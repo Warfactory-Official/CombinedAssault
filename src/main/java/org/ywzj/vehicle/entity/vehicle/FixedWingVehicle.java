@@ -31,6 +31,8 @@ import org.ywzj.vehicle.client.resource.vehicle.VehicleDisplay;
 import org.ywzj.vehicle.network.message.ClientVehicleAction;
 import org.ywzj.vehicle.util.ParticleUtil;
 import org.ywzj.vehicle.util.VectorUtil;
+import org.ywzj.vehicle.all.AllConfigs;
+import org.ywzj.vehicle.vehicle.solver.AircraftAerodynamics;
 import org.ywzj.vehicle.vehicle.LocalVehiclePlayer;
 import org.ywzj.vehicle.vehicle.part.*;
 import org.ywzj.vehicle.vehicle.pojo.AimContext;
@@ -91,6 +93,9 @@ public class FixedWingVehicle extends AbstractVehicle
     private VehicleSound aerobaticSmokeSoundInstance;
     private VehicleSound passbySoundInstance;
     private IAnimationInstance<FixedWingVehicleContext> animationInstance;
+
+    /** Arcade flight response. Fixed-wing uses only its sideslip term; the rest is its own. */
+    protected final AircraftAerodynamics aerodynamics = new AircraftAerodynamics();
 
     public FixedWingVehicle(EntityType<? extends AbstractVehicle> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
@@ -346,7 +351,7 @@ public class FixedWingVehicle extends AbstractVehicle
                 }
             }
         }
-        double mass = physicsEngine.physicsInfo.mass;
+        double mass = physicsEngine.mass;
         // 空速
         Vec3 airSpeed = getDeltaMovement();
         // 地面航行
@@ -384,6 +389,14 @@ public class FixedWingVehicle extends AbstractVehicle
         double al = airSpeed.length();
         double f = al * al * k;
         airSpeed = airSpeed.normalize().scale(al - f / mass);
+        if (AllConfigs.common.arcadeFlightModel.get()) {
+            // Sideslip. The drag above varies with angle of attack, so the pitch plane is covered,
+            // but nothing costs the aircraft anything for sliding across its own fuselage — which
+            // is what lets a plane mush sideways through a turn instead of carving it.
+            Vec3 right = relativeRotDirection(new Vec3(1, 0, 0), false);
+            double lateral = airSpeed.dot(right);
+            airSpeed = airSpeed.subtract(right.scale(aerodynamics.sideslipBleed((float) lateral)));
+        }
         // 升力
         double aRaw = airSpeed.length();
         double degreeX = Math.toDegrees(angelX);

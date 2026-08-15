@@ -653,7 +653,7 @@ public class LocalVehiclePlayer {
     }
 
     public Vec3 viewOrigin() {
-        AbstractVehicle vehicle = getVehicle();
+        AbstractVehicle vehicle = this.vehicle;
         if (vehicle != null && vehicle.getDetachedBodyAnchor(getPlayer()) != null) {
             return vehicle.position();
         }
