@@ -27,12 +27,13 @@ import org.ywzj.vehicle.client.render.animation.VehicleAnimationInstance;
 import org.ywzj.vehicle.client.render.animation.context.EntityContext;
 import org.ywzj.vehicle.client.render.util.OBBRenderer;
 import org.ywzj.vehicle.client.resource.ClientAssetsManager;
+import org.ywzj.vehicle.client.render.util.VehicleDecorationQueue;
+import org.ywzj.vehicle.client.resource.vehicle.BaseDisplay;
 import org.ywzj.vehicle.client.resource.vehicle.VehicleBedrockModel;
 import org.ywzj.vehicle.client.resource.vehicle.VehicleDisplay;
 import org.ywzj.vehicle.entity.vehicle.AbstractVehicle;
 import org.ywzj.vehicle.entity.vehicle.FixedWingVehicle;
 import org.ywzj.vehicle.vehicle.LocalVehiclePlayer;
-import org.ywzj.vehicle.vehicle.part.DecorationUnit;
 import org.ywzj.vehicle.vehicle.part.PartUnit;
 import org.ywzj.vehicle.vehicle.part.WeaponUnit;
 import org.ywzj.vehicle.vehicle.structure.VehicleCubeOBB;
@@ -94,9 +95,7 @@ public class VehicleRender<T extends AbstractVehicle> extends EntityRenderer<T> 
                 partUnit.render(pPoseStack, bufferSource, pPackedLight);
             }
             // 饰品
-            for (DecorationUnit decorationUnit : vehicle.getDecorationUnits().values()) {
-                decorationUnit.render(pPoseStack, bufferSource, pPackedLight);
-            }
+            VehicleDecorationQueue.enqueue(vehicle, pPoseStack, bufferSource, pPackedLight);
             // 弹孔
             for (BulletHoleParticle bulletHoleParticle : vehicle.getBulletHoleParticles()) {
                 bulletHoleParticle.renderOnVehicle(pPartialTick, pPoseStack, bufferSource, modelInstance);
