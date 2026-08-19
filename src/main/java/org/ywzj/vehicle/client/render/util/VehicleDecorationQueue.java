@@ -35,7 +35,7 @@ public final class VehicleDecorationQueue {
 
     public static void enqueue(AbstractVehicle vehicle, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
         Map<String, DecorationUnit> units = vehicle.getDecorationUnits();
-        if (units.isEmpty() || vehicle.getModelInstance() == null) {
+        if (units.isEmpty() || vehicle.getVehicleModelInstance() == null) {
             return;
         }
         if (IrisCompat.isRenderingShadowPass()) {
