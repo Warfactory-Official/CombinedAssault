@@ -152,6 +152,7 @@ public abstract class AbstractVehicle extends ContainerCraft
     protected List<VehicleCubeOBB> vehicleCubeOBBs;
     protected VehicleCubeOBB mainCubeOBB;
     private List<OBB> cachedOBBs = List.of();
+    private List<OBB> activeOBBs = List.of();
     private ChunkCollisionCache.Cursor collisionCursor;
     private final BoxBuffer scratchBoxes = new BoxBuffer();
     // Providers hand back real AABBs, cached and reused across ticks rather than rebuilt.
@@ -174,6 +175,9 @@ public abstract class AbstractVehicle extends ContainerCraft
     // Flattened body and part geometry, indexed once at startup; cube lists are static after initData.
     private List<VehicleCubeOBB> allCubeOBBs;
     private int[] cubeGroupIndex = new int[0];
+    /** Owning part unit per entry of allCubeOBBs, or -1 for body cubes. */
+    private int[] cubePartIndex = new int[0];
+    private boolean[] cubeDetached = new boolean[0];
     // Group forest in topological order; transforms must not live on shared cube groups.
     private VehicleCubeGroup[] groupOrder = new VehicleCubeGroup[0];
     private int[] groupParent = new int[0];
@@ -526,6 +530,8 @@ public abstract class AbstractVehicle extends ContainerCraft
         this.physicsEngine.canDestroyBlock = vehicleData.getPhysicsInfo().canDestroyBlock;
         this.physicsEngine.canTumble = vehicleData.getPhysicsInfo().canTumble;
         this.physicsEngine.radarCrossSection = vehicleData.getPhysicsInfo().radarCrossSection;
+        this.physicsEngine.friction = vehicleData.getPhysicsInfo().friction;
+        this.physicsEngine.destroyExplosionVelocity = vehicleData.getPhysicsInfo().destroyExplosionVelocity;
         this.physicsEngine.density = vehicleData.getPhysicsInfo().density;
         this.physicsEngine.liquidDamping = vehicleData.getPhysicsInfo().liquidDamping;
         this.defenseStats = vehicleData.getDefenseStats();
@@ -711,6 +717,7 @@ public abstract class AbstractVehicle extends ContainerCraft
     }
 
     protected void tickPhysics(Vec3 force) {
+        force = force.add(physicsEngine.sampleBuoyancy());
         physicsRig.capturePose(this);
         physicsRig.bindWorld(ChunkCollisionCache.of(this.level()));
         collisionCursor = physicsRig.cursor;
@@ -846,9 +853,8 @@ public abstract class AbstractVehicle extends ContainerCraft
         }
         // 摩擦力
         velocity = physicsEngine.decelerationByFriction(touchPoints, velocity);
-        // 浮力. Leaves the damped and lifted velocity in the engine, returns the buoyant force.
-        force = force.add(physicsEngine.motionByBuoyancy(velocity));
-        velocity = new Vec3(physicsEngine.velocity);
+        // 浮力. Sampled on the tick thread; the force is already folded into `force`.
+        velocity = physicsEngine.applyBuoyancy(velocity);
         // 重力与旋转
         velocity = physicsEngine.rotAndFallByGravity(rig, touchPoints, axes, force.toVector3f(), velocity.toVector3f());
         physicsEngine.velocityO = physicsEngine.velocity;
@@ -947,7 +953,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         physicsRig.bindWorld(pinnedSections);
         planTravel(physicsRig, true);
         collisionCursor = physicsRig.cursor;
-        Vec3 force = tickMove();
+        Vec3 force = tickMove().add(physicsEngine.sampleBuoyancy());
         physicsRig.capturePose(this);
         physicsEngine.captureState(engineStateSnapshot);
         VehiclePhysicsJob job = new VehiclePhysicsJob(this, force);
@@ -1286,7 +1292,44 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     @Override
     public List<OBB> getOBBs() {
-        return cachedOBBs;
+        return activeOBBs;
+    }
+
+    /**
+     * Keeps {@link #activeOBBs} in step with which parts are detached. A detached part rides its
+     * own entity, so leaving it in the collision list would go on colliding, inflate the AABB and
+     * offer a landing surface. Only rebuilds when the detach state actually changed, and shares
+     * the cached list outright while nothing is detached.
+     */
+    private void refreshActiveOBBs() {
+        boolean changed = false;
+        boolean anyDetached = false;
+        for (int i = 0; i < cubeDetached.length; i++) {
+            int part = cubePartIndex[i];
+            boolean detached = part >= 0 && partUnits.get(part).isDetached();
+            anyDetached |= detached;
+            if (cubeDetached[i] != detached) {
+                cubeDetached[i] = detached;
+                changed = true;
+            }
+        }
+        if (!changed) {
+            return;
+        }
+        if (!anyDetached) {
+            activeOBBs = cachedOBBs;
+            return;
+        }
+        List<OBB> obbs = new ArrayList<>(cachedOBBs.size());
+        for (VehicleCubeOBB cubeOBB : vehicleCubeOBBs) {
+            obbs.add(cubeOBB.obb());
+        }
+        for (PartUnit<?> partUnit : partUnits) {
+            if (!partUnit.isDetached()) {
+                obbs.addAll(partUnit.getOBBs());
+            }
+        }
+        activeOBBs = Collections.unmodifiableList(obbs);
     }
 
     /**
@@ -1316,6 +1359,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         if (allCubeOBBs == null) {
             buildOBBIndex();
         }
+        refreshActiveOBBs();
         refreshGroupTransforms();
 
         Quaternionf vehicleRotation = rotYXZShared();
@@ -1324,12 +1368,19 @@ public abstract class AbstractVehicle extends ContainerCraft
         float[] deckBoxes = deck.boxBuffer(structureCubes);
         float[] landingBoxes = deckCubes > 0 ? deck.deckBoxBuffer(deckCubes) : deck.deckBoxes();
         int landingCount = 0;
+        int boxCount = 0;
         double minX = Double.POSITIVE_INFINITY, minY = Double.POSITIVE_INFINITY, minZ = Double.POSITIVE_INFINITY;
         double maxX = Double.NEGATIVE_INFINITY, maxY = Double.NEGATIVE_INFINITY, maxZ = Double.NEGATIVE_INFINITY;
         for (int i = 0, size = structureCubes; i <= size; i++) {
             VehicleCubeOBB cubeOBB = i == size ? mainCubeOBB : allCubeOBBs.get(i);
             int group = cubeGroupIndex[i];
             cubeOBB.update(this, vehicleRotation, groupOffset[group], groupRotation[group]);
+
+            // A detached part rides its own entity now. Keep posing it so nothing reads a stale
+            // pose, but leave it out of the hull's bounds and deck surfaces.
+            if (i < size && cubeDetached[i]) {
+                continue;
+            }
 
             Vector3f center = cubeOBB.localCenter();
             Vector3f extents = cubeOBB.obb().extents();
@@ -1338,7 +1389,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             float ry = Math.abs(scratchLocalRot.m01) * extents.x + Math.abs(scratchLocalRot.m11) * extents.y + Math.abs(scratchLocalRot.m21) * extents.z;
             float rz = Math.abs(scratchLocalRot.m02) * extents.x + Math.abs(scratchLocalRot.m12) * extents.y + Math.abs(scratchLocalRot.m22) * extents.z;
             if (i < size) {
-                int o = i * 6;
+                int o = boxCount * 6;
                 deckBoxes[o] = center.x - rx;
                 deckBoxes[o + 1] = center.y - ry;
                 deckBoxes[o + 2] = center.z - rz;
@@ -1349,6 +1400,7 @@ public abstract class AbstractVehicle extends ContainerCraft
                     System.arraycopy(deckBoxes, o, landingBoxes, landingCount * 6, 6);
                     landingCount++;
                 }
+                boxCount++;
             }
             if (center.x - rx < minX) minX = center.x - rx;
             if (center.y - ry < minY) minY = center.y - ry;
@@ -1365,7 +1417,7 @@ public abstract class AbstractVehicle extends ContainerCraft
 
         deck.set(vehicleRotation, getYRot(),
                 getX() + centerOffset.x, getY() + centerOffset.y, getZ() + centerOffset.z,
-                structureCubes, landingCount);
+                boxCount, landingCount);
         deckSnapshot = deck;
         deckSnapshotSlot ^= 1;
         boolean isCarrier = landingCount > 0;
@@ -1402,6 +1454,15 @@ public abstract class AbstractVehicle extends ContainerCraft
             cubes.addAll(partUnit.getPartCubeOBBs());
         }
         allCubeOBBs = List.copyOf(cubes);
+        cubePartIndex = new int[cubes.size()];
+        cubeDetached = new boolean[cubes.size()];
+        Arrays.fill(cubePartIndex, -1);
+        int cubeCursor = vehicleCubeOBBs.size();
+        for (int p = 0, parts = partUnits.size(); p < parts; p++) {
+            for (int c = partUnits.get(p).getPartCubeOBBs().size(); c > 0; c--) {
+                cubePartIndex[cubeCursor++] = p;
+            }
+        }
         int declaredDeck = 0;
         for (int i = 0, size = cubes.size(); i < size; i++) {
             if (cubes.get(i).isDeck()) {
@@ -1415,6 +1476,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             obbs.add(cubeOBB.obb());
         }
         cachedOBBs = Collections.unmodifiableList(obbs);
+        activeOBBs = cachedOBBs;
 
         List<VehicleCubeGroup> order = new ArrayList<>();
         Map<VehicleCubeGroup, Integer> indexOf = new IdentityHashMap<>();

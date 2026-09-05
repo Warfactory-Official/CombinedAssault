@@ -802,12 +802,29 @@ public class PhysicsEngine {
      * {@link #velocity} for the caller to pick up. The return value is the buoyant force, which
      * the caller folds into the gravity budget.
      */
-    public Vec3 motionByBuoyancy(Vec3 velocity) {
+    /** Buoyant acceleration cached by {@link #sampleBuoyancy()} for the solve to apply. */
+    private double buoyancyAcceleration;
+
+    /**
+     * 浮力影响: samples how much of the hull is under a fluid surface.
+     *
+     * <p><b>World thread only.</b> This reads live fluid states, so it cannot run inside the
+     * contact solve, which the scheduler may hand to a worker. It is split from
+     * {@link #applyBuoyancy} for exactly that reason: sampling happens once on the tick thread
+     * before the solve is launched, and the solve then applies the cached result.
+     *
+     * @return the buoyant force, for the caller to fold into the gravity budget
+     */
+    public Vec3 sampleBuoyancy() {
         submergedRatio = 0;
+        buoyancyAcceleration = 0;
         if (density <= 0 || mass <= 0) {
             return Vec3.ZERO;
         }
         VehicleCubeOBB physicsCube = physicsCube();
+        if (physicsCube == null) {
+            return Vec3.ZERO;
+        }
         OBB obb = physicsCube.obb();
         Vector3f[] axes = obb.getAxes();
         Vector3f extents = obb.extents();
@@ -816,6 +833,9 @@ public class PhysicsEngine {
         int samplesZ = buoyancySamples(extents.z * 2);
         int sampleCount = samplesX * samplesY * samplesZ;
         double physicsCubeVolume = physicsCube.volume();
+        if (physicsCubeVolume <= 0) {
+            return Vec3.ZERO;
+        }
         double sampleVolume = physicsCubeVolume / sampleCount;
         double displacedVolume = 0;
         double displacedFluidMass = 0;
@@ -842,30 +862,50 @@ public class PhysicsEngine {
                 }
             }
         }
+        if (displacedVolume <= 0) {
+            return Vec3.ZERO;
+        }
         double buoyancyForce = G * mass * displacedFluidMass / (density * physicsCubeVolume);
-        double buoyancyAcceleration = buoyancyForce / mass;
+        buoyancyAcceleration = buoyancyForce / mass;
         submergedRatio = (float) (displacedVolume / physicsCubeVolume);
+        return new Vec3(0, buoyancyForce, 0);
+    }
+
+    /**
+     * Applies the sampled buoyancy to this tick's velocity: liquid damping across the whole
+     * vector, then the buoyant acceleration upwards. Worker-safe; reads only what
+     * {@link #sampleBuoyancy()} cached.
+     */
+    public Vec3 applyBuoyancy(Vec3 velocity) {
+        if (submergedRatio <= 0) {
+            return velocity;
+        }
         double damping = Mth.clamp(1 - liquidDamping * submergedRatio, 0, 1);
         velocity = velocity.scale(damping);
         double before = velocity.y;
         velocity = velocity.add(0, buoyancyAcceleration, 0);
         trace(PhysicsTrace.Source.BUOYANCY, velocity.y - before);
         this.velocity.set((float) velocity.x, (float) velocity.y, (float) velocity.z);
-        return new Vec3(0, buoyancyForce, 0);
+        return velocity;
     }
 
-    /** Rights and settles a hull that is floating, so it does not stay capsized in water. */
-    private void rightInLiquid() {
+    /**
+     * Rights and settles a floating hull, so it does not stay capsized in water. Writes through
+     * the rig rather than the entity: the solve may be running on a worker, and
+     * {@code flushContacts} pushes the rig's pose onto the entity afterwards, so an entity write
+     * here would simply be overwritten.
+     */
+    private void rightInLiquid(PhysicsRig rig) {
         if (submergedRatio <= 0) {
             return;
         }
         dampSpin(Mth.clamp(1 - submergedRatio * 0.2f, 0, 1));
         float rightingStep = 1.5f * submergedRatio;
-        vehicle.setXRot(Mth.approachDegrees(vehicle.getXRot(), 0, rightingStep));
+        rig.setXRot(Mth.approachDegrees(rig.getXRot(), 0, rightingStep));
         if (lockZRot) {
-            vehicle.setZRot(0);
+            rig.setZRot(0);
         } else {
-            vehicle.setZRot(Mth.approachDegrees(vehicle.getZRot(), 0, rightingStep));
+            rig.setZRot(Mth.approachDegrees(rig.getZRot(), 0, rightingStep));
         }
     }
 
@@ -1128,7 +1168,7 @@ public class PhysicsEngine {
             exception.printStackTrace();
         } finally {
             this.velocity = velocity;
-            rightInLiquid();
+            rightInLiquid(rig);
         }
         return new Vec3(velocity);
     }
