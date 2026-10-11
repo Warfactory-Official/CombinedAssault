@@ -1,0 +1,15 @@
+{
+    "type": "combinedassault:cannon",
+    "name": "vehicle.weapon.mortar_81mm",
+    "recoil": 0.4,
+    "inaccuracy": 0.35,
+    "shoot_interval": 600,
+    "max_capacity": 1,
+    "reload": {
+        "time": 60,
+        "ammo": [
+            "wflib:cartridge_81mm",
+            "#wflib:artillery_shells"
+        ]
+    }
+}

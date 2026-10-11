@@ -1,0 +1,59 @@
+{
+    "name": "av8b_controller",
+    "script": "combinedassault:av8b",
+    "parameters": {},
+    "graph": {
+        "type": "merge",
+        "inputs": [
+            {
+                "type": "script",
+                "function": "updateBones"
+            },
+            {
+                "type": "bone_binding",
+                "special_bindings": [
+                    {
+                        "bones": [
+                            "gear_nose_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.289
+                    },
+                    {
+                        "bones": [
+                            "gear_main_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.298
+                    },
+                    {
+                        "bones": [
+                            "gear_main_wheel1"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.298
+                    },
+                    {
+                        "bones": [
+                            "outrigger_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.224
+                    },
+                    {
+                        "bones": [
+                            "outrigger_wheel1"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.224
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -1,0 +1,99 @@
+{
+    "name": "c5_controller",
+    "script": "combinedassault:c5",
+    "parameters": {},
+    "graph": {
+        "type": "merge",
+        "inputs": [
+            {
+                "type": "script",
+                "function": "updateBones"
+            },
+            {
+                "type": "bone_binding",
+                "special_bindings": [
+                    {
+                        "bones": [
+                            "bogie_r0_0_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.508
+                    },
+                    {
+                        "bones": [
+                            "bogie_r0_1_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.508
+                    },
+                    {
+                        "bones": [
+                            "bogie_l0_0_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.508
+                    },
+                    {
+                        "bones": [
+                            "bogie_l0_1_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.508
+                    },
+                    {
+                        "bones": [
+                            "bogie_r1_0_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.508
+                    },
+                    {
+                        "bones": [
+                            "bogie_r1_1_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.508
+                    },
+                    {
+                        "bones": [
+                            "bogie_l1_0_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.508
+                    },
+                    {
+                        "bones": [
+                            "bogie_l1_1_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.508
+                    },
+                    {
+                        "bones": [
+                            "nose_wheels_l_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.508
+                    },
+                    {
+                        "bones": [
+                            "nose_wheels_r_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.508
+                    }
+                ]
+            }
+        ]
+    }
+}

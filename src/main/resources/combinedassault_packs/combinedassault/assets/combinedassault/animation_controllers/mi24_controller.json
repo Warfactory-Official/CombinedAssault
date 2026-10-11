@@ -1,0 +1,51 @@
+{
+    "name": "mi24_controller",
+    "script": "combinedassault:mi24",
+    "parameters": {},
+    "graph": {
+        "type": "merge",
+        "inputs": [
+            {
+                "type": "script",
+                "function": "updateBones"
+            },
+            {
+                "type": "bone_binding",
+                "special_bindings": [
+                    {
+                        "bones": [
+                            "gear_nose_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.225
+                    },
+                    {
+                        "bones": [
+                            "gear_nose_wheel1"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.225
+                    },
+                    {
+                        "bones": [
+                            "gear_l_fold_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.349
+                    },
+                    {
+                        "bones": [
+                            "gear_r_fold_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.349
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -1,0 +1,14 @@
+{
+    "pack": {
+        "pack_format": 34,
+        "description": "[CA] CombinedAssault"
+    },
+    "combinedassault": {
+        "id": "combinedassault",
+        "license": "CC-BY-NC-4.0 AND LicenseRef-EMB4",
+        "authors": [
+            "MrNorwood",
+            "EMB4"
+        ]
+    }
+}

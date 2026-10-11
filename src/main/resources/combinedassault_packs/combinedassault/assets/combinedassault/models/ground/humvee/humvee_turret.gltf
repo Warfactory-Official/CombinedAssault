@@ -1,0 +1,225 @@
+{
+ "asset": {
+  "version": "2.0",
+  "generator": "REDACTED",
+  "extras": {
+   "staged_by": "REDACTED",
+   "source": "EMB4 McHeliCE humvee_mk19 $weapon0",
+   "scale": 0.9
+  }
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "name": "humvee_turret",
+   "mesh": 0,
+   "children": [
+    1,
+    2,
+    3
+   ],
+   "extras": {
+    "combinedassault": {
+     "system": "turret"
+    }
+   }
+  },
+  {
+   "name": "socket_seat",
+   "translation": [
+    0.0,
+    1.085,
+    -0.084
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "extras": {
+    "combinedassaultRole": "seat",
+    "gemrenderHidden": true
+   }
+  },
+  {
+   "name": "socket_view",
+   "translation": [
+    0.0,
+    1.235,
+    -0.084
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "extras": {
+    "combinedassaultRole": "view",
+    "gemrenderHidden": true
+   }
+  },
+  {
+   "name": "socket_dismount",
+   "translation": [
+    0.0,
+    0.685,
+    -0.584
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "extras": {
+    "combinedassaultRole": "dismount",
+    "gemrenderHidden": true
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "humvee_turret",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 1,
+      "NORMAL": 2,
+      "TEXCOORD_0": 3
+     },
+     "indices": 0,
+     "material": 0
+    }
+   ]
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5125,
+   "count": 702,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 352,
+   "type": "VEC3",
+   "min": [
+    -0.48489800095558167,
+    0.586899995803833,
+    -0.24315199255943298
+   ],
+   "max": [
+    0.5938900113105774,
+    1.291748046875,
+    1.4314279556274414
+   ]
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 352,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5126,
+   "count": 352,
+   "type": "VEC2"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteOffset": 0,
+   "byteLength": 2808,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 2808,
+   "byteLength": 4224,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 7032,
+   "byteLength": 4224,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 11256,
+   "byteLength": 2816,
+   "target": 34962
+  }
+ ],
+ "materials": [
+  {
+   "name": "paint",
+   "doubleSided": false,
+   "alphaMode": "MASK",
+   "alphaCutoff": 0.5,
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 0
+    },
+    "metallicFactor": 0.0,
+    "roughnessFactor": 1.0
+   }
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9728,
+   "minFilter": 9984
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "extras": {
+    "resourceLocation": "combinedassault:textures/ground/humvee/humvee.png"
+   }
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 14072,
+   "extras": {
+    "resourceLocation": "combinedassault:models/ground/humvee/humvee_turret.bin"
+   }
+  }
+ ]
+}

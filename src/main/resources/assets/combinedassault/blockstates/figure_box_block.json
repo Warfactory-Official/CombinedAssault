@@ -1,0 +1,15 @@
+{
+  "variants": {
+    "facing=north,open=false": { "model": "combinedassault:block/figure_box_block" },
+    "facing=north,open=true":  { "model": "combinedassault:block/figure_box_block_open" },
+
+    "facing=east,open=false":  { "model": "combinedassault:block/figure_box_block", "y": 90 },
+    "facing=east,open=true":   { "model": "combinedassault:block/figure_box_block_open", "y": 90 },
+
+    "facing=south,open=false": { "model": "combinedassault:block/figure_box_block", "y": 180 },
+    "facing=south,open=true":  { "model": "combinedassault:block/figure_box_block_open", "y": 180 },
+
+    "facing=west,open=false":  { "model": "combinedassault:block/figure_box_block", "y": 270 },
+    "facing=west,open=true":   { "model": "combinedassault:block/figure_box_block_open", "y": 270 }
+  }
+}

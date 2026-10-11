@@ -1,0 +1,16 @@
+{
+    "type": "combinedassault:cannon",
+    "name": "M61A1 Vulcan",
+    "recoil": 0.1,
+    "inaccuracy": 0.1,
+    "shoot_interval": 13,
+    "max_capacity": 1550,
+    "reload": {
+        "time": 200,
+        "ammo": "wflib:cartridge_20x102"
+    },
+    "sounds": {
+        "fire": {"event": "combinedassault:auto_cannon_shot", "range": 600, "pitch_random": 0.1},
+        "reload": {"event": "combinedassault:gun_reload", "range": 24}
+    }
+}

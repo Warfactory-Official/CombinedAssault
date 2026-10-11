@@ -1,0 +1,158 @@
+{
+    "type": "combinedassault:fixed_wing_vehicle",
+    "attributes": {
+        "thrust": 760000,
+        "thrust_k": 1.0,
+        "ceiling": 480,
+        "x_rot_input_step": 0.2,
+        "y_rot_input_step": 0.5,
+        "z_rot_input_step": 0.2,
+        "air_drag_k_min": 250,
+        "air_drag_k_max": 1000,
+        "lift_to_drag_k": 5,
+        "x_rot_input_drag_k": 1.0,
+        "y_rot_input_drag_k": 0.25,
+        "z_rot_input_drag_k": 0.125,
+        "turn_rate_by_speed": 0.4,
+        "x_turn_rate": 0.8,
+        "y_turn_rate": 1.2,
+        "z_turn_rate": 2.0
+    },
+    "physics_info": {
+        "mass": 170000,
+        "friction": 190000
+    },
+    "landing_gear_part_id": "landing_gear",
+    "airbrake_part_id": "airbrake",
+    "max_health": 2400,
+    "view_info": {
+        "third_person_distance": 48,
+        "third_person_distance_zoomed": 24
+    },
+    "energy_info": {
+        "energy_capacity": 60000,
+        "energy_consumption_per_tick": 0.1
+    },
+    "defense_stats": {
+        "damage_threshold": 10,
+        "impact_multiplier": 3
+    },
+    "with_warning_receiver": true,
+    "storage": {
+        "slots": 54
+    },
+    "cargo": {
+        "door": "cargo_doors",
+        "max_mass": 129000
+    },
+    "parts": [
+        {
+            "id": "pilot",
+            "name": "pilot",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "crew_roles": [
+                "driver"
+            ]
+        },
+        {
+            "id": "copilot",
+            "name": "copilot",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "crew_roles": [
+                "commander"
+            ]
+        },
+        {
+            "id": "troop_0",
+            "name": "troop_0",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "troop_1",
+            "name": "troop_1",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "troop_2",
+            "name": "troop_2",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "troop_3",
+            "name": "troop_3",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "cargo_doors",
+            "name": "cargo_doors",
+            "type": "combinedassault:door",
+            "is_seat": false
+        },
+        {
+            "id": "ramp",
+            "name": "ramp",
+            "type": "combinedassault:linked_hinge",
+            "is_seat": false,
+            "link": "cargo_doors",
+            "open_x_rot": -20,
+            "rot_info": {
+                "x_rot_speed": 0.5,
+                "y_rot_speed": 0,
+                "need_power": false
+            }
+        },
+        {
+            "id": "landing_gear",
+            "name": "landing_gear",
+            "type": "combinedassault:landing_gear",
+            "is_seat": false,
+            "drag_k": 0.5
+        },
+        {
+            "id": "airbrake",
+            "name": "airbrake",
+            "type": "combinedassault:airbrake",
+            "is_seat": false,
+            "drag_k": 2
+        }
+    ],
+    "model": "combinedassault:models/aircraft/c5/c5.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/c5.png",
+        "controller": "combinedassault:c5_controller",
+        "engine": {
+            "start": {"event": "combinedassault:jet_engine_start", "range": 720},
+            "loops": [
+                {"sound": {"event": "combinedassault:jet_engine_run", "range": 1200}, "input": "throttle", "volume": [[0, 0.55], [1, 1]], "pitch": [[0, 0.85], [1, 1.05], [1.5, 1.15]], "aspect": [[0, 0.55], [120, 1]], "gate": [[0.2, 0], [0.5, 1]]}
+            ]
+        },
+        "cabin_muffle": 0.8,
+        "tab_index": 525,
+        "variants": {
+            "c5_black": {
+                "paint": "combinedassault:black"
+            },
+            "c5_olive_drab": {
+                "paint": "combinedassault:olive_drab"
+            },
+            "c5_sand": {
+                "paint": "combinedassault:sand"
+            },
+            "c5_urban": {
+                "paint": "combinedassault:urban"
+            },
+            "c5_winter": {
+                "paint": "combinedassault:winter"
+            },
+            "c5_woodland": {
+                "paint": "combinedassault:woodland"
+            }
+        }
+    }
+}

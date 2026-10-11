@@ -1,0 +1,14 @@
+{
+    "type": "combinedassault:aerial_bomb",
+    "name": "CBU-87",
+    "recoil": 0,
+    "shoot_interval": 100,
+    "max_capacity": 8,
+    "reload": {
+        "time": 100,
+        "ammo": [
+            "wflib:bomb_cbu_87",
+            "#wflib:bomb/medium"
+        ]
+    }
+}

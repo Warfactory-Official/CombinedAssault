@@ -1,8 +1,8 @@
 import org.joml.Matrix3f;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
-import org.ywzj.vehicle.vehicle.parenting.DeckFrame;
-import org.ywzj.vehicle.vehicle.parenting.DeckSnapshot;
+import com.wf.combinedassault.vehicle.parenting.DeckFrame;
+import com.wf.combinedassault.vehicle.parenting.DeckSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,8 +16,8 @@ import java.util.Random;
  * Run:
  *   JOML=$(find ~/.gradle ~/.local/share/gradle -name 'joml-*.jar' ! -name '*sources*' | head -1)
  *   javac -d /tmp/carriercheck -cp "$JOML" \
- *       src/main/java/org/ywzj/vehicle/vehicle/parenting/DeckFrame.java \
- *       src/main/java/org/ywzj/vehicle/vehicle/parenting/DeckSnapshot.java tools/CarrierCheck.java
+ *       src/main/java/com/wf/combinedassault/vehicle/parenting/DeckFrame.java \
+ *       src/main/java/com/wf/combinedassault/vehicle/parenting/DeckSnapshot.java tools/CarrierCheck.java
  *   java -cp "/tmp/carriercheck:$JOML" CarrierCheck
  */
 public class CarrierCheck {

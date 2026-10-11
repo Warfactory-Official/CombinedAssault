@@ -1,0 +1,554 @@
+package com.wf.combinedassault.custom.vehicle;
+
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import org.apache.commons.lang3.StringUtils;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.all.AllEntities;
+import com.wf.combinedassault.custom.CommonAssetsManager;
+import com.wf.combinedassault.custom.part.PartUnitEntry;
+import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.entity.vehicle.NoneVehicle;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.ballistics.ArmorProfile;
+import com.wf.combinedassault.ballistics.addon.AddonMount;
+import com.wf.combinedassault.ballistics.addon.AddonMountInfo;
+import com.wf.combinedassault.vehicle.pojo.DefenseStats;
+import com.wf.combinedassault.vehicle.pojo.EnergyInfo;
+import com.wf.combinedassault.vehicle.pojo.PhysicsInfo;
+import com.wf.combinedassault.tow.TowInfo;
+import com.wf.combinedassault.vehicle.pojo.MountPointInfo;
+import com.wf.combinedassault.vehicle.pojo.CargoInfo;
+import com.wf.combinedassault.vehicle.pojo.MountableInfo;
+import com.wf.combinedassault.vehicle.pojo.StorageInfo;
+import com.wf.combinedassault.vehicle.pojo.ViewInfo;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
+import com.wf.combinedassault.vehicle.structure.ConvexHull;
+import com.wf.combinedassault.vehicle.structure.VehicleCubeGroup;
+import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
+import com.wf.combinedassault.vehicle.structure.VehicleStructOBBs;
+
+import java.util.*;
+import com.wf.combinedassault.vehicle.hit.ClipRig;
+import com.wf.combinedassault.vehicle.hit.HitMesh;
+import com.wf.combinedassault.vehicle.hit.ModelData;
+import com.wf.combinedassault.vehicle.hit.ModelRig;
+import com.wf.combinedassault.vehicle.hit.HitModel;
+import com.wf.combinedassault.vehicle.structure.HullTag;
+import org.jetbrains.annotations.Nullable;
+
+public class BaseVehicleData<T extends AbstractVehicle> {
+
+    /** Face normal y below -this => support face. */
+    private static final float SUPPORT_FACE_DOWN = 0.3F;
+    /** Support points closer than this (blocks, per axis) merge. */
+    private static final float SUPPORT_MERGE = 0.1F;
+
+    protected ResourceLocation vehicleId;
+    protected Component name;
+    protected float maxHealth;
+    protected ViewInfo viewInfo;
+    protected EnergyInfo energyInfo;
+    protected PhysicsInfo physicsInfo;
+    /** physics_info.center in the physics body's frame. Hull model: pack value is vehicle-local. */
+    protected Vec3 physicsCenter;
+    /** Hull model: downward-face vertices of solid body pieces, physics body frame; bottom supports. */
+    protected final List<Vector3f> bodySupports = new ArrayList<>();
+    private final List<ConvexHull> bodyHulls = new ArrayList<>();
+    protected DefenseStats defenseStats;
+    protected StorageInfo storage = new StorageInfo();
+    protected List<MountPointInfo> mountPoints = List.of();
+    protected MountableInfo mountable = new MountableInfo();
+    protected TowInfo towing = TowInfo.NONE;
+    protected CargoInfo cargo = CargoInfo.NONE;
+    protected ArmorProfile armor;
+    protected List<AddonMount> addonMounts = List.of();
+    protected boolean uav;
+    protected boolean canWade;
+    protected boolean withWarningReceiver;
+    protected boolean protectPassenger;
+    protected boolean experimental;
+    protected Vec3 centerOffset;
+    /** Set by the data manager around {@link VehicleDataType#parse}: data types build inside Gson parsing. */
+    public static final ThreadLocal<ModelData> MODEL = new ThreadLocal<>();
+    protected ModelData model;
+    @org.jetbrains.annotations.Nullable
+    protected HitModel hitModel;
+    protected ClipRig clipRig;
+    private final Map<String, VehicleCubeGroup> groupsByName = new HashMap<>();
+    protected double structureLength;
+    /** Z extent of the solid body colliders; turn geometry. Main cube = one convex piece, not the hull. */
+    protected float bodyDepth;
+    protected List<PartUnitEntry<?, ?>> parts;
+    protected VehicleCubeOBB mainCubeOBB;
+    protected final List<VehicleCubeOBB> vehicleBodyOBBs = new ArrayList<>();
+    /** Per rig frame: type-level group; [0] = body. Part groups are copied per vehicle ({@link #vehicleCubeGroupsCopy}). */
+    protected final List<VehicleCubeGroup> frameGroups = new ArrayList<>();
+    private int[] frameParent = new int[0];
+    private boolean hasDeckGeometry;
+
+    public BaseVehicleData() {}
+
+    public AbstractVehicle construct(Level level, Vec3 position, float xRot, float yRot) {
+        AbstractVehicle vehicle = fromRegistries(level, position, xRot, yRot);
+        if (vehicle != null) {
+            return vehicle;
+        }
+        vehicle = fromCustom(level);
+        vehicle.setVehicleId(vehicleId);
+        vehicle.setPos(position);
+        vehicle.setXRot(xRot);
+        vehicle.setYRot(yRot);
+        return vehicle;
+    }
+
+    protected AbstractVehicle fromRegistries(Level level, Vec3 position, float xRot, float yRot) {
+        if (BuiltInRegistries.ENTITY_TYPE.containsKey(vehicleId)) {
+            EntityType<?> vehicleType = BuiltInRegistries.ENTITY_TYPE.get(vehicleId);
+            Entity entity = vehicleType.create(level);
+            if (entity instanceof AbstractVehicle vehicle) {
+                vehicle.setPos(position);
+                vehicle.setXRot(xRot);
+                vehicle.setYRot(yRot);
+                return vehicle;
+            }
+        }
+        return null;
+    }
+
+    protected AbstractVehicle fromCustom(Level level) {
+        return new NoneVehicle(AllEntities.NONE_VEHICLE.get(), level);
+    }
+
+    protected static String check(BaseVehicleDataPojo pojo) {
+        return "";
+    }
+
+    public void build(BaseVehicleDataPojo pojo) {
+        String checkResult = check(pojo);
+        if (!StringUtils.isBlank(checkResult)) {
+            CombinedAssault.LOGGER.warn(checkResult);
+            return;
+        }
+
+        this.maxHealth = pojo.maxHealth;
+        this.viewInfo = pojo.viewInfo;
+        this.energyInfo = pojo.energyInfo;
+        this.physicsInfo = pojo.physicsInfo;
+        this.defenseStats = pojo.defenseStats;
+        this.storage = pojo.storage == null ? new StorageInfo() : pojo.storage;
+        this.mountPoints = pojo.mountPoints == null ? List.of() : List.copyOf(pojo.mountPoints);
+        this.mountable = pojo.mountable == null ? new MountableInfo() : pojo.mountable;
+        this.towing = pojo.towing == null ? TowInfo.NONE : pojo.towing;
+        this.cargo = pojo.cargo == null ? CargoInfo.NONE : pojo.cargo;
+        this.armor = pojo.armor;
+        this.uav = pojo.uav;
+        this.canWade = pojo.canWade;
+        this.withWarningReceiver = pojo.withWarningReceiver;
+        this.protectPassenger = pojo.protectPassenger;
+        this.experimental = pojo.experimental;
+
+        this.centerOffset = pojo.centerOffset;
+        this.model = Objects.requireNonNull(MODEL.get(), "vehicle built outside the data manager");
+        buildFrames(model.rig());
+        this.parts = pojo.parts;
+        for (var entry : this.parts) {
+            var partData = entry.data();
+            int part = model.rig().part(partData.getId());
+            int pitch = model.rig().pitch(partData.getId());
+            partData.initFrames(part < 0 ? null : frameGroups.get(part), pitch < 0 ? null : frameGroups.get(pitch));
+        }
+        if (cargo != CargoInfo.NONE) {
+            if (!cargo.enabled()) {
+                throw new IllegalArgumentException("cargo needs door and a cargo_bay socket (or bay_center + bay_size)");
+            }
+            if (parts.stream().noneMatch(entry -> entry.data().getId().equals(cargo.door))) {
+                throw new IllegalArgumentException("cargo.door names no part: " + cargo.door);
+            }
+        }
+        physicsCenter = physicsInfo.center.subtract(mainCubeOBB.offset());
+        buildBodySupports();
+
+        this.addonMounts = resolveAddonMounts(pojo.addonArmor == null ? List.of() : pojo.addonArmor);
+        double minX = Double.POSITIVE_INFINITY;
+        double maxX = Double.NEGATIVE_INFINITY;
+        double minZ = Double.POSITIVE_INFINITY;
+        double maxZ = Double.NEGATIVE_INFINITY;
+        List<VehicleCubeOBB> vehicleOBBs = new ArrayList<>(vehicleBodyOBBs);
+        for (PartUnitEntry<?, ?> partUnitEntry : parts) {
+            vehicleOBBs.addAll(partUnitEntry.data().getRawPartCubeOBBs());
+        }
+        for (VehicleCubeOBB vehicleOBB : vehicleOBBs) {
+            double x1 = vehicleOBB.offset().x + vehicleOBB.getWidth() / 2;
+            double x2 = vehicleOBB.offset().x - vehicleOBB.getWidth() / 2;
+            if (maxX < x1) {
+                maxX = x1;
+            }
+            if (minX > x2) {
+                minX = x2;
+            }
+            double z1 = vehicleOBB.offset().z + vehicleOBB.getDepth() / 2;
+            double z2 = vehicleOBB.offset().z - vehicleOBB.getDepth() / 2;
+            if (maxZ < z1) {
+                maxZ = z1;
+            }
+            if (minZ > z2) {
+                minZ = z2;
+            }
+        }
+        this.structureLength = Math.max(maxX - minX, maxZ - minZ);
+    }
+
+    public void inject(T vehicle) {}
+
+    /** @param groups type-level group -> this vehicle's copy (part groups only; body groups are shared) */
+    public record PartUnitsAndSeats(
+            Map<String, PartUnit<?>> partUnitMap,
+            List<AbstractVehicle.Seat> seats,
+            Map<VehicleCubeGroup, VehicleCubeGroup> groups
+    ) {}
+
+    public PartUnitsAndSeats createPartUnits(AbstractVehicle vehicle) {
+        return createBasePartUnits(vehicle);
+    }
+
+    public Optional<PartUnit<?>> copyPartUnit(AbstractVehicle owner, String partUnitId, CompoundTag state) {
+        PartUnit<?> partUnit = createBasePartUnits(owner).partUnitMap().get(partUnitId);
+        if (partUnit == null) {
+            return Optional.empty();
+        }
+        partUnit.deserializeNBT(owner.registryAccess(), state);
+        return Optional.of(partUnit);
+    }
+
+    private PartUnitsAndSeats createBasePartUnits(AbstractVehicle vehicle) {
+        Map<String, PartUnit<?>> partUnitMap = new LinkedHashMap<>();
+        List<AbstractVehicle.Seat> seats = new ArrayList<>();
+        HashMap<VehicleCubeGroup, VehicleCubeGroup> vehicleCubeGroupCopy = vehicleCubeGroupsCopy();
+        int index = 0;
+        for (var partData : parts) {
+            var partUnit = partData.create(index, vehicle);
+            partUnit.buildStructure(vehicleCubeGroupCopy);
+            if (partData.data().isSeat()) {
+                int seatIndex = seats.size();
+                seats.add(new AbstractVehicle.Seat(seatIndex, partUnit));
+            }
+            partUnitMap.put(partData.data().getId(), partUnit);
+            index++;
+        }
+        var view = Collections.unmodifiableMap(partUnitMap);
+        for (var partUnit : partUnitMap.values()) {
+            partUnit.combineAndInit(view, vehicle);
+        }
+        return new PartUnitsAndSeats(partUnitMap, seats, vehicleCubeGroupCopy);
+    }
+
+    /** Frames -> groups (pre-order: parent first); colliders -> pieces; main = flagged, else largest solid body piece. */
+    private void buildFrames(ModelRig rig) {
+        frameParent = new int[rig.frames().size()];
+        for (int f = 0; f < rig.frames().size(); f++) {
+            ModelRig.Frame frame = rig.frames().get(f);
+            frameParent[f] = frame.parent();
+            Vector3f origin = frame.world().getTranslation(new Vector3f());
+            Quaternionf rotation = frame.world().getNormalizedRotation(new Quaternionf());
+            VehicleCubeGroup group;
+            if (frame.parent() <= ModelRig.BODY) {
+                group = new VehicleCubeGroup(null, rotation, new Vec3(origin), frame.name());
+            } else {
+                ModelRig.Frame up = rig.frames().get(frame.parent());
+                Quaternionf inverse = up.world().getNormalizedRotation(new Quaternionf()).conjugate();
+                Vector3f pivot = inverse.transform(origin.sub(up.world().getTranslation(new Vector3f()), new Vector3f()));
+                group = new VehicleCubeGroup(frameGroups.get(frame.parent()), inverse.mul(rotation, new Quaternionf()),
+                        new Vec3(pivot), frame.name());
+            }
+            frameGroups.add(group);
+            groupsByName.putIfAbsent(frame.name(), group);
+        }
+        List<ConvexHull> bodyHulls = new ArrayList<>();
+        for (ModelRig.Collider collider : rig.colliders()) {
+            VehicleCubeOBB built = VehicleCubeOBB.init(frameGroups.get(collider.frame()), collider.hull(), collider.deck(),
+                    new HullTag(collider.name(), collider.solid()));
+            hasDeckGeometry |= collider.deck();
+            if (collider.frame() != ModelRig.BODY) {
+                continue;
+            }
+            if (built.isSolid()) {
+                bodyHulls.add(collider.hull());
+            }
+            if (collider.main()) {
+                mainCubeOBB = built;
+            } else {
+                vehicleBodyOBBs.add(built);
+            }
+        }
+        if (mainCubeOBB == null) {
+            mainCubeOBB = vehicleBodyOBBs.stream().filter(VehicleCubeOBB::isSolid)
+                    .max(Comparator.comparingDouble(VehicleCubeOBB::volume)).orElseThrow(() ->
+                            new IllegalArgumentException(model.source() + ": no solid body collider"));
+        }
+        float minZ = Float.POSITIVE_INFINITY, maxZ = Float.NEGATIVE_INFINITY;
+        for (ConvexHull hull : bodyHulls) {
+            minZ = Math.min(minZ, hull.minZ());
+            maxZ = Math.max(maxZ, hull.maxZ());
+        }
+        bodyDepth = maxZ - minZ;
+        this.bodyHulls.clear();
+        this.bodyHulls.addAll(bodyHulls);
+    }
+
+    /**
+     * Body box points cover only the body piece's own footprint; without these the rest of the hull
+     * has no ground support (Ka-52 nose 0.57 into the ground, F-35A on its tail).
+     */
+    private void buildBodySupports() {
+        bodySupports.clear();
+        if (mainCubeOBB == null) {
+            return;
+        }
+        Quaternionf inverse = new Quaternionf(mainCubeOBB.group.globalTransform().rotation()).conjugate();
+        Vec3 origin = mainCubeOBB.offset();
+        Set<Long> seen = new HashSet<>();
+        for (ConvexHull hull : bodyHulls) {
+            float[] planes = hull.planes(), points = hull.points();
+            int[] index = hull.faceVertices();
+            for (int face = 0, faces = hull.faceCount(); face < faces; face++) {
+                if (planes[face * 4 + 1] > -SUPPORT_FACE_DOWN) {
+                    continue;
+                }
+                for (int k = hull.faceStart(face), end = hull.faceEnd(face); k < end; k++) {
+                    int v = index[k] * 3;
+                    Vector3f local = inverse.transform(new Vector3f((float) (points[v] - origin.x),
+                            (float) (points[v + 1] - origin.y), (float) (points[v + 2] - origin.z)));
+                    local.y -= VehicleCubeOBB.POINT_OFFSET;
+                    long key = (Math.round(local.x / SUPPORT_MERGE) & 0x1FFFFF) << 42
+                            | (Math.round(local.y / SUPPORT_MERGE) & 0x1FFFFF) << 21
+                            | (Math.round(local.z / SUPPORT_MERGE) & 0x1FFFFF);
+                    if (seen.add(key)) {
+                        bodySupports.add(local);
+                    }
+                }
+            }
+        }
+        bodyHulls.clear();
+    }
+
+    /** After {@link #setVehicleId}. */
+    public void bindHitModel() {
+        this.clipRig = model.clips();
+        HitMesh hitMesh = model.hits();
+        if (hitMesh == null) {
+            return;
+        }
+        Set<String> present = new HashSet<>();
+        for (var entry : this.parts) {
+            present.add(entry.data().getId());
+        }
+        List<String> frameParts = new ArrayList<>();
+        for (ModelRig.Frame frame : model.rig().frames()) {
+            frameParts.add(present.contains(frame.part()) ? frame.part() : null);
+        }
+        this.hitModel = HitModel.bind(String.valueOf(vehicleId), hitMesh, frameGroups, frameParts, frameParent,
+                this instanceof TrackedVehicleData);
+        if ((armor == null || !armor.isDefined()) && hitMesh.nodes().stream()
+                .anyMatch(n -> n.mesh() != null && n.mesh().hasArmor())) {
+            CombinedAssault.LOGGER.warn("{}: {} has armor_<mm> materials but the vehicle has no armor block, so nothing "
+                    + "reads them", vehicleId, hitMesh.source());
+        }
+    }
+
+    /** Null: no clips. */
+    @org.jetbrains.annotations.Nullable
+    public ClipRig getClipRig() {
+        return clipRig;
+    }
+
+    /** Null: {@code "hitbox": false}, colliders are the hit surface. */
+    @org.jetbrains.annotations.Nullable
+    public HitModel getHitModel() {
+        return hitModel;
+    }
+
+    public ModelData getModel() {
+        return model;
+    }
+
+    /** Each vehicle owns copies of the part groups; the body group is shared (never moves). */
+    public HashMap<VehicleCubeGroup, VehicleCubeGroup> vehicleCubeGroupsCopy() {
+        HashMap<VehicleCubeGroup, VehicleCubeGroup> clone = new HashMap<>();
+        for (VehicleCubeGroup group : frameGroups.subList(1, frameGroups.size())) {
+            VehicleCubeGroup copy = new VehicleCubeGroup(group.parent == null ? null : clone.get(group.parent),
+                    group.rotation, group.pivot, group.name);
+            copy.baseRotation = group.baseRotation;
+            clone.put(group, copy);
+        }
+        return clone;
+    }
+
+    public VehicleStructOBBs getVehicleStructObbs() {
+        var obbs = vehicleBodyOBBs.stream().map(VehicleCubeOBB::new).toList();
+        return new VehicleStructOBBs(obbs, new VehicleCubeOBB(mainCubeOBB));
+    }
+
+    /** Vehicles of this type can be landed on. */
+    public boolean hasDeckGeometry() {
+        return hasDeckGeometry;
+    }
+
+    public ResourceLocation getVehicleId() {
+        return vehicleId;
+    }
+
+    public void setVehicleId(ResourceLocation vehicleId) {
+        this.vehicleId = vehicleId;
+    }
+
+    public Component getName() {
+        return name;
+    }
+
+    public void setName(Component name) {
+        this.name = name;
+    }
+
+    public double getStructureLength() {
+        return structureLength;
+    }
+
+    public float getBodyDepth() {
+        return bodyDepth;
+    }
+
+    public float getMaxHealth() {
+        return maxHealth;
+    }
+
+    public ViewInfo getViewInfo() {
+        return viewInfo;
+    }
+
+    public EnergyInfo getEnergyInfo() {
+        return energyInfo;
+    }
+
+    public PhysicsInfo getPhysicsInfo() {
+        return physicsInfo;
+    }
+
+    public List<Vector3f> getBodySupports() {
+        return bodySupports;
+    }
+
+    public Vec3 getPhysicsCenter() {
+        return physicsCenter;
+    }
+
+    public ArmorProfile getArmor() {
+        return armor;
+    }
+
+    public List<PartUnitEntry<?, ?>> getParts() {
+        return parts;
+    }
+
+    public List<AddonMount> getAddonMounts() {
+        return addonMounts;
+    }
+
+    /** A bad entry is dropped with a warning, never moved into another frame. */
+    private List<AddonMount> resolveAddonMounts(List<AddonMountInfo> infos) {
+        if (infos.isEmpty()) {
+            return List.of();
+        }
+        Map<String, VehicleCubeGroup> groups = new HashMap<>();
+        List<VehicleCubeOBB> cubes = new ArrayList<>(vehicleBodyOBBs);
+        for (PartUnitEntry<?, ?> entry : parts) {
+            cubes.addAll(entry.data().getRawPartCubeOBBs());
+        }
+        for (VehicleCubeOBB cube : cubes) {
+            for (VehicleCubeGroup group = cube.group; group != null; group = group.parent) {
+                if (!group.name.isEmpty()) {
+                    groups.putIfAbsent(group.name, group);
+                }
+            }
+        }
+        List<AddonMount> mounts = new ArrayList<>(infos.size());
+        Set<String> ids = new HashSet<>();
+        for (AddonMountInfo info : infos) {
+            if (info.id.isEmpty() || !ids.add(info.id)) {
+                CombinedAssault.LOGGER.warn("{}: addon_armor id '{}' is empty or repeated; dropped", getName(), info.id);
+                continue;
+            }
+            VehicleCubeGroup group = null;
+            if (!info.bone.isEmpty()) {
+                group = groups.get(info.bone);
+                if (group == null) {
+                    CombinedAssault.LOGGER.warn("{}: addon_armor '{}' names bone '{}', which carries no collision geometry; dropped",
+                            getName(), info.id, info.bone);
+                    continue;
+                }
+            }
+            try {
+                mounts.add(AddonMount.resolve(mounts.size(), info, group));
+            } catch (IllegalArgumentException invalid) {
+                CombinedAssault.LOGGER.warn("{}: {}; dropped", getName(), invalid.getMessage());
+            }
+        }
+        return List.copyOf(mounts);
+    }
+
+    public DefenseStats getDefenseStats() {
+        return defenseStats;
+    }
+
+    public StorageInfo getStorage() {
+        return storage;
+    }
+
+    public List<MountPointInfo> getMountPoints() {
+        return mountPoints;
+    }
+
+    public MountableInfo getMountable() {
+        return mountable;
+    }
+
+    public TowInfo getTowing() {
+        return towing;
+    }
+
+    public CargoInfo getCargo() {
+        return cargo;
+    }
+
+    public boolean isUav() {
+        return uav;
+    }
+
+    public boolean canWade() {
+        return canWade;
+    }
+
+    public boolean withWarningReceiver() {
+        return withWarningReceiver;
+    }
+
+    public boolean isProtectPassenger() {
+        return protectPassenger;
+    }
+
+    public boolean isExperimental() {
+        return experimental;
+    }
+
+    public Vec3 getCenterOffset() {
+        return centerOffset;
+    }
+
+}

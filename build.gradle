@@ -27,11 +27,25 @@ neoForge {
         }
     }
 
+    unitTest {
+        enable()
+        testedMod = mods."${mod_id}"
+    }
+
     runs {
         client {
             client()
             gameDirectory = project.file('run/client_1')
+            // JBR-only, and every JBR on this machine is 25.x while the toolchain is 21. A stock JDK
+            // refuses to start at all on an unknown -XX flag, so let it skip the option rather than die.
+            jvmArgument("-XX:+IgnoreUnrecognizedVMOptions")
             jvmArgument("-XX:+AllowEnhancedClassRedefinition")
+
+            // -PquickPlay=<world> boots straight into a save instead of the main menu, so an
+            // automated check has no menu clicks to get right blind.
+            if (project.hasProperty('quickPlay')) {
+                programArguments.addAll '--quickPlaySingleplayer', project.property('quickPlay').toString()
+            }
         }
 
         client2 {
@@ -43,6 +57,40 @@ neoForge {
         server {
             server()
             gameDirectory = project.file('run/server')
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+        }
+
+        // The tow trials drive a server of their own for hours at a time. run/server is the one a
+        // person is likely to be sitting in, and a harness that takes that over kills whatever was
+        // already running there and rewrites its server.properties underneath it.
+        towServer {
+            server()
+            gameDirectory = project.file('run/tow-server')
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+            // Headless. A dedicated server with no argument opens Minecraft's own Swing console,
+            // which takes the focus off whatever the person at the keyboard was doing.
+            programArgument 'nogui'
+        }
+
+        // Headless verification. ./gradlew runGameTestServer runs every @GameTest in the mod and exits
+        // non-zero on a failure, which is the only way anything in this project gets checked without a
+        // screenshot.
+        gameTestServer {
+            type = "gameTestServer"
+            gameDirectory = project.file('run/gametest')
+            // -Pbench[=substring] => ClimbBench/PhysicsBench only, cases filtered (tools/bench.sh)
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bench') ? 'combinedassaultbench' : mod_id
+            systemProperty 'combinedassault.bench.filter', project.findProperty('bench') ?: ''
+            systemProperty 'combinedassault.test.filter', project.findProperty('testFilter') ?: ''
+            systemProperty 'combinedassault.bench.trace', project.hasProperty('benchTrace') ? 'true' : 'false'
+            systemProperty 'combinedassault.rigid.debug', project.hasProperty('rigidDebug') ? 'true' : 'false'
+            systemProperty 'combinedassault.rigid.debugAll', project.hasProperty('rigidDebugAll') ? 'true' : 'false'
+            systemProperty 'combinedassault.rigid.substeps', project.findProperty('rigidSubsteps') ?: '4'
+            systemProperty 'combinedassault.rigid.iterations', project.findProperty('rigidIterations') ?: '1'
+            // -Pjfr => run/gametest/bench.jfr
+            if (project.hasProperty('jfr')) {
+                jvmArgument('-XX:StartFlightRecording=filename=bench.jfr,settings=profile,jdk.ExecutionSample#period=1ms')
+            }
         }
     }
 }
@@ -66,17 +114,23 @@ repositories {
         url = "https://maven.ryanhcode.dev/releases"
     }
     maven {
-        url 'https://jitpack.io'
-        content {
-            includeGroup "com.github.mcmodderanchor"
-        }
+        name = "createmod maven" // Engine-Room Flywheel, which GemRender draws through
+        url = "https://maven.createmod.net"
+        content { includeGroupAndSubgroups 'dev.engine-room' }
     }
     maven {
         url = 'https://maven.sighs.cc/repository/maven-public/'
     }
+    maven {
+        name = 'KosmX'
+        url = 'https://maven.kosmx.dev/'
+        content { includeGroup 'dev.kosmx.player-anim' }
+    }
 }
 
 dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     // JS支持
     jarJar(implementation('org.ywzj:rhino:1.8.1')) {
         version {
@@ -85,17 +139,15 @@ dependencies {
         }
     }
     additionalRuntimeClasspath 'org.ywzj:rhino:1.8.1'
-    // SBM
-    jarJar(implementation("com.github.mcmodderanchor:simplebedrockmodel:2.5.1.1-neoforge-mc1.21.1")) {
-        version {
-            strictly '[2.5.1.1-neoforge-mc1.21.1,)'
-            prefer '2.5.1.1-neoforge-mc1.21.1'
-        }
-    }
-    compileOnly('com.maydaymemory:mae:1.1.2') {
+    // MAE: animation pose graph
+    jarJar(implementation('com.maydaymemory:mae:1.1.2')) {
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
         exclude group: 'it.unimi.dsi', module: 'fastutil'
         exclude group: 'org.joml', module: 'joml'
+        version {
+            strictly '[1.1.2,)'
+            prefer '1.1.2'
+        }
     }
     // apricityui
     jarJar(implementation 'com.sighs:ApricityUI-neoforge-1.21.1:1.2.4-hotfix') {
@@ -119,11 +171,80 @@ dependencies {
     implementation "curse.maven:sable-1312371:8003927"
     compileOnly("dev.ryanhcode.sable-companion:sable-companion-common-${project.minecraft_version}:${project.sable_companion_version}")
     implementation "maven.modrinth:create-aeronautics:1.1.3+mc1.21.1"
+    // WFLib: required. Its Flywheel/GemRender deps are side = "CLIENT"; installClientMods supplies them to
+    // client runs, a server run needs neither.
+    implementation files('libs/wflib-1.8.28.jar')
+    // AHF: seat pose sets (rig = drawn pose) + vehicle-tilt stance. PlayerAnimator: client-only mod, draws seat poses.
+    implementation files('libs/ahf-1.21.1-NeoForge-1.0.8.jar')
+    implementation "dev.kosmx.player-anim:player-animation-lib-forge:${project.playeranimator_version}"
+
+    // GemRender (+ Flywheel): required on the client, absent on a server run => compileOnly; runtime via installClientMods.
+    compileOnly files('libs/gemrender-0.1.15.jar')
+    compileOnly "dev.engine-room.flywheel:flywheel-neoforge-1.21.1:1.0.6"
+
+    // Immersive Railroading, so a vehicle can be strapped to a flatcar. compileOnly only:
+    // com.wf.combinedassault.compat.rail is the only package that names an IR type and every entry point is
+    // behind ModList. UniversalModCore comes with it because IR stopped shading it at 1.11.0.
+    // -PwithRail puts both on the run classpath, which is the only way the carriage path can be
+    // exercised; with them absent the compat correctly does nothing.
+    compileOnly "maven.modrinth:immersive-railroading:${project.immersive_railroading_version}"
+    compileOnly "maven.modrinth:universal-mod-core:${project.universal_mod_core_version}"
+    if (project.hasProperty('withRail')) {
+        runtimeOnly "maven.modrinth:immersive-railroading:${project.immersive_railroading_version}"
+        runtimeOnly "maven.modrinth:universal-mod-core:${project.universal_mod_core_version}"
+        runtimeOnly "maven.modrinth:track-api:${project.track_api_version}"
+    }
 
     additionalRuntimeClasspath 'org.ywzj:rhino:1.8.1'
+    additionalRuntimeClasspath('com.maydaymemory:mae:1.1.2') { transitive = false }
+}
+
+// GemRender -> client run mods/, not run classpath: carries Flywheel (client only), server run must not see it.
+def gemRenderJar = file('libs/gemrender-0.1.15.jar')
+def clientRunDirs = [file('run/client_1'), file('run/client_2')]
+def installClientMods = tasks.register('installClientMods') {
+    group = 'combinedassault'
+    description = 'Puts GemRender in every client run directory.'
+    inputs.file(gemRenderJar)
+    outputs.files(clientRunDirs.collect { new File(it, "mods/${gemRenderJar.name}") })
+    doLast {
+        clientRunDirs.each { runDir ->
+            File mods = new File(runDir, 'mods')
+            mods.mkdirs()
+            // An older copy would be a second mod with the same id, which is a load error rather than a
+            // fallback, so a version bump has to take its predecessor out.
+            mods.listFiles()?.each { jar ->
+                if (jar.name.startsWith('gemrender-') && jar.name != gemRenderJar.name) {
+                    jar.delete()
+                }
+            }
+            File target = new File(mods, gemRenderJar.name)
+            if (!target.exists() || !Arrays.equals(target.bytes, gemRenderJar.bytes)) {
+                target.bytes = gemRenderJar.bytes
+            }
+        }
+    }
+}
+neoForge.ideSyncTask(installClientMods)
+
+// Sync-only install => IDE launch kept a stale jar (NoSuchFieldError jointUvBase).
+['prepareClientRun', 'prepareClient2Run'].each { name ->
+    tasks.named(name).configure { dependsOn installClientMods }
+}
+
+// Bench packs (tools/REDACTED) only under -Pbench: the suite must see the shipped packs alone.
+tasks.named('runGameTestServer').configure {
+    doFirst {
+        File bench = project.file('run/gametest/combinedassault/packs/bench')
+        project.delete(bench)
+        if (project.hasProperty('bench')) {
+            project.exec { commandLine 'python3', 'tools/REDACTED', bench.path }
+        }
+    }
 }
 
 tasks.named('jar', Jar).configure {
+    from('LICENSE.txt', 'LICENSE-CC-BY-NC-4.0.txt', 'ASSETS.md')
     manifest {
         attributes([
                 'Specification-Title'     : mod_id,
@@ -137,7 +258,41 @@ tasks.named('jar', Jar).configure {
     }
 }
 
+// Native narrowphase (native/*.zig): `zig` on PATH or -Pzig=<path>; -PnativeSymbols keeps symbols (profiling). x64: baseline x86-64-v2 + AVX2 (v3) build,
+// picked at load by NarrowNative.
+def nativeTargets = [
+        ['linux-x64', 'x86_64-linux-gnu', 'x86_64_v2', 'libcanarrow.so'],
+        ['linux-x64', 'x86_64-linux-gnu', 'x86_64_v3', 'libcanarrow_v3.so'],
+        ['linux-arm64', 'aarch64-linux-gnu', 'baseline', 'libcanarrow.so'],
+        ['windows-x64', 'x86_64-windows-gnu', 'x86_64_v2', 'canarrow.dll'],
+        ['windows-x64', 'x86_64-windows-gnu', 'x86_64_v3', 'canarrow_v3.dll'],
+        ['macos-x64', 'x86_64-macos', 'x86_64_v2', 'libcanarrow.dylib'],
+        ['macos-x64', 'x86_64-macos', 'x86_64_v3', 'libcanarrow_v3.dylib'],
+        ['macos-arm64', 'aarch64-macos', 'apple_m1', 'libcanarrow.dylib'],
+]
+def nativeOut = layout.buildDirectory.dir('natives')
+def buildNatives = tasks.register('buildNatives') {
+    inputs.files(fileTree('native') { include '*.zig' })
+    inputs.property('targets', nativeTargets)
+    inputs.property('strip', !project.hasProperty('nativeSymbols'))
+    outputs.dir(nativeOut)
+    doLast {
+        String zig = project.findProperty('zig') ?: 'zig'
+        nativeTargets.each { platform, target, cpu, name ->
+            File out = nativeOut.get().file("natives/${platform}/${name}").asFile
+            out.parentFile.mkdirs()
+            project.exec {
+                workingDir project.file('native')
+                commandLine([zig, 'build-lib', '-dynamic', '-O', 'ReleaseFast', '-target', target, '-mcpu', cpu,
+                             "-femit-bin=${out}", 'jni.zig'] + (project.hasProperty('nativeSymbols') ? [] : ['-fstrip']))
+            }
+        }
+        project.delete(fileTree(nativeOut) { include '**/*.o', '**/*.pdb', '**/*.lib' })
+    }
+}
+
 tasks.named('processResources', ProcessResources).configure {
+    from(buildNatives)
     var replaceProperties = [
             minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,
@@ -172,4 +327,8 @@ publishing {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+}
+
+test {
+    useJUnitPlatform()
 }

@@ -1,0 +1,18 @@
+{
+    "type": "combinedassault:aerial_bomb",
+    "name": "aerial_bomb",
+    "recoil": 0,
+    "shoot_interval": 100,
+    "max_capacity": 8,
+    "reload": {
+        "time": 100,
+        "ammo": [
+            "wflib:bomb_fab_250",
+            "#wflib:bomb/medium"
+        ]
+    },
+    "sounds": {
+        "fire": {"event": "combinedassault:bomb_drop", "range": 48, "pitch_random": 0.1},
+        "reload": {"event": "combinedassault:gun_reload", "range": 24}
+    }
+}

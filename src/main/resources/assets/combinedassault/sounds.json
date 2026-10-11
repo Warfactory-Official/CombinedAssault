@@ -1,0 +1,97 @@
+{
+  "vehicle_hurt": {
+    "sounds": [
+      "combinedassault:misc/vehicle_hurt_01",
+      "combinedassault:misc/vehicle_hurt_02",
+      "combinedassault:misc/vehicle_hurt_03"
+    ],
+    "subtitle": "combinedassault.sounds.vehicle_hurt"
+  },
+  "vehicle_hit_small": {
+    "sounds": [
+      "combinedassault:misc/vehicle_hit_small_01",
+      "combinedassault:misc/vehicle_hit_small_02",
+      "combinedassault:misc/vehicle_hit_small_03",
+      "combinedassault:misc/vehicle_hit_small_04",
+      "combinedassault:misc/vehicle_hit_small_05",
+      "combinedassault:misc/vehicle_hit_small_06",
+      "combinedassault:misc/vehicle_hit_small_07",
+      "combinedassault:misc/vehicle_hit_small_08",
+      "combinedassault:misc/vehicle_hit_small_09",
+      "combinedassault:misc/vehicle_hit_small_10"
+    ],
+    "subtitle": "combinedassault.sounds.vehicle_hit_small"
+  },
+  "vehicle_hit_med": {
+    "sounds": [
+      "combinedassault:misc/vehicle_hit_med_01",
+      "combinedassault:misc/vehicle_hit_med_02",
+      "combinedassault:misc/vehicle_hit_med_03"
+    ],
+    "subtitle": "combinedassault.sounds.vehicle_hit_med"
+  },
+  "vehicle_hit_big": {
+    "sounds": [
+      "combinedassault:misc/vehicle_hit_big_01",
+      "combinedassault:misc/vehicle_hit_big_02",
+      "combinedassault:misc/vehicle_hit_big_03"
+    ],
+    "subtitle": "combinedassault.sounds.vehicle_hit_big"
+  },
+  "ir_track_alarm": {
+    "sounds": ["combinedassault:misc/ir_track_alarm"],
+    "subtitle": "combinedassault.sounds.ir_track_alarm"
+  },
+  "radar_search_warn": {
+    "sounds": ["combinedassault:misc/radar_search_warn"],
+    "subtitle": "combinedassault.sounds.radar_search_warn"
+  },
+  "radar_lock_warn": {
+    "sounds": ["combinedassault:misc/radar_lock_warn"],
+    "subtitle": "combinedassault.sounds.radar_lock_warn"
+  },
+  "missile_launch_warn": {
+    "sounds": ["combinedassault:misc/missile_launch_warn"],
+    "subtitle": "combinedassault.sounds.missile_launch_warn"
+  },
+  "tire_squeal": {
+    "sounds": ["combinedassault:misc/tire_squeal"],
+    "subtitle": "combinedassault.sounds.tire_squeal"
+  },
+  "landing": {
+    "sounds": ["combinedassault:misc/landing"],
+    "subtitle": "combinedassault.sounds.landing"
+  },
+  "aerobatics_smoke_start": {
+    "sounds": [
+      "combinedassault:misc/aerobatics_smoke_start_01",
+      "combinedassault:misc/aerobatics_smoke_start_02",
+      "combinedassault:misc/aerobatics_smoke_start_03"
+    ],
+    "subtitle": "combinedassault.sounds.aerobatics_smoke_start"
+  },
+  "aerobatics_smoke_loop": {
+    "sounds": ["combinedassault:misc/aerobatics_smoke_loop"],
+    "subtitle": "combinedassault.sounds.aerobatics_smoke_loop"
+  },
+  "turret_turn_servo_h": {
+    "sounds": ["combinedassault:misc/turret_turn_servo_h"],
+    "subtitle": "combinedassault.sounds.turret_turn_servo_h"
+  },
+  "turret_turn_servo_v": {
+    "sounds": ["combinedassault:misc/turret_turn_servo_v"],
+    "subtitle": "combinedassault.sounds.turret_turn_servo_v"
+  },
+  "parachute_open": {
+    "sounds": ["combinedassault:item/parachute_open"],
+    "subtitle": "subtitles.combinedassault.parachute_open"
+  },
+  "parachute_down": {
+    "sounds": ["combinedassault:item/parachute_down"],
+    "subtitle": "subtitles.combinedassault.parachute_down"
+  },
+  "select_weapon": {
+    "sounds": ["combinedassault:misc/select_weapon"],
+    "subtitle": "combinedassault.sounds.select_weapon"
+  }
+}

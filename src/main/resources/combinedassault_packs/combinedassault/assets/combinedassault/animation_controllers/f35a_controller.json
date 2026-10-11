@@ -1,0 +1,43 @@
+{
+    "name": "f35a_controller",
+    "script": "combinedassault:f35a",
+    "parameters": {},
+    "graph": {
+        "type": "merge",
+        "inputs": [
+            {
+                "type": "script",
+                "function": "updateBones"
+            },
+            {
+                "type": "bone_binding",
+                "special_bindings": [
+                    {
+                        "bones": [
+                            "gear_nose_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.268
+                    },
+                    {
+                        "bones": [
+                            "gear_l_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.389
+                    },
+                    {
+                        "bones": [
+                            "gear_r_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.389
+                    }
+                ]
+            }
+        ]
+    }
+}

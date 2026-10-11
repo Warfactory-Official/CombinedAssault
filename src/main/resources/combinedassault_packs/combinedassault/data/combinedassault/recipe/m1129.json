@@ -1,0 +1,45 @@
+{
+  "type": "combinedassault:vehicle_printing",
+  "materials": [
+    {
+      "count": 240,
+      "ingredient": {
+        "tag": "c:ingots/iron"
+      }
+    },
+    {
+      "count": 96,
+      "ingredient": {
+        "tag": "c:ingots/copper"
+      }
+    },
+    {
+      "count": 48,
+      "ingredient": {
+        "item": "minecraft:redstone"
+      }
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "minecraft:glass_pane"
+      }
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "minecraft:furnace"
+      }
+    }
+  ],
+  "result": {
+    "id": "combinedassault:vehicle_spawn_item",
+    "count": 1,
+    "components": {
+      "minecraft:custom_data": {
+        "CombinedAssaultId": "combinedassault:m1129"
+      }
+    }
+  },
+  "printingTime": 2400
+}

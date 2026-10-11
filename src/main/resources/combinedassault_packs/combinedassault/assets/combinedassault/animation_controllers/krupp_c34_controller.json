@@ -1,0 +1,9 @@
+{
+    "name": "krupp_c34_controller",
+    "script": "combinedassault:krupp_c34",
+    "parameters": {},
+    "graph": {
+        "type": "script",
+        "function": "updateBones"
+    }
+}

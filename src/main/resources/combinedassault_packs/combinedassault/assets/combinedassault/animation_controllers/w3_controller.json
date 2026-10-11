@@ -1,0 +1,9 @@
+{
+    "name": "w3_controller",
+    "script": "combinedassault:w3",
+    "parameters": {},
+    "graph": {
+        "type": "script",
+        "function": "updateBones"
+    }
+}

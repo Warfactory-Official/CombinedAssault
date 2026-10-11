@@ -1,0 +1,15 @@
+{
+    "type": "combinedassault:cannon",
+    "name": "GAU-12/U",
+    "recoil": 0.3,
+    "shoot_interval": 15,
+    "max_capacity": 800,
+    "reload": {
+        "time": 100,
+        "ammo": "wflib:cartridge_25x137"
+    },
+    "sounds": {
+        "fire": {"event": "combinedassault:auto_cannon_shot", "range": 600, "pitch_random": 0.1},
+        "reload": {"event": "combinedassault:gun_reload", "range": 24}
+    }
+}

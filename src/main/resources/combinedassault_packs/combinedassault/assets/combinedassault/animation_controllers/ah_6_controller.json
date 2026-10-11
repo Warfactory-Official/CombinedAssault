@@ -1,0 +1,9 @@
+{
+    "name": "ah_6_controller",
+    "script": "combinedassault:ah_6",
+    "parameters": {},
+    "graph": {
+        "type": "script",
+        "function": "updateBones"
+    }
+}

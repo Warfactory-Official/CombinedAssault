@@ -1,0 +1,66 @@
+{
+    "type": "combinedassault:generic",
+    "attributes": {},
+    "max_health": 60,
+    "view_info": {
+        "third_person_distance": 3,
+        "third_person_distance_zoomed": 0
+    },
+    "energy_info": {
+        "energy_capacity": 1000,
+        "energy_consumption_per_tick": 0.01
+    },
+    "storage": {
+        "slots": 18
+    },
+    "parts": [
+        {
+            "id": "mortar",
+            "name": "part.combinedassault.mortar",
+            "type": "combinedassault:weapon",
+            "max_health": 25,
+            "component": "barrel",
+            "detachable": false,
+            "operator_on_weapon_unit": true,
+            "indirect_fire": {},
+            "optical_sight_type": "operator",
+            "crosshair_style": "cross",
+            "zoom_max": 4,
+            "rot_info": {
+                "x_rot_speed": 4,
+                "y_rot_speed": 5,
+                "x_rot": -62,
+                "need_power": false
+            },
+            "weapons": [
+                "combinedassault:mortar_81mm"
+            ],
+            "pose": "stand",
+            "protect_passenger": false
+        }
+    ],
+    "mountable": {
+        "enabled": true,
+        "tags": [
+            "mortar",
+            "emplacement",
+            "naval_emplacement"
+        ]
+    },
+    "towing": {
+        "towable": {
+            "enabled": true,
+            "tags": [],
+            "modes": [
+                "sling"
+            ]
+        }
+    },
+    "model": "combinedassault:models/emplacement/m252a1/m252a1.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/m252a1.png",
+        "controller": "combinedassault:m252a1_controller",
+        "tab_index": 601,
+        "description": ""
+    }
+}

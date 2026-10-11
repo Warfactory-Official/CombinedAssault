@@ -1,0 +1,13 @@
+{
+    "type": "combinedassault:missile",
+    "name": "Torpedo tube",
+    "recoil": 0,
+    "shoot_interval": 1500,
+    "max_capacity": 6,
+    "missile_holder": "tube_rack",
+    "x_rot_max": 15,
+    "x_rot_min": -15,
+    "y_rot_max": 30,
+    "y_rot_min": -30,
+    "holder_only": true
+}

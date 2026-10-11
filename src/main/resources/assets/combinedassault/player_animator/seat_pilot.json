@@ -1,0 +1,73 @@
+{
+ "format_version": "1.8.0",
+ "animations": {
+  "ride_lower": {
+   "loop": true,
+   "animation_length": 0.05,
+   "bones": {
+    "right_leg": {
+     "rotation": [
+      -78,
+      6,
+      0
+     ]
+    },
+    "left_leg": {
+     "rotation": [
+      -78,
+      -6,
+      0
+     ]
+    },
+    "right_leg_bend": {
+     "rotation": [
+      60,
+      0,
+      0
+     ]
+    },
+    "left_leg_bend": {
+     "rotation": [
+      60,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  "hold_upper": {
+   "loop": true,
+   "animation_length": 0.05,
+   "bones": {
+    "right_arm": {
+     "rotation": [
+      -38,
+      6,
+      0
+     ]
+    },
+    "left_arm": {
+     "rotation": [
+      -30,
+      0,
+      -6
+     ]
+    },
+    "right_arm_bend": {
+     "rotation": [
+      -45,
+      0,
+      0
+     ]
+    },
+    "left_arm_bend": {
+     "rotation": [
+      -55,
+      0,
+      0
+     ]
+    }
+   }
+  }
+ }
+}

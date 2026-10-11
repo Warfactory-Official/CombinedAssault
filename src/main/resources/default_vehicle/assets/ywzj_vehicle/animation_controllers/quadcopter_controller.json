@@ -1,9 +1,0 @@
-{
-    "name": "quadcopter_controller",
-    "script": "ywzj_vehicle:quadcopter",
-    "parameters": {},
-    "graph": {
-        "type": "script",
-        "function": "updateBones"
-    }
-}

@@ -7,8 +7,7 @@ modId = "${mod_id}"
 version = "${mod_version}"
 displayName = "${mod_name}"
 authors = "${mod_authors}"
-logoFile="logo.png"
-description = '''Limitless Vehicle (Open Beta). The current features and art assets are under development and do not represent the final quality of the game.''''
+description = '''CombinedAssault (Open Beta). The current features and art assets are under development and do not represent the final quality of the game.''''
 
 [[dependencies.${ mod_id }]]
 modId = "neoforge"
@@ -25,6 +24,34 @@ ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.${ mod_id }]]
+modId = "wflib"
+type = "required"
+versionRange = "[1.8.21,2)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${ mod_id }]]
+modId = "ahf"
+type = "required"
+versionRange = "[1.0.8,2)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${ mod_id }]]
+modId = "playeranimator"
+type = "required"
+versionRange = "[2.0.4,)"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[dependencies.${ mod_id }]]
+modId = "gemrender"
+type = "required"
+versionRange = "[0.1.14,1)"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[dependencies.${ mod_id }]]
 modId = "acceleratedrendering"
 type = "optional"
 versionRange = "[0,)"
@@ -32,4 +59,4 @@ ordering = "NONE"
 side = "CLIENT"
 
 [[mixins]]
-config = "mixins.ywzj_vehicle.json"
+config = "mixins.combinedassault.json"

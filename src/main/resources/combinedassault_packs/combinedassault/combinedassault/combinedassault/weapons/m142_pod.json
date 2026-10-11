@@ -1,0 +1,13 @@
+{
+    "type": "combinedassault:missile",
+    "name": "M142 GMLRS pod",
+    "recoil": 0,
+    "shoot_interval": 1500,
+    "max_capacity": 6,
+    "missile_holder": "pod",
+    "holder_only": true,
+    "x_rot_min": -60,
+    "x_rot_max": 0,
+    "y_rot_min": -180,
+    "y_rot_max": 180
+}

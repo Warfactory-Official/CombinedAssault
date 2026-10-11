@@ -1,7 +1,7 @@
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
-import org.ywzj.vehicle.vehicle.parenting.DeckClip;
+import com.wf.combinedassault.vehicle.parenting.DeckClip;
 
 import java.util.Random;
 

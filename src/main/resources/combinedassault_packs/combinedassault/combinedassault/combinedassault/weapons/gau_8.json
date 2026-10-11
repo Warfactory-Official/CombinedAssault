@@ -1,0 +1,12 @@
+{
+    "type": "combinedassault:cannon",
+    "name": "GAU-8/A Avenger",
+    "recoil": 0.2,
+    "inaccuracy": 0.12,
+    "shoot_interval": 20,
+    "max_capacity": 1174,
+    "reload": {
+        "time": 100,
+        "ammo": "wflib:cartridge_30x173"
+    }
+}

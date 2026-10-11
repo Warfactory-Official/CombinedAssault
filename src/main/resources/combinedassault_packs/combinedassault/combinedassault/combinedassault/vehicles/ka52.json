@@ -1,0 +1,143 @@
+{
+    "type": "combinedassault:rotary_wing_vehicle",
+    "attributes": {
+        "main_rotor_force": 152100,
+        "ceiling": 256,
+        "x_rot_speed_acceleration": 1.2,
+        "x_rot_speed_max": 4.5,
+        "y_rot_speed_acceleration": 1.2,
+        "y_rot_speed_max": 4.5,
+        "z_rot_speed_acceleration": 1.2,
+        "z_rot_speed_max": 4.5,
+        "max_air_speed": 4.17
+    },
+    "physics_info": {
+        "mass": 7800,
+        "friction": 15600
+    },
+    "max_health": 1100,
+    "view_info": {
+        "third_person_distance": 14,
+        "third_person_distance_zoomed": 0
+    },
+    "energy_info": {
+        "energy_capacity": 1480,
+        "energy_consumption_per_tick": 0.0085,
+        "engine_particle_offsets": []
+    },
+    "defense_stats": {
+        "damage_threshold": 10,
+        "impact_multiplier": 2
+    },
+    "with_warning_receiver": true,
+    "parts": [
+        {
+            "id": "sighting_system",
+            "crew_roles": [
+                "driver",
+                "gunner"
+            ],
+            "name": "sighting_system",
+            "type": "combinedassault:weapon",
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 3,
+                "y_rot_speed": 3
+            },
+            "optical_sight_type": "crt",
+            "with_stabilizer": true,
+            "with_focus_locker": true,
+            "with_thermal_imager": true,
+            "with_night_vision": true,
+            "zoom_max": 12,
+            "weapons": [
+                {
+                    "id": "combinedassault:2a42",
+                    "part_unit_id": "auto_cannon"
+                },
+                {
+                    "id": "combinedassault:vikhr",
+                    "part_unit_id": "missile",
+                    "round_bones": ["missile0", "missile1", "missile2", "missile3", "missile4", "missile5", "missile6", "missile7", "missile8", "missile9", "missile10", "missile11"]
+                },
+                {
+                    "id": "combinedassault:fim_92",
+                    "part_unit_id": "igla"
+                },
+                {
+                    "id": "combinedassault:decoy_flare",
+                    "part_unit_id": "decoy_flare"
+                }
+            ]
+        },
+        {
+            "id": "auto_cannon",
+            "name": "auto_cannon",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "fire_control_sensor_type": "ccip",
+            "crosshair_style": "square",
+            "rot_info": {
+                "x_rot_speed": 1,
+                "y_rot_speed": 1
+            }
+        },
+        {
+            "id": "missile",
+            "name": "missile",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "fire_control_sensor_type": "eo",
+            "crosshair_style": "circle",
+            "parent_weapon_unit_aim": true,
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "igla",
+            "name": "igla",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "fire_control_sensor_type": "ir",
+            "crosshair_style": "circle",
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "decoy_flare",
+            "name": "decoy_flare",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "crosshair_style": "none",
+            "firing_mode": "salvo",
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "seat2",
+            "name": "passenger_seat",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        }
+    ],
+    "model": "combinedassault:models/aircraft/ka52/ka52.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/ka52.png",
+        "controller": "combinedassault:ka52_controller",
+        "engine": {
+            "start": {"event": "combinedassault:z10_engine_start", "range": 360},
+            "stop": {"event": "combinedassault:z10_engine_stop", "range": 360},
+            "loops": [
+                {"sound": {"event": "combinedassault:z10_engine_run", "range": 600}, "input": "power", "volume": [[0.2, 0], [0.5, 1]], "pitch": [[0.5, 0.8], [1, 1]]}
+            ]
+        },
+        "cabin_muffle": 0.7,
+        "tab_index": 405
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "type": "combinedassault:missile",
+    "name": "BGM-71 TOW",
+    "recoil": 0.6,
+    "shoot_interval": 1000,
+    "max_capacity": 1,
+    "reload": {
+        "time": 100,
+        "ammo": [
+            "wflib:missile_tow",
+            "#wflib:missile/small"
+        ]
+    },
+    "x_rot_max": 90,
+    "x_rot_min": -90,
+    "y_rot_max": 180,
+    "y_rot_min": -180,
+    "sounds": {
+        "fire": {"event": "combinedassault:missile_launch", "range": 400, "pitch_random": 0.1},
+        "reload": {"event": "combinedassault:common_reload", "range": 24}
+    }
+}

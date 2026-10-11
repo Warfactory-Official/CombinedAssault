@@ -1,0 +1,16 @@
+{
+    "type": "combinedassault:cannon",
+    "name": "2A42",
+    "recoil": 0.2,
+    "inaccuracy": 0.12,
+    "shoot_interval": 110,
+    "max_capacity": 460,
+    "reload": {
+        "time": 100,
+        "ammo": "wflib:cartridge_30x165"
+    },
+    "sounds": {
+        "fire": {"event": "combinedassault:auto_cannon_shot", "range": 600, "pitch_random": 0.1},
+        "reload": {"event": "combinedassault:gun_reload", "range": 24}
+    }
+}

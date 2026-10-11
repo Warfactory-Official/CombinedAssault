@@ -1,0 +1,175 @@
+package com.wf.combinedassault.custom.weapon.data;
+
+import com.google.gson.annotations.SerializedName;
+import com.wf.wflib.audio.SoundSpec;
+import com.wf.wflib.ammo.AmmoItems;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Map;
+
+/** Launcher only: the loaded WFLib round owns flight, warhead and damage. */
+public class BaseVehicleWeaponData {
+
+    private ResourceLocation weaponId;
+
+    @SerializedName("name")
+    private String name = "vehicle.weapon.unknown";
+
+    @SerializedName("inaccuracy")
+    private float inaccuracy = 0.5f;
+
+    @SerializedName("recoil")
+    private float recoil = 0f;
+
+    @SerializedName("shoot_interval")
+    private long shootInterval = 100;
+
+    @SerializedName("max_capacity")
+    private int maxCapacity = 64;
+
+    @SerializedName("reload")
+    private Reload reload;
+
+    @SerializedName("independent")
+    public boolean independent;
+
+    /** {@code fire} (at the pivot), {@code shell} (half an interval later), {@code reload}. */
+    @SerializedName("sounds")
+    private Map<String, SoundSpec> sounds = Map.of();
+
+    public static class Reload {
+
+        @SerializedName("time")
+        private int time;
+
+        /** Item, {@code #tag}, or a list of either. */
+        @SerializedName("ammo")
+        private Ingredient ammo;
+
+        /** WFLib ammo variants a cartridge must carry; absent = any variant of the cartridge. */
+        @SerializedName("variants")
+        @Nullable
+        private List<ResourceLocation> variants;
+
+        public Reload(int time, Ingredient ammo) {
+            this.time = time;
+            this.ammo = ammo;
+        }
+
+        public int getTime() {
+            return time;
+        }
+
+        public void setTime(int time) {
+            this.time = time;
+        }
+
+        public Ingredient getAmmo() {
+            return ammo;
+        }
+
+        public void setAmmo(Ingredient ammo) {
+            this.ammo = ammo;
+        }
+
+        public boolean isAmmo(ItemStack stack) {
+            if (!ammo.test(stack)) {
+                return false;
+            }
+            if (variants == null) {
+                return true;
+            }
+            var variant = AmmoItems.variantOf(stack);
+            return variant != null && variants.contains(variant.id());
+        }
+
+        /** Round a creative magazine loads: first variant, else the ingredient's first item. */
+        public ItemStack defaultRound() {
+            if (variants != null && !variants.isEmpty()) {
+                return AmmoItems.stack(variants.getFirst(), 1);
+            }
+            ItemStack[] items = ammo.getItems();
+            return items.length == 0 ? ItemStack.EMPTY : items[0].copyWithCount(1);
+        }
+
+    }
+
+    @Nullable
+    public SoundSpec sound(String key) {
+        return sounds.get(key);
+    }
+
+    public ResourceLocation getWeaponId() {
+        return weaponId;
+    }
+
+    public void setWeaponId(ResourceLocation weaponId) {
+        this.weaponId = weaponId;
+    }
+
+    /** Once parsed and id set, each side. No {@code reload} => {@link IllegalStateException}. */
+    public void loaded() {
+        if (reload == null && needsReload()) {
+            throw new IllegalStateException("weapon " + weaponId + ": no reload.ammo");
+        }
+    }
+
+    /** False: never reloads (rack-fed). */
+    protected boolean needsReload() {
+        return true;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public float getInaccuracy() {
+        return inaccuracy;
+    }
+
+    public void setInaccuracy(float inaccuracy) {
+        this.inaccuracy = inaccuracy;
+    }
+
+    public float getRecoil() {
+        return recoil;
+    }
+
+    public void setRecoil(float recoil) {
+        this.recoil = recoil;
+    }
+
+    public long getShootInterval() {
+        return shootInterval;
+    }
+
+    public void setShootInterval(long shootInterval) {
+        this.shootInterval = shootInterval;
+    }
+
+    public int getMaxCapacity() {
+        return maxCapacity;
+    }
+
+    public void setMaxCapacity(int maxCapacity) {
+        this.maxCapacity = maxCapacity;
+    }
+
+    @Nullable
+    public Reload getReload() {
+        return reload;
+    }
+
+    public void setReload(Reload reload) {
+        this.reload = reload;
+    }
+
+}

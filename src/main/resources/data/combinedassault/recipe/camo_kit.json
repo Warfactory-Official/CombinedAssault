@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "minecraft:stick" },
+    { "item": "minecraft:string" },
+    { "tag": "minecraft:leaves" },
+    { "tag": "minecraft:leaves" }
+  ],
+  "result": {
+    "id": "combinedassault:camo_kit",
+    "count": 1
+  }
+}

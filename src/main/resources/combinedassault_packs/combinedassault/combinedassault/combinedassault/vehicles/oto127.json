@@ -1,0 +1,52 @@
+{
+    "type": "combinedassault:generic",
+    "attributes": {},
+    "max_health": 400,
+    "view_info": {
+        "third_person_distance": 8,
+        "third_person_distance_zoomed": 0
+    },
+    "energy_info": {
+        "energy_capacity": 1000,
+        "energy_consumption_per_tick": 0.01
+    },
+    "uav": false,
+    "parts": [
+        {
+            "id": "gun",
+            "name": "gun",
+            "type": "combinedassault:weapon",
+            "max_health": 200,
+            "component": "turret",
+            "detachable": false,
+            "operator_on_weapon_unit": true,
+            "fire_control_sensor_type": "rf",
+            "indirect_fire": {},
+            "optical_sight_type": "crt",
+            "crosshair_style": "cross",
+            "zoom_max": 8,
+            "rot_info": {
+                "x_rot_speed": 4,
+                "y_rot_speed": 6,
+                "need_power": false
+            },
+            "weapons": [
+                "combinedassault:cannon_127mm"
+            ],
+            "with_thermal_imager": true
+        }
+    ],
+    "model": "combinedassault:models/emplacement/oto127/oto127.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/oto127.png",
+        "controller": "combinedassault:oto127_controller",
+        "tab_index": 603
+    },
+    "mountable": {
+        "enabled": true,
+        "tags": [
+            "emplacement",
+            "naval_emplacement"
+        ]
+    }
+}

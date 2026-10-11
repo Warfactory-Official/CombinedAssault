@@ -1,0 +1,193 @@
+{
+    "type": "combinedassault:wheeled_vehicle",
+    "attributes": {
+        "brake_force": 8000,
+        "forward_force": 8800,
+        "backward_force": 4800,
+        "max_speed_forward": 0.55,
+        "max_speed_backward": 0.18,
+        "turn_step": 0.2,
+        "max_turn": 2
+    },
+    "max_health": 400,
+    "view_info": {
+        "third_person_distance": 14,
+        "passenger_view_rot": {
+            "rot_by_vehicle_in_third_person": false,
+            "rot_by_vehicle_in_operator": true
+        }
+    },
+    "energy_info": {
+        "energy_capacity": 1000,
+        "energy_consumption_per_tick": 0.01
+    },
+    "physics_info": {
+        "mass": 1600
+    },
+    "storage": {
+        "slots": 27
+    },
+    "towing": {
+        "hitches": [
+            {
+                "id": "fifth_wheel",
+                "name": "hitch.combinedassault.fifth_wheel",
+                "modes": [
+                    "hitch"
+                ],
+                "accepts": [
+                    "#semi_trailer"
+                ],
+                "max_mass": 4000
+            },
+            {
+                "id": "pintle",
+                "name": "hitch.combinedassault.pintle",
+                "modes": [
+                    "cable"
+                ],
+                "cable_length": 9,
+                "max_mass": 4000
+            }
+        ],
+        "towable": {
+            "enabled": true,
+            "tags": [
+                "truck"
+            ],
+            "modes": [
+                "cable"
+            ]
+        }
+    },
+    "parts": [
+        {
+            "id": "seat0",
+            "name": "seat0",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "seat1",
+            "name": "seat1",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "seat2",
+            "name": "seat2",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "wheel_0_l",
+            "name": "wheel_0_l",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "is_seat": false,
+            "spring_stiffness": 39200,
+            "damping": 650,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.2
+        },
+        {
+            "id": "wheel_0_r",
+            "name": "wheel_0_r",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "is_seat": false,
+            "spring_stiffness": 39200,
+            "damping": 650,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.2
+        },
+        {
+            "id": "wheel_1_l",
+            "name": "wheel_1_l",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "is_seat": false,
+            "spring_stiffness": 39200,
+            "damping": 650,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.2
+        },
+        {
+            "id": "wheel_1_r",
+            "name": "wheel_1_r",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "is_seat": false,
+            "spring_stiffness": 39200,
+            "damping": 650,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.2
+        },
+        {
+            "id": "wheel_2_l",
+            "name": "wheel_2_l",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "is_seat": false,
+            "spring_stiffness": 39200,
+            "damping": 650,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.2
+        },
+        {
+            "id": "wheel_2_r",
+            "name": "wheel_2_r",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "is_seat": false,
+            "spring_stiffness": 39200,
+            "damping": 650,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.2
+        },
+        {
+            "id": "wheel_3_l",
+            "name": "wheel_3_l",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "is_seat": false,
+            "spring_stiffness": 39200,
+            "damping": 650,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.2
+        },
+        {
+            "id": "wheel_3_r",
+            "name": "wheel_3_r",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "is_seat": false,
+            "spring_stiffness": 39200,
+            "damping": 650,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.2
+        }
+    ],
+    "model": "combinedassault:models/ground/m983/m983.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/m983.png",
+        "controller": "combinedassault:m983_controller",
+        "engine": {
+            "start": {"event": "combinedassault:lav150_engine_start", "range": 96},
+            "loops": [
+                {"sound": {"event": "combinedassault:truck_engine_idle", "range": 96}, "input": "rpm", "volume": [[0.05, 0], [0.3, 1], [0.6, 1], [0.75, 0]], "pitch": [[0.3, 0.85], [0.6, 1]]},
+                {"sound": {"event": "combinedassault:truck_engine_run", "range": 160}, "input": "rpm", "volume": [[0.6, 0], [0.7, 1]], "pitch": [[0.6, 0.8], [1, 1.1]]}
+            ]
+        },
+        "cabin_muffle": 0.55,
+        "tab_index": 205
+    }
+}

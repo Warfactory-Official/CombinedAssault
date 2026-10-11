@@ -1,0 +1,9 @@
+{
+    "name": "m252a1_controller",
+    "script": "combinedassault:m252a1",
+    "parameters": {},
+    "graph": {
+        "type": "script",
+        "function": "mortarPose"
+    }
+}

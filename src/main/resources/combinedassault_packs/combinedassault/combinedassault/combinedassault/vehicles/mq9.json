@@ -1,0 +1,119 @@
+{
+    "type": "combinedassault:fixed_wing_vehicle",
+    "attributes": {
+        "thrust": 18300,
+        "thrust_k": 1,
+        "ceiling": 512,
+        "x_rot_input_step": 0.3,
+        "y_rot_input_step": 0.4,
+        "z_rot_input_step": 0.15,
+        "air_drag_k_min": 7.3,
+        "air_drag_k_max": 29,
+        "lift_to_drag_k": 8,
+        "x_rot_input_drag_k": 1.2,
+        "y_rot_input_drag_k": 0.25,
+        "z_rot_input_drag_k": 0.125,
+        "turn_rate_by_speed": 0.4,
+        "x_turn_rate": 1.2,
+        "y_turn_rate": 1.5,
+        "z_turn_rate": 3.0
+    },
+    "physics_info": {
+        "mass": 4700,
+        "friction": 9400
+    },
+    "landing_gear_part_id": "landing_gear",
+    "max_health": 200,
+    "view_info": {
+        "third_person_distance": 16,
+        "third_person_distance_zoomed": 6
+    },
+    "energy_info": {
+        "energy_capacity": 1800,
+        "energy_consumption_per_tick": 0.012
+    },
+    "defense_stats": {
+        "damage_threshold": 5,
+        "impact_multiplier": 3
+    },
+    "with_warning_receiver": true,
+    "uav": true,
+    "parts": [
+        {
+            "id": "sighting_system",
+            "name": "sighting_system",
+            "type": "combinedassault:weapon",
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            },
+            "optical_sight_type": "crt",
+            "with_thermal_imager": true,
+            "with_night_vision": true,
+            "zoom_max": 12,
+            "weapons": [
+                {
+                    "id": "combinedassault:pylon_launcher",
+                    "part_unit_id": "hardpoints"
+                }
+            ]
+        },
+        {
+            "id": "hardpoints",
+            "name": "hardpoints",
+            "type": "combinedassault:weapon",
+            "fire_control_sensor_type": "eo",
+            "is_seat": false,
+            "parent_weapon_unit_aim": true,
+            "crosshair_style": "circle",
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "pylons",
+            "name": "pylons",
+            "type": "combinedassault:missile_holder",
+            "is_seat": false,
+            "accepts": [
+                "SMALL"
+            ],
+            "capacity": 6
+        },
+        {
+            "id": "landing_gear",
+            "name": "landing_gear",
+            "type": "combinedassault:landing_gear",
+            "is_seat": false,
+            "drag_k": 0.5
+        },
+        {
+            "id": "flaps",
+            "name": "part.combinedassault.flaps",
+            "type": "combinedassault:flaps",
+            "is_seat": false,
+            "stages": [
+                0,
+                15,
+                30
+            ],
+            "rot_info": {
+                "x_rot_speed": 1
+            }
+        }
+    ],
+    "model": "combinedassault:models/aircraft/mq9/mq9.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/mq9.png",
+        "controller": "combinedassault:mq9_controller",
+        "engine": {
+            "start": {"event": "combinedassault:ah_6_engine_start", "range": 180},
+            "loops": [
+                {"sound": {"event": "combinedassault:ah_6_engine_run", "range": 300}, "input": "throttle", "volume": [[0, 0.55], [1, 1]], "pitch": [[0, 0.85], [1, 1.05], [1.5, 1.15]], "aspect": [[0, 0.55], [120, 1]], "gate": [[0.2, 0], [0.5, 1]]}
+            ]
+        },
+        "tab_index": 510
+    }
+}

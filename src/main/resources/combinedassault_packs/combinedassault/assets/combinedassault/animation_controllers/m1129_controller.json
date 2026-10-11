@@ -1,0 +1,56 @@
+{
+    "name": "m1129_controller",
+    "parameters": {},
+    "script": "combinedassault:m1129",
+    "graph": {
+        "type": "merge",
+        "inputs": [
+            {
+                "type": "script",
+                "function": "updateBones"
+            },
+            {
+                "type": "bone_binding",
+                "special_bindings": [
+                    {
+                        "bones": [
+                            "wheel_0_r",
+                            "wheel_0_l",
+                            "wheel_1_r",
+                            "wheel_1_l",
+                            "wheel_2_r",
+                            "wheel_2_l",
+                            "wheel_3_r",
+                            "wheel_3_l"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.533
+                    },
+                    {
+                        "bones": [
+                            "wheel_0_l",
+                            "wheel_0_r"
+                        ],
+                        "source": "steering_angle",
+                        "axis": "y",
+                        "multiplier": 1.0,
+                        "min": -30,
+                        "max": 30
+                    },
+                    {
+                        "bones": [
+                            "wheel_1_l",
+                            "wheel_1_r"
+                        ],
+                        "source": "steering_angle",
+                        "axis": "y",
+                        "multiplier": 0.5,
+                        "min": -15,
+                        "max": 15
+                    }
+                ]
+            }
+        ]
+    }
+}

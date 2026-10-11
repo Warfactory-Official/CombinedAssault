@@ -1,0 +1,14 @@
+{
+    "type": "combinedassault:rocket",
+    "name": "Hydra 70",
+    "inaccuracy": 0.05,
+    "shoot_interval": 200,
+    "max_capacity": 32,
+    "reload": {
+        "time": 100,
+        "ammo": [
+            "wflib:rocket_hydra_70",
+            "#wflib:rocket/70mm"
+        ]
+    }
+}

@@ -1,0 +1,9 @@
+{
+    "name": "oto127_controller",
+    "script": "combinedassault:oto127",
+    "parameters": {},
+    "graph": {
+        "type": "script",
+        "function": "updateBones"
+    }
+}

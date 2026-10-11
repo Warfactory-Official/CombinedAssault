@@ -1,0 +1,199 @@
+{
+    "type": "combinedassault:rotary_wing_vehicle",
+    "attributes": {
+        "main_rotor_force": 153000,
+        "ceiling": 256,
+        "x_rot_speed_acceleration": 0.8,
+        "x_rot_speed_max": 3.5,
+        "y_rot_speed_acceleration": 0.8,
+        "y_rot_speed_max": 3.5,
+        "z_rot_speed_acceleration": 0.8,
+        "z_rot_speed_max": 3.5,
+        "max_air_speed": 4.65
+    },
+    "physics_info": {
+        "mass": 8500,
+        "friction": 17000
+    },
+    "max_health": 1400,
+    "view_info": {
+        "third_person_distance": 14,
+        "third_person_distance_zoomed": 0
+    },
+    "energy_info": {
+        "energy_capacity": 1500,
+        "energy_consumption_per_tick": 0.009,
+        "engine_particle_offsets": []
+    },
+    "defense_stats": {
+        "damage_threshold": 10,
+        "impact_multiplier": 2
+    },
+    "with_warning_receiver": true,
+    "towing": {
+        "hitches": [
+            {
+                "id": "cargo_hook",
+                "name": "hitch.combinedassault.cargo_hook",
+                "modes": [
+                    "sling"
+                ],
+                "max_mass": 2400,
+                "cable_length": 8
+            }
+        ]
+    },
+    "landing_gear_part_id": "landing_gear",
+    "parts": [
+        {
+            "id": "sighting_system",
+            "crew_roles": [
+                "driver",
+                "gunner"
+            ],
+            "name": "sighting_system",
+            "type": "combinedassault:weapon",
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 3,
+                "y_rot_speed": 3
+            },
+            "optical_sight_type": "crt",
+            "with_stabilizer": true,
+            "with_focus_locker": true,
+            "with_thermal_imager": true,
+            "with_night_vision": true,
+            "zoom_max": 12,
+            "weapons": [
+                {
+                    "id": "combinedassault:gsh_23",
+                    "part_unit_id": "gun"
+                },
+                {
+                    "id": "combinedassault:shturm",
+                    "part_unit_id": "missile"
+                },
+                {
+                    "id": "combinedassault:rocket",
+                    "part_unit_id": "rocket"
+                },
+                {
+                    "id": "combinedassault:decoy_flare",
+                    "part_unit_id": "decoy_flare"
+                }
+            ]
+        },
+        {
+            "id": "gun",
+            "name": "gun",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "fire_control_sensor_type": "eo",
+            "crosshair_style": "square",
+            "rot_info": {
+                "x_rot_speed": 3,
+                "y_rot_speed": 3
+            }
+        },
+        {
+            "id": "missile",
+            "name": "missile",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "fire_control_sensor_type": "eo",
+            "crosshair_style": "circle",
+            "parent_weapon_unit_aim": true,
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "rocket",
+            "name": "rocket",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "fire_control_sensor_type": "ccip",
+            "crosshair_style": "cross",
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "decoy_flare",
+            "name": "decoy_flare",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "crosshair_style": "none",
+            "firing_mode": "salvo",
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "landing_gear",
+            "name": "landing_gear",
+            "type": "combinedassault:landing_gear",
+            "is_seat": false,
+            "drag_k": 0.5
+        },
+        {
+            "id": "seat2",
+            "name": "passenger_seat",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "seat3",
+            "name": "passenger_seat",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "seat4",
+            "name": "passenger_seat",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "seat5",
+            "name": "passenger_seat",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "seat6",
+            "name": "passenger_seat",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "seat7",
+            "name": "passenger_seat",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "seat8",
+            "name": "passenger_seat",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        }
+    ],
+    "model": "combinedassault:models/aircraft/mi24/mi24.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/mi24.png",
+        "controller": "combinedassault:mi24_controller",
+        "engine": {
+            "start": {"event": "combinedassault:z10_engine_start", "range": 360},
+            "stop": {"event": "combinedassault:z10_engine_stop", "range": 360},
+            "loops": [
+                {"sound": {"event": "combinedassault:z10_engine_run", "range": 600}, "input": "power", "volume": [[0.2, 0], [0.5, 1]], "pitch": [[0.5, 0.8], [1, 1]]}
+            ]
+        },
+        "cabin_muffle": 0.6,
+        "tab_index": 404
+    }
+}

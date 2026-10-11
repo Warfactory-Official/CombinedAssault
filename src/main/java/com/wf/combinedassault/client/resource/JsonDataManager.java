@@ -1,0 +1,72 @@
+package com.wf.combinedassault.client.resource;
+
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import net.minecraft.resources.FileToIdConverter;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
+import net.minecraft.util.profiling.ProfilerFiller;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
+import org.jetbrains.annotations.NotNull;
+import com.wf.combinedassault.util.ResourceScanner;
+
+import java.util.Map;
+
+public class JsonDataManager<T> extends SimplePreparableReloadListener<Map<ResourceLocation, T>> {
+
+    protected final Map<ResourceLocation, T> dataMap = Maps.newHashMap();
+    private final Gson gson;
+    private final Class<T> dataClass;
+    private final Marker marker;
+    private final FileToIdConverter fileToIdConverter;
+
+    public JsonDataManager(Class<T> dataClass, Gson pGson, String directory, String marker) {
+        this(dataClass, pGson, FileToIdConverter.json(directory), marker);
+    }
+
+    public JsonDataManager(Class<T> dataClass, Gson pGson, FileToIdConverter fileToIdConverter, String marker) {
+        this.gson = pGson;
+        this.dataClass = dataClass;
+        this.marker = MarkerManager.getMarker(marker);
+        this.fileToIdConverter = fileToIdConverter;
+    }
+
+    @NotNull
+    @Override
+    public Map<ResourceLocation, T> prepare(ResourceManager pResourceManager, ProfilerFiller pProfiler) {
+        return ResourceScanner.scanDirectory(pResourceManager, fileToIdConverter, gson, dataClass);
+    }
+
+    @Override
+    public void apply(Map<ResourceLocation, T> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
+        dataMap.clear();
+        dataMap.putAll(pObject);
+    }
+
+    public Class<T> getDataClass() {
+        return dataClass;
+    }
+
+    public Marker getMarker() {
+        return marker;
+    }
+
+    public Gson getGson() {
+        return gson;
+    }
+
+    public T getData(ResourceLocation id) {
+        return dataMap.get(id);
+    }
+
+    public Map<ResourceLocation, T> getAllData() {
+        return dataMap;
+    }
+
+    public void clearData() {
+        dataMap.clear();
+    }
+
+}

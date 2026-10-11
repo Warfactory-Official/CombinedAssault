@@ -1,0 +1,14 @@
+{
+  "replace": false,
+  "values": [
+    "combinedassault:fuel",
+    "combinedassault:fuel_flowing",
+    { "id": "#c:diesel", "required": false },
+    { "id": "#c:gasoline", "required": false },
+    { "id": "#c:fuel", "required": false },
+    { "id": "immersiveengineering:diesel", "required": false },
+    { "id": "gtceu:diesel", "required": false },
+    { "id": "gtceu:gasoline", "required": false },
+    { "id": "createaddition:bioethanol", "required": false }
+  ]
+}

@@ -1,0 +1,157 @@
+{
+    "type": "combinedassault:generic",
+    "attributes": {},
+    "max_health": 250,
+    "uav": true,
+    "view_info": {
+        "third_person_distance": 16
+    },
+    "energy_info": {
+        "energy_capacity": 1000,
+        "energy_consumption_per_tick": 0.01
+    },
+    "physics_info": {
+        "mass": 1400
+    },
+    "storage": {
+        "slots": 9
+    },
+    "towing": {
+        "towable": {
+            "enabled": true,
+            "tags": [
+                "semi_trailer",
+                "trailer"
+            ],
+            "modes": [
+                "hitch",
+                "cable"
+            ]
+        }
+    },
+    "parts": [
+        {
+            "id": "wheel_0_l",
+            "name": "wheel_0_l",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "spring_stiffness": 29400,
+            "damping": 600,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_droop": 0.1,
+            "max_extension": 0.2
+        },
+        {
+            "id": "wheel_0_r",
+            "name": "wheel_0_r",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "spring_stiffness": 29400,
+            "damping": 600,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_droop": 0.1,
+            "max_extension": 0.2
+        },
+        {
+            "id": "wheel_1_l",
+            "name": "wheel_1_l",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "spring_stiffness": 29400,
+            "damping": 600,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_droop": 0.1,
+            "max_extension": 0.2
+        },
+        {
+            "id": "wheel_1_r",
+            "name": "wheel_1_r",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "spring_stiffness": 29400,
+            "damping": 600,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_droop": 0.1,
+            "max_extension": 0.2
+        },
+        {
+            "id": "landing_leg_l",
+            "name": "landing_leg_l",
+            "type": "combinedassault:suspension",
+            "component": "generic",
+            "detachable": false,
+            "spring_stiffness": 120000,
+            "damping": 3000,
+            "rest_length": 0.1,
+            "max_compression": 0.05,
+            "max_extension": 1.8,
+            "stow_when_towed": true
+        },
+        {
+            "id": "landing_leg_r",
+            "name": "landing_leg_r",
+            "type": "combinedassault:suspension",
+            "component": "generic",
+            "detachable": false,
+            "spring_stiffness": 120000,
+            "damping": 3000,
+            "rest_length": 0.1,
+            "max_compression": 0.05,
+            "max_extension": 1.8,
+            "stow_when_towed": true
+        },
+        {
+            "id": "launcher",
+            "name": "part.combinedassault.launcher",
+            "type": "combinedassault:weapon",
+            "crew_roles": [
+                "gunner"
+            ],
+            "max_health": 120,
+            "detachable": false,
+            "operator_on_weapon_unit": false,
+            "optical_sight_type": "operator",
+            "crosshair_style": "cross",
+            "zoom_max": 6,
+            "indirect_fire": {
+                "map": true,
+                "launch_elevation": 45
+            },
+            "air_defense": {
+                "range": 384,
+                "min_elevation": 20,
+                "max_elevation": 80
+            },
+            "rot_info": {
+                "x_rot_speed": 3,
+                "y_rot_speed": 4,
+                "x_rot": 0,
+                "need_power": false
+            },
+            "weapons": [
+                "combinedassault:mim104_launcher"
+            ]
+        },
+        {
+            "id": "canisters",
+            "name": "part.combinedassault.canisters",
+            "type": "combinedassault:missile_holder",
+            "is_seat": false,
+            "detachable": false,
+            "accepts": [
+                "LARGE"
+            ],
+            "capacity": 4
+        }
+    ],
+    "model": "combinedassault:models/ground/mim104/mim104.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/mim104.png",
+        "controller": "combinedassault:mim104_controller",
+        "tab_index": 206
+    }
+}

@@ -1,0 +1,110 @@
+{
+    "type": "combinedassault:ship",
+    "attributes": {
+        "waterline": 0.0,
+        "draft": 11.4,
+        "max_speed_forward": 0.77,
+        "max_speed_backward": 0.25,
+        "acceleration_time": 60,
+        "throttle_rate": 0.25,
+        "rudder_rate": 0.5,
+        "turn_rate": 2.0,
+        "turn_lag": 1.0,
+        "low_speed_turn": 0.0,
+        "drift": 0.15,
+        "heel": 1.0,
+        "trim": 0.3,
+        "heave_period": 6.0,
+        "righting_rate": 1.0,
+        "min_keel_clearance": 2.0,
+        "shallow_drag": 2.0
+    },
+    "max_health": 1500,
+    "view_info": {
+        "third_person_distance": 160,
+        "third_person_distance_zoomed": 8
+    },
+    "energy_info": {
+        "energy_capacity": 200000,
+        "energy_consumption_per_tick": 0.05
+    },
+    "defense_stats": {
+        "damage_threshold": 50,
+        "impact_multiplier": 0.05
+    },
+    "physics_info": {
+        "mass": 2000000,
+        "radar_cross_section": 40,
+        "can_tumble": false
+    },
+    "armor": {
+        "front": 80,
+        "side": 60,
+        "rear": 60,
+        "top": 25,
+        "bottom": 30,
+        "ricochet_angle": 70
+    },
+    "storage": {
+        "slots": 216
+    },
+    "mount_points": [
+        {
+            "id": "emplacement_port_bow",
+            "accepts": [
+                "#naval_emplacement"
+            ]
+        },
+        {
+            "id": "emplacement_starboard_bow",
+            "accepts": [
+                "#naval_emplacement"
+            ]
+        },
+        {
+            "id": "emplacement_port_waist",
+            "accepts": [
+                "#naval_emplacement"
+            ]
+        },
+        {
+            "id": "emplacement_starboard_aft",
+            "accepts": [
+                "#naval_emplacement"
+            ]
+        },
+        {
+            "id": "emplacement_port_stern",
+            "accepts": [
+                "#naval_emplacement"
+            ]
+        },
+        {
+            "id": "emplacement_starboard_stern",
+            "accepts": [
+                "#naval_emplacement"
+            ]
+        }
+    ],
+    "parts": [
+        {
+            "id": "helm",
+            "name": "helm",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "bridge_2",
+            "name": "bridge",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        }
+    ],
+    "model": "combinedassault:models/ships/nimitz/nimitz.gltf",
+    "display": {
+        "cabin_muffle": 0.8,
+        "icon": "combinedassault:textures/slot/nimitz.png",
+        "tab_index": 700,
+        "description": ""
+    }
+}

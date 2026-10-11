@@ -1,0 +1,19 @@
+{
+    "type": "combinedassault:rocket",
+    "name": "rocket",
+    "inaccuracy": 0.05,
+    "shoot_interval": 200,
+    "max_capacity": 32,
+    "reload": {
+        "time": 100,
+        "ammo": [
+            "wflib:rocket_s8",
+            "#wflib:rocket/80mm",
+            "#wflib:rocket/70mm"
+        ]
+    },
+    "sounds": {
+        "fire": {"event": "combinedassault:rocket_launch", "range": 500, "pitch_random": 0.1},
+        "reload": {"event": "combinedassault:common_reload", "range": 24}
+    }
+}

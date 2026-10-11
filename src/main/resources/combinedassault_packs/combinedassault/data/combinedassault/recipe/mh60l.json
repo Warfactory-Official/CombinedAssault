@@ -1,0 +1,63 @@
+{
+    "type": "combinedassault:vehicle_printing",
+    "materials": [
+        {
+            "count": 141,
+            "ingredient": {
+                "tag": "c:ingots/iron"
+            }
+        },
+        {
+            "count": 106,
+            "ingredient": {
+                "tag": "c:ingots/copper"
+            }
+        },
+        {
+            "count": 70,
+            "ingredient": {
+                "item": "minecraft:redstone"
+            }
+        },
+        {
+            "count": 22,
+            "ingredient": {
+                "item": "minecraft:glass_pane"
+            }
+        },
+        {
+            "count": 9,
+            "ingredient": {
+                "item": "minecraft:dispenser"
+            }
+        },
+        {
+            "count": 11,
+            "ingredient": {
+                "item": "minecraft:diamond"
+            }
+        },
+        {
+            "count": 35,
+            "ingredient": {
+                "item": "minecraft:gold_ingot"
+            }
+        },
+        {
+            "count": 26,
+            "ingredient": {
+                "item": "minecraft:lapis_lazuli"
+            }
+        }
+    ],
+    "result": {
+        "id": "combinedassault:vehicle_spawn_item",
+        "count": 1,
+        "components": {
+            "minecraft:custom_data": {
+                "CombinedAssaultId": "combinedassault:mh60l"
+            }
+        }
+    },
+    "printingTime": 1500
+}

@@ -1,0 +1,210 @@
+{
+    "type": "combinedassault:rotary_wing_vehicle",
+    "attributes": {
+        "main_rotor_force": 115200,
+        "ceiling": 256,
+        "x_rot_speed_acceleration": 0.9,
+        "x_rot_speed_max": 3.6,
+        "y_rot_speed_acceleration": 0.9,
+        "y_rot_speed_max": 3.6,
+        "z_rot_speed_acceleration": 0.9,
+        "z_rot_speed_max": 3.6,
+        "max_air_speed": 3.61
+    },
+    "physics_info": {
+        "mass": 6400,
+        "friction": 12800
+    },
+    "max_health": 900,
+    "view_info": {
+        "third_person_distance": 14,
+        "third_person_distance_zoomed": 0
+    },
+    "energy_info": {
+        "energy_capacity": 1330,
+        "energy_consumption_per_tick": 0.005,
+        "engine_particle_offsets": []
+    },
+    "defense_stats": {
+        "damage_threshold": 10,
+        "impact_multiplier": 2
+    },
+    "with_warning_receiver": true,
+    "towing": {
+        "hitches": [
+            {
+                "id": "cargo_hook",
+                "name": "hitch.combinedassault.cargo_hook",
+                "modes": [
+                    "sling"
+                ],
+                "max_mass": 2100,
+                "cable_length": 8
+            }
+        ]
+    },
+    "parts": [
+        {
+            "id": "sighting_system",
+            "crew_roles": [
+                "driver",
+                "gunner"
+            ],
+            "name": "sighting_system",
+            "type": "combinedassault:weapon",
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 3,
+                "y_rot_speed": 3
+            },
+            "optical_sight_type": "crt",
+            "with_stabilizer": true,
+            "with_focus_locker": true,
+            "with_thermal_imager": true,
+            "with_night_vision": true,
+            "zoom_max": 12,
+            "weapons": [
+                {
+                    "id": "combinedassault:rocket",
+                    "part_unit_id": "rocket"
+                },
+                {
+                    "id": "combinedassault:fim_92",
+                    "part_unit_id": "grom"
+                },
+                {
+                    "id": "combinedassault:decoy_flare",
+                    "part_unit_id": "decoy_flare"
+                }
+            ]
+        },
+        {
+            "id": "rocket",
+            "name": "rocket",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "crosshair_style": "cross",
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            },
+            "fire_control_sensor_type": "ccip"
+        },
+        {
+            "id": "grom",
+            "name": "grom",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "crosshair_style": "circle",
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "decoy_flare",
+            "name": "decoy_flare",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "crosshair_style": "none",
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            },
+            "firing_mode": "salvo"
+        },
+        {
+            "id": "nose_gun",
+            "crew_roles": [
+                "gunner"
+            ],
+            "name": "nose_gun",
+            "type": "combinedassault:weapon",
+            "render_bone": "nose_gun",
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 5,
+                "y_rot_speed": 5,
+                "need_power": false
+            },
+            "optical_sight_type": "operator",
+            "zoom_max": 2,
+            "crosshair_style": "cross",
+            "weapons": [
+                "combinedassault:gun_12.7mm"
+            ]
+        },
+        {
+            "id": "door_gun",
+            "crew_roles": [
+                "gunner"
+            ],
+            "name": "door_gun_r",
+            "type": "combinedassault:weapon",
+            "render_bone": "door_gun",
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 5,
+                "y_rot_speed": 5,
+                "y_rot": 90,
+                "need_power": false
+            },
+            "optical_sight_type": "operator",
+            "zoom_max": 2,
+            "crosshair_style": "cross",
+            "weapons": [
+                "combinedassault:gun_7.62mm"
+            ]
+        },
+        {
+            "id": "seat3",
+            "name": "passenger_seat",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "seat4",
+            "name": "passenger_seat",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "seat5",
+            "name": "passenger_seat",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "seat6",
+            "name": "passenger_seat",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "seat7",
+            "name": "passenger_seat",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "seat8",
+            "name": "passenger_seat",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        }
+    ],
+    "model": "combinedassault:models/aircraft/w3/w3.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/w3.png",
+        "controller": "combinedassault:w3_controller",
+        "engine": {
+            "start": {"event": "combinedassault:z10_engine_start", "range": 360},
+            "stop": {"event": "combinedassault:z10_engine_stop", "range": 360},
+            "loops": [
+                {"sound": {"event": "combinedassault:z10_engine_run", "range": 600}, "input": "power", "volume": [[0.2, 0], [0.5, 1]], "pitch": [[0.5, 0.8], [1, 1]]}
+            ]
+        },
+        "cabin_muffle": 0.5,
+        "tab_index": 406
+    }
+}

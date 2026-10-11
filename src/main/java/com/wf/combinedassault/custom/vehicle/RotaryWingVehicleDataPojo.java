@@ -1,0 +1,55 @@
+package com.wf.combinedassault.custom.vehicle;
+
+import com.google.gson.JsonObject;
+import com.google.gson.annotations.SerializedName;
+
+public class RotaryWingVehicleDataPojo extends BaseVehicleDataPojo {
+
+    @SerializedName("attributes")
+    public RotaryWingAttributes attributes;
+
+    @SerializedName("landing_gear_part_id")
+    public String landingGearPartId;
+
+    public static class RotaryWingAttributes {
+
+        @SerializedName("main_rotor_force")
+        public float mainRotorForce = 13720f;
+
+        @SerializedName("ceiling")
+        public float ceiling = 256;
+
+        @SerializedName("x_rot_speed_acceleration")
+        public float xRotSpeedAcceleration;
+
+        @SerializedName("x_rot_speed_max")
+        public float xRotSpeedMax;
+
+        @SerializedName("y_rot_speed_acceleration")
+        public float yRotSpeedAcceleration;
+
+        @SerializedName("y_rot_speed_max")
+        public float yRotSpeedMax;
+
+        @SerializedName("z_rot_speed_acceleration")
+        public float zRotSpeedAcceleration;
+
+        @SerializedName("z_rot_speed_max")
+        public float zRotSpeedMax;
+
+        @SerializedName("max_air_speed")
+        public float maxAirSpeed;
+
+        /** Direct attitude control; read by com.wf.combinedassault.fpv.FpvFlight. Absent means the stock model. */
+        @SerializedName("fpv")
+        public JsonObject fpv;
+
+        @SerializedName("fast_roping")
+        public boolean fastRoping;
+
+        @SerializedName("fast_roping_door_id")
+        public String fastRopingDoorId;
+
+    }
+
+}

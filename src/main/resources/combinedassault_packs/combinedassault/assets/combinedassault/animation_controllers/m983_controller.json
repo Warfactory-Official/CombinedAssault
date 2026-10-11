@@ -1,0 +1,46 @@
+{
+    "name": "m983_controller",
+    "parameters": {},
+    "graph": {
+        "type": "bone_binding",
+        "special_bindings": [
+            {
+                "bones": [
+                    "02_WHEEL_00_L",
+                    "02_WHEEL_00_R",
+                    "02_WHEEL_01_L",
+                    "02_WHEEL_01_R",
+                    "02_WHEEL_02_L",
+                    "02_WHEEL_02_R",
+                    "02_WHEEL_03_L",
+                    "02_WHEEL_03_R"
+                ],
+                "source": "wheel_rotation",
+                "axis": "x",
+                "param": 0.653
+            },
+            {
+                "bones": [
+                    "02_WHEEL_00_L",
+                    "02_WHEEL_00_R"
+                ],
+                "source": "steering_angle",
+                "axis": "y",
+                "multiplier": 1.0,
+                "min": -30.0,
+                "max": 30.0
+            },
+            {
+                "bones": [
+                    "02_WHEEL_01_L",
+                    "02_WHEEL_01_R"
+                ],
+                "source": "steering_angle",
+                "axis": "y",
+                "multiplier": 0.71,
+                "min": -22.0,
+                "max": 22.0
+            }
+        ]
+    }
+}

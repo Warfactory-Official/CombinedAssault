@@ -1,0 +1,20 @@
+{
+    "name": "mim104_controller",
+    "parameters": {},
+    "graph": {
+        "type": "bone_binding",
+        "special_bindings": [
+            {
+                "bones": [
+                    "04_WHEEL_00_L",
+                    "04_WHEEL_00_R",
+                    "04_WHEEL_01_L",
+                    "04_WHEEL_01_R"
+                ],
+                "source": "wheel_rotation",
+                "axis": "x",
+                "param": 0.619
+            }
+        ]
+    }
+}

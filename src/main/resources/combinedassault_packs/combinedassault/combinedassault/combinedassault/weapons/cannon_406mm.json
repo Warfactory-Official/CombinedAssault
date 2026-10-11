@@ -1,0 +1,19 @@
+{
+    "type": "combinedassault:cannon",
+    "name": "vehicle.weapon.cannon_406mm",
+    "inaccuracy": 0.05,
+    "shoot_interval": 1000,
+    "max_capacity": 1,
+    "reload": {
+        "time": 600,
+        "ammo": [
+            "wflib:cartridge_406mm_naval",
+            "#wflib:artillery_shells"
+        ]
+    },
+    "sounds": {
+        "fire": {"event": "combinedassault:cannon_125mm_shot", "range": 1000, "pitch_random": 0.1},
+        "shell": {"event": "combinedassault:cannon_shell_drop", "range": 24},
+        "reload": {"event": "combinedassault:artillery_reload", "range": 24}
+    }
+}

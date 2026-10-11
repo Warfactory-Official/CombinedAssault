@@ -1,0 +1,19 @@
+{
+  "type": "combinedassault:vehicle_printing",
+  "materials": [
+    { "count": 200, "ingredient": { "tag": "c:ingots/iron" } },
+    { "count": 120, "ingredient": { "tag": "c:ingots/copper" } },
+    { "count": 64, "ingredient": { "item": "minecraft:redstone" } },
+    { "count": 8, "ingredient": { "item": "minecraft:lodestone" } }
+  ],
+  "result": {
+    "id": "combinedassault:vehicle_spawn_item",
+    "count": 1,
+    "components": {
+      "minecraft:custom_data": {
+        "CombinedAssaultId": "combinedassault:mim104"
+      }
+    }
+  },
+  "printingTime": 2000
+}

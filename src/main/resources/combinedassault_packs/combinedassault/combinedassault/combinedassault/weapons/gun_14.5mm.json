@@ -1,0 +1,14 @@
+{
+    "type": "combinedassault:cannon",
+    "name": "14.5mm Gun",
+    "shoot_interval": 100,
+    "max_capacity": 120,
+    "reload": {
+        "time": 100,
+        "ammo": "wflib:cartridge_14_5x114"
+    },
+    "sounds": {
+        "fire": {"event": "combinedassault:gun_14.5mm_shot", "range": 500, "pitch_random": 0.1},
+        "reload": {"event": "combinedassault:gun_reload", "range": 24}
+    }
+}

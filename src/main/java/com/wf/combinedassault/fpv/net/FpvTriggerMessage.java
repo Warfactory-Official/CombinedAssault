@@ -1,0 +1,49 @@
+package com.wf.combinedassault.fpv.net;
+
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.fpv.payload.FpvTrigger;
+import com.wf.combinedassault.fpv.payload.PayloadUnit;
+
+/**
+ * Only message this feature adds; arming rides the host's vehicle-action packet instead. Server verifies
+ * the sender is riding the named drone, unlike a part toggle that trusts the wire id.
+ *
+ * @param droneId drone the client believed it was flying; guards a stale click from firing a later ride
+ */
+public record FpvTriggerMessage(int droneId) implements CustomPacketPayload {
+
+    public static final Type<FpvTriggerMessage> TYPE = new Type<>(CombinedAssault.modLocation("fpv_trigger_payload"));
+
+    public static final StreamCodec<FriendlyByteBuf, FpvTriggerMessage> STREAM_CODEC = StreamCodec.of(
+            (buf, message) -> buf.writeVarInt(message.droneId),
+            buf -> new FpvTriggerMessage(buf.readVarInt())
+    );
+
+    public static void handle(FpvTriggerMessage message, IPayloadContext context) {
+        if (!(context.player() instanceof ServerPlayer operator)) {
+            return;
+        }
+        Entity ridden = operator.getVehicle();
+        if (!(ridden instanceof AbstractVehicle drone) || drone.getId() != message.droneId) {
+            return;
+        }
+        PayloadUnit hardpoint = PayloadUnit.on(drone);
+        if (hardpoint == null) {
+            return;
+        }
+        hardpoint.fire(FpvTrigger.OPERATOR, operator, drone.getDeltaMovement().length());
+    }
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
+    }
+
+}

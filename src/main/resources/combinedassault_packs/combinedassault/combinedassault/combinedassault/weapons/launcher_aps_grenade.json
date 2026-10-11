@@ -1,0 +1,15 @@
+{
+    "type": "combinedassault:grenade",
+    "name": "APS",
+    "shoot_interval": 400,
+    "max_capacity": 8,
+    "reload": {
+        "time": 100,
+        "ammo": "wflib:aps_grenade"
+    },
+    "independent": true,
+    "sounds": {
+        "fire": {"event": "combinedassault:smoke_grenade_launch", "range": 120, "pitch_random": 0.1},
+        "reload": {"event": "combinedassault:common_reload", "range": 24}
+    }
+}

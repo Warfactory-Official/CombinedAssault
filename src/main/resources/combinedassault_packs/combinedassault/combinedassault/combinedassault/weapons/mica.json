@@ -1,0 +1,18 @@
+{
+    "type": "combinedassault:missile",
+    "name": "MICA",
+    "recoil": 0.1,
+    "shoot_interval": 1000,
+    "max_capacity": 6,
+    "reload": {
+        "time": 100,
+        "ammo": [
+            "wflib:missile_mica",
+            "#wflib:missile/large"
+        ]
+    },
+    "x_rot_max": 90,
+    "x_rot_min": -90,
+    "y_rot_max": 90,
+    "y_rot_min": -90
+}

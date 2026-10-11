@@ -1,0 +1,14 @@
+{
+    "type": "combinedassault:decoy_flare",
+    "name": "Decoy Flare",
+    "shoot_interval": 200,
+    "max_capacity": 32,
+    "reload": {
+        "time": 100,
+        "ammo": "wflib:flare_cartridge"
+    },
+    "independent": true,
+    "sounds": {
+        "fire": {"event": "combinedassault:decoy_flare_launch", "range": 150, "pitch_random": 0.1}
+    }
+}

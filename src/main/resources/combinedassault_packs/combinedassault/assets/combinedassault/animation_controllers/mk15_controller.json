@@ -1,0 +1,9 @@
+{
+    "name": "mk15_controller",
+    "script": "combinedassault:mk15",
+    "parameters": {},
+    "graph": {
+        "type": "script",
+        "function": "updateBones"
+    }
+}

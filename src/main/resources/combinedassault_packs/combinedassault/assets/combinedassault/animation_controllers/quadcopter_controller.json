@@ -1,0 +1,9 @@
+{
+    "name": "quadcopter_controller",
+    "script": "combinedassault:quadcopter",
+    "parameters": {},
+    "graph": {
+        "type": "script",
+        "function": "updateBones"
+    }
+}

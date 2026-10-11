@@ -1,0 +1,9 @@
+{
+    "name": "ch47_controller",
+    "script": "combinedassault:ch47",
+    "parameters": {},
+    "graph": {
+        "type": "script",
+        "function": "updateBones"
+    }
+}

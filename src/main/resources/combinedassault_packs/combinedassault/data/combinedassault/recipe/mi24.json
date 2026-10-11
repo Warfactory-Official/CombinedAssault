@@ -1,0 +1,63 @@
+{
+    "type": "combinedassault:vehicle_printing",
+    "materials": [
+        {
+            "count": 160,
+            "ingredient": {
+                "tag": "c:ingots/iron"
+            }
+        },
+        {
+            "count": 120,
+            "ingredient": {
+                "tag": "c:ingots/copper"
+            }
+        },
+        {
+            "count": 80,
+            "ingredient": {
+                "item": "minecraft:redstone"
+            }
+        },
+        {
+            "count": 25,
+            "ingredient": {
+                "item": "minecraft:glass_pane"
+            }
+        },
+        {
+            "count": 10,
+            "ingredient": {
+                "item": "minecraft:dispenser"
+            }
+        },
+        {
+            "count": 12,
+            "ingredient": {
+                "item": "minecraft:diamond"
+            }
+        },
+        {
+            "count": 40,
+            "ingredient": {
+                "item": "minecraft:gold_ingot"
+            }
+        },
+        {
+            "count": 30,
+            "ingredient": {
+                "item": "minecraft:lapis_lazuli"
+            }
+        }
+    ],
+    "result": {
+        "id": "combinedassault:vehicle_spawn_item",
+        "count": 1,
+        "components": {
+            "minecraft:custom_data": {
+                "CombinedAssaultId": "combinedassault:mi24"
+            }
+        }
+    },
+    "printingTime": 1600
+}

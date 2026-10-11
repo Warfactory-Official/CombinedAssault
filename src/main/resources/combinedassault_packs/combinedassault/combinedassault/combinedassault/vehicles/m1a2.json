@@ -1,0 +1,236 @@
+{
+    "type": "combinedassault:tracked_vehicle",
+    "attributes": {
+        "brake_acceleration": 0.025,
+        "forward_acceleration": 0.01,
+        "backward_acceleration": 0.01,
+        "max_speed_forward": 0.5,
+        "max_speed_backward": 0.2,
+        "turn_acceleration": 1,
+        "max_turn": 2
+    },
+    "physics_info": {
+        "mass": 61000,
+        "friction": 122000,
+        "suspension_response": 4,
+        "can_destroy_block": true
+    },
+    "max_health": 3000,
+    "armor": {
+        "front": 620,
+        "side": 130,
+        "rear": 60,
+        "top": 50,
+        "bottom": 40
+    },
+    "view_info": {
+        "third_person_distance": 7
+    },
+    "energy_info": {
+        "energy_capacity": 1525,
+        "energy_consumption_per_tick": 0.004166667
+    },
+    "addon_armor": [
+        {
+            "id": "port_rear_slat",
+            "standoff": 0.35
+        },
+        {
+            "id": "starboard_rear_slat",
+            "standoff": 0.35
+        },
+        {
+            "id": "rear_slat_1",
+            "standoff": 0.35
+        },
+        {
+            "id": "rear_slat_2",
+            "standoff": 0.35
+        },
+        {
+            "id": "turret_bustle_slat",
+            "standoff": 0.35
+        }
+    ],
+    "parts": [
+        {
+            "id": "turret",
+            "crew_roles": [
+                "gunner"
+            ],
+            "loading": "manual",
+            "name": "turret",
+            "type": "combinedassault:weapon",
+            "max_health": 1000,
+            "render_bone": "turret",
+            "rot_info": {
+                "x_rot_speed": 1.5,
+                "y_rot_speed": 1.5
+            },
+            "optical_sight_type": "crt",
+            "with_stabilizer": true,
+            "with_thermal_imager": true,
+            "with_night_vision": true,
+            "zoom_max": 8,
+            "weapons": [
+                [
+                    "combinedassault:cannon_120mm_apfsds",
+                    "combinedassault:cannon_120mm_heat"
+                ],
+                {
+                    "id": "combinedassault:gun_7.62mm",
+                    "part_unit_id": "turret_machine_gun",
+                    "secondary": true
+                },
+                {
+                    "id": "combinedassault:launcher_smoke_grenade",
+                    "part_unit_id": "turret_smoke_grenade"
+                }
+            ]
+        },
+        {
+            "id": "turret_machine_gun",
+            "name": "turret_machine_gun",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "rot_info": {
+                "x_rot_speed": 1.5,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "turret_smoke_grenade",
+            "name": "turret_smoke_grenade",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "anti_aircraft_machine_gun",
+            "crew_roles": [
+                "commander",
+                "gunner"
+            ],
+            "name": "anti_aircraft_machine_gun",
+            "type": "combinedassault:weapon",
+            "max_health": 200,
+            "render_bone": "mg",
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 4.5,
+                "y_rot_speed": 4.5,
+                "need_power": false
+            },
+            "optical_sight_type": "operator",
+            "zoom_max": 2,
+            "weapons": [
+                "combinedassault:gun_12.7mm"
+            ]
+        },
+        {
+            "id": "loader_machine_gun",
+            "crew_roles": [
+                "loader",
+                "gunner"
+            ],
+            "name": "loader_machine_gun",
+            "type": "combinedassault:weapon",
+            "max_health": 150,
+            "render_bone": "loader_mg",
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 6,
+                "y_rot_speed": 6,
+                "need_power": false
+            },
+            "optical_sight_type": "operator",
+            "zoom_max": 2,
+            "weapons": [
+                "combinedassault:gun_7.62mm"
+            ]
+        },
+        {
+            "id": "seat",
+            "crew_roles": [
+                "driver"
+            ],
+            "name": "seat",
+            "type": "combinedassault:generic"
+        },
+        {
+            "id": "suspension_left",
+            "name": "suspension_left",
+            "type": "combinedassault:track",
+            "is_seat": false,
+            "spring_stiffness": 854000,
+            "damping": 14640,
+            "rest_length": 0.1,
+            "max_compression": 0.1,
+            "max_extension": 0.1,
+            "max_droop": 0.1,
+            "track_width": 0.611
+        },
+        {
+            "id": "suspension_right",
+            "name": "suspension_right",
+            "type": "combinedassault:track",
+            "is_seat": false,
+            "spring_stiffness": 854000,
+            "damping": 14640,
+            "rest_length": 0.1,
+            "max_compression": 0.1,
+            "max_extension": 0.1,
+            "max_droop": 0.1,
+            "track_width": 0.611
+        },
+        {
+            "id": "loader_hatch",
+            "name": "loader_hatch",
+            "type": "combinedassault:door",
+            "is_seat": false,
+            "door_for_seat_id": "loader_machine_gun"
+        }
+    ],
+    "model": "combinedassault:models/ground/m1a2/m1a2.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/m1a2.png",
+        "controller": "combinedassault:m1a2_controller",
+        "engine": {
+            "start": {"event": "combinedassault:m1a2_engine_start", "range": 144},
+            "loops": [
+                {"sound": {"event": "combinedassault:m1a2_engine_idle", "range": 144}, "input": "rpm", "volume": [[0.05, 0], [0.3, 1], [0.6, 1], [0.75, 0]], "pitch": [[0.3, 0.85], [0.6, 1]]},
+                {"sound": {"event": "combinedassault:m1a2_engine_run", "range": 240}, "input": "rpm", "volume": [[0.6, 0], [0.7, 1]], "pitch": [[0.6, 0.8], [1, 1.1]]},
+                {"sound": {"event": "combinedassault:track_run", "range": 144}, "input": "speed", "volume": [[0.01, 0], [0.1, 0.6], [0.6, 1]], "pitch": [[0, 0.8], [1, 1.1]]}
+            ]
+        },
+        "cabin_muffle": 0.85,
+        "tab_index": 101,
+        "track": {
+            "model": "combinedassault:models/effect/m1a2_track_link.gltf",
+            "module_length": 0.2849
+        },
+        "variants": {
+            "m1a2_black": {
+                "paint": "combinedassault:black"
+            },
+            "m1a2_olive_drab": {
+                "paint": "combinedassault:olive_drab"
+            },
+            "m1a2_sand": {
+                "paint": "combinedassault:sand"
+            },
+            "m1a2_urban": {
+                "paint": "combinedassault:urban"
+            },
+            "m1a2_winter": {
+                "paint": "combinedassault:winter"
+            },
+            "m1a2_woodland": {
+                "paint": "combinedassault:woodland"
+            }
+        }
+    }
+}

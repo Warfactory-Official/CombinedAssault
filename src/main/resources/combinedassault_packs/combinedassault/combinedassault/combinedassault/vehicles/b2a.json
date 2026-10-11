@@ -1,0 +1,141 @@
+{
+    "type": "combinedassault:fixed_wing_vehicle",
+    "attributes": {
+        "thrust": 308000,
+        "thrust_k": 1,
+        "ceiling": 512,
+        "x_rot_input_step": 0.15,
+        "y_rot_input_step": 0.2,
+        "z_rot_input_step": 0.1,
+        "air_drag_k_min": 100,
+        "air_drag_k_max": 400,
+        "lift_to_drag_k": 8,
+        "x_rot_input_drag_k": 1.0,
+        "y_rot_input_drag_k": 0.25,
+        "z_rot_input_drag_k": 0.125,
+        "turn_rate_by_speed": 0.4,
+        "x_turn_rate": 0.8,
+        "y_turn_rate": 0.8,
+        "z_turn_rate": 2.5
+    },
+    "physics_info": {
+        "mass": 71700,
+        "friction": 50000
+    },
+    "landing_gear_part_id": "landing_gear",
+    "airbrake_part_id": "airbrake",
+    "max_health": 1500,
+    "view_info": {
+        "third_person_distance": 45,
+        "third_person_distance_zoomed": 20
+    },
+    "energy_info": {
+        "energy_capacity": 75000,
+        "energy_consumption_per_tick": 0.2
+    },
+    "defense_stats": {
+        "damage_threshold": 10,
+        "impact_multiplier": 3
+    },
+    "with_warning_receiver": true,
+    "parts": [
+        {
+            "id": "sighting_system",
+            "name": "sighting_system",
+            "type": "combinedassault:weapon",
+            "crew_roles": [
+                "driver",
+                "gunner"
+            ],
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 5,
+                "y_rot_speed": 5
+            },
+            "optical_sight_type": "crt",
+            "with_stabilizer": true,
+            "with_focus_locker": true,
+            "with_thermal_imager": true,
+            "with_night_vision": true,
+            "zoom_max": 16,
+            "weapons": [
+                {
+                    "id": "combinedassault:aerial_bomb",
+                    "part_unit_id": "bomb_bay",
+                    "weapon_bay_unit_id": "bay_doors"
+                },
+                {
+                    "id": "combinedassault:gbu_12",
+                    "part_unit_id": "guided_bay",
+                    "weapon_bay_unit_id": "bay_doors"
+                }
+            ]
+        },
+        {
+            "id": "bomb_bay",
+            "name": "bomb_bay",
+            "type": "combinedassault:weapon",
+            "ammo_capacity": 40,
+            "is_seat": false,
+            "parent_weapon_unit_aim": true,
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "guided_bay",
+            "name": "guided_bay",
+            "type": "combinedassault:weapon",
+            "ammo_capacity": 16,
+            "fire_control_sensor_type": "eo",
+            "is_seat": false,
+            "parent_weapon_unit_aim": true,
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "commander",
+            "name": "commander",
+            "type": "combinedassault:generic",
+            "crew_roles": [
+                "commander"
+            ]
+        },
+        {
+            "id": "bay_doors",
+            "name": "bay_doors",
+            "type": "combinedassault:weapon_bay",
+            "is_seat": false
+        },
+        {
+            "id": "landing_gear",
+            "name": "landing_gear",
+            "type": "combinedassault:landing_gear",
+            "is_seat": false,
+            "drag_k": 0.5
+        },
+        {
+            "id": "airbrake",
+            "name": "airbrake",
+            "type": "combinedassault:airbrake",
+            "is_seat": false,
+            "drag_k": 2
+        }
+    ],
+    "model": "combinedassault:models/aircraft/b2a/b2a.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/b2a.png",
+        "controller": "combinedassault:b2a_controller",
+        "engine": {
+            "start": {"event": "combinedassault:jet_engine_start", "range": 720},
+            "loops": [
+                {"sound": {"event": "combinedassault:jet_engine_run", "range": 1200}, "input": "throttle", "volume": [[0, 0.55], [1, 1]], "pitch": [[0, 0.85], [1, 1.05], [1.5, 1.15]], "aspect": [[0, 0.55], [120, 1]], "gate": [[0.2, 0], [0.5, 1]]}
+            ]
+        },
+        "cabin_muffle": 0.9,
+        "tab_index": 520
+    }
+}

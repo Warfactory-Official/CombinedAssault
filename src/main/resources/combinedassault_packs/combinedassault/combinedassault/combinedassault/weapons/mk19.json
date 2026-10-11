@@ -1,0 +1,10 @@
+{
+    "type": "combinedassault:grenade",
+    "name": "Mk 19",
+    "shoot_interval": 170,
+    "max_capacity": 48,
+    "reload": {
+        "time": 180,
+        "ammo": "wflib:cartridge_40x53"
+    }
+}

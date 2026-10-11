@@ -1,0 +1,67 @@
+{
+    "name": "b2a_controller",
+    "script": "combinedassault:b2a",
+    "parameters": {},
+    "graph": {
+        "type": "merge",
+        "inputs": [
+            {
+                "type": "script",
+                "function": "updateBones"
+            },
+            {
+                "type": "bone_binding",
+                "special_bindings": [
+                    {
+                        "bones": [
+                            "gear_nose_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.424
+                    },
+                    {
+                        "bones": [
+                            "gear_nose_wheel1"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.424
+                    },
+                    {
+                        "bones": [
+                            "gear_main_wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.552
+                    },
+                    {
+                        "bones": [
+                            "gear_main_wheel1"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.552
+                    },
+                    {
+                        "bones": [
+                            "gear_main_wheel2"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.552
+                    },
+                    {
+                        "bones": [
+                            "gear_main_wheel3"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.552
+                    }
+                ]
+            }
+        ]
+    }
+}

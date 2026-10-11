@@ -1,0 +1,12 @@
+{
+    "type": "combinedassault:cannon",
+    "name": "Mauser BK-27",
+    "recoil": 0.2,
+    "inaccuracy": 0.12,
+    "shoot_interval": 24,
+    "max_capacity": 125,
+    "reload": {
+        "time": 100,
+        "ammo": "wflib:cartridge_27x145b"
+    }
+}

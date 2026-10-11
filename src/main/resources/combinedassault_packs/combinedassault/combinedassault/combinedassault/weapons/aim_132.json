@@ -1,0 +1,18 @@
+{
+    "type": "combinedassault:missile",
+    "name": "AIM-132 ASRAAM",
+    "recoil": 0.1,
+    "shoot_interval": 1000,
+    "max_capacity": 6,
+    "reload": {
+        "time": 100,
+        "ammo": [
+            "wflib:missile_aim_132",
+            "#wflib:missile/medium"
+        ]
+    },
+    "x_rot_max": 90,
+    "x_rot_min": -90,
+    "y_rot_max": 90,
+    "y_rot_min": -90
+}

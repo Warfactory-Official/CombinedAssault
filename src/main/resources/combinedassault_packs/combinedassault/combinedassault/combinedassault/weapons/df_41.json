@@ -1,0 +1,17 @@
+{
+    "type": "combinedassault:missile",
+    "name": "DF-41",
+    "shoot_interval": 1000,
+    "max_capacity": 1,
+    "reload": {
+        "time": 100,
+        "ammo": [
+            "wflib:missile_df_41",
+            "#wflib:missile/huge"
+        ]
+    },
+    "x_rot_max": 0,
+    "x_rot_min": -90,
+    "y_rot_max": 0,
+    "y_rot_min": 0
+}

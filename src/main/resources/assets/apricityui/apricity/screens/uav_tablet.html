@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="aui-font-mode" content="web">
+    <meta name="aui-viewport" content="mode=browser">
+    <link rel="stylesheet" href="/apricityui/theme/ore/ore.css">
+    <style>
+        html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+        .tablet-screen { color: var(--ore-ink); background: var(--ore-canvas); display: flex; flex-direction: column; font-family: OreRegular, "Microsoft YaHei"; }
+        body.ore-theme.tablet-screen .navbar-brand { font-size: 18px; line-height: 1.1; }
+        .tablet-screen .navbar { min-height: 38px; padding: 6px 10px 10px; flex: 0 0 auto; }
+        .tablet-screen .navbar-brand, .tablet-screen .card-header, .tablet-screen .button { font-family: OreDisplay, "Microsoft YaHei"; }
+        .tablet-workspace { display: flex; gap: 7px; padding: 7px; min-height: 0; flex: 1 1 auto; }
+        .tablet-panel { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+        .list-panel { width: 27%; flex: 0 0 27%; }
+        .detail-column { min-width: 0; min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 7px; }
+        .feed-panel { min-height: 0; flex: 3 1 0; }
+        .status-panel { flex: 0 0 auto; }
+        .tablet-screen .card-header { min-height: 30px; padding: 8px 9px; font-size: 11px; flex: 0 0 auto; }
+        .tablet-panel .card-body { min-height: 0; padding: 7px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+        .vehicle-list { min-height: 0; overflow-y: auto; flex: 1 1 auto; }
+        .vehicle-entry { min-height: 34px; padding: 4px 7px; box-sizing: border-box; border: 2px solid transparent; background: #363739; color: #fff; cursor: pointer; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+        .vehicle-entry + .vehicle-entry { margin-top: 3px; }
+        .vehicle-entry:hover { border-color: #85878b; background: #4a4b4e; }
+        .vehicle-entry.active { border-color: var(--ore-gold); background: #514a35; }
+        .vehicle-entry-name { min-width: 0; overflow: hidden; white-space: nowrap; font-size: 15px; }
+        .vehicle-entry-state { font-size: 11px; color: var(--ore-ink-muted); }
+        .vehicle-entry-state.online { color: var(--ore-success); }
+        .vehicle-entry-state.occupied { color: var(--ore-warning); }
+        .vehicle-entry-state.lost { color: var(--ore-danger); }
+        .empty-state { padding: 9px 6px; color: var(--ore-ink-muted); font-size: 10px; text-align: center; }
+        .feed-panel .card-body { position: relative; padding: 0; background: #252628; overflow: hidden; flex: 1 1 auto; }
+        .preview-viewport { position: absolute; inset: 5px; border: 2px solid #56585b; background: #101112; box-shadow: inset 3px 3px #222325, inset -3px -3px #444649; }
+        #feed { position: absolute; inset: 2px; cursor: grab; }
+        #feed-card { position: absolute; left: 0; right: 0; top: 45%; text-align: center; color: var(--ore-danger); font-family: OreDisplay, "Microsoft YaHei"; font-size: 14px; }
+        .systems { display: flex; flex-wrap: wrap; gap: 3px; }
+        .system-cell { min-width: 34px; padding: 1px 4px; font-size: 10px; text-align: center; color: #202020; }
+        .system-cell.broken { color: #fff; }
+        .meter-row { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: bold; }
+        .meter-label { flex: 0 0 64px; }
+        .meter { height: 12px; padding: 2px; border-width: 2px; flex: 1 1 auto; }
+        .meter-value { flex: 0 0 38px; text-align: right; }
+        .ammo { color: var(--ore-ink-muted); font-size: 12px; white-space: normal; }
+        .tablet-screen .card-footer { padding: 0; flex: 0 0 auto; display: flex; justify-content: flex-end; gap: 6px; background: transparent !important; border-top: none !important; }
+        .tablet-screen .close-button { width: 30px; height: 26px; min-height: 26px; padding: 3px 7px 7px; font-size: 14px; line-height: 1; flex: 0 0 30px; }
+        .hidden { display: none; }
+    </style>
+    <link rel="stylesheet" href="screen-common.css">
+</head>
+<body class="ore-theme tablet-screen">
+    <nav class="navbar"><div class="navbar-brand"><translation>tablet.combinedassault.title</translation></div><button id="close-button" class="button button-danger close-button" type="button">X</button></nav>
+    <main class="tablet-workspace">
+        <aside class="card card-accent-green tablet-panel list-panel">
+            <div class="card-header split"><span><translation>tablet.combinedassault.linked</translation></span><span id="vehicle-count" class="badge">0</span></div>
+            <div class="card-body"><div id="vehicle-list" class="vehicle-list"></div><div id="vehicle-empty" class="empty-state hidden"><translation>tablet.combinedassault.empty</translation></div></div>
+        </aside>
+        <div class="detail-column">
+            <section class="card card-accent-purple tablet-panel feed-panel">
+                <div class="card-header split"><span><translation>tablet.combinedassault.camera</translation></span><span id="feed-badge" class="badge badge-purple">--</span></div>
+                <div class="card-body"><div class="preview-viewport"><div id="feed"></div><div id="feed-card"></div></div></div>
+            </section>
+            <section class="card card-accent-gold tablet-panel status-panel">
+                <div class="card-header split"><span id="selected-name">--</span><span id="selected-state" class="badge">--</span></div>
+                <div class="card-body">
+                    <div id="systems" class="systems"></div>
+                    <div class="meter-row"><span class="meter-label"><translation>tablet.combinedassault.link_label</translation></span><div class="progress meter"><div id="link-bar" class="progress-bar" style="width:0%"></div></div><span id="link-value" class="meter-value">--</span></div>
+                    <div class="meter-row"><span id="fuel-label" class="meter-label"><translation>tablet.combinedassault.fuel_label</translation></span><div class="progress meter"><div id="fuel-bar" class="progress-bar" style="width:0%"></div></div><span id="fuel-value" class="meter-value">--</span></div>
+                    <div id="ammo" class="ammo"></div>
+                    <div class="card-footer">
+                        <button id="remove-button" class="button button-secondary" type="button"><translation>tablet.combinedassault.remove</translation></button>
+                        <button id="connect-button" class="button button-primary" type="button"><translation>tablet.combinedassault.connect</translation></button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+</body>
+</html>

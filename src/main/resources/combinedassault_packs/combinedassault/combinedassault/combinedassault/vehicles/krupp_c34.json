@@ -1,0 +1,43 @@
+{
+    "type": "combinedassault:generic",
+    "attributes": {},
+    "max_health": 1200,
+    "view_info": {
+        "third_person_distance": 16,
+        "third_person_distance_zoomed": 0
+    },
+    "energy_info": {
+        "energy_capacity": 1000,
+        "energy_consumption_per_tick": 0.01
+    },
+    "uav": false,
+    "parts": [
+        {
+            "id": "gun",
+            "name": "gun",
+            "type": "combinedassault:weapon",
+            "max_health": 600,
+            "component": "turret",
+            "detachable": false,
+            "operator_on_weapon_unit": true,
+            "indirect_fire": {},
+            "optical_sight_type": "optical_scope",
+            "crosshair_style": "cross",
+            "zoom_max": 8,
+            "rot_info": {
+                "x_rot_speed": 1,
+                "y_rot_speed": 1,
+                "need_power": false
+            },
+            "weapons": [
+                "combinedassault:cannon_406mm"
+            ]
+        }
+    ],
+    "model": "combinedassault:models/emplacement/krupp_c34/krupp_c34.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/krupp_c34.png",
+        "controller": "combinedassault:krupp_c34_controller",
+        "tab_index": 604
+    }
+}

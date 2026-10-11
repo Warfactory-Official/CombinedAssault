@@ -1,0 +1,14 @@
+{
+    "type": "combinedassault:cannon",
+    "name": "12.7mm Gun",
+    "shoot_interval": 60,
+    "max_capacity": 120,
+    "reload": {
+        "time": 100,
+        "ammo": "wflib:cartridge_12_7x99"
+    },
+    "sounds": {
+        "fire": {"event": "combinedassault:gun_12.7mm_shot", "range": 450, "pitch_random": 0.1},
+        "reload": {"event": "combinedassault:gun_reload", "range": 24}
+    }
+}

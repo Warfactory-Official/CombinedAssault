@@ -1,0 +1,9 @@
+{
+    "name": "mh60l_controller",
+    "script": "combinedassault:mh60l",
+    "parameters": {},
+    "graph": {
+        "type": "script",
+        "function": "updateBones"
+    }
+}

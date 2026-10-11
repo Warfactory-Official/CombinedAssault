@@ -1,8 +1,8 @@
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
-import org.ywzj.vehicle.vehicle.parenting.DeckClip;
-import org.ywzj.vehicle.vehicle.parenting.DeckSnapshot;
+import com.wf.combinedassault.vehicle.parenting.DeckClip;
+import com.wf.combinedassault.vehicle.parenting.DeckSnapshot;
 
 import java.util.Random;
 
@@ -14,8 +14,8 @@ import java.util.Random;
  * Run:
  *   JOML=$(find ~/.gradle ~/.local/share/gradle -name 'joml-*.jar' ! -name '*sources*' | head -1)
  *   javac -d /tmp/deckcheck -cp "$JOML" \
- *       src/main/java/org/ywzj/vehicle/vehicle/parenting/DeckClip.java \
- *       src/main/java/org/ywzj/vehicle/vehicle/parenting/DeckSnapshot.java tools/DeckCheck.java
+ *       src/main/java/com/wf/combinedassault/vehicle/parenting/DeckClip.java \
+ *       src/main/java/com/wf/combinedassault/vehicle/parenting/DeckSnapshot.java tools/DeckCheck.java
  *   java -cp "/tmp/deckcheck:$JOML" DeckCheck
  */
 public class DeckCheck {

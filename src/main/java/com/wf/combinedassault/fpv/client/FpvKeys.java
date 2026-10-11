@@ -1,0 +1,33 @@
+package com.wf.combinedassault.fpv.client;
+
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.KeyMapping;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.settings.KeyConflictContext;
+import net.neoforged.neoforge.client.settings.KeyModifier;
+import org.lwjgl.glfw.GLFW;
+
+/** No keybind for firing: reuses the host's vehicle-shoot key, so rebinding shoot rebinds detonate too. */
+@EventBusSubscriber(value = Dist.CLIENT)
+public final class FpvKeys {
+
+    public static final KeyMapping ARM_PAYLOAD = new KeyMapping(
+            "key.combinedassault.arm_payload.desc",
+            KeyConflictContext.IN_GAME,
+            KeyModifier.NONE,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_5,
+            "key.category.combinedassault");
+
+    private FpvKeys() {
+    }
+
+    @SubscribeEvent
+    public static void onRegisterKeys(RegisterKeyMappingsEvent event) {
+        event.register(ARM_PAYLOAD);
+    }
+
+}

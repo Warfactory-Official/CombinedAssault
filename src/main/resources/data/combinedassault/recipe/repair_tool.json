@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "minecraft:iron_ingot" },
+    { "item": "minecraft:fire_charge" }
+  ],
+  "result": {
+    "id": "combinedassault:repair_tool",
+    "count": 1
+  }
+}

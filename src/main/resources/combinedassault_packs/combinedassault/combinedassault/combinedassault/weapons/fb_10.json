@@ -1,0 +1,22 @@
+{
+    "type": "combinedassault:missile",
+    "name": "FB-10",
+    "recoil": 0.6,
+    "shoot_interval": 1000,
+    "max_capacity": 8,
+    "reload": {
+        "time": 100,
+        "ammo": [
+            "wflib:missile_fb_10",
+            "#wflib:missile/medium"
+        ]
+    },
+    "x_rot_max": 90,
+    "x_rot_min": -90,
+    "y_rot_max": 180,
+    "y_rot_min": -180,
+    "sounds": {
+        "fire": {"event": "combinedassault:missile_launch", "range": 400, "pitch_random": 0.1},
+        "reload": {"event": "combinedassault:common_reload", "range": 24}
+    }
+}

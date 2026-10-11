@@ -1,0 +1,39 @@
+{
+  "type": "combinedassault:vehicle_printing",
+  "materials": [
+    {
+      "count": 48,
+      "ingredient": {
+        "tag": "c:ingots/iron"
+      }
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "c:ingots/gold"
+      }
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "item": "minecraft:diamond"
+      }
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "minecraft:tnt"
+      }
+    }
+  ],
+  "result": {
+    "id": "combinedassault:vehicle_spawn_item",
+    "count": 1,
+    "components": {
+      "minecraft:custom_data": {
+        "CombinedAssaultId": "combinedassault:tornado"
+      }
+    }
+  },
+  "printingTime": 1800
+}

@@ -1,0 +1,44 @@
+{
+    "name": "humvee_controller",
+    "parameters": {},
+    "graph": {
+        "type": "merge",
+        "inputs": [
+            {
+                "type": "bone_binding",
+                "special_bindings": [
+                    {
+                        "bones": [
+                            "wheel_fl",
+                            "wheel_fr",
+                            "wheel_rl",
+                            "wheel_rr"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "x",
+                        "param": 0.457
+                    },
+                    {
+                        "bones": [
+                            "wheel_fl",
+                            "wheel_fr"
+                        ],
+                        "source": "steering_angle",
+                        "axis": "y",
+                        "multiplier": 1.0,
+                        "min": -30.0,
+                        "max": 30.0
+                    },
+                    {
+                        "bones": [
+                            "steering_wheel"
+                        ],
+                        "source": "steering_angle",
+                        "axis": "y",
+                        "multiplier": -4.33
+                    }
+                ]
+            }
+        ]
+    }
+}

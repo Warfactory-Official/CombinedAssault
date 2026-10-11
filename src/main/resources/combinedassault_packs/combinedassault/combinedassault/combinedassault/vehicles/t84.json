@@ -1,0 +1,157 @@
+{
+    "type": "combinedassault:tracked_vehicle",
+    "attributes": {
+        "brake_acceleration": 0.025,
+        "forward_acceleration": 0.01,
+        "backward_acceleration": 0.01,
+        "max_speed_forward": 0.5,
+        "max_speed_backward": 0.2,
+        "turn_acceleration": 1,
+        "max_turn": 2
+    },
+    "physics_info": {
+        "mass": 51000,
+        "friction": 102000,
+        "suspension_response": 4,
+        "can_destroy_block": true
+    },
+    "max_health": 2600,
+    "armor": {
+        "front": 700,
+        "side": 150,
+        "rear": 60,
+        "top": 50,
+        "bottom": 40
+    },
+    "view_info": {
+        "third_person_distance": 7
+    },
+    "energy_info": {
+        "energy_capacity": 1525,
+        "energy_consumption_per_tick": 0.004166667
+    },
+    "parts": [
+        {
+            "id": "turret",
+            "crew_roles": [
+                "gunner"
+            ],
+            "loading": "autoloader",
+            "name": "turret",
+            "type": "combinedassault:weapon",
+            "max_health": 1000,
+            "render_bone": "turret",
+            "rot_info": {
+                "x_rot_speed": 1.5,
+                "y_rot_speed": 1.8
+            },
+            "optical_sight_type": "crt",
+            "with_stabilizer": true,
+            "with_thermal_imager": true,
+            "with_night_vision": true,
+            "zoom_max": 8,
+            "weapons": [
+                [
+                    "combinedassault:cannon_125mm_apfsds",
+                    "combinedassault:cannon_125mm_heat"
+                ],
+                {
+                    "id": "combinedassault:gun_7.62mm",
+                    "part_unit_id": "turret_machine_gun",
+                    "secondary": true
+                }
+            ]
+        },
+        {
+            "id": "turret_machine_gun",
+            "name": "turret_machine_gun",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "rot_info": {
+                "x_rot_speed": 1.5,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "seat",
+            "crew_roles": [
+                "driver"
+            ],
+            "name": "seat",
+            "type": "combinedassault:generic"
+        },
+        {
+            "id": "commander",
+            "name": "commander",
+            "type": "combinedassault:generic",
+            "crew_roles": [
+                "commander"
+            ]
+        },
+        {
+            "id": "suspension_left",
+            "name": "suspension_left",
+            "type": "combinedassault:track",
+            "is_seat": false,
+            "spring_stiffness": 716000,
+            "damping": 12240,
+            "rest_length": 0.1,
+            "max_compression": 0.1,
+            "max_extension": 0.1,
+            "max_droop": 0.1,
+            "track_width": 0.497
+        },
+        {
+            "id": "suspension_right",
+            "name": "suspension_right",
+            "type": "combinedassault:track",
+            "is_seat": false,
+            "spring_stiffness": 716000,
+            "damping": 12240,
+            "rest_length": 0.1,
+            "max_compression": 0.1,
+            "max_extension": 0.1,
+            "max_droop": 0.1,
+            "track_width": 0.497
+        }
+    ],
+    "model": "combinedassault:models/ground/t84/t84.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/t84.png",
+        "controller": "combinedassault:t84_controller",
+        "engine": {
+            "start": {"event": "combinedassault:ztz99a_engine_start", "range": 144},
+            "loops": [
+                {"sound": {"event": "combinedassault:ztz99a_engine_idle", "range": 144}, "input": "rpm", "volume": [[0.05, 0], [0.3, 1], [0.6, 1], [0.75, 0]], "pitch": [[0.3, 0.85], [0.6, 1]]},
+                {"sound": {"event": "combinedassault:ztz99a_engine_run", "range": 240}, "input": "rpm", "volume": [[0.6, 0], [0.7, 1]], "pitch": [[0.6, 0.8], [1, 1.1]]},
+                {"sound": {"event": "combinedassault:track_run", "range": 144}, "input": "speed", "volume": [[0.01, 0], [0.1, 0.6], [0.6, 1]], "pitch": [[0, 0.8], [1, 1.1]]}
+            ]
+        },
+        "cabin_muffle": 0.85,
+        "tab_index": 102,
+        "track": {
+            "model": "combinedassault:models/effect/t84_track_link.gltf",
+            "module_length": 0.2849
+        },
+        "variants": {
+            "t84_black": {
+                "paint": "combinedassault:black"
+            },
+            "t84_olive_drab": {
+                "paint": "combinedassault:olive_drab"
+            },
+            "t84_sand": {
+                "paint": "combinedassault:sand"
+            },
+            "t84_urban": {
+                "paint": "combinedassault:urban"
+            },
+            "t84_winter": {
+                "paint": "combinedassault:winter"
+            },
+            "t84_woodland": {
+                "paint": "combinedassault:woodland"
+            }
+        }
+    }
+}

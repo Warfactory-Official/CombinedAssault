@@ -1,0 +1,9 @@
+{
+    "name": "kilo_controller",
+    "script": "combinedassault:kilo",
+    "parameters": {},
+    "graph": {
+        "type": "script",
+        "function": "updateBones"
+    }
+}

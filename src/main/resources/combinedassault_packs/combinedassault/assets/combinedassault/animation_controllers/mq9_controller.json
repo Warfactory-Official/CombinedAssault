@@ -1,0 +1,43 @@
+{
+    "name": "mq9_controller",
+    "script": "combinedassault:mq9",
+    "parameters": {},
+    "graph": {
+        "type": "merge",
+        "inputs": [
+            {
+                "type": "script",
+                "function": "updateBones"
+            },
+            {
+                "type": "bone_binding",
+                "special_bindings": [
+                    {
+                        "bones": [
+                            "wheel0"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "z",
+                        "param": 0.227
+                    },
+                    {
+                        "bones": [
+                            "wheel1"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "z",
+                        "param": 0.227
+                    },
+                    {
+                        "bones": [
+                            "wheel2"
+                        ],
+                        "source": "wheel_rotation",
+                        "axis": "z",
+                        "param": 0.227
+                    }
+                ]
+            }
+        ]
+    }
+}

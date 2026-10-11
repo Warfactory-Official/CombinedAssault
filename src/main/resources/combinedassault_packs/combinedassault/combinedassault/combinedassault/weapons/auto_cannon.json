@@ -1,0 +1,15 @@
+{
+    "type": "combinedassault:cannon",
+    "name": "Auto Cannon",
+    "recoil": 0.3,
+    "shoot_interval": 100,
+    "max_capacity": 120,
+    "reload": {
+        "time": 100,
+        "ammo": "wflib:cartridge_20x102"
+    },
+    "sounds": {
+        "fire": {"event": "combinedassault:auto_cannon_shot", "range": 600, "pitch_random": 0.1},
+        "reload": {"event": "combinedassault:gun_reload", "range": 24}
+    }
+}

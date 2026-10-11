@@ -1,0 +1,33 @@
+{
+    "name": "m142_controller",
+    "parameters": {},
+    "graph": {
+        "type": "bone_binding",
+        "special_bindings": [
+            {
+                "bones": [
+                    "wheel_0_l",
+                    "wheel_0_r",
+                    "wheel_1_l",
+                    "wheel_1_r",
+                    "wheel_2_l",
+                    "wheel_2_r"
+                ],
+                "source": "wheel_rotation",
+                "axis": "x",
+                "param": 0.52
+            },
+            {
+                "bones": [
+                    "wheel_0_l",
+                    "wheel_0_r"
+                ],
+                "source": "steering_angle",
+                "axis": "y",
+                "multiplier": 1.0,
+                "min": -30,
+                "max": 30
+            }
+        ]
+    }
+}

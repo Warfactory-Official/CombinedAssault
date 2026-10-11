@@ -1,0 +1,34 @@
+{
+  "required": true,
+  "plugin": "com.wf.combinedassault.mixin.plugin.MixinPlugin",
+  "package": "com.wf.combinedassault.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "minVersion": "0.8",
+  "client": [
+    "client.CameraMixin",
+    "client.ClientPacketListenerMixin",
+    "client.EntityRenderDispatcherMixin",
+    "client.LevelRendererMixin",
+    "client.LivingEntityRendererMixin",
+    "client.MinecraftMixin",
+    "client.MouseHandlerMixin",
+    "client.PlayerRendererMixin",
+    "client.PostChainMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "mixins": [
+    "common.EntityMixin",
+    "common.ExplosionAccessor",
+    "common.GameTestServerMixin",
+    "common.LevelChunkCollisionMixin",
+    "common.LevelMixin",
+    "common.LivingEntityMixin",
+    "common.PlayerMixin",
+    "common.ServerGamePacketListenerImplMixin",
+    "create.ContraptionColliderMixin",
+    "sable.AbstractVehicleSableMixin",
+    "sable.SubLevelEntityCollisionMixin"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "combinedassault:fuel_tank" },
+    { "item": "minecraft:coal" }
+  ],
+  "result": {
+    "id": "combinedassault:fuel_tank",
+    "count": 1
+  }
+}

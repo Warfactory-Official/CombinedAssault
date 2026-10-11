@@ -1,0 +1,196 @@
+{
+    "type": "combinedassault:wheeled_vehicle",
+    "attributes": {
+        "brake_force": 8000,
+        "forward_force": 8800,
+        "backward_force": 4800,
+        "max_speed_forward": 0.7,
+        "max_speed_backward": 0.18,
+        "turn_step": 0.2,
+        "max_turn": 2
+    },
+    "max_health": 350,
+    "view_info": {
+        "third_person_distance": 12,
+        "passenger_view_rot": {
+            "rot_by_vehicle_in_third_person": false,
+            "rot_by_vehicle_in_operator": true
+        }
+    },
+    "energy_info": {
+        "energy_capacity": 1000,
+        "energy_consumption_per_tick": 0.01
+    },
+    "physics_info": {
+        "mass": 1500
+    },
+    "storage": {
+        "slots": 18
+    },
+    "towing": {
+        "hitches": [
+            {
+                "id": "pintle",
+                "name": "hitch.combinedassault.pintle",
+                "modes": [
+                    "cable"
+                ],
+                "cable_length": 9,
+                "max_mass": 3000
+            }
+        ],
+        "towable": {
+            "enabled": true,
+            "tags": [
+                "truck"
+            ],
+            "modes": [
+                "cable"
+            ]
+        }
+    },
+    "parts": [
+        {
+            "id": "driver",
+            "name": "part.combinedassault.driver",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "crew_roles": [
+                "driver"
+            ]
+        },
+        {
+            "id": "launcher",
+            "name": "part.combinedassault.launcher",
+            "type": "combinedassault:weapon",
+            "crew_roles": [
+                "gunner"
+            ],
+            "max_health": 120,
+            "detachable": false,
+            "operator_on_weapon_unit": false,
+            "optical_sight_type": "operator",
+            "crosshair_style": "cross",
+            "zoom_max": 4,
+            "indirect_fire": {
+                "map": true,
+                "launch_elevation": 50
+            },
+            "rot_info": {
+                "x_rot_speed": 2,
+                "y_rot_speed": 3,
+                "x_rot": 0,
+                "need_power": false
+            },
+            "weapons": [
+                "combinedassault:m142_pod"
+            ]
+        },
+        {
+            "id": "pod",
+            "name": "part.combinedassault.pod",
+            "type": "combinedassault:missile_holder",
+            "is_seat": false,
+            "detachable": false,
+            "accepts": [
+                "POD"
+            ],
+            "capacity": 6
+        },
+        {
+            "id": "chief",
+            "name": "part.combinedassault.commander",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "crew_roles": [
+                "commander"
+            ]
+        },
+        {
+            "id": "wheel_0_l",
+            "name": "wheel_0_l",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "is_seat": false,
+            "spring_stiffness": 49000,
+            "damping": 730,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.2
+        },
+        {
+            "id": "wheel_0_r",
+            "name": "wheel_0_r",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "is_seat": false,
+            "spring_stiffness": 49000,
+            "damping": 730,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.2
+        },
+        {
+            "id": "wheel_1_l",
+            "name": "wheel_1_l",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "is_seat": false,
+            "spring_stiffness": 49000,
+            "damping": 730,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.2
+        },
+        {
+            "id": "wheel_1_r",
+            "name": "wheel_1_r",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "is_seat": false,
+            "spring_stiffness": 49000,
+            "damping": 730,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.2
+        },
+        {
+            "id": "wheel_2_l",
+            "name": "wheel_2_l",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "is_seat": false,
+            "spring_stiffness": 49000,
+            "damping": 730,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.2
+        },
+        {
+            "id": "wheel_2_r",
+            "name": "wheel_2_r",
+            "type": "combinedassault:suspension",
+            "max_health": 60,
+            "is_seat": false,
+            "spring_stiffness": 49000,
+            "damping": 730,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.2
+        }
+    ],
+    "model": "combinedassault:models/ground/m142/m142.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/m142.png",
+        "controller": "combinedassault:m142_controller",
+        "engine": {
+            "start": {"event": "combinedassault:lav150_engine_start", "range": 96},
+            "loops": [
+                {"sound": {"event": "combinedassault:truck_engine_idle", "range": 96}, "input": "rpm", "volume": [[0.05, 0], [0.3, 1], [0.6, 1], [0.75, 0]], "pitch": [[0.3, 0.85], [0.6, 1]]},
+                {"sound": {"event": "combinedassault:truck_engine_run", "range": 160}, "input": "rpm", "volume": [[0.6, 0], [0.7, 1]], "pitch": [[0.6, 0.8], [1, 1.1]]}
+            ]
+        },
+        "cabin_muffle": 0.55,
+        "tab_index": 209
+    }
+}

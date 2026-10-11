@@ -1,0 +1,341 @@
+{
+    "gun_7.62mm_shot": {
+        "sounds": [
+            "combinedassault:weapon/gun/gun_7.62mm_shot_01",
+            "combinedassault:weapon/gun/gun_7.62mm_shot_02",
+            "combinedassault:weapon/gun/gun_7.62mm_shot_03"
+        ],
+        "subtitle": "combinedassault.sounds.gun_7.62mm_shot"
+    },
+    "gun_12.7mm_shot": {
+        "sounds": [
+            "combinedassault:weapon/gun/gun_12.7mm_shot_01",
+            "combinedassault:weapon/gun/gun_12.7mm_shot_02",
+            "combinedassault:weapon/gun/gun_12.7mm_shot_03"
+        ],
+        "subtitle": "combinedassault.sounds.gun_12.7mm_shot"
+    },
+    "gun_14.5mm_shot": {
+        "sounds": [
+            "combinedassault:weapon/gun/gun_14.5mm_shot_01",
+            "combinedassault:weapon/gun/gun_14.5mm_shot_02",
+            "combinedassault:weapon/gun/gun_14.5mm_shot_03"
+        ],
+        "subtitle": "combinedassault.sounds.gun_14.5mm_shot"
+    },
+    "auto_cannon_shot": {
+        "sounds": [
+            "combinedassault:weapon/auto_cannon/auto_cannon_shot_01",
+            "combinedassault:weapon/auto_cannon/auto_cannon_shot_02",
+            "combinedassault:weapon/auto_cannon/auto_cannon_shot_03"
+        ],
+        "subtitle": "combinedassault.sounds.auto_cannon_shot"
+    },
+    "cannon_125mm_shot": {
+        "sounds": [
+            "combinedassault:weapon/artillery/cannon_125mm_shot_01",
+            "combinedassault:weapon/artillery/cannon_125mm_shot_02",
+            "combinedassault:weapon/artillery/cannon_125mm_shot_03"
+        ],
+        "subtitle": "combinedassault.sounds.cannon_125mm_shot"
+    },
+    "rocket_launch": {
+        "sounds": [
+            "combinedassault:weapon/rocket/rocket_start_01",
+            "combinedassault:weapon/rocket/rocket_start_02",
+            "combinedassault:weapon/rocket/rocket_start_03",
+            "combinedassault:weapon/rocket/rocket_start_04"
+        ],
+        "subtitle": "combinedassault.sounds.rocket_launch"
+    },
+    "missile_launch": {
+        "sounds": [
+            "combinedassault:weapon/missile/missile_start_light_01",
+            "combinedassault:weapon/missile/missile_start_light_02",
+            "combinedassault:weapon/missile/missile_start_light_03"
+        ],
+        "subtitle": "combinedassault.sounds.missile_launch"
+    },
+    "large_missile_launch": {
+        "sounds": [
+            "combinedassault:weapon/missile/missile_start_med_001",
+            "combinedassault:weapon/missile/missile_start_med_002",
+            "combinedassault:weapon/missile/missile_start_med_003"
+        ],
+        "subtitle": "combinedassault.sounds.large_missile_launch"
+    },
+    "rocket_flying": {
+        "sounds": [
+            "combinedassault:weapon/rocket/rocket_loop_very_close"
+        ],
+        "subtitle": "combinedassault.sounds.rocket_flying"
+    },
+    "bomb_drop": {
+        "sounds": [
+            "combinedassault:weapon/bomb/bomb_drop"
+        ],
+        "subtitle": "combinedassault.sounds.bomb_drop"
+    },
+    "bomb_whistle": {
+        "sounds": [
+            "combinedassault:weapon/bomb/bomb_whistle"
+        ],
+        "subtitle": "combinedassault.sounds.bomb_whistle"
+    },
+    "bombs_incoming": {
+        "sounds": [
+            "combinedassault:weapon/bomb/bombs_incoming_01",
+            "combinedassault:weapon/bomb/bombs_incoming_02",
+            "combinedassault:weapon/bomb/bombs_incoming_03"
+        ],
+        "subtitle": "combinedassault.sounds.bombs_incoming"
+    },
+    "cannon_shell_drop": {
+        "sounds": [
+            "combinedassault:weapon/artillery/cannon_shell_drop_01",
+            "combinedassault:weapon/artillery/cannon_shell_drop_02",
+            "combinedassault:weapon/artillery/cannon_shell_drop_03"
+        ],
+        "subtitle": "combinedassault.sounds.cannon_shell_drop"
+    },
+    "smoke_grenade_launch": {
+        "sounds": [
+            "combinedassault:weapon/grenade/smoke_grenade_launch_01",
+            "combinedassault:weapon/grenade/smoke_grenade_launch_02",
+            "combinedassault:weapon/grenade/smoke_grenade_launch_03"
+        ],
+        "subtitle": "combinedassault.sounds.smoke_grenade_launch"
+    },
+    "decoy_flare_launch": {
+        "sounds": [
+            "combinedassault:weapon/decoy_flare/decoy_flare_launch_01",
+            "combinedassault:weapon/decoy_flare/decoy_flare_launch_02",
+            "combinedassault:weapon/decoy_flare/decoy_flare_launch_03"
+        ],
+        "subtitle": "combinedassault.sounds.decoy_flare_launch"
+    },
+    "gun_reload": {
+        "sounds": [
+            "combinedassault:weapon/gun/gun_reload"
+        ],
+        "subtitle": "combinedassault.sounds.gun_reload"
+    },
+    "auto_cannon_reload": {
+        "sounds": [
+            "combinedassault:weapon/auto_cannon/auto_cannon_reload"
+        ],
+        "subtitle": "combinedassault.sounds.auto_cannon_reload"
+    },
+    "artillery_reload": {
+        "sounds": [
+            "combinedassault:weapon/artillery/artillery_reload_01",
+            "combinedassault:weapon/artillery/artillery_reload_02",
+            "combinedassault:weapon/artillery/artillery_reload_03"
+        ],
+        "subtitle": "combinedassault.sounds.artillery_reload"
+    },
+    "common_reload": {
+        "sounds": [
+            "combinedassault:weapon/common/common_reload"
+        ],
+        "subtitle": "combinedassault.sounds.common_reload"
+    },
+    "track_run": {
+        "sounds": [
+            "combinedassault:vehicle/common/track_run"
+        ],
+        "subtitle": "combinedassault.sounds.track_run"
+    },
+    "truck_engine_idle": {
+        "sounds": [
+            "combinedassault:vehicle/common/truck_engine_idle"
+        ],
+        "subtitle": "combinedassault.sounds.truck_engine_idle"
+    },
+    "truck_engine_run": {
+        "sounds": [
+            "combinedassault:vehicle/common/truck_engine_run"
+        ],
+        "subtitle": "combinedassault.sounds.truck_engine_run"
+    },
+    "boat_engine_idle": {
+        "sounds": [
+            "combinedassault:vehicle/common/boat_engine_idle"
+        ]
+    },
+    "boat_engine_run": {
+        "sounds": [
+            "combinedassault:vehicle/common/boat_engine_run"
+        ]
+    },
+    "jet_engine_start": {
+        "sounds": [
+            "combinedassault:vehicle/jet/jet_engine_start"
+        ],
+        "subtitle": "combinedassault.sounds.jet_engine_start"
+    },
+    "jet_engine_stop": {
+        "sounds": [
+            "combinedassault:vehicle/jet/jet_engine_stop"
+        ],
+        "subtitle": "combinedassault.sounds.jet_engine_stop"
+    },
+    "jet_engine_run": {
+        "sounds": [
+            "combinedassault:vehicle/jet/jet_engine_run"
+        ],
+        "subtitle": "combinedassault.sounds.jet_engine_run"
+    },
+    "jet_engine_thrust": {
+        "sounds": [
+            "combinedassault:vehicle/jet/jet_engine_thrust"
+        ],
+        "subtitle": "combinedassault.sounds.jet_engine_thrust"
+    },
+    "jet_passby": {
+        "sounds": [
+            "combinedassault:vehicle/jet/jet_passby_001",
+            "combinedassault:vehicle/jet/jet_passby_002",
+            "combinedassault:vehicle/jet/jet_passby_003"
+        ],
+        "subtitle": "combinedassault.sounds.jet_passby"
+    },
+    "piston_engine_start": {
+        "sounds": [
+            "combinedassault:vehicle/piston/piston_engine_start"
+        ],
+        "subtitle": "combinedassault.sounds.piston_engine_start"
+    },
+    "piston_engine_stop": {
+        "sounds": [
+            "combinedassault:vehicle/piston/piston_engine_stop"
+        ],
+        "subtitle": "combinedassault.sounds.piston_engine_stop"
+    },
+    "piston_engine_run": {
+        "sounds": [
+            "combinedassault:vehicle/piston/piston_engine_run"
+        ],
+        "subtitle": "combinedassault.sounds.piston_engine_run"
+    },
+    "piston_engine_thrust": {
+        "sounds": [
+            "combinedassault:vehicle/piston/piston_engine_thrust"
+        ],
+        "subtitle": "combinedassault.sounds.piston_engine_thrust"
+    },
+    "piston_passby": {
+        "sounds": [
+            "combinedassault:vehicle/piston/piston_passby"
+        ],
+        "subtitle": "combinedassault.sounds.piston_passby"
+    },
+    "lav150_engine_start": {
+        "sounds": [
+            "combinedassault:vehicle/lav150/lav150_engine_start"
+        ],
+        "subtitle": "combinedassault.sounds.lav150_engine_start"
+    },
+    "lav150_engine_idle": {
+        "sounds": [
+            "combinedassault:vehicle/lav150/lav150_engine_idle"
+        ],
+        "subtitle": "combinedassault.sounds.lav150_engine_idle"
+    },
+    "lav150_engine_run": {
+        "sounds": [
+            "combinedassault:vehicle/lav150/lav150_engine_run"
+        ],
+        "subtitle": "combinedassault.sounds.lav150_engine_run"
+    },
+    "ztz99a_engine_start": {
+        "sounds": [
+            "combinedassault:vehicle/ztz99a/ztz99a_engine_start"
+        ],
+        "subtitle": "combinedassault.sounds.ztz99a_engine_start"
+    },
+    "ztz99a_engine_idle": {
+        "sounds": [
+            "combinedassault:vehicle/ztz99a/ztz99a_engine_idle"
+        ],
+        "subtitle": "combinedassault.sounds.ztz99a_engine_idle"
+    },
+    "ztz99a_engine_run": {
+        "sounds": [
+            "combinedassault:vehicle/ztz99a/ztz99a_engine_run"
+        ],
+        "subtitle": "combinedassault.sounds.ztz99a_engine_run"
+    },
+    "z10_engine_start": {
+        "sounds": [
+            "combinedassault:vehicle/z10/z10_engine_start"
+        ],
+        "subtitle": "combinedassault.sounds.z10_engine_start"
+    },
+    "z10_engine_stop": {
+        "sounds": [
+            "combinedassault:vehicle/z10/z10_engine_stop"
+        ],
+        "subtitle": "combinedassault.sounds.z10_engine_stop"
+    },
+    "z10_engine_run": {
+        "sounds": [
+            "combinedassault:vehicle/z10/z10_engine_run"
+        ],
+        "subtitle": "combinedassault.sounds.z10_engine_run"
+    },
+    "ah_6_engine_start": {
+        "sounds": [
+            "combinedassault:vehicle/ah_6/ah_6_engine_start"
+        ],
+        "subtitle": "combinedassault.sounds.ah_6_engine_start"
+    },
+    "ah_6_engine_run": {
+        "sounds": [
+            "combinedassault:vehicle/ah_6/ah_6_engine_run"
+        ],
+        "subtitle": "combinedassault.sounds.ah_6_engine_run"
+    },
+    "quadcopter_engine_run": {
+        "sounds": [
+            "combinedassault:vehicle/quadcopter/quadcopter_engine_run"
+        ],
+        "subtitle": "combinedassault.sounds.quadcopter_engine_run"
+    },
+    "motorcycle_engine_start": {
+        "sounds": [
+            "combinedassault:vehicle/motorcycle/motorcycle_engine_start"
+        ],
+        "subtitle": "combinedassault.sounds.motorcycle_engine_start"
+    },
+    "motorcycle_engine_idle": {
+        "sounds": [
+            "combinedassault:vehicle/motorcycle/motorcycle_engine_idle"
+        ],
+        "subtitle": "combinedassault.sounds.motorcycle_engine_idle"
+    },
+    "motorcycle_engine_run": {
+        "sounds": [
+            "combinedassault:vehicle/motorcycle/motorcycle_engine_run"
+        ],
+        "subtitle": "combinedassault.sounds.motorcycle_engine_run"
+    },
+    "m1a2_engine_start": {
+        "sounds": [
+            "combinedassault:vehicle/m1a2/m1a2_engine_start"
+        ],
+        "subtitle": "combinedassault.sounds.m1a2_engine_start"
+    },
+    "m1a2_engine_idle": {
+        "sounds": [
+            "combinedassault:vehicle/m1a2/m1a2_engine_idle"
+        ],
+        "subtitle": "combinedassault.sounds.m1a2_engine_idle"
+    },
+    "m1a2_engine_run": {
+        "sounds": [
+            "combinedassault:vehicle/m1a2/m1a2_engine_run"
+        ],
+        "subtitle": "combinedassault.sounds.m1a2_engine_run"
+    }
+}

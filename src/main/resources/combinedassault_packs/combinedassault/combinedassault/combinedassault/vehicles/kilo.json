@@ -1,0 +1,123 @@
+{
+    "type": "combinedassault:ship",
+    "attributes": {
+        "waterline": 3.0,
+        "draft": 7.6,
+        "max_speed_forward": 0.31,
+        "max_speed_backward": 0.12,
+        "acceleration_time": 25,
+        "throttle_rate": 0.3,
+        "rudder_rate": 0.7,
+        "turn_rate": 3.0,
+        "turn_lag": 1.0,
+        "low_speed_turn": 0.0,
+        "drift": 0.15,
+        "heel": 0.3,
+        "trim": 0.5,
+        "heave_period": 4.0,
+        "righting_rate": 3.0,
+        "min_keel_clearance": 1.0,
+        "shallow_drag": 2.0,
+        "submarine": {
+            "max_depth": 40,
+            "crush_depth": 60,
+            "dive_rate": 0.15,
+            "max_speed_submerged": 0.44,
+            "dive_angle": 12
+        }
+    },
+    "max_health": 400,
+    "view_info": {
+        "third_person_distance": 45,
+        "third_person_distance_zoomed": 1
+    },
+    "energy_info": {
+        "energy_capacity": 6000,
+        "energy_consumption_per_tick": 0.04
+    },
+    "defense_stats": {
+        "damage_threshold": 40,
+        "impact_multiplier": 0.1
+    },
+    "physics_info": {
+        "mass": 60000,
+        "radar_cross_section": 2,
+        "can_tumble": false
+    },
+    "armor": {
+        "front": 40,
+        "side": 35,
+        "rear": 35,
+        "top": 30,
+        "bottom": 30
+    },
+    "storage": {
+        "slots": 54
+    },
+    "parts": [
+        {
+            "id": "helm",
+            "name": "helm",
+            "type": "combinedassault:weapon",
+            "is_seat": true,
+            "operator_on_weapon_unit": false,
+            "fire_control_sensor_type": "eo",
+            "optical_sight_type": "operator",
+            "crosshair_style": "cross",
+            "zoom_max": 8,
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0,
+                "x_rot_min": 0,
+                "x_rot_max": 0,
+                "y_rot_min": 0,
+                "y_rot_max": 0
+            },
+            "weapons": [
+                {
+                    "id": "combinedassault:torpedo_launcher",
+                    "part_unit_id": "torpedo_tubes"
+                }
+            ]
+        },
+        {
+            "id": "torpedo_tubes",
+            "name": "torpedo_tubes",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "parent_weapon_unit_aim": true,
+            "ammo_capacity": 6,
+            "firing_mode": "ripple",
+            "crosshair_style": "none",
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "tube_rack",
+            "name": "tube_rack",
+            "type": "combinedassault:missile_holder",
+            "is_seat": false,
+            "accepts": [
+                "MEDIUM",
+                "LARGE"
+            ],
+            "capacity": 6
+        },
+        {
+            "id": "planesman",
+            "name": "planesman",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        }
+    ],
+    "model": "combinedassault:models/ships/kilo/kilo.gltf",
+    "display": {
+        "cabin_muffle": 0.9,
+        "icon": "combinedassault:textures/slot/kilo.png",
+        "controller": "combinedassault:kilo_controller",
+        "tab_index": 702,
+        "description": ""
+    }
+}

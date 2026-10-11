@@ -1,0 +1,178 @@
+{
+    "type": "combinedassault:ship",
+    "attributes": {
+        "waterline": 0.36,
+        "draft": 0.33,
+        "max_speed_forward": 1.0,
+        "max_speed_backward": 0.3,
+        "acceleration_time": 4,
+        "throttle_rate": 1.0,
+        "rudder_rate": 2.0,
+        "turn_rate": 40.0,
+        "turn_lag": 1.0,
+        "low_speed_turn": 0.5,
+        "drift": 0.5,
+        "heel": -0.5,
+        "trim": 4.0,
+        "heave_period": 1.5,
+        "righting_rate": 30.0,
+        "min_keel_clearance": 0.5,
+        "shallow_drag": 1.5
+    },
+    "max_health": 100,
+    "view_info": {
+        "third_person_distance": 8,
+        "third_person_distance_zoomed": 0.5
+    },
+    "energy_info": {
+        "energy_capacity": 500,
+        "energy_consumption_per_tick": 0.02
+    },
+    "defense_stats": {
+        "damage_threshold": 10,
+        "impact_multiplier": 1
+    },
+    "physics_info": {
+        "mass": 5000,
+        "radar_cross_section": 0.3,
+        "can_tumble": false
+    },
+    "storage": {
+        "slots": 27
+    },
+    "parts": [
+        {
+            "id": "helm",
+            "name": "helm",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "crew_1",
+            "name": "crew",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "crew_2",
+            "name": "crew",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "gun_bow_port",
+            "name": "gun_bow_port",
+            "type": "combinedassault:weapon",
+            "crew_roles": [
+                "gunner"
+            ],
+            "max_health": 120,
+            "render_bone": "gun_bow_port",
+            "operator_on_weapon_unit": false,
+            "optical_sight_type": "operator",
+            "zoom_max": 2,
+            "rot_info": {
+                "x_rot_speed": 4,
+                "y_rot_speed": 4,
+                "need_power": false
+            },
+            "weapons": [
+                "combinedassault:gun_12.7mm",
+                "combinedassault:mk19"
+            ],
+            "mounts": [
+                {
+                    "model": "combinedassault:models/weapon/m2/m2.gltf",
+                    "node": "ATTACH_MOUNT_BOW_PORT",
+                    "weapon": "combinedassault:gun_12.7mm"
+                },
+                {
+                    "model": "combinedassault:models/weapon/mk19/mk19.gltf",
+                    "node": "ATTACH_MOUNT_BOW_PORT",
+                    "weapon": "combinedassault:mk19"
+                }
+            ],
+            "pose": "stand",
+            "protect_passenger": false
+        },
+        {
+            "id": "gun_bow_starboard",
+            "name": "gun_bow_starboard",
+            "type": "combinedassault:weapon",
+            "crew_roles": [
+                "gunner"
+            ],
+            "max_health": 120,
+            "render_bone": "gun_bow_starboard",
+            "operator_on_weapon_unit": false,
+            "optical_sight_type": "operator",
+            "zoom_max": 2,
+            "rot_info": {
+                "x_rot_speed": 4,
+                "y_rot_speed": 4,
+                "need_power": false
+            },
+            "weapons": [
+                "combinedassault:gun_12.7mm",
+                "combinedassault:mk19"
+            ],
+            "mounts": [
+                {
+                    "model": "combinedassault:models/weapon/m2/m2.gltf",
+                    "node": "ATTACH_MOUNT_BOW_STARBOARD",
+                    "weapon": "combinedassault:gun_12.7mm"
+                },
+                {
+                    "model": "combinedassault:models/weapon/mk19/mk19.gltf",
+                    "node": "ATTACH_MOUNT_BOW_STARBOARD",
+                    "weapon": "combinedassault:mk19"
+                }
+            ],
+            "pose": "stand",
+            "protect_passenger": false
+        },
+        {
+            "id": "gun_stern",
+            "name": "gun_stern",
+            "type": "combinedassault:weapon",
+            "crew_roles": [
+                "gunner"
+            ],
+            "max_health": 120,
+            "render_bone": "gun_stern",
+            "operator_on_weapon_unit": false,
+            "optical_sight_type": "operator",
+            "zoom_max": 2,
+            "rot_info": {
+                "x_rot_speed": 4,
+                "y_rot_speed": 4,
+                "need_power": false
+            },
+            "weapons": [
+                "combinedassault:mk19",
+                "combinedassault:gun_12.7mm"
+            ],
+            "mounts": [
+                {
+                    "model": "combinedassault:models/weapon/m2/m2.gltf",
+                    "node": "ATTACH_MOUNT_STERN",
+                    "weapon": "combinedassault:gun_12.7mm"
+                },
+                {
+                    "model": "combinedassault:models/weapon/mk19/mk19.gltf",
+                    "node": "ATTACH_MOUNT_STERN",
+                    "weapon": "combinedassault:mk19"
+                }
+            ],
+            "pose": "stand",
+            "protect_passenger": false
+        }
+    ],
+    "model": "combinedassault:models/ships/riverine/riverine.gltf",
+    "display": {
+        "cabin_muffle": 0.2,
+        "icon": "combinedassault:textures/slot/riverine.png",
+        "tab_index": 701,
+        "description": ""
+    }
+}

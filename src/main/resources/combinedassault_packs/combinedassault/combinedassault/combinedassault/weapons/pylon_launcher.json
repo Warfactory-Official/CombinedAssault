@@ -1,0 +1,9 @@
+{
+    "type": "combinedassault:missile",
+    "name": "Pylon launcher",
+    "recoil": 0,
+    "shoot_interval": 500,
+    "max_capacity": 6,
+    "missile_holder": "pylons",
+    "holder_only": true
+}

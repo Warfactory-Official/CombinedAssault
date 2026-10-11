@@ -1,0 +1,9 @@
+{
+    "name": "ka52_controller",
+    "script": "combinedassault:ka52",
+    "parameters": {},
+    "graph": {
+        "type": "script",
+        "function": "updateBones"
+    }
+}
