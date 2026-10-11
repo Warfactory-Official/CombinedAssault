@@ -86,7 +86,6 @@ public class ServerBroadcastEntities implements CustomPacketPayload {
                 EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(broadcastEntity.entityType);
                 Entity entity = type.create(level);
                 if (entity != null) {
-                    entity.load(broadcastEntity.data);
                     entity.setId(broadcastEntity.entityId);
                     entity.xo = broadcastEntity.entityPosition.x;
                     entity.yo = broadcastEntity.entityPosition.y;

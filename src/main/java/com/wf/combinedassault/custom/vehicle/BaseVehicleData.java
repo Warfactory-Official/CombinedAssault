@@ -46,11 +46,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class BaseVehicleData<T extends AbstractVehicle> {
 
-    /** Face normal y below -this => support face. */
-    private static final float SUPPORT_FACE_DOWN = 0.3F;
-    /** Support points closer than this (blocks, per axis) merge. */
-    private static final float SUPPORT_MERGE = 0.1F;
-
     protected ResourceLocation vehicleId;
     protected Component name;
     protected float maxHealth;
@@ -59,9 +54,6 @@ public class BaseVehicleData<T extends AbstractVehicle> {
     protected PhysicsInfo physicsInfo;
     /** physics_info.center in the physics body's frame. Hull model: pack value is vehicle-local. */
     protected Vec3 physicsCenter;
-    /** Hull model: downward-face vertices of solid body pieces, physics body frame; bottom supports. */
-    protected final List<Vector3f> bodySupports = new ArrayList<>();
-    private final List<ConvexHull> bodyHulls = new ArrayList<>();
     protected DefenseStats defenseStats;
     protected StorageInfo storage = new StorageInfo();
     protected List<MountPointInfo> mountPoints = List.of();
@@ -174,7 +166,6 @@ public class BaseVehicleData<T extends AbstractVehicle> {
             }
         }
         physicsCenter = physicsInfo.center.subtract(mainCubeOBB.offset());
-        buildBodySupports();
 
         this.addonMounts = resolveAddonMounts(pojo.addonArmor == null ? List.of() : pojo.addonArmor);
         double minX = Double.POSITIVE_INFINITY;
@@ -299,44 +290,6 @@ public class BaseVehicleData<T extends AbstractVehicle> {
             maxZ = Math.max(maxZ, hull.maxZ());
         }
         bodyDepth = maxZ - minZ;
-        this.bodyHulls.clear();
-        this.bodyHulls.addAll(bodyHulls);
-    }
-
-    /**
-     * Body box points cover only the body piece's own footprint; without these the rest of the hull
-     * has no ground support (Ka-52 nose 0.57 into the ground, F-35A on its tail).
-     */
-    private void buildBodySupports() {
-        bodySupports.clear();
-        if (mainCubeOBB == null) {
-            return;
-        }
-        Quaternionf inverse = new Quaternionf(mainCubeOBB.group.globalTransform().rotation()).conjugate();
-        Vec3 origin = mainCubeOBB.offset();
-        Set<Long> seen = new HashSet<>();
-        for (ConvexHull hull : bodyHulls) {
-            float[] planes = hull.planes(), points = hull.points();
-            int[] index = hull.faceVertices();
-            for (int face = 0, faces = hull.faceCount(); face < faces; face++) {
-                if (planes[face * 4 + 1] > -SUPPORT_FACE_DOWN) {
-                    continue;
-                }
-                for (int k = hull.faceStart(face), end = hull.faceEnd(face); k < end; k++) {
-                    int v = index[k] * 3;
-                    Vector3f local = inverse.transform(new Vector3f((float) (points[v] - origin.x),
-                            (float) (points[v + 1] - origin.y), (float) (points[v + 2] - origin.z)));
-                    local.y -= VehicleCubeOBB.POINT_OFFSET;
-                    long key = (Math.round(local.x / SUPPORT_MERGE) & 0x1FFFFF) << 42
-                            | (Math.round(local.y / SUPPORT_MERGE) & 0x1FFFFF) << 21
-                            | (Math.round(local.z / SUPPORT_MERGE) & 0x1FFFFF);
-                    if (seen.add(key)) {
-                        bodySupports.add(local);
-                    }
-                }
-            }
-        }
-        bodyHulls.clear();
     }
 
     /** After {@link #setVehicleId}. */
@@ -441,9 +394,6 @@ public class BaseVehicleData<T extends AbstractVehicle> {
         return physicsInfo;
     }
 
-    public List<Vector3f> getBodySupports() {
-        return bodySupports;
-    }
 
     public Vec3 getPhysicsCenter() {
         return physicsCenter;

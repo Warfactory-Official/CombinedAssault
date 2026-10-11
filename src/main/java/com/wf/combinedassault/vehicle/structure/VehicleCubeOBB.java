@@ -42,7 +42,6 @@ public class VehicleCubeOBB {
     public VehicleCubeGroup group;
     private boolean deck;
     private final List<CubePoint> cubePoints;
-    private final List<CubePoint> attachedPoints = new ArrayList<>();
     private boolean pointsInitialized;
     private final Vector3f localCenter = new Vector3f();
     private final Quaternionf localRotation = new Quaternionf();
@@ -179,7 +178,6 @@ public class VehicleCubeOBB {
         obb.setExtents(new Vector3f((float) (width / 2), (float) (height / 2), (float) (depth / 2)));
         cubePoints.clear();
         cubePointsByFace.clear();
-        attachedPoints.clear();
         pointsInitialized = false;
         initSpacing();
     }
@@ -381,14 +379,6 @@ public class VehicleCubeOBB {
         ensurePoints();
         cubePoints.add(point);
         cubePointsByFace.get(point.cubeFace()).add(point);
-        attachedPoints.add(point);
-    }
-
-    /**
-     * Sample points attached by parts, distinct from those initialized on the cube surface.
-     */
-    public List<CubePoint> attachedPoints() {
-        return attachedPoints;
     }
 
     public double getX() {

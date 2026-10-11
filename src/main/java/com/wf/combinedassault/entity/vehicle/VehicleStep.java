@@ -16,6 +16,8 @@ import com.wf.combinedassault.vehicle.collision.CompoundBody;
 import com.wf.combinedassault.vehicle.collision.DriveSurface;
 import com.wf.combinedassault.vehicle.collision.SurfaceSection;
 import com.wf.combinedassault.vehicle.parenting.CarrierLink;
+import com.wf.combinedassault.vehicle.part.LandingGearUnit;
+import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.SuspensionUnit;
 import com.wf.combinedassault.vehicle.rigid.ContactBuffer;
 import com.wf.combinedassault.vehicle.rigid.ConvexContacts;
@@ -104,6 +106,10 @@ public final class VehicleStep {
     /** Strut off (up.y < STRUT_FADE_END): wheel boxes as world shapes, tyre sidewalls. Same layout as pieceFrames. */
     private float[] wheelFrames = new float[0];
     private int wheelCount;
+    /** Landing gear points, hull frame: FOOT boxes resting on each. */
+    private float[] feet = new float[0];
+    private int footCount;
+    private static final float FOOT = 0.15f;
 
     int body;
     /** World shape frames ({@link NarrowNative#FRAME} each), hull (null = box), native hull handle. */
@@ -137,6 +143,7 @@ public final class VehicleStep {
     DriveSurface.View surface;
     /** {@link AbstractVehicle#weightCarried}, at capture. */
     boolean carried;
+    boolean gear;
     /** Prism depth behind a fill triangle, blocks. 0.25: hull at 0.47 b/t on a 1:2 ramp went 0.23 deep, past the prism. */
     private static final float FILL_DEPTH = 1.0f;
     /** Hull point this far past a box's xz footprint still reads as over its top, blocks. */
@@ -241,8 +248,10 @@ public final class VehicleStep {
         sprung = engine.suspended();
         wheelsWereDown = engine.wheelsGrounded();
         captureWheels(main.obb());
+        captureFeet();
         captureTow();
         carried = v.weightCarried();
+        gear = !sprung && v.rollsOnGear();
         acceleration.set(0, v.isNoGravity() || carried ? 0 : -PhysicsEngine.G, 0);
         engine.buoyancy(velocity, acceleration);
         if (sprung) {
@@ -250,7 +259,7 @@ public final class VehicleStep {
             if (wheelsWereDown) {
                 engine.rollingResistance(velocity);
             }
-        } else if (v.towedOnWheels() && v.onGround()) {
+        } else if ((v.towedOnWheels() || gear) && v.onGround()) {
             engine.rollingResistance(velocity);
         }
         driveTorque(engine);
@@ -322,6 +331,23 @@ public final class VehicleStep {
         }
         wheelCount = wheels.size();
         wheelFrames = frames(wheels, stale, wheelFrames);
+    }
+
+    private void captureFeet() {
+        footCount = 0;
+        for (PartUnit<?> unit : vehicle.getPartUnits()) {
+            if (unit instanceof LandingGearUnit gear && !gear.isDetached()) {
+                if (feet.length < (footCount + gear.footCount()) * 3) {
+                    feet = Arrays.copyOf(feet, (footCount + gear.footCount()) * 3);
+                }
+                for (int i = 0; i < gear.footCount(); i++, footCount++) {
+                    Vector3f at = gear.foot(i);
+                    feet[footCount * 3] = at.x;
+                    feet[footCount * 3 + 1] = at.y + FOOT;
+                    feet[footCount * 3 + 2] = at.z;
+                }
+            }
+        }
     }
 
     /** Coupling geometry against the tractor's current (pre-step) pose; parted-far couplings left to {@link TowSolver}. */
@@ -462,7 +488,7 @@ public final class VehicleStep {
     private void worldFrames(double[] origin, boolean handles) {
         float hx = (float) (hullX - origin[0]), hy = (float) (hullY - origin[1]), hz = (float) (hullZ - origin[2]);
         CompoundBody compound = vehicle.collisionBody();
-        int count = 1 + compound.pieceCount() + wheelCount;
+        int count = 1 + compound.pieceCount() + wheelCount + footCount;
         if (worldHulls.length < count) {
             worldHulls = Arrays.copyOf(worldHulls, count);
             worldHandles = Arrays.copyOf(worldHandles, count);
@@ -488,6 +514,11 @@ public final class VehicleStep {
                     rotation);
             float ex = wheelFrames[o + 7], ey = wheelFrames[o + 8], ez = wheelFrames[o + 9];
             frame(base + i, null, px, py, pz, rotation, ex, ey, ez, offset.set(ex, ey, ez).length(), handles);
+        }
+        for (int i = 0, base = 1 + compound.pieceCount() + wheelCount; i < footCount; i++) {
+            hullRotation.transform(offset.set(feet[i * 3], feet[i * 3 + 1], feet[i * 3 + 2]));
+            frame(base + i, null, hx + offset.x, hy + offset.y, hz + offset.z, hullRotation, FOOT, FOOT, FOOT,
+                    FOOT * 1.7321f, handles);
         }
     }
 
@@ -725,7 +756,8 @@ public final class VehicleStep {
         // belly braked a T-90 to a stop on a 1:4 hill. Lift contacts => no slide down slopes.
         // Towed on wheels: rolls; the axle row grips sideways (unsprung MIM-104 dragged its belly at 0.5, train stalled).
         // Carried (afloat): heave spring presses a grounded bow into the bed => 0.5 grip >> screw thrust, never backed off.
-        boolean rolling = tow != null && tow.mode() != TowMode.SLING;
+        // Unsprung gear down: Coulomb 0.5 held a full-thrust A-10 parked (0.0095 b/t per tick zeroed).
+        boolean rolling = gear || tow != null && tow.mode() != TowMode.SLING;
         float friction = rolling || carried || sprung && hullRotation.transform(new Vector3f(0, 1, 0)).y > BELLY_SPIN_UP ? 0 : FRICTION;
         float restitution = vehicle.physicsEngine.bounce;
         int deckSupports = 0;

@@ -447,6 +447,15 @@ public class FixedWingVehicle extends AbstractVehicle
         }
         Vector3f rot = new Vector3f();
         q.getEulerAnglesYXZ(rot);
+        if (onGround && !isLandingGearUp()) {
+            // lockCenterRot => contacts never rotate the hull: look-up 10 deg sat an A-10 on its tail at 0.07 b/t,
+            // landed one parked at -10. Gear stance eases level (pre-rewrite AUTO_LEVEL_EASE), released as lift at
+            // the stall angle reaches weight (current lift: ease held AoA down, never flew). TODO: ease toward the ground slope.
+            double stallLift = lift(f, angleOfAttackMax - flaps(Flap.STALL_SHIFT), liftToDragK, scaleAir);
+            float keep = GEAR_LEVEL_EASE + (1 - GEAR_LEVEL_EASE) * Mth.clamp((float) (stallLift / (mass * PhysicsHelper.GRAVITY)), 0, 1);
+            rot.x *= keep;
+            rot.z *= keep;
+        }
         setXRot((float) Math.toDegrees(rot.x));
         setYRot((float) Math.toDegrees(-rot.y));
         setZRot((float) Math.toDegrees(rot.z));
@@ -608,6 +617,13 @@ public class FixedWingVehicle extends AbstractVehicle
 
     public boolean isLandingGearUp() {
         return landingGear != null && landingGear.isOn();
+    }
+
+    private static final float GEAR_LEVEL_EASE = 0.7f;
+
+    @Override
+    protected boolean rollsOnGear() {
+        return !isLandingGearUp();
     }
 
     public boolean isAirbrakeOn() {

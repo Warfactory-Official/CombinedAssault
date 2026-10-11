@@ -842,13 +842,6 @@ public abstract class AbstractVehicle extends ContainerCraft
         this.seats.clear();
         this.vehicleCubeOBBs.addAll(vehicleStruct.obbs());
         this.mainCubeOBB = vehicleStruct.mainCubeOBB();
-        List<Vector3f> supports = vehicleData.getBodySupports();
-        for (Vector3f support : supports) {
-            mainCubeOBB.attachPoint(new VehicleCubeOBB.CubePoint(mainCubeOBB, new Vector3f(support), VehicleCubeOBB.CubeFace.BOTTOM));
-        }
-        if (!supports.isEmpty()) {
-            mainCubeOBB.initBottomPoint();
-        }
         this.structureLength = vehicleData.getStructureLength();
         this.bodyDepth = vehicleData.getBodyDepth();
         BaseVehicleData.PartUnitsAndSeats partUnitsAndSeats = vehicleData.createPartUnits(this);
@@ -1349,6 +1342,11 @@ public abstract class AbstractVehicle extends ContainerCraft
     protected boolean towedOnWheels() {
         TowLink link = towLink();
         return link != null && link.mode() != TowMode.SLING;
+    }
+
+    /** Unsprung gear down: contact rows frictionless, pack {@code friction} = rolling resistance. */
+    protected boolean rollsOnGear() {
+        return false;
     }
 
     /** Weight held by the controller ({@link #tickMove}); the step applies no gravity. */

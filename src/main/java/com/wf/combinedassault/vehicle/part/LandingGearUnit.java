@@ -52,6 +52,15 @@ public class LandingGearUnit extends SwitchableUnit<LandingGearUnitData> {
         mainCubeOBB.initBottomPoint();
     }
 
+    public int footCount() {
+        return gearCubes.size();
+    }
+
+    /** Main OBB frame. */
+    public Vector3f foot(int index) {
+        return gearCubes.get(index).gearCubePoint.obbLocalPos();
+    }
+
     @Override
     public boolean onInteract(Player player, InteractionHand hand) {
         return true;
@@ -127,7 +136,7 @@ public class LandingGearUnit extends SwitchableUnit<LandingGearUnitData> {
     }
 
     private float gearDownPointY(VehicleCubeOBB cubeOBB) {
-        return gearUpPointY(cubeOBB) - cubeOBB.obb().extents().y * 2 - 0.1f;
+        return gearUpPointY(cubeOBB) - cubeOBB.obb().extents().y * 2;
     }
 
     public float getDragK() {
