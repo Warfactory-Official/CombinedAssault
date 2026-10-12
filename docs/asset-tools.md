@@ -55,12 +55,6 @@ Install: Blockbench 5.1 desktop > File > Plugins > Load Plugin from File. Menu a
 - Flatpak sandbox: pack outside Documents / Desktop / Downloads => `flatpak override --user --filesystem=<pack> net.blockbench.Blockbench`.
 - Test: `node tools/blockbench/test_combinedassault.mjs`. Live round trip: `node tools/blockbench/compare_roundtrip.mjs <source.gltf> <source.bin> <exported.gltf>`.
 
-## In game
-
-`REDACTED <pack dir>`: directory pack installed on server + client, vehicles spawned beside
-the shipped one. Humvee re-exported by each tool (`tools/blender/make_rtpack.py`, `tools/blender/reexport.py`): same settled y
-(1e-8), 19 OBBs, 14 compound pieces, textured, no load error.
-
 ## Validator (`tools/blender/ca_validate.py`)
 
 `python3 tools/blender/ca_validate.py <model.gltf>...`; exit 1 on any error. No Blender needed. Mirrors `ModelRig`

@@ -19,18 +19,13 @@ Java per vehicle required.
 
 - **Vehicles as content packs** - ground, air, naval and fixed-emplacement vehicles, each a glTF pack whose
   node names drive rig, colliders, hit modules and sockets — [vehicle-pack-format](docs/vehicle-pack-format.md).
-- **Rigid-body physics** - per-tick solver, convex hulls, suspension, contact/tumbling rules —
-  [removed](REDACTED).
+- **Rigid-body physics** - suspension, contact/tumbling rules, naval hull hydrodynamics.
 - **Ballistics, armor and system damage** on WFLib, surfaced through wflib UI-widget probe panels and map/HUD
   overlays — [hud](docs/hud.md).
-- **Naval** - hull physics, decks, carrier parenting — [removed](REDACTED).
 - **Towing**, cargo hold + airlift (parachutes, slings, drive-in bays), crew requirements, fuel/power.
 - **Indirect fire** - map-based fire missions and terminal telemetry, plus an unmanned MIM-104-style
   air-defence battery on WFLib's shared interceptor system.
 - **FPV and fixed UAVs** - stock drone airframes, camera feed + control tablet.
-- **Driver-side client prediction**, server authoritative — [removed](REDACTED).
-- **Fast-vehicle chunk/entity streaming** at speed, without unloading the flight/drive path —
-  [removed](REDACTED).
 - **Authoring tools** - Blender + Blockbench add-ons, pack validator, player reference —
   [asset-tools](docs/asset-tools.md).
 

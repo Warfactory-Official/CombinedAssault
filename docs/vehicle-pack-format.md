@@ -767,7 +767,7 @@ Role nodes read at load (rest pose, vehicle frame). Each fills a vehicle def key
 ### 6.9 GemRender specifics
 
 - One instance per hull on Flywheel; posed through a bone palette on the GPU. Flywheel backend off => no hull.
-- Material with colour and no texture draws white: give it a sheet (`REDACTED`: one cell per material, UVs pinned to cell centres, linear -> sRGB).
+- Material with colour and no texture draws white: give it a sheet (one cell per material, UVs pinned to cell centres, linear -> sRGB).
 - Lighting per instance: no per-node fullbright.
 - Suspension: `render_bone` node translated by the wheel's travel. Detached part: the vehicle model isolated to the part's `render_bone` subtree.
 
@@ -1026,7 +1026,7 @@ either way; only the way you top it up changes.
 ## 13. Ships
 
 `combinedassault:ship` is a hull the water holds up. Its motion is a surge, sway, yaw, heel, trim and
-heave model whose size dependence comes from the hull itself (see `REDACTED`); the
+heave model whose size dependence comes from the hull itself; the
 physics engine only ever applies gravity to it while it is afloat, and the contact stage handles the
 seabed and the banks the way it handles walls. `can_wade` is forced on and `physics_info.density` is
 forced to 0 for every ship.
@@ -1190,7 +1190,6 @@ drives a tractor and trailer round it under a fixed driving law, writing a row p
 `combinedassault_trials/`. Courses are `lap` (flat, washboard, ruts, whole-block noise, kerbs and a
 crest, one sector each), `flat`, `rough` and `washboard`. `tow trial report` hands back the verdict,
 which is the worst of the coupling gap, the trailer's clearance and the articulation chatter.
-`REDACTED` runs the whole set on a dedicated server.
 
 ### 14.5 The shipped pair
 
@@ -1215,7 +1214,7 @@ Unmanned launcher: [§18](#18-air-defence).
 - Drawn: WFLib airframe at true size; any other round, its item sprite.
 - Selected round (`6`, map fire mission): lowest slot of that kind; none loaded => nothing fires.
 - `POD` = MLRS cell: `wflib:missile_gmlrs`, `missile_gmlrs_aw`.
-- Shipped: `mq9` (UAV, six stations), staged by `REDACTED`; `m142` (six cells on the elevating pod: holder frame under the launcher's `pitch` frame), `REDACTED`.
+- Shipped: `mq9` (UAV, six stations); `m142` (six cells on the elevating pod: holder frame under the launcher's `pitch` frame).
 
 ## 16. ERA and slat
 
@@ -1304,11 +1303,11 @@ carried): fit / refill / remove / weld. Weld = carried `#hull_tool`; bent bar fr
 
 Landing (ground vehicles; aircraft excluded): touchdown faster than 9 m/s vertical hurts, damage = `2 * max_health * ((v - 9) / 16)^2` at the hull bottom (25 m/s = wreck). Sprung hulls land on suspension, which reports no contact impact.
 
-Cargo parachute (`combinedassault:cargo_parachute`): use on a vehicle to fit, sneak-use to take back; not aircraft or UAVs. Opens falling > 0.6 b/t, or 10 ticks after leaving a hold. Quadratic drag to 0.35 b/t (7 m/s), opening shock <= 0.5 b/t per tick, rights the hull; spent on ground/water. Canopies: one per 8 t, up to 6 (`REDACTED`).
+Cargo parachute (`combinedassault:cargo_parachute`): use on a vehicle to fit, sneak-use to take back; not aircraft or UAVs. Opens falling > 0.6 b/t, or 10 ticks after leaving a hold. Quadratic drag to 0.35 b/t (7 m/s), opening shock <= 0.5 b/t per tick, rights the hull; spent on ground/water. Canopies: one per 8 t, up to 6.
 
 ## 18. Air defence
 
-- Per station: `air_defense` ([§4.4](#44-weapon-stations--weapon-auto_weapon)). Shipped: `mim104` (`uav`; four `LARGE` canisters on the elevating launcher, `REDACTED`; `indirect_fire` map).
+- Per station: `air_defense` ([§4.4](#44-weapon-stations--weapon-auto_weapon)). Shipped: `mim104` (`uav`; four `LARGE` canisters on the elevating launcher; `indirect_fire` map).
 
 | field | default | |
 | --- | --- | --- |
