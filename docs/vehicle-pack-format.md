@@ -623,6 +623,7 @@ glTF animations, scrubbed by part progress p ∈ [0,1], never played on a clock:
 - Start key = default state (p 0); end = other state, or full deflection.
 - After the controller graph: clip wins on the channels it keys. Toggle sound: trapdoor.
 - Hit mesh follows clips (server + client). Colliders: rest pose; moving collision = `linked_hinge`.
+- `linked_hinge` collider turns by `+open_x_rot`; a script drawing the bone at `-xrot` swings the collider opposite the picture (C-5, CH-47 ramps rose into walls). Hinge frame rest rotation: same split (GemRender cancels it, colliders keep it).
 - Script `if (context.isPartOn(..)) setRotation(..)`: snaps, no hit motion => bake to a clip (`tools/script_clips.py`).
 - Author: Blender add-on Key part clip; staged models `tools/mqo.py` `append_clip` / `hinge_keys`.
 
@@ -635,14 +636,15 @@ Role `collider`: a mesh node, the convex solid it bounds, in its frame. Collisio
 | `main` | bool | `false` | physics hull; `body` frame only; at most one. Absent => largest solid `body` collider. Must span the ground footprint: support polygon = main hull; feet on other pieces => COM unsupported, tips |
 | `solid` | bool | `true` | false => station / probe marker: bounds a part (missile station, suspension probe, gear leg), never collided |
 | `hit` | bool | `false` | also a hit surface override ([§6.6](#66-hit-geometry)): replaces its parent's drawn subtree |
-| `deck` | bool | `false` | others may stand / park on it |
+| `deck` | bool | `false` | others may stand / park / drive on it (wheels probe it; tilted piece = oriented box, lip <= 1 climbable) |
+| `world` | bool | `true` | false => vehicles only: blocks, hill fill, providers pass through. Ramp opened past the ground (C-5, CH-47: lip under the ground, no lift of the carrier) |
 | `name` | string | node name | readout label |
 
-- Every collider a closed convex flat-faced solid; checked on load, the bad face named. Mesh with >1 primitive => one face per primitive (CoACD quads); else coplanar triangles merged.
+- Every collider a convex flat-faced solid; checked on load, the bad face named. Closure unchecked: T-junction fine, missing face = hole. Mesh with >1 primitive => one face per primitive (CoACD quads); else coplanar triangles merged.
 - Compound: ground supports = downward faces (normal y < -0.3) of every solid `body` collider; other solid pieces posed in the main hull's frame. Turn geometry uses the `body` colliders' Z extent (not the main piece).
 - Debug view (`/combinedassault debug true` / inspect key): colliders white, solid if the solve meets the world through it; hit surface faint, `hit` modules, rotor discs.
 
-**Generating** (`tools/gen_hulls.py`, CoACD; setup in its header): per-node convex decomposition, written into the glTF as colliders; `--merge NAME`: `--nodes` decomposed as one mesh; `--main`: largest piece => `main` (another `main` present => exit); `"locked": true` keeps a hand-made piece through regeneration. `/reload` rereads. Blender add-on `tools/blender/combinedassault_tools.py` (1 unit = 1 block): Collider, Hit module, Hit surface, Socket (at 3D cursor), Hit overrides, frame limits, armour/decor material tags, Make hinge, Key part clip, Make convex hull, Export vehicle (checks then `.gltf` + `.bin` + textures, URIs -> `extras.resourceLocation`).
+**Generating** (`tools/gen_hulls.py`, CoACD; setup in its header): per-node convex decomposition, written into the glTF as colliders; `--merge NAME`: `--nodes` decomposed as one mesh; `--main`: largest piece => `main` (another `main` present => exit); `"locked": true` keeps a hand-made piece through regeneration. `/reload` rereads. Blender add-on, Blockbench plugin, validator, player reference: `asset-tools.md`.
 
 ### 6.6 Hit geometry
 

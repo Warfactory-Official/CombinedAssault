@@ -8,5 +8,10 @@ Mod id `combinedassault`, package `com.wf.combinedassault`. Vehicles on WFLib; h
 | [removed](removed) | ship physics, decks, carriers, trials |
 | [removed](removed) | hitches, towables, couplings |
 | [removed](removed) | per-tick rigid-body step: order, solver, contact rules, rewrite status |
+| [hud](hud.md) | HUD presets on wflib UI: selection, divergences, gaps |
+| [removed](removed) | fast-vehicle chunk/entity streaming: budget, rulings, status |
+| [removed](removed) | driver-side prediction protocol, snapshot, what's not predicted |
+| [asset-tools](asset-tools.md) | Blender/Blockbench add-ons, validator, player reference |
+| [testing](removed) | commands, GameTests, harness scenarios: index only |
 
-Tools: `tools/convert_pack.py` (old Limitless layout -> pack), `tools/gen_hulls.py` (colliders), `tools/blender/combinedassault_tools.py` (authoring add-on), `tools/bake_addon_armor.py`, `tools/model_icon.py`, `tools/paint_layers.py`, `tools/damage_textures.py`, `tools/script_clips.py`, `tools/pack_scaffold.py`.
+Tools: `tools/convert_pack.py` (old Limitless layout -> pack), `tools/gen_hulls.py` (colliders), `tools/blender/` (authoring add-on, validator; `asset-tools.md`), `tools/bake_addon_armor.py`, `tools/model_icon.py`, `tools/paint_layers.py`, `tools/damage_textures.py`, `tools/script_clips.py`, `tools/pack_scaffold.py`.
