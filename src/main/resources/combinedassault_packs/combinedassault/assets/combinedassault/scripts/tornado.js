@@ -1,4 +1,4 @@
-// EMB4 tornado-gr4 (tools/stage_emb4_jet.py).
+// EMB4 tornado-gr4 (tools/internal/stage_emb4_jet.py).
 function updateBones(context) {
     var builder = createPoseBuilder();
     builder.setRotation("wing_l", 35 * context.getPartYRot("wing_l") / -35, 0, 0);

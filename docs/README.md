@@ -14,4 +14,6 @@ Mod id `combinedassault`, package `com.wf.combinedassault`. Vehicles on WFLib; h
 | [asset-tools](asset-tools.md) | Blender/Blockbench add-ons, validator, player reference |
 | [testing](removed) | commands, GameTests, harness scenarios: index only |
 
-Tools: `tools/convert_pack.py` (old Limitless layout -> pack), `tools/gen_hulls.py` (colliders), `tools/blender/` (authoring add-on, validator; `asset-tools.md`), `tools/bake_addon_armor.py`, `tools/model_icon.py`, `tools/paint_layers.py`, `tools/damage_textures.py`, `tools/script_clips.py`, `tools/pack_scaffold.py`.
+Tools: `tools/convert_pack.py` (old Limitless layout -> pack), `tools/gen_hulls.py` (colliders), `tools/blender/` (authoring add-on, validator; `asset-tools.md`), `tools/bake_addon_armor.py`, `tools/model_icon.py`, `tools/paint_layers.py`, `tools/damage_textures.py`, `tools/script_clips.py`, `tools/pack_scaffold.py`, `tools/def_sockets.py`, `tools/split_stores.py`.
+
+`tools/internal/`: one-off per-vehicle MCHeli/EMB4/warty staging scripts, `REDACTED`, dev test-harness drivers (`REDACTED`, `REDACTED`, `REDACTED`, `REDACTED`), profiling (`REDACTED`, `REDACTED`), `REDACTED`. Not part of the general content-authoring path; a new vehicle pack does not need them.

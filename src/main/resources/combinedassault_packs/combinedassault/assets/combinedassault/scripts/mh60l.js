@@ -1,4 +1,4 @@
-// EMB4 mh-60l_dap (tools/stage_emb4_heli.py).
+// EMB4 mh-60l_dap (tools/internal/stage_emb4_heli.py).
 function updateBones(context) {
     var spin = (context.getFloat("rotor", 0) + context.getPower() / 5) % 360;
     context.setFloat("rotor", spin);

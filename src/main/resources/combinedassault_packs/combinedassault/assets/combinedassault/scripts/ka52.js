@@ -1,4 +1,4 @@
-// EMB4 ka52 (tools/stage_emb4_heli.py). AddRotor axes: upper -y, lower +y.
+// EMB4 ka52 (tools/internal/stage_emb4_heli.py). AddRotor axes: upper -y, lower +y.
 function updateBones(context) {
     var spin = (context.getFloat("rotor", 0) + context.getPower() / 5) % 360;
     context.setFloat("rotor", spin);

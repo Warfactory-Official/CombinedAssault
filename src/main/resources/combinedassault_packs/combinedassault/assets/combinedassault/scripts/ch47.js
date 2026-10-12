@@ -5,7 +5,7 @@ function updateBones(context) {
     var builder = createPoseBuilder();
     builder.setRotation("rotor", 0, spin, 0);
     builder.setRotation("rotor_aft", 0, -spin, 0);
-    builder.setRotation("ramp", -1 * context.getPartXRot("ramp"), 0, 0);
+    builder.setRotation("ramp", context.getPartXRot("ramp"), 0, 0);
     var guns = ["door_gun_r", "door_gun_l", "ramp_gun"];
     for (var i = 0; i < 3; i++) {
         builder.setRotation(guns[i], 0, -context.getPartYRot(guns[i]), 0);

@@ -1,4 +1,4 @@
-// EMB4 ah-64 (tools/stage_emb4_heli.py). setRotation +angle == MCHeli AddRotor axis.
+// EMB4 ah-64 (tools/internal/stage_emb4_heli.py). setRotation +angle == MCHeli AddRotor axis.
 function updateBones(context) {
     var step = context.getPower() / 5;
     var spin = (context.getFloat("rotor", 0) + (context.getRotorLift() > 0 ? step : 0)) % 360;

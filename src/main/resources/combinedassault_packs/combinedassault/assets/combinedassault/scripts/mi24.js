@@ -1,4 +1,4 @@
-// EMB4 mi-24 (tools/stage_emb4_heli.py).
+// EMB4 mi-24 (tools/internal/stage_emb4_heli.py).
 function updateBones(context) {
     var spin = (context.getFloat("rotor", 0) + context.getPower() / 5) % 360;
     context.setFloat("rotor", spin);

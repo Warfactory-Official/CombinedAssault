@@ -178,13 +178,13 @@ dependencies {
     implementation "maven.modrinth:create-aeronautics:1.3.2+mc1.21.1"
     // WFLib: required. Its Flywheel/GemRender deps are side = "CLIENT"; installClientMods supplies them to
     // client runs, a server run needs neither.
-    implementation files('libs/wflib-1.8.28.jar')
+    implementation files('libs/wflib-1.8.31.jar')
     // AHF: seat pose sets (rig = drawn pose) + vehicle-tilt stance. PlayerAnimator: client-only mod, draws seat poses.
     implementation files('libs/ahf-1.21.1-NeoForge-1.0.8.jar')
     implementation "dev.kosmx.player-anim:player-animation-lib-forge:${project.playeranimator_version}"
 
     // GemRender (+ Flywheel): required on the client, absent on a server run => compileOnly; runtime via installClientMods.
-    compileOnly files('libs/gemrender-0.1.15.jar')
+    compileOnly files('libs/gemrender-0.1.16.jar')
     compileOnly "dev.engine-room.flywheel:flywheel-neoforge-1.21.1:1.0.6"
 
     // Immersive Railroading, so a vehicle can be strapped to a flatcar. compileOnly only:
@@ -206,7 +206,7 @@ dependencies {
 
 // GemRender + clientRunMods -> client run mods/, not run classpath: client only, server run must not see them.
 // Also staged in build/clientRunMods for mc-harness.
-def gemRenderJar = file('libs/gemrender-0.1.15.jar')
+def gemRenderJar = file('libs/gemrender-0.1.16.jar')
 def clientRunDirs = [file('run/client_1'), file('run/client_2'), file('build/clientRunMods')]
 def installClientMods = tasks.register('installClientMods') {
     group = 'combinedassault'
@@ -243,13 +243,13 @@ neoForge.ideSyncTask(installClientMods)
     tasks.named(name).configure { dependsOn installClientMods }
 }
 
-// Bench packs (tools/REDACTED) only under -Pbench: the suite must see the shipped packs alone.
+// Bench packs (tools/internal/REDACTED) only under -Pbench: the suite must see the shipped packs alone.
 tasks.named('runGameTestServer').configure {
     doFirst {
         File bench = project.file('run/gametest/combinedassault/packs/bench')
         project.delete(bench)
         if (project.hasProperty('bench')) {
-            project.exec { commandLine 'python3', 'tools/REDACTED', bench.path }
+            project.exec { commandLine 'python3', 'tools/internal/REDACTED', bench.path }
         }
     }
 }

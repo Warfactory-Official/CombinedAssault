@@ -1,4 +1,4 @@
-// Mavic 3 Pro (tools/stage_mavic.py). Spin sense from the export's rotor extras; gimbal follows the camera part.
+// Mavic 3 Pro (tools/internal/stage_mavic.py). Spin sense from the export's rotor extras; gimbal follows the camera part.
 var CW = ["13_ROTOR_FL", "13_ROTOR_RR"];
 var CCW = ["13_ROTOR_FR", "13_ROTOR_RL"];
 

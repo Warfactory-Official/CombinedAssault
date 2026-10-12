@@ -1,4 +1,4 @@
-// EMB4 harrier (tools/stage_emb4_jet.py).
+// EMB4 harrier (tools/internal/stage_emb4_jet.py).
 function updateBones(context) {
     var builder = createPoseBuilder();
     builder.setRotation("nozzle_0", -context.getPartXRot("thrust"), 0, 0);

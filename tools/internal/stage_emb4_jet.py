@@ -196,16 +196,18 @@ JETS = {
                   dict(name="clamshell_r", part="$wing4", pivot=(-1.2585, 5.5188, -53.7885), axis=(-1.4513, -3.3656, 14.3613),
                        angle=-120, drive="on:cargo_doors"),
                   dict(name="ramp_ext", part="$wing6", pivot=(0.0, -4.0, -36.0), axis=(1, 0, 0), angle=-39, drive="on:cargo_doors"),
-                  # Server-side hinge (linked_hinge `ramp`, open_x_rot -20): its deck piece is the drive-in slope.
-                  dict(name="ramp", part="$wing2", pivot=(0.0, 1.81, -34.9667), axis=(-1, 0, 0), angle=20, drive="xrot:ramp:-1")],
+                  # Server-side hinge (linked_hinge `ramp`, open_x_rot -29): its deck piece is the drive-in slope.
+                  # Rest rotation on a collider frame FORBIDDEN: GemRender draws R D R^-1, colliders R D => ramp drawn down, collided up.
+                  dict(name="ramp", part="$wing2", pivot=(0.0, 1.81, -34.9667), axis=(1, 0, 0), angle=20, drive="xrot:ramp:1")],
         # Hollow hold (MCHeli units): floor y 2.1 (EMB4 racks), 5.8 wide, 4.2 tall, z 3 .. -35; enter over the ramp.
         hull_boxes=[("floor", "vehicle_body", (-4.3, 0.65, -35.0), (4.3, 1.8, 3.0), True),
                     ("wall l", "vehicle_body", (2.95, 1.8, -35.0), (4.3, 6.3, 3.0), False),
                     ("wall r", "vehicle_body", (-4.3, 1.8, -35.0), (-2.95, 6.3, 3.0), False),
                     ("roof", "vehicle_body", (-4.3, 6.3, -35.0), (4.3, 9.0, 3.0), False),
                     ("nose", "vehicle_body", (-3.3, 1.8, 3.0), (3.3, 8.6, 5.44), False),
-                    ("tail", "vehicle_body", (-3.5, 4.5, -61.3), (3.5, 9.3, -35.0), False),
-                    ("ramp", "ramp", (-2.9, 0.9, -39.5), (2.9, 1.8, -35.0), True)],
+                    ("tail", "vehicle_body", (-3.5, 6.3, -61.3), (3.5, 9.3, -35.0), False),
+                    # Collider extras world: false (patched in the glTF; this writer has no key): lip under the ground.
+                    ("ramp", "ramp", (-2.9, 1.65, -39.5), (2.9, 1.8, -35.0), True)],
         sight=(0.0, 7.0, 3.0), weapons={},
         points={"seat": (0.62, 6.8 + 1.2, 2.4), "seat2": (-0.62, 6.8 + 1.2, 2.4), "nozzle": (12.0, 4.2, -22.0),
                 "wingtip": (34.0, 7.5, -30.0)}),

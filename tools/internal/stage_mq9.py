@@ -3,7 +3,7 @@
 # a port to role nodes, or a run through tools/convert_pack.py.
 """Stage the MQ-9 Reaper into default_vehicle from ~/models/warty/MQ9_Reaper_tweaked.blend.
 
-tools/blender/export_mq9.py exports it already in the vehicle frame with posable pivots; this re-points the
+tools/internal/export_mq9.py exports it already in the vehicle frame with posable pivots; this re-points the
 buffer and atlas at pack resources and writes the structure model. Stations: one box per rail, under it,
 sized for the largest pylon airframe (wflib atgm: 1.63 long, 0.33 fin span); order L1 R1 L2 R2 L3 R3.
 
@@ -43,7 +43,7 @@ STATION_LENGTH = 1.9
 
 
 def export(out):
-    script = os.path.abspath("tools/blender/export_mq9.py")
+    script = os.path.abspath("tools/internal/export_mq9.py")
     subprocess.run(shlex.split(BLENDER) + ["-b", BLEND, "--python", script, "--", out],
                    check=True, stdout=subprocess.DEVNULL)
 

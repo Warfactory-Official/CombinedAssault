@@ -5,7 +5,8 @@
 
 Overwrites the glTF (colliders included) => then tools/damage_textures.py, tools/model_icon.py.
 Scale 0.97 = real hub spacing 11.94 m / MCHeli 12.31. Colliders hand-made (hollow cabin; CoACD would fill it).
-Divergences: ramp opens 42 deg (MCHeli 34) => lip on the ground; troop seats moved to the cabin walls (MCHeli centre
+Divergences: ramp opens -49 deg (MCHeli 34; x_rot range -50..0 patched in the glTF) => lip just under the ground,
+collider world: false (vehicles only, never lifts the airframe); troop seats moved to the cabin walls (MCHeli centre
 line = inside a stowed vehicle); sideways/rearward guns turned to +Z about their pivot; spinning m134 barrels merged.
 """
 import math
@@ -22,8 +23,9 @@ SPEC = dict(root=os.path.expanduser("~/projects/mcheli-gigarework/1.7.10-origina
             src="helicopters/ch47", sha1="82283521db7038be6cc97cdcba58830b647d6fcb", texture="helicopters/ch47",
             kind="aircraft", scale=0.97, ground=0.15)
 HINGE = (0.0, 0.8578, -11.5485)
-# Cabin, MCHeli units: walls |x| 1.36, floor top 0.86, ceiling 3.1, ramp hinge -> front bulkhead.
-CABIN = dict(x=1.36, floor=0.86, ceiling=3.1, aft=-11.55, fore=-1.9)
+# Hold, MCHeli units: floor top 0.86, ramp hinge -> front bulkhead. Walls |x| 1.495, ceiling 3.561 (world 2.9 x 2.62 over
+# floor) > drawn cabin 1.36 / 3.1: Humvee mirrors 2.78 wide, roof mount 2.5 tall.
+CABIN = dict(x=1.495, floor=0.86, ceiling=3.561, aft=-11.55, fore=-1.9)
 SKIN = 1.75
 
 
@@ -118,17 +120,14 @@ def colliders(rig):
     rise = lip * s
     half = float(ramp_hi[0])
     ramp = hexa(lambda ix, iy, iz: ((-half, half)[ix], (rise[1], 0.0)[iz] + (-0.12, 0.0)[iy], (rise[2], 0.0)[iz]))
-    tail_floor = (3.1, 2.33)
     pieces = [
         ("hold floor", None, True, cuboid(src, (-w, 0.57, c["aft"]), (w, c["floor"], c["fore"]))),
         ("hold wall l", None, False, cuboid(src, (x, c["floor"], c["aft"]), (w, c["ceiling"], c["fore"]))),
         ("hold wall r", None, False, cuboid(src, (-w, c["floor"], c["aft"]), (-x, c["ceiling"], c["fore"]))),
-        ("hold roof", None, False, cuboid(src, (-w, c["ceiling"], c["aft"]), (w, 3.5, c["fore"]))),
+        ("hold roof", None, False, cuboid(src, (-w, c["ceiling"], c["aft"]), (w, 3.963, c["fore"]))),
         ("cockpit", None, False, cuboid(src, (-w, 0.67, c["fore"]), (w, 3.14, 6.46))),
         ("forward pylon", None, False, cuboid(src, (-0.8, 3.1, -2.0), (0.8, 4.3, 1.2))),
-        ("tail", None, False, hexa(lambda ix, iy, iz: src.T(((-1.5, 1.5)[ix],
-                                                              ((tail_floor[1], tail_floor[0])[iz], 5.8)[iy],
-                                                              (-14.69, c["aft"])[iz])))),
+        ("tail", None, False, cuboid(src, (-1.5, c["ceiling"], -14.69), (1.5, 5.8, c["aft"]))),
         ("ramp", "ramp", True, ramp),
         ("front wheel l", None, False, cuboid(src, (1.5, -0.15, -4.79), (1.97, 0.82, -4.16))),
         ("front wheel r", None, False, cuboid(src, (-1.97, -0.15, -4.79), (-1.5, 0.82, -4.16))),
@@ -144,6 +143,8 @@ def colliders(rig):
         data = {"name": name}
         if deck:
             data["deck"] = True
+        if frame == "ramp":
+            data["world"] = False
         convert_pack.set_role(node, "collider", None, **data)
         if frame:
             node["translation"] = [0.0, 0.0, 0.0]
