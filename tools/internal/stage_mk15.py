@@ -3,7 +3,7 @@
 # a port to role nodes, or a run through tools/convert_pack.py.
 """Stage warty's Mk 15 Phalanx (naval repaint of MCHeli mk15.mqo) as mk15: glTF + structure.
 
-    python3 REDACTED      (from combinedassault/)
+    python3 tools/internal/stage_mk15.py      (from combinedassault/)
 
 Export: +Z forward, +X port, MCHeli scale; nodes named after mk15.txt parts: $part0 yaw, $part1 yaw + pitch,
 $part1_0 spinning barrels. Divergences staged here:
@@ -77,7 +77,7 @@ def main():
         name = image["uri"].lower().replace("mk15_naval_", "mk15_")
         shutil.copyfile(os.path.join(SRC, image.pop("uri")), os.path.join(textures, name))
         image["extras"] = {"resourceLocation": f"{NS}:textures/emplacement/mk15/{name}"}
-    doc["asset"]["extras"] = {"staged_by": "REDACTED"}
+    doc["asset"]["extras"] = {"staged_by": "tools/internal/stage_mk15.py"}
     with open(gltf, "w") as f:
         json.dump(doc, f, separators=(",", ":"))
     mqo.append_nodes(gltf, binary, kept)

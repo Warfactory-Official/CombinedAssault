@@ -6,7 +6,7 @@
 
 Structure NBT written by hand (gzip, big-endian tags); DataVersion is 1.21.1's.
 
-Run from the combinedassault directory:  python3 tools/REDACTED
+Run from the combinedassault directory:  python3 tools/make_water_pool.py
 """
 import gzip
 import os

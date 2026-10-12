@@ -1,6 +1,6 @@
 """build/bltest/rtpack: directory pack `rttest`, shipped humvee copied as humvee_bl / humvee_bb for re-export in place
 by Blender (reexport.py) / Blockbench; textures under assets/combinedassault so imports resolve. In game:
-REDACTED build/bltest/rtpack.
+mc-harness/scenarios/ca_pack_rt.mjs build/bltest/rtpack.
 
     python3 tools/blender/make_rtpack.py
 """

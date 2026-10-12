@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # TODO: writes the pre-role layout (default_vehicle/, Bedrock structure + hull json, display json); restaging needs
-# a port to role nodes, or a run through tools/convert_pack.py, then REDACTED.
+# a port to role nodes, or a run through tools/convert_pack.py, then tools/internal/rig_mim104.py.
 """Stage the M983 HEMTT tractor and the MIM-104 Patriot trailer into default_vehicle.
 
 The pair is the first warty export that needs no correcting. Its builder states "Blender front -Y,

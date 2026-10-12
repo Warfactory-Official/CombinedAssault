@@ -11,7 +11,7 @@ import java.util.function.DoubleUnaryOperator;
  *
  * <p>Size-dependence, untuned per hull: yaw/sway tau = {@code L/v} (turn est./shed takes ~1 hull length
  * of travel); thrust = {@code m v_max / t_acc} (heavier hull, same engine => slower accel/brake). See
- * {@code REDACTED}.
+ * {@code docs/naval-vehicles.md}.
  */
 public final class ShipHydrodynamics {
 

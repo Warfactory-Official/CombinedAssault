@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """CPU samples from a JFR file: share per thread, top self frames, top inclusive frames under a package.
-usage: tools/REDACTED <file.jfr> [package-prefix=com.wf.combinedassault] [thread-substring] [under-frame-substring]
+usage: tools/jfr_top.py <file.jfr> [package-prefix=com.wf.combinedassault] [thread-substring] [under-frame-substring]
 under => also: callee frames (any package) inclusive below the first frame matching it."""
 import collections
 import json

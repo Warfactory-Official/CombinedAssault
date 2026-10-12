@@ -80,7 +80,7 @@ public final class AircraftAerodynamics {
 
     private int heldTicks;
 
-    /** Authority ramp (snapshot, REDACTED). */
+    /** Authority ramp (snapshot, docs/client-prediction.md). */
     public void writePrediction(FriendlyByteBuf buf) {
         buf.writeVarInt(heldTicks);
     }

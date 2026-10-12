@@ -1,4 +1,4 @@
-"""Blender side of REDACTED: bake the vehicle frame, build the posable pivots, export glTF.
+"""Blender side of tools/internal/stage_mq9.py: bake the vehicle frame, build the posable pivots, export glTF.
 
   blender -b MQ9_Reaper_tweaked.blend --python tools/blender/export_mq9.py -- <out.gltf>
 

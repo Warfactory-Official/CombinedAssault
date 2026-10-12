@@ -3,7 +3,7 @@
 (suspension part frames + probe boxes), landing legs (stow_when_towed suspension: frame at each foot, inner leg
 telescoping out of the static sleeve, foot probe).
 
-    python3 REDACTED      (from CombinedAssault/)
+    python3 tools/internal/rig_mim104.py      (from CombinedAssault/)
 
 Each step once only (skips a rigged one). Rest pose = canisters level, muzzles forward (+Z); elevation raises the
 muzzles. Stations = front STATION_DEPTH of each canister (launch from the station tail => inside the tube).

@@ -7,7 +7,7 @@ tools/internal/export_mq9.py exports it already in the vehicle frame with posabl
 buffer and atlas at pack resources and writes the structure model. Stations: one box per rail, under it,
 sized for the largest pylon airframe (wflib atgm: 1.63 long, 0.33 fin span); order L1 R1 L2 R2 L3 R3.
 
-  python3 REDACTED            (BLENDER overrides the flatpak default)
+  python3 tools/internal/stage_mq9.py            (BLENDER overrides the flatpak default)
 """
 import json
 import os
@@ -66,7 +66,7 @@ def stage(src):
         .resize((ATLAS_SIZE, ATLAS_SIZE), Image.LANCZOS).save(os.path.join(textures, atlas))
     image.pop("uri")
     image["extras"] = {"resourceLocation": f"{NS}:textures/aircraft/{RIG}/{atlas}"}
-    doc.setdefault("asset", {})["extras"] = {"staged_by": "REDACTED"}
+    doc.setdefault("asset", {})["extras"] = {"staged_by": "tools/internal/stage_mq9.py"}
     controller(RIG, spin_tyres(doc))
     flap_hinges(doc)
     gltf, binary = os.path.join(models, f"{RIG}.gltf"), os.path.join(models, f"{RIG}.bin")

@@ -1,4 +1,4 @@
-// EMB4 w3 (REDACTED).
+// EMB4 w3 (tools/internal/stage_emb4_ce.py).
 function updateBones(context) {
     var spin = (context.getFloat("rotor", 0) + context.getPower() / 5) % 360;
     context.setFloat("rotor", spin);

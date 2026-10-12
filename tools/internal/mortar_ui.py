@@ -2,10 +2,10 @@
 """Drive the dev client through the indirect fire board, one stage per screenshot.
 
 Usage (from the combinedassault directory, with the client already launched):
-  python3 tools/REDACTED scene     # platform, mortar, ammo, and the player in the seat
-  python3 tools/REDACTED board     # hand laying, the stops, the ladder, a correction
-  python3 tools/REDACTED mission   # a fire mission by coordinates, then fire it
-  python3 tools/REDACTED shell     # load a rocket-assisted shell and read the reach again
+  python3 tools/mortar_ui.py scene     # platform, mortar, ammo, and the player in the seat
+  python3 tools/mortar_ui.py board     # hand laying, the stops, the ladder, a correction
+  python3 tools/mortar_ui.py mission   # a fire mission by coordinates, then fire it
+  python3 tools/mortar_ui.py shell     # load a rocket-assisted shell and read the reach again
 """
 import os
 import sys

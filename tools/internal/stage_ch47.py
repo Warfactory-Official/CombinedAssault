@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Stage EMB4 CH-47 (MCHeli 1.0.3 helicopters/ch47) as role-layout glTF with an internal cargo hold.
 
-    python3 REDACTED      (from CombinedAssault/)
+    python3 tools/internal/stage_ch47.py      (from CombinedAssault/)
 
 Overwrites the glTF (colliders included) => then tools/damage_textures.py, tools/model_icon.py.
 Scale 0.97 = real hub spacing 11.94 m / MCHeli 12.31. Colliders hand-made (hollow cabin; CoACD would fill it).

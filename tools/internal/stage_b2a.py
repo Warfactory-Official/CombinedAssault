@@ -3,7 +3,7 @@
 # a port to role nodes, or a run through tools/convert_pack.py.
 """Stage EMB4's B-2A (MCHeli 1.0.3) as b2a: glTF display + structure.
 
-    python3 REDACTED      (from combinedassault/)
+    python3 tools/internal/stage_b2a.py      (from combinedassault/)
 
 Pivots/angles: EMB4 b-2a.txt AddPartLG* (line order == $lgN) and AddPartWeaponBay (== $wbN).
 MCHeli blocks -> ours: (p + (0, GROUND, 0)) * SCALE. SCALE: span 60.3 -> 52.4 (real 52.4).
@@ -78,7 +78,7 @@ def sides(objs):
 
 def display(parts):
     w = mqo.GltfWriter(f"{NS}:models/aircraft/b2a/b2a.bin", f"{NS}:textures/aircraft/b2a/b2a.png",
-                       "REDACTED")
+                       "tools/internal/stage_b2a.py")
 
     def mesh_of(name, objs, pivot):
         pos, nrm, uv = [], [], []
@@ -103,7 +103,7 @@ def display(parts):
     models = os.path.join(PACK, "assets", NS, "models", "aircraft", "b2a")
     os.makedirs(models, exist_ok=True)
     w.write(os.path.join(models, "b2a.gltf"), os.path.join(models, "b2a.bin"),
-            {"staged_by": "REDACTED", "source": "EMB4 MCHeli 1.0.3 planes/b-2a", "scale": SCALE})
+            {"staged_by": "tools/internal/stage_b2a.py", "source": "EMB4 MCHeli 1.0.3 planes/b-2a", "scale": SCALE})
     return wheels
 
 

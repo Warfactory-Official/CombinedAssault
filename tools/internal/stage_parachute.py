@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Stage the cargo parachute canopy: EMB4 MCHeli 1.0.3 models/parachute2.mqo -> models/effect/cargo_parachute.gltf.
 
-    python3 REDACTED      (from CombinedAssault/)
+    python3 tools/internal/stage_parachute.py      (from CombinedAssault/)
 
 Rigging lines meet at y 0.1 on a 7.9-block square (CargoRenderer.RIG_SPAN); `$seat` dropped.
 """
@@ -29,7 +29,7 @@ def main():
         raise SystemExit(f"{path}: sha1 {digest} != EMB4 1.0.3 release")
     objects = [o for o in mqo.read(path) if not o.name.startswith("$") and o.tris]
     w = mqo.GltfWriter(f"{NS}:models/effect/cargo_parachute.bin", f"{NS}:textures/effect/cargo_parachute.png",
-                       "REDACTED")
+                       "tools/internal/stage_parachute.py")
     pos, nrm, uv = [], [], []
     for o in objects:
         a, b, c = mqo.triangles(o, lambda v: np.asarray(v, dtype=float))
@@ -42,7 +42,7 @@ def main():
     os.makedirs(textures, exist_ok=True)
     shutil.copyfile(os.path.join(SRC, "textures", "parachute2.png"), os.path.join(textures, "cargo_parachute.png"))
     w.write(os.path.join(models, "cargo_parachute.gltf"), os.path.join(models, "cargo_parachute.bin"),
-            {"staged_by": "REDACTED", "source": "EMB4 MCHeli 1.0.3 models/parachute2.mqo"})
+            {"staged_by": "tools/internal/stage_parachute.py", "source": "EMB4 MCHeli 1.0.3 models/parachute2.mqo"})
     print(len(objects), "objects,", sum(len(p) for p in pos) // 3, "triangles")
 
 

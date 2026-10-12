@@ -1,4 +1,4 @@
-// Mk 15 (REDACTED). Barrels spin for 10 ticks after an ammo drop.
+// Mk 15 (tools/internal/stage_mk15.py). Barrels spin for 10 ticks after an ammo drop.
 function updateBones(context) {
     var builder = createPoseBuilder();
     builder.setRotation("mount", 0, -context.getPartYRot("ciws"), 0);

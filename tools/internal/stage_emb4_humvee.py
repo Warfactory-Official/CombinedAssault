@@ -3,8 +3,8 @@
 # a port to role nodes, or a run through tools/convert_pack.py.
 """Stage the EMB4 (McHeliCE addon) Humvee: glTF display + structure, and its Mk 19 as a separate mount model.
 
-    python3 REDACTED      (from combinedassault/)
-    python3 REDACTED m2   M2 mount from humveewithweapon (same pivots); role layout, shipped pack
+    python3 tools/internal/stage_emb4_humvee.py      (from combinedassault/)
+    python3 tools/internal/stage_emb4_humvee.py m2   M2 mount from humveewithweapon (same pivots); role layout, shipped pack
 
 MCHeli frame == vehicle frame (+X port, +Z forward); pivots from humvee_mk19.yml. Ours = (p + (0, GROUND, 0)) * SCALE.
 Roof: humvee = open ring only ($body1 roof plug dropped). humvee_mk19 part MOUNT_PART carries two mounts: shield +
@@ -103,7 +103,7 @@ def mesh_of(w, name, objs, pivot, frame=np.eye(3)):
 
 def display(src):
     w = mqo.GltfWriter(f"{NS}:models/ground/humvee/humvee.bin", f"{NS}:textures/ground/humvee/humvee.png",
-                       "REDACTED")
+                       "tools/internal/stage_emb4_humvee.py")
     root = w.node("humvee")
     w.node("body", mesh=mesh_of(w, "body", src.objs(BODY), np.zeros(3)), parent=root)
     for name, (parts, pivot) in HINGED.items():
@@ -127,7 +127,7 @@ def display(src):
     # Gunner markers belong to the weapon station (turret mount), not the unarmed hull.
     station = [m for m in kept if m["name"].endswith("_" + MOUNT_PART)]
     kept = [m for m in kept if m not in station]
-    w.write(gltf, binary, {"staged_by": "REDACTED", "source": "EMB4 McHeliCE humvee_mk19",
+    w.write(gltf, binary, {"staged_by": "tools/internal/stage_emb4_humvee.py", "source": "EMB4 McHeliCE humvee_mk19",
                            "scale": SCALE})
     mqo.append_nodes(gltf, binary, kept)
     return station
@@ -141,10 +141,10 @@ def turret(src, station):
     for m in station:
         kept.append({**m, "name": m["name"][:-len("_" + MOUNT_PART)], "parent": "humvee_turret"})
     w = mqo.GltfWriter(f"{NS}:models/ground/humvee/humvee_turret.bin", f"{NS}:textures/ground/humvee/humvee.png",
-                       "REDACTED")
+                       "tools/internal/stage_emb4_humvee.py")
     yaw_p = T(YAW_PIVOT)
     w.node("humvee_turret", mesh=mesh_of(w, "humvee_turret", src.objs(["$weapon0"], lambda o: o.name not in RING), yaw_p))
-    w.write(gltf, binary, {"staged_by": "REDACTED", "source": "EMB4 McHeliCE humvee_mk19 $weapon0",
+    w.write(gltf, binary, {"staged_by": "tools/internal/stage_emb4_humvee.py", "source": "EMB4 McHeliCE humvee_mk19 $weapon0",
                            "scale": SCALE})
     mqo.append_nodes(gltf, binary, kept)
 
@@ -152,7 +152,7 @@ def turret(src, station):
 def mk19(src):
     """Pitch-pivot frame. Bolt: breech over the trunnion on the bore line, Z scale = barrel length."""
     w = mqo.GltfWriter(f"{NS}:models/weapon/mk19/mk19.bin", f"{NS}:textures/ground/humvee/humvee.png",
-                       "REDACTED")
+                       "tools/internal/stage_emb4_humvee.py")
     pitch_p = T(PITCH_PIVOT)
     w.node("mk19", mesh=mesh_of(w, "mk19", src.objs(["$weapon0_0"]), pitch_p))
     muzzle = T(MUZZLE)
@@ -160,7 +160,7 @@ def mk19(src):
     models = os.path.join(PACK, "assets", NS, "models", "weapon", "mk19")
     os.makedirs(models, exist_ok=True)
     gltf, binary = os.path.join(models, "mk19.gltf"), os.path.join(models, "mk19.bin")
-    w.write(gltf, binary, {"staged_by": "REDACTED", "source": "EMB4 McHeliCE humvee_mk19 $weapon0_0",
+    w.write(gltf, binary, {"staged_by": "tools/internal/stage_emb4_humvee.py", "source": "EMB4 McHeliCE humvee_mk19 $weapon0_0",
                            "scale": SCALE})
     mqo.append_nodes(gltf, binary, [{"name": "socket_bolt_0", "parent": "mk19",
                                      "translation": [round(float(v), 5) for v in breech - pitch_p],
@@ -171,7 +171,7 @@ def mk19(src):
 def m2(src):
     """Pitch-pivot frame, role nodes as convert_pack writes them."""
     w = mqo.GltfWriter(f"{NS}:models/weapon/m2/m2.bin", f"{NS}:textures/weapon/m2/m2.png",
-                       "REDACTED")
+                       "tools/internal/stage_emb4_humvee.py")
     pitch_p = T(PITCH_PIVOT)
     root = w.node("m2", mesh=mesh_of(w, "m2", src.objs(["$weapon0_0"]), pitch_p))
     muzzle = T(M2_MUZZLE)
@@ -183,7 +183,7 @@ def m2(src):
     os.makedirs(models, exist_ok=True)
     os.makedirs(textures, exist_ok=True)
     w.write(os.path.join(models, "m2.gltf"), os.path.join(models, "m2.bin"),
-            {"staged_by": "REDACTED", "source": "EMB4 McHeliCE humveewithweapon $weapon0_0",
+            {"staged_by": "tools/internal/stage_emb4_humvee.py", "source": "EMB4 McHeliCE humveewithweapon $weapon0_0",
              "scale": SCALE})
     shutil.copyfile(os.path.join(SRC, "textures", "tanks", "humveewithweapon.png"), os.path.join(textures, "m2.png"))
 

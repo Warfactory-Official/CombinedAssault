@@ -34,7 +34,7 @@ import java.util.List;
  * A surface ship or a submarine: a hull held up by the water rather than by contacts.
  *
  * <p>Motion: {@link ShipHydrodynamics}, fed by {@link SeaProbe}; afloat => no step gravity. Seabed, banks: ordinary
- * contacts. See {@code REDACTED}.
+ * contacts. See {@code docs/naval-vehicles.md}.
  */
 public class ShipVehicle extends AbstractVehicle
         implements IAnimationEntity<ShipVehicle, ShipVehicleContext> {

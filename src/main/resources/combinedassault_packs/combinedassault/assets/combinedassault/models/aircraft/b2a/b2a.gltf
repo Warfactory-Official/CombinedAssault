@@ -1,9 +1,9 @@
 {
  "asset": {
   "version": "2.0",
-  "generator": "REDACTED",
+  "generator": "tools/internal/stage_b2a.py",
   "extras": {
-   "staged_by": "REDACTED",
+   "staged_by": "tools/internal/stage_b2a.py",
    "source": "EMB4 MCHeli 1.0.3 planes/b-2a",
    "scale": 0.87
   }

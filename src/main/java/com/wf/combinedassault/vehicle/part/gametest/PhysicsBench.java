@@ -28,7 +28,7 @@ import java.util.Locale;
 import java.util.Optional;
 
 /**
- * Physics cost vs hull size; one {@code [perf]} row per (vehicle, drive/park, solver). Vehicles: {@code tools/internal/REDACTED}.
+ * Physics cost vs hull size; one {@code [perf]} row per (vehicle, drive/park, solver). Vehicles: {@code tools/internal/bench_pack.py}.
  * One test, cases in fixed order after a warmup pass: batch order is hash order => JIT warmup lands on a random case.
  * tick = server tick wall (ServerTickEvent Pre -> Post); cpu = sum of all threads' CPU (process CPU clock = 10 ms).
  * base* = same floor, vehicles removed. Shared empty row FORBIDDEN: absorbs the previous case's chunk unload (-50 us/vehicle).
@@ -120,7 +120,7 @@ public class PhysicsBench {
                     ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ClimbBench.NAMESPACE, c.vehicle);
                     Optional<BaseVehicleData> data = CommonAssetsManager.vehicleDataManager().getVehicleData(id);
                     if (data.isEmpty()) {
-                        helper.fail(id + " not loaded: tools/internal/REDACTED not staged");
+                        helper.fail(id + " not loaded: tools/internal/bench_pack.py not staged");
                         return;
                     }
                     for (int i = 0; i < COPIES; i++) {

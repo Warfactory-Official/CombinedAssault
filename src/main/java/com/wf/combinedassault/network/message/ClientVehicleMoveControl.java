@@ -13,7 +13,7 @@ public class ClientVehicleMoveControl implements CustomPacketPayload {
     public static final StreamCodec<FriendlyByteBuf, ClientVehicleMoveControl> STREAM_CODEC = StreamCodec.of((buf, msg) -> msg.encode(buf), ClientVehicleMoveControl::decode);
     public static final CustomPacketPayload.Type<ClientVehicleMoveControl> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(CombinedAssault.MOD_ID, "vehicle_move_control"));
     public int vehicleEntityId;
-    /** Client tick input sequence (REDACTED). */
+    /** Client tick input sequence (docs/client-prediction.md). */
     public int seq;
     public boolean forward;
     public boolean backward;

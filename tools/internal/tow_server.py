@@ -2,13 +2,13 @@
 """Drive a dedicated server on flat land over RCON and run tow trials on it.
 
 Usage (from the combinedassault directory):
-  python3 REDACTED start      # write server.properties for the land world and launch
-  python3 REDACTED lap        # the mixed ring: flat, washboard, ruts, rough, kerbs, a crest
-  python3 REDACTED flat       # the control: the same circle on level ground
-  python3 REDACTED rough      # a whole ring of whole-block noise
-  python3 REDACTED cable      # a truck towing a truck on a cable, over the mixed ring
-  python3 REDACTED all        # every scene above, with a summary
-  python3 REDACTED stop       # /stop and restore server.properties
+  python3 tools/internal/tow_server.py start      # write server.properties for the land world and launch
+  python3 tools/internal/tow_server.py lap        # the mixed ring: flat, washboard, ruts, rough, kerbs, a crest
+  python3 tools/internal/tow_server.py flat       # the control: the same circle on level ground
+  python3 tools/internal/tow_server.py rough      # a whole ring of whole-block noise
+  python3 tools/internal/tow_server.py cable      # a truck towing a truck on a cable, over the mixed ring
+  python3 tools/internal/tow_server.py all        # every scene above, with a summary
+  python3 tools/internal/tow_server.py stop       # /stop and restore server.properties
 
 The RCON socket only ever hears a command's own reply, so a trial is started and then polled: the
 server keeps the verdict after the run ends and `tow trial report` hands it back.

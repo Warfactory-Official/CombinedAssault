@@ -1,4 +1,4 @@
-// EMB4 krupp_c34 (REDACTED). Barrel slides back RECOIL blocks on an ammo drop, runs out over RUN_OUT ticks:
+// EMB4 krupp_c34 (tools/internal/stage_emb4_ce.py). Barrel slides back RECOIL blocks on an ammo drop, runs out over RUN_OUT ticks:
 // rotation of "barrel", pivot 20 blocks below the bore.
 var RECOIL = 0.9, RUN_OUT = 12, SLIDE = 20;
 function updateBones(context) {

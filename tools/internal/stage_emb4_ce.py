@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Stage McHeliCE stock EMB4 models absent from MCHeli 1.0.3 (CE commit 5af67efb) as role-layout glTF.
 
-    python3 REDACTED [w3 oto127 krupp_c34]      (from CombinedAssault/)
+    python3 tools/internal/stage_emb4_ce.py [w3 oto127 krupp_c34]      (from CombinedAssault/)
 
 Overwrites the glTF (colliders included) => then per vehicle: tools/gen_hulls.py, tools/damage_textures.py,
 tools/model_icon.py.
@@ -95,7 +95,7 @@ class Rig:
     def __init__(self, src, folder):
         self.src = src
         self.w = mqo.GltfWriter(f"{NS}:models/{folder}/{src.id}/{src.id}.bin",
-                                f"{NS}:textures/{folder}/{src.id}/{src.id}.png", "REDACTED")
+                                f"{NS}:textures/{folder}/{src.id}/{src.id}.png", "tools/internal/stage_emb4_ce.py")
         self.world = {}
         self.index = {}
         self.root = self.node(src.id, None, (0, 0, 0), extras={ROLE: "body"})
@@ -136,7 +136,7 @@ class Rig:
         models = os.path.join(PACK, "assets", NS, "models", folder, self.src.id)
         os.makedirs(models, exist_ok=True)
         self.w.write(os.path.join(models, f"{self.src.id}.gltf"), os.path.join(models, f"{self.src.id}.bin"),
-                     {"staged_by": "REDACTED", "source": f"EMB4 McHeliCE stock {self.src.spec['src']}",
+                     {"staged_by": "tools/internal/stage_emb4_ce.py", "source": f"EMB4 McHeliCE stock {self.src.spec['src']}",
                       "scale": self.src.spec["scale"]})
 
 

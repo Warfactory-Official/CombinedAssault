@@ -21,7 +21,7 @@ public class ShipVehicleData extends BaseVehicleData<ShipVehicle> {
     }
 
     public void build(ShipVehicleDataPojo pojo) {
-        // A hull is always wet, and the box buoyancy would fight the hull model; see REDACTED.
+        // A hull is always wet, and the box buoyancy would fight the hull model; see docs/naval-vehicles.md.
         pojo.canWade = true;
         pojo.physicsInfo.density = 0;
         super.build(pojo);

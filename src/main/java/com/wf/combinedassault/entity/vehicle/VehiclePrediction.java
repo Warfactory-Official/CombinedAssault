@@ -17,7 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Driver-side prediction of one vehicle (REDACTED): inputs and post-step snapshots by seq, reconciled
+ * Driver-side prediction of one vehicle (docs/client-prediction.md): inputs and post-step snapshots by seq, reconciled
  * against the server's acked snapshot. Client tick thread; statics below {@link #due} are the server's sender.
  */
 @EventBusSubscriber(modid = CombinedAssault.MOD_ID)

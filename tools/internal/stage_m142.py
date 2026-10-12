@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Stage warty's M142 HIMARS (empty six-cell pod, remesh of MCHeli m142.mqo) as role-layout glTF.
 
-    python3 REDACTED      (from CombinedAssault/)
+    python3 tools/internal/stage_m142.py      (from CombinedAssault/)
 
 Overwrites the glTF (colliders included) => then tools/damage_textures.py, tools/model_icon.py.
 Source glTF forward -X, up +Y, MCHeli scale (12.1 long) => ours: yaw +90 (forward +Z, +X port), x0.578 = real
@@ -95,7 +95,7 @@ class Rig:
     def __init__(self, src):
         self.src = src
         self.w = mqo.GltfWriter(f"{NS}:models/ground/{VID}/{VID}.bin", f"{NS}:textures/ground/{VID}/{VID}.png",
-                                "REDACTED")
+                                "tools/internal/stage_m142.py")
         self.w.doc["materials"][0]["doubleSided"] = True
         self.world = {}
         self.index = {}
@@ -171,7 +171,7 @@ def stage(src):
     os.makedirs(models, exist_ok=True)
     path = os.path.join(models, f"{VID}.gltf")
     rig.w.write(path, os.path.join(models, f"{VID}.bin"),
-                {"staged_by": "REDACTED", "source": "warty M142_Empty_Blender_glTF", "scale": SCALE})
+                {"staged_by": "tools/internal/stage_m142.py", "source": "warty M142_Empty_Blender_glTF", "scale": SCALE})
     colliders(src, path, pitch_at)
     textures = os.path.join(PACK, "assets", NS, "textures", "ground", VID)
     os.makedirs(textures, exist_ok=True)

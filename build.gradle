@@ -243,13 +243,13 @@ neoForge.ideSyncTask(installClientMods)
     tasks.named(name).configure { dependsOn installClientMods }
 }
 
-// Bench packs (tools/internal/REDACTED) only under -Pbench: the suite must see the shipped packs alone.
+// Bench packs (tools/internal/bench_pack.py) only under -Pbench: the suite must see the shipped packs alone.
 tasks.named('runGameTestServer').configure {
     doFirst {
         File bench = project.file('run/gametest/combinedassault/packs/bench')
         project.delete(bench)
         if (project.hasProperty('bench')) {
-            project.exec { commandLine 'python3', 'tools/internal/REDACTED', bench.path }
+            project.exec { commandLine 'python3', 'tools/internal/bench_pack.py', bench.path }
         }
     }
 }

@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Every server vehicle that ticked, stepped once per level tick (REDACTED): capture, islands of touching
+ * Every server vehicle that ticked, stepped once per level tick (docs/rigid-step.md): capture, islands of touching
  * hulls, one {@link RigidSolver} solve + integration per island on the pool, flush in id order. Tick thread except
  * island tasks.
  */
@@ -243,7 +243,7 @@ public final class RigidStep {
         }
     }
 
-    /** Client tick thread: one predicted vehicle, no neighbours, live world (REDACTED). */
+    /** Client tick thread: one predicted vehicle, no neighbours, live world (docs/rigid-step.md). */
     static void predict(VehicleStep step) {
         Island island = new Island();
         island.members.add(step);

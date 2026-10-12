@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-/** The {@code attributes} block of a {@code combinedassault:ship}. Units in {@code REDACTED}. */
+/** The {@code attributes} block of a {@code combinedassault:ship}. Units in {@code docs/naval-vehicles.md}. */
 public class ShipVehicleDataPojo extends BaseVehicleDataPojo {
 
     @SerializedName("attributes")

@@ -1274,7 +1274,7 @@ public final class VehicleStep {
         }
     }
 
-    /** Warm-start caches (snapshot, REDACTED). */
+    /** Warm-start caches (snapshot, docs/client-prediction.md). */
     void writeWarm(FriendlyByteBuf buf) {
         buf.writeVarInt(cacheCount);
         for (int i = 0, n = cacheCount * 9; i < n; i++) {

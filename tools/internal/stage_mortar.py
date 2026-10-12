@@ -27,7 +27,7 @@ rather than at the zero the part system poses from. So this does four things, in
    linear on the way, which they need anyway: glTF states baseColorFactor in linear light and a
    Minecraft texture is read as though it were sRGB.
 
-Run from the combinedassault directory:  python3 REDACTED
+Run from the combinedassault directory:  python3 tools/internal/stage_mortar.py
 """
 import json
 import math
@@ -546,7 +546,7 @@ def main():
     print(f"   painted {len(doc['materials'])} materials into {sheet}")
     doc["buffers"][0] = {"byteLength": len(blob),
                          "extras": {"resourceLocation": f"{NS}:models/emplacement/{ID}/{ID}.bin"}}
-    doc.setdefault("asset", {})["extras"] = {"staged_by": "REDACTED",
+    doc.setdefault("asset", {})["extras"] = {"staged_by": "tools/internal/stage_mortar.py",
                                              "yaw": 180, "rest_elevation": REST_ELEVATION}
     gltf, binary = os.path.join(models, f"{ID}.gltf"), os.path.join(models, f"{ID}.bin")
     kept = mqo.read_markers(gltf, binary)

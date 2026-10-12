@@ -389,7 +389,7 @@ public abstract class AbstractVehicle extends ContainerCraft
     /** The working pose the rigid step runs against. */
     final PhysicsRig physicsRig = new PhysicsRig();
     final VehicleStep step = new VehicleStep(this);
-    /** Client: driver-side prediction of this vehicle, null when not predicted (REDACTED). */
+    /** Client: driver-side prediction of this vehicle, null when not predicted (docs/client-prediction.md). */
     @Nullable
     VehiclePrediction prediction;
     /** World view frozen for this vehicle's async solve. */
@@ -3837,7 +3837,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         return false;
     }
 
-    /** Client, driver's input this tick: predict when eligible (REDACTED), else server pose lerped. */
+    /** Client, driver's input this tick: predict when eligible (docs/client-prediction.md), else server pose lerped. */
     public void predictInput(ControlUnit input) {
         if (!predictionEligible()) {
             dropPrediction();
@@ -3897,7 +3897,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         }
     }
 
-    /** Snapshot (REDACTED): what the next step starts from beyond inputs and the world. */
+    /** Snapshot (docs/client-prediction.md): what the next step starts from beyond inputs and the world. */
     protected void writePrediction(FriendlyByteBuf buf) {
         buf.writeDouble(getX());
         buf.writeDouble(getY());

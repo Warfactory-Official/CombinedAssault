@@ -19,7 +19,7 @@ import java.util.Map;
  * Fast player (root entity: ridden vehicle, elytra): chunks the view disc will reach within {@code leadLoadTicks} are
  * loaded to FULL before the disc arrives; vanilla then sends them on entry. Covers view disc shifted by
  * {@code v * leadLoadTicks}, capped at one view radius, minus the own disc.
- * Sender idle at speed, readiness lags (`ca_chunkstream`, REDACTED): tickets only, no extra sends.
+ * Sender idle at speed, readiness lags (`ca_chunkstream`, docs/chunk-streaming.md): tickets only, no extra sends.
  */
 public final class LeadTickets {
 

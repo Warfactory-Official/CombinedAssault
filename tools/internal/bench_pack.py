@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Synthetic box vehicles for PhysicsBench: box_<L>_sprung / box_<L>_rigid, L = hull length in blocks.
-usage: tools/REDACTED <pack dir>   (a CombinedAssault pack: <gamedir>/combinedassault/packs/bench)"""
+usage: tools/bench_pack.py <pack dir>   (a CombinedAssault pack: <gamedir>/combinedassault/packs/bench)"""
 import base64
 import json
 import math

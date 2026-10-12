@@ -106,7 +106,7 @@ public class PhysicsEngine {
     private final LongOpenHashSet queuedCells = new LongOpenHashSet();
     private final BlockPos.MutableBlockPos breakCursor = new BlockPos.MutableBlockPos();
 
-    /** Carried across ticks (snapshot, REDACTED). */
+    /** Carried across ticks (snapshot, docs/client-prediction.md). */
     public void writePrediction(FriendlyByteBuf buf) {
         buf.writeFloat(angularVelocity.x);
         buf.writeFloat(angularVelocity.y);

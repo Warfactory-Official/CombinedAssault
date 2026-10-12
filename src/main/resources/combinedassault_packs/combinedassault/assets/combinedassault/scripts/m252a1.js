@@ -9,7 +9,7 @@
 // moves its geometry and its translation and scale do not.
 //
 // Every figure is in blocks from the socket the tube pivots in, measured off the export by
-// REDACTED, which prints them.
+// tools/internal/stage_mortar.py, which prints them.
 var FOOT_Y = 0.355, FOOT_Z = 0.585;         // the lower pin, in the bipod's frame
 var HEAD_Y = -0.14953, HEAD_Z = 0.83493;    // the upper pin, in the tube's, with the tube laid flat
 
