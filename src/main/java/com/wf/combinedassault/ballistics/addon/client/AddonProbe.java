@@ -5,7 +5,7 @@ import com.wf.wflib.probe.ProbeContext;
 import com.wf.wflib.probe.ProbeElement;
 import com.wf.wflib.probe.ProbeInfo;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import com.wf.gemrender.ui.Canvas;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
@@ -135,7 +135,7 @@ public final class AddonProbe {
     }
 
     private interface Draw {
-        void draw(GuiGraphics graphics, int x, int y, int w, int h);
+        void draw(Canvas graphics, int x, int y, int w, int h);
     }
 
     private static ProbeElement schematic(AddonMount mount, Draw draw) {

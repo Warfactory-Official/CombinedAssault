@@ -1,5 +1,6 @@
 package com.wf.combinedassault.entity.vehicle;
 
+import com.wf.combinedassault.vehicle.structure.HullTag;
 import com.wf.combinedassault.api.collision.CollisionProvider;
 import com.wf.combinedassault.api.collision.OrientedBoxes;
 import com.wf.combinedassault.tow.HitchInfo;
@@ -164,6 +165,8 @@ public final class VehicleStep {
     private static final float FACE_COMPONENT = 0.1f;
     /** Blocks; past it a pose is broken, and preparing the sweep allocates collision columns without bound. */
     private static final double MAX_GATHER = 1024;
+    /** > one tick of travel plus steering swing of the hull centre. */
+    private static final double TELEPORT_JUMP = 16;
     /** One hill triangle's vertices, section-local. */
     private final float[] triangle = new float[9];
     /** Union of the world shapes' bounds: one triangle walk per tick, not per shape. */
@@ -224,6 +227,12 @@ public final class VehicleStep {
         hullX = pivotX + arm.x;
         hullY = pivotY + arm.y;
         hullZ = pivotZ + arm.z;
+        // Position set outside the step (/tp, teleportTo) leaves the OBBs at the old pose => gather spans both.
+        OBB stale = main.obb();
+        double jx = hullX - stale.centerX(), jy = hullY - stale.centerY(), jz = hullZ - stale.centerZ();
+        if (jx * jx + jy * jy + jz * jz > TELEPORT_JUMP * TELEPORT_JUMP) {
+            v.updateOBBs();
+        }
         hullExtents.set(main.obb().extents());
         Vec3 center = engine.center;
         hullLocalRotation.transform(comLocal.set((float) center.x, (float) center.y, (float) center.z)).add(hullLocal);
@@ -708,12 +717,18 @@ public final class VehicleStep {
                     }
                 }
             }
-            int fillTo = buffer.size();
+            boolean world = worldShape(s);
+            if (!world) {
+                buffer.retain(from, k -> false);
+            }
+            int fillTo = buffer.size(), fillStart = world ? fillFrom : from;
             if (!cull) {
                 if (deck != null) {
                     deckContacts(narrow, buffer, shape, link, deck, origin);
                 }
-                providerContacts(narrow, buffer, shape, deckCount, origin);
+                if (world) {
+                    providerContacts(narrow, buffer, shape, deckCount, origin);
+                }
             }
             // Fill => face-normal lift; off-triangle points and steep sides dropped. Blocks inside the hill's cover band
             // are the hill's (step faces, cut crests); other block support => top-face lift.
@@ -721,7 +736,7 @@ public final class VehicleStep {
                 if (k >= fillTo) {
                     return true;
                 }
-                if (k >= fillFrom) {
+                if (k >= fillStart) {
                     if (buffer.flags(k) == OFF_FACE || buffer.normalY(k) <= SUPPORT_NORMAL) {
                         return false;
                     }
@@ -775,36 +790,76 @@ public final class VehicleStep {
             }
             RigidSolver.Contact c = solver.addContact(0, body, buffer.x(k), buffer.y(k), buffer.z(k),
                     buffer.normalX(k), buffer.normalY(k), buffer.normalZ(k), buffer.separation(k));
-            // Deck: belly is where a sprung rider rests (wheels probe blocks only); frictionless => slid off a pitching boat.
-            c.friction = buffer.tagA(k) < 0 ? FRICTION : friction;
+            // Any carrier piece: riverine hull top = deck top => reduction kept hull points, rider never parked.
+            boolean carrier = buffer.tagA(k) < 0 && -1 - buffer.tagA(k) < deckCount;
+            // Carrier support = world support rule: a nose meeting the lowered ramp rides up it.
+            c.lift = buffer.flags(k) == LIFT || carrier && buffer.normalY(k) > SUPPORT_NORMAL;
+            // Deck walls, providers: Coulomb. Deck lift = world belly rule (wheels probe decks): 0.5 on the lip held a Merkava.
+            c.friction = buffer.tagA(k) < 0 && !(carrier && c.lift) ? FRICTION : friction;
             c.restitution = restitution;
-            c.lift = buffer.flags(k) == LIFT;
             c.wedged = wedged;
             warm(c, c.anchorB);
-            if (buffer.tagA(k) < 0 && -1 - buffer.tagA(k) < deckCount && buffer.normalY(k) > SUPPORT_NORMAL) {
+            if (carrier && buffer.normalY(k) > SUPPORT_NORMAL) {
                 deckSupports++;
             }
         }
         contactTo = solver.contactCount();
-        link.supportContacts(deckSupports);
-        springs(solver);
+        link.supportContacts(deckSupports + springs(solver));
     }
 
     private void deckContacts(ConvexContacts narrow, ContactBuffer buffer, Polytope shape, CarrierLink link, BoxBuffer deck,
                               double[] origin) {
         Quaternionf rotation = link.deckRotation();
+        Quaternionf piece = new Quaternionf();
         Vector3f centre = new Vector3f();
         for (int i = 0, size = deck.size(); i < size; i++) {
-            rotation.transform(centre.set((float) ((deck.minX(i) + deck.maxX(i)) * 0.5), (float) ((deck.minY(i) + deck.maxY(i)) * 0.5),
-                    (float) ((deck.minZ(i) + deck.maxZ(i)) * 0.5)));
-            box.box((float) (link.pivotX() + centre.x - origin[0]), (float) (link.pivotY() + centre.y - origin[1]),
-                    (float) (link.pivotZ() + centre.z - origin[2]), rotation, (float) ((deck.maxX(i) - deck.minX(i)) * 0.5),
-                    (float) ((deck.maxY(i) - deck.minY(i)) * 0.5), (float) ((deck.maxZ(i) - deck.minZ(i)) * 0.5));
+            // Oriented piece, not its carrier-frame AABB: a lowered ramp's AABB = 2-block wall at the lip.
+            rotation.transform(centre.set(link.deckFrame(i, 0), link.deckFrame(i, 1), link.deckFrame(i, 2)));
+            rotation.mul(piece.set(link.deckFrame(i, 6), link.deckFrame(i, 7), link.deckFrame(i, 8), link.deckFrame(i, 9)), piece);
+            float cx = (float) (link.pivotX() + centre.x - origin[0]), cy = (float) (link.pivotY() + centre.y - origin[1]),
+                    cz = (float) (link.pivotZ() + centre.z - origin[2]);
+            ConvexHull hull = link.deckHull(i);
+            if (hull != null) {
+                box.hull(hull, cx, cy, cz, piece);
+            } else {
+                box.box(cx, cy, cz, piece, link.deckFrame(i, 3), link.deckFrame(i, 4), link.deckFrame(i, 5));
+            }
             box.tag = -1 - i;
             if (box.boundsMeet(shape, margin)) {
+                int from = buffer.size();
                 narrow.collide(box, shape, margin, buffer);
+                if (link.landing(i)) {
+                    for (int k = from, to = buffer.size(); k < to; k++) {
+                        deckTop(buffer, k, piece, cx, cy, cz, link.deckFrame(i, 3), link.deckFrame(i, 4), link.deckFrame(i, 5));
+                    }
+                }
             }
         }
+    }
+
+    /** World frame s ({@link #worldFrames} order) meets blocks, fill, providers; {@link HullTag#world()}. */
+    private boolean worldShape(int s) {
+        CompoundBody compound = vehicle.collisionBody();
+        return s == 0 ? vehicle.mainCubeOBB.tag().world() : s > compound.pieceCount() || compound.piece(s - 1).tag().world();
+    }
+
+    /**
+     * Landing deck contact k over the piece's top, <= {@link DriveSurface#CLIMB} under it => top normal, lift ({@link #topFace}
+     * for a tilted box). Hull face against a lowered ramp's lip read horizontal: Merkava (hull box to the ground) stopped.
+     */
+    private static void deckTop(ContactBuffer buffer, int k, Quaternionf rotation, float cx, float cy, float cz,
+                                float ex, float ey, float ez) {
+        float half = buffer.separation(k) * 0.5f;
+        Vector3f local = rotation.transformInverse(new Vector3f(buffer.x(k) + buffer.normalX(k) * half - cx,
+                buffer.y(k) + buffer.normalY(k) * half - cy, buffer.z(k) + buffer.normalZ(k) * half - cz));
+        float gap = local.y - ey;
+        if (Math.abs(local.x) > ex + TOP_SLACK || Math.abs(local.z) > ez + TOP_SLACK || gap < -DriveSurface.CLIMB) {
+            return;
+        }
+        Vector3f up = rotation.transform(new Vector3f(0, 1, 0));
+        local.y = ey + gap * 0.5f;
+        rotation.transform(local).add(cx, cy, cz);
+        buffer.set(k, local.x, local.y, local.z, up.x, up.y, up.z, gap, LIFT);
     }
 
     private void providerContacts(ConvexContacts narrow, ContactBuffer buffer, Polytope shape, int deckCount, double[] origin) {
@@ -844,13 +899,15 @@ public final class VehicleStep {
         sessions.clear();
     }
 
-    private void springs(RigidSolver solver) {
+    /** @return wheel rows standing on a carrier deck (deck support, like belly contacts) */
+    private int springs(RigidSolver solver) {
         PhysicsEngine engine = vehicle.physicsEngine;
         springFrom = solver.springCount();
         if (!sprung) {
             springTo = springFrom;
-            return;
+            return 0;
         }
+        int onDeck = 0;
         PhysicsRig rig = vehicle.physicsRig;
         engine.simulateSuspensions(rig, surface);
         List<SuspensionUnit<?>> units = vehicle.getSuspensionUnits();
@@ -873,6 +930,9 @@ public final class VehicleStep {
             float stiffness = (float) (PhysicsHelper.forcePerTick(unit.getData().getSpringStiffness()) * weight);
             float damping = (float) (PhysicsHelper.dampingPerTick(unit.getData().getDamping()) * weight);
             for (int row = 0; row < rows; row++, slot++) {
+                if (unit.contactOnDeck(row)) {
+                    onDeck++;
+                }
                 RigidSolver.Spring spring = solver.addSpring(body, (float) (unit.contactX(row) - solver.origin[0]),
                         (float) (unit.contactY(row) - solver.origin[1]), (float) (unit.contactZ(row) - solver.origin[2]), 0, 1, 0);
                 spring.ratio = ratio;
@@ -886,6 +946,7 @@ public final class VehicleStep {
             }
         }
         springTo = solver.springCount();
+        return onDeck;
     }
 
     /** Previous tick's impulses for the nearest matching point. */

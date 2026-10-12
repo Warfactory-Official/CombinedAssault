@@ -1,0 +1,199 @@
+{
+  "constants": {
+    "tab_w": "floor(130 / count) + (index < mod(130, count) ? 1 : 0)",
+    "active": "index == station.active_index",
+    "ammo": "primary.ammo == 0 ? #ffff6040 : primary.ammo <= floor(primary.capacity / 4) ? #ddffaa00 : #ff60e880",
+    "ammo_bar": "primary.ammo == 0 ? #ffff6040 : primary.ammo <= floor(primary.capacity / 4) ? #ddffaa00 : #ff30d050"
+  },
+  "use": [
+    "combinedassault:hud"
+  ],
+  "root": {
+    "type": "when",
+    "if": "station.weapon_count > 0",
+    "then": {
+      "type": "place",
+      "x": "ui.width - 4",
+      "y": "ui.height - 7",
+      "pivot": "bottom_right",
+      "child": {
+        "type": "transform",
+        "scale": 0.75,
+        "pivot": "bottom_right",
+        "child": {
+          "type": "sized",
+          "w": 130,
+          "h": 58,
+          "child": {
+            "type": "stack",
+            "children": [
+              {
+                "type": "box",
+                "background": "#cc0a1408",
+                "border": "#ff2a7a3a",
+                "min_width": 130,
+                "min_height": 58
+              },
+              {
+                "type": "place",
+                "x": 5,
+                "y": 5,
+                "child": {
+                  "type": "text",
+                  "text": "{primary.name}",
+                  "color": "#ffd0f0d8",
+                  "max_width": 86
+                }
+              },
+              {
+                "type": "place",
+                "x": 5,
+                "y": 18,
+                "child": {
+                  "type": "when",
+                  "if": "primary.reloading",
+                  "then": {
+                    "type": "text",
+                    "text": "RELOADING",
+                    "color": "#ffff6040"
+                  },
+                  "else": {
+                    "type": "text",
+                    "text": "{primary.ammo} / {primary.capacity}",
+                    "color": "$ammo"
+                  }
+                }
+              },
+              {
+                "type": "place",
+                "x": 5,
+                "y": 31,
+                "child": {
+                  "type": "bar",
+                  "w": 68.8,
+                  "h": 3,
+                  "value": "primary.capacity > 0 ? primary.ammo / primary.capacity : 0",
+                  "fill": "$ammo_bar",
+                  "back": "#dd0f2210"
+                }
+              },
+              {
+                "type": "when",
+                "if": "primary.multi > 0",
+                "then": {
+                  "type": "place",
+                  "x": 63,
+                  "y": 19,
+                  "child": {
+                    "type": "repeat",
+                    "items": "primary.multi_dots",
+                    "gap": 3,
+                    "child": {
+                      "type": "rect",
+                      "w": 6,
+                      "h": 6,
+                      "color": "index == primary.multi_selected ? #ffff8c00 : #ff333333"
+                    }
+                  }
+                }
+              },
+              {
+                "type": "when",
+                "if": "secondary.present",
+                "then": {
+                  "type": "combinedassault:hud/weapon_side",
+                  "weapon": "secondary",
+                  "y": 5
+                }
+              },
+              {
+                "type": "when",
+                "if": "independent.present",
+                "then": {
+                  "type": "combinedassault:hud/weapon_side",
+                  "weapon": "independent",
+                  "y": 25
+                }
+              },
+              {
+                "type": "place",
+                "x": 0,
+                "y": 58,
+                "pivot": "bottom_left",
+                "child": {
+                  "type": "repeat",
+                  "items": "station.weapons",
+                  "align": "end",
+                  "child": {
+                    "type": "sized",
+                    "w": "$tab_w",
+                    "h": "$active ? 19 : 14",
+                    "child": {
+                      "type": "stack",
+                      "children": [
+                        {
+                          "type": "rect",
+                          "w": "$tab_w",
+                          "h": "$active ? 19 : 14",
+                          "color": "$active ? #cc0e2a10 : #cc0a1408"
+                        },
+                        {
+                          "type": "rect",
+                          "w": "$tab_w",
+                          "h": 1,
+                          "color": "$green"
+                        },
+                        {
+                          "type": "when",
+                          "if": "$active",
+                          "then": {
+                            "type": "place",
+                            "x": 1,
+                            "y": 1,
+                            "child": {
+                              "type": "rect",
+                              "w": "$tab_w - 2",
+                              "h": 1,
+                              "color": "$green"
+                            }
+                          }
+                        },
+                        {
+                          "type": "when",
+                          "if": "index > 0",
+                          "then": {
+                            "type": "place",
+                            "x": 0,
+                            "y": 1,
+                            "child": {
+                              "type": "rect",
+                              "w": 1,
+                              "h": "$active ? 17 : 12",
+                              "color": "$green"
+                            }
+                          }
+                        },
+                        {
+                          "type": "place",
+                          "x": 3,
+                          "y": "$active ? 5 : 2",
+                          "child": {
+                            "type": "text",
+                            "text": "{weapon.name}",
+                            "color": "$active ? #ffd8f8e0 : #ff5a9060",
+                            "shadow": true,
+                            "max_width": "$tab_w - 4"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

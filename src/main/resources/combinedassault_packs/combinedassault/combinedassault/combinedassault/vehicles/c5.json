@@ -100,7 +100,7 @@
             "type": "combinedassault:linked_hinge",
             "is_seat": false,
             "link": "cargo_doors",
-            "open_x_rot": -20,
+            "open_x_rot": -29,
             "rot_info": {
                 "x_rot_speed": 0.5,
                 "y_rot_speed": 0,

@@ -20,7 +20,7 @@ import java.util.Set;
  */
 public record ModelRig(List<Frame> frames, int[] nodeFrame, List<Collider> colliders) {
 
-    private static final Set<String> COLLIDER_KEYS = Set.of("main", "deck", "solid", "name", "hit");
+    private static final Set<String> COLLIDER_KEYS = Set.of("main", "deck", "solid", "world", "name", "hit");
     /** Vertex weld and coplanarity, blocks. */
     private static final float WELD = 1.0e-4f;
     private static final float PLANE = 1.0e-4f;
@@ -34,7 +34,8 @@ public record ModelRig(List<Frame> frames, int[] nodeFrame, List<Collider> colli
     public record Frame(int node, String name, NodeRole role, String part, int parent, Matrix4f world, JsonObject meta) {
     }
 
-    public record Collider(int frame, String node, ConvexHull hull, boolean main, boolean deck, boolean solid,
+    /** @param world false => vehicles only: blocks, hill fill, providers pass through (ramp lip below the ground) */
+    public record Collider(int frame, String node, ConvexHull hull, boolean main, boolean deck, boolean solid, boolean world,
                            String name) {
     }
 
@@ -132,6 +133,7 @@ public record ModelRig(List<Frame> frames, int[] nodeFrame, List<Collider> colli
             colliders.add(new Collider(nodeFrame[i], node.name(), hull, main,
                     meta.has("deck") && meta.get("deck").getAsBoolean(),
                     !meta.has("solid") || meta.get("solid").getAsBoolean(),
+                    !meta.has("world") || meta.get("world").getAsBoolean(),
                     meta.has("name") ? meta.get("name").getAsString() : node.name()));
         }
         if (colliders.stream().filter(Collider::main).count() > 1) {

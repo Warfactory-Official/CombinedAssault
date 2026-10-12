@@ -1,0 +1,6 @@
+{
+  "use": ["combinedassault:hud"],
+  "params": {"key": "key", "color": "color", "shown": {"type": "bool", "default": "true"}},
+  "root": {"type": "box", "background": "$shown ? $shade : 0", "border_width": 0, "pad_x": 3, "pad_y": 2,
+    "child": {"type": "text", "text": "{tr:$key}", "color": "$shown ? $color : 0", "shadow": true}}
+}

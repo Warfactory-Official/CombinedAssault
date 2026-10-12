@@ -1,0 +1,9 @@
+{
+  "use": ["combinedassault:hud"],
+  "params": {"x": "num", "y": "num", "key": "key", "value": "text", "color": "color"},
+  "root": {"type": "place", "x": "$x", "y": "$y", "child": {"type": "sized", "w": "136 - $x", "h": 9, "child": {"type": "stack", "children": [
+    {"type": "text", "text": "{tr:$key}", "color": "$label"},
+    {"type": "place", "x": "136 - $x", "y": 0, "pivot": "top_right",
+      "child": {"type": "text", "text": "$value", "color": "$color", "shadow": true}}
+  ]}}}
+}

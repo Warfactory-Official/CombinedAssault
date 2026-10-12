@@ -1,0 +1,17 @@
+{
+  "use": ["combinedassault:hud"],
+  "constants": {"aim": "vehicle.rotary ? $green : $white"},
+  "root": {"type": "stack", "children": [
+    {"type": "when", "if": "!local.scope", "then": {"type": "stack", "children": [
+      {"type": "combinedassault:aim_reticle", "color": "$aim"},
+      {"type": "combinedassault:impact_markers", "color": "$aim"},
+      {"type": "combinedassault:lock_markers"}
+    ]}},
+    {"type": "combinedassault:hud/weapon_card"},
+    {"type": "place", "x": "ui.width / 2 + 128", "y": "ui.height - 80", "child": {"type": "combinedassault:radar_scopes"}},
+    {"type": "when", "if": "vehicle.rwr",
+      "then": {"type": "place", "x": "ui.width - 40", "y": "ui.height - 180", "child": {"type": "combinedassault:rwr"}}},
+    {"type": "when", "if": "indirect.present",
+      "then": {"type": "place", "x": 6, "y": 6, "child": {"type": "combinedassault:hud/indirect_board"}}}
+  ]}
+}

@@ -10,7 +10,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.all.AllConfigs;
 import com.wf.combinedassault.api.event.HitVehicleEvent;
-import com.wf.combinedassault.client.gui.VehicleHitIndicatorOverlay;
+import com.wf.combinedassault.client.hud.HitFeedback;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 
 import java.util.UUID;
@@ -67,13 +67,13 @@ public class ServerHitVehicleEvent implements CustomPacketPayload {
         }
         ctxSupplier.enqueueWork(() -> {
             if (message.shooterUuid.equals(LocalVehiclePlayer.instance.getPlayer().getUUID())) {
-                VehicleHitIndicatorOverlay.lastHitTime = System.currentTimeMillis();
-                if (!VehicleHitIndicatorOverlay.events.isEmpty() && VehicleHitIndicatorOverlay.events.get(0).entityId != message.entityId) {
-                    VehicleHitIndicatorOverlay.events.clear();
+                HitFeedback.lastHitTime = System.currentTimeMillis();
+                if (!HitFeedback.events.isEmpty() && HitFeedback.events.get(0).entityId != message.entityId) {
+                    HitFeedback.events.clear();
                 }
-                VehicleHitIndicatorOverlay.events.add(message);
-                if (VehicleHitIndicatorOverlay.events.size() > 128) {
-                    VehicleHitIndicatorOverlay.events.remove(0);
+                HitFeedback.events.add(message);
+                if (HitFeedback.events.size() > 128) {
+                    HitFeedback.events.remove(0);
                 }
             }
         });

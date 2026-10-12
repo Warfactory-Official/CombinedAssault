@@ -29,6 +29,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.core.SectionPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -346,6 +347,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     private volatile DeckSnapshot deckSnapshot = DeckSnapshot.EMPTY;
     /** Count of allCubeOBBs declared as landing surface. */
     private int deckCubes;
+    /** Pack-tagged `main` collider: outside {@link #allCubeOBBs}, so the deck set adds it. */
+    private boolean mainOwnPiece;
     /**
      * This tick's frozen view of the carrier this vehicle is flying over, driving on or landing on.
      * Per vehicle and rewritten on the tick thread, so the solve reads numbers nobody else is touching.
@@ -1554,8 +1557,12 @@ public abstract class AbstractVehicle extends ContainerCraft
             return;
         }
         deckSlotVersion[deckSnapshotSlot] = localVersion;
-        float[] deckBoxes = deck.boxBuffer(structureCubes);
+        float[] deckBoxes = deck.boxBuffer(structureCubes + 1);
         float[] landingBoxes = deckCubes > 0 ? deck.deckBoxBuffer(deckCubes) : deck.deckBoxes();
+        deck.shapeBuffers(structureCubes + 1);
+        float[] frames = deck.frames();
+        ConvexHull[] shapes = deck.hulls();
+        boolean[] landing = deck.landing();
         int landingCount = 0;
         int boxCount = 0;
         double minX = Double.POSITIVE_INFINITY, minY = Double.POSITIVE_INFINITY, minZ = Double.POSITIVE_INFINITY;
@@ -1579,7 +1586,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             float rz = Math.abs(scratchLocalRot.m02) * extents.x + Math.abs(scratchLocalRot.m12) * extents.y + Math.abs(scratchLocalRot.m22) * extents.z;
             // A piece declared not solid is still shot at and still bounds the hull, but nothing
             // stands on it and nothing collides with it: a mudguard, an aerial, a mirror.
-            if (i < size && cubeOBB.isSolid()) {
+            if ((i < size || mainOwnPiece) && cubeOBB.isSolid()) {
                 int o = boxCount * 6;
                 deckBoxes[o] = center.x - rx;
                 deckBoxes[o + 1] = center.y - ry;
@@ -1587,6 +1594,20 @@ public abstract class AbstractVehicle extends ContainerCraft
                 deckBoxes[o + 3] = center.x + rx;
                 deckBoxes[o + 4] = center.y + ry;
                 deckBoxes[o + 5] = center.z + rz;
+                int f = boxCount * DeckSnapshot.FRAME;
+                Quaternionf local = cubeOBB.localRotation();
+                frames[f] = center.x;
+                frames[f + 1] = center.y;
+                frames[f + 2] = center.z;
+                frames[f + 3] = extents.x;
+                frames[f + 4] = extents.y;
+                frames[f + 5] = extents.z;
+                frames[f + 6] = local.x;
+                frames[f + 7] = local.y;
+                frames[f + 8] = local.z;
+                frames[f + 9] = local.w;
+                shapes[boxCount] = cubeOBB.hull();
+                landing[boxCount] = cubeOBB.isDeck();
                 if (cubeOBB.isDeck() && landingCount < deckCubes) {
                     System.arraycopy(deckBoxes, o, landingBoxes, landingCount * 6, 6);
                     landingCount++;
@@ -1684,7 +1705,8 @@ public abstract class AbstractVehicle extends ContainerCraft
                 declaredDeck++;
             }
         }
-        deckCubes = declaredDeck;
+        mainOwnPiece = !cubes.contains(mainCubeOBB);
+        deckCubes = declaredDeck + (mainOwnPiece && mainCubeOBB.isDeck() ? 1 : 0);
 
         List<OBB> obbs = new ArrayList<>(cubes.size());
         for (VehicleCubeOBB cubeOBB : cubes) {
@@ -2235,8 +2257,14 @@ public abstract class AbstractVehicle extends ContainerCraft
         if (pPassenger == null) {
             return null;
         }
-        Optional<Seat> ownSeat = seats.stream().filter(seat -> seat.passengerId == pPassenger.getId()).findFirst();
-        return ownSeat.map(seat -> seat.partUnit).orElse(null);
+        int id = pPassenger.getId();
+        for (int i = 0; i < seats.size(); i++) {
+            Seat seat = seats.get(i);
+            if (seat.passengerId == id) {
+                return seat.partUnit;
+            }
+        }
+        return null;
     }
 
     public List<PartUnit<?>> getPartUnits() {
@@ -2830,11 +2858,11 @@ public abstract class AbstractVehicle extends ContainerCraft
 
 
 
-    /** Hull bottom within this of a deck box top (carrier frame) => the deck owns the pair. */
+    /** Hull bottom within this of a landing piece's top (its own frame) => the deck owns the pair. */
     private static final double DECK_STAND_REACH = 0.5;
 
     /**
-     * Rider's hull centre over a carrier deck box, bottom near its top. Covers the tick a woken rider has neither harness
+     * Rider's hull centre over a carrier landing piece, bottom near its top. Covers the tick a woken rider has neither harness
      * nor deck link (refresh runs in its next plan): hull contact there turned boat speed into a 0.6 b/t launch.
      */
     private static boolean standsOnDeckOf(AbstractVehicle rider, AbstractVehicle carrier) {
@@ -2846,11 +2874,20 @@ public abstract class AbstractVehicle extends ContainerCraft
         Vector3d local = DeckFrame.toLocal(deck.inverse(), deck.pivotX(), deck.pivotY(), deck.pivotZ(),
                 hull.centerX(), hull.centerY(), hull.centerZ(), new Vector3d());
         double below = hull.extents().length();
-        float[] boxes = deck.deckBoxes();
-        for (int i = 0, count = deck.deckCount(); i < count; i++) {
-            int o = i * 6;
-            if (local.x >= boxes[o] && local.x <= boxes[o + 3] && local.z >= boxes[o + 2] && local.z <= boxes[o + 5]
-                    && local.y >= boxes[o + 4] - DECK_STAND_REACH && local.y <= boxes[o + 4] + below + DECK_STAND_REACH) {
+        float[] frames = deck.frames();
+        boolean[] landing = deck.landing();
+        Quaternionf inverse = new Quaternionf();
+        Vector3d p = new Vector3d();
+        for (int i = 0, count = deck.count(); i < count; i++) {
+            if (!landing[i]) {
+                continue;
+            }
+            int f = i * DeckSnapshot.FRAME;
+            inverse.set(frames[f + 6], frames[f + 7], frames[f + 8], frames[f + 9]).conjugate()
+                    .transform(p.set(local.x - frames[f], local.y - frames[f + 1], local.z - frames[f + 2]));
+            float top = frames[f + 4];
+            if (Math.abs(p.x) <= frames[f + 3] && Math.abs(p.z) <= frames[f + 5]
+                    && p.y >= top - DECK_STAND_REACH && p.y <= top + below + DECK_STAND_REACH) {
                 return true;
             }
         }
@@ -3818,6 +3855,17 @@ public abstract class AbstractVehicle extends ContainerCraft
                 || entityData.get(TOW_TRACTOR) >= 0 || entityData.get(TOW_HITCH) >= 0) {
             return false;
         }
+        // Terrain absent client-side => the step flies through what the server collides with.
+        AABB swept = getBoundingBox().expandTowards(getDeltaMovement().scale(PREDICT_TERRAIN_TICKS));
+        // ClientLevel.hasChunk == true => ask the chunk source.
+        var chunks = level().getChunkSource();
+        for (int cx = SectionPos.blockToSectionCoord(swept.minX), maxX = SectionPos.blockToSectionCoord(swept.maxX); cx <= maxX; cx++) {
+            for (int cz = SectionPos.blockToSectionCoord(swept.minZ), maxZ = SectionPos.blockToSectionCoord(swept.maxZ); cz <= maxZ; cz++) {
+                if (!chunks.hasChunk(cx, cz)) {
+                    return false;
+                }
+            }
+        }
         // Gap: no neighbour bodies client-side; within reach the server's contacts would correct every tick.
         AABB reach = getBoundingBox().inflate(NEIGHBOUR_REACH);
         for (AbstractVehicle other : level().getEntitiesOfClass(AbstractVehicle.class, reach)) {
@@ -3829,6 +3877,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     }
 
     private static final double NEIGHBOUR_REACH = 4;
+    /** Lookahead of the client-terrain check: covers an RTT of unacked steps. */
+    private static final double PREDICT_TERRAIN_TICKS = 10;
 
     /** Back to the server's pose: its last report blended in over the usual 3 ticks. */
     void dropPrediction() {

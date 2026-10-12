@@ -6,7 +6,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.client.gui.VehicleHitIndicatorOverlay;
+import com.wf.combinedassault.client.hud.HitFeedback;
 
 public class ServerVehicleHurtEntity implements CustomPacketPayload {
 
@@ -43,7 +43,7 @@ public class ServerVehicleHurtEntity implements CustomPacketPayload {
     }
 
     public static void handle(ServerVehicleHurtEntity message, IPayloadContext ctx) {
-        ctx.enqueueWork(() -> VehicleHitIndicatorOverlay.markHitTimestamp(message.hitVehicle, message.kill));
+        ctx.enqueueWork(() -> HitFeedback.markHitTimestamp(message.hitVehicle, message.kill));
     }
 
     @Override

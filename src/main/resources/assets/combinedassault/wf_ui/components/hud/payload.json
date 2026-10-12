@@ -1,0 +1,16 @@
+{
+  "use": ["combinedassault:hud"],
+  "root": {"type": "place", "x": "floor(ui.width / 2) - 120", "y": "floor(ui.height / 2) + 27",
+    "child": {"type": "column", "gap": 4, "children": [
+      {"type": "when", "if": "payload.single",
+        "then": {"type": "text", "text": "{payload.name}", "color": "$green", "shadow": true},
+        "else": {"type": "text", "text": "{tr:ui.vehicle_payload.rounds(payload.remaining, payload.capacity)}",
+          "color": "$green", "shadow": true}},
+      {"type": "when", "if": "!payload.armed",
+        "then": {"type": "text", "text": "{tr:ui.vehicle_payload.safe}", "color": "$gray", "shadow": true},
+        "else": {"type": "when", "if": "!payload.live",
+          "then": {"type": "text", "text": "{tr:ui.vehicle_payload.arming(payload.arming|.1)}", "color": "$amber",
+            "shadow": true},
+          "else": {"type": "text", "text": "{tr:ui.vehicle_payload.armed}", "color": "$red", "shadow": true}}}
+    ]}}
+}

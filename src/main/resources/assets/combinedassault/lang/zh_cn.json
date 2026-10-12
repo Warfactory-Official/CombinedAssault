@@ -221,7 +221,6 @@
   "ui.vehicle_payload.arming": "载荷解保中 %ss",
   "ui.vehicle_payload.armed": "载荷已解保",
   "key.combinedassault.arm_payload.desc": "解保/保险 无人机载荷",
-  "ui.indirect.title": "间接瞄准",
   "ui.indirect.mode": "%s弹道",
   "ui.indirect.arc.low": "低伸",
   "ui.indirect.arc.high": "高抛",

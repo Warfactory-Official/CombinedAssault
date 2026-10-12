@@ -7,7 +7,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
-import com.wf.combinedassault.client.gui.VehicleScopeOverlay;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.util.SecondOrderDynamics;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
@@ -48,7 +47,6 @@ public class LocalVehiclePlayerEvent {
                 } else {
                     fov = WORLD_FOV_DYNAMICS.update((float) event.getFOV());
                 }
-                VehicleScopeOverlay.fov = fov;
                 event.setFOV(fov);
             } else {
                 float fov = WORLD_FOV_DYNAMICS.update((float) event.getFOV());

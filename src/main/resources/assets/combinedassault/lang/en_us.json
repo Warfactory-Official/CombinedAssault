@@ -221,7 +221,6 @@
   "ui.vehicle_payload.arming": "PAYLOAD ARMING %ss",
   "ui.vehicle_payload.armed": "PAYLOAD ARMED",
   "key.combinedassault.arm_payload.desc": "Arm / Safe Drone Payload",
-  "ui.indirect.title": "INDIRECT",
   "ui.indirect.mode": "%s ARC",
   "ui.indirect.arc.low": "LOW",
   "ui.indirect.arc.high": "HIGH",

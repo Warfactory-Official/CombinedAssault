@@ -1233,13 +1233,9 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     }
 
     public WeaponUnitData.FireControlSensorType getFireControlSensorType() {
-        Optional<AbstractVehicleWeapon<?>> weaponOptional = getCurrentWeapon();
-        if (weaponOptional.isPresent()) {
-            WeaponUnit weaponUnit = weaponOptional.get().getWeaponUnit();
-            if (weaponUnit == this) {
-                return fireControlSensorType;
-            }
-            return weaponOptional.get().getWeaponUnit().getFireControlSensorType();
+        AbstractVehicleWeapon<?> current = currentWeapon();
+        if (current != null && current.getWeaponUnit() != this) {
+            return current.getWeaponUnit().getFireControlSensorType();
         }
         return fireControlSensorType;
     }
@@ -1285,22 +1281,26 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
 
     public AbstractVehicleWeapon<?> proxyWeapon(AbstractVehicleWeapon<?> weapon) {
         while (weapon instanceof VehicleWeaponAgent weaponAgent) {
-            Optional<AbstractVehicleWeapon<?>> weaponOptional = weaponAgent.getWeaponUnit().getCurrentWeapon();
-            if (weaponOptional.isPresent()) {
-                weapon = weaponOptional.get();
-            } else {
+            AbstractVehicleWeapon<?> current = weaponAgent.getWeaponUnit().currentWeapon();
+            if (current == null) {
                 break;
             }
+            weapon = current;
         }
         return weapon;
     }
 
     public Optional<AbstractVehicleWeapon<?>> getCurrentWeapon() {
+        return Optional.ofNullable(currentWeapon());
+    }
+
+    /** {@link #getCurrentWeapon()} without the Optional; per-frame callers. */
+    @Nullable
+    public AbstractVehicleWeapon<?> currentWeapon() {
         if (currentWeaponIndex >= 0 && currentWeaponIndex < weapons.size()) {
-            AbstractVehicleWeapon<?> currentWeapon = proxyWeapon(weapons.get(currentWeaponIndex));
-            return Optional.of(currentWeapon);
+            return proxyWeapon(weapons.get(currentWeaponIndex));
         }
-        return Optional.empty();
+        return null;
     }
 
     public int getCurrentWeaponIndex() {
@@ -1313,10 +1313,15 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     }
 
     public Optional<AbstractVehicleWeapon<?>> getCurrentSecondaryWeapon() {
+        return Optional.ofNullable(currentSecondaryWeapon());
+    }
+
+    @Nullable
+    public AbstractVehicleWeapon<?> currentSecondaryWeapon() {
         if (currentSecondaryWeaponIndex >= 0 && currentSecondaryWeaponIndex < secondaryWeapons.size()) {
-            return Optional.of(secondaryWeapons.get(currentSecondaryWeaponIndex));
+            return secondaryWeapons.get(currentSecondaryWeaponIndex);
         }
-        return Optional.empty();
+        return null;
     }
 
     public int getCurrentSecondaryWeaponIndex() {

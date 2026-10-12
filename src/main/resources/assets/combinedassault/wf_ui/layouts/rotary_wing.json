@@ -1,0 +1,26 @@
+{
+  "use": ["combinedassault:hud"],
+  "constants": {"left": "floor(ui.width / 2 - 120)", "top": "floor(ui.height / 2 - 21)"},
+  "root": {"type": "when", "if": "local.driver", "then": {"type": "stack", "children": [
+    {"type": "place", "x": "$left", "y": "$top", "child": {"type": "column", "gap": 4, "children": [
+      {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.rpm(trunc(rotary.rpm))}", "color": "$green", "shadow": true},
+      {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.collective_pitch(trunc(rotary.collective))}", "color": "$green", "shadow": true},
+      {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.speed(trunc(vehicle.ground_speed))}", "color": "$green", "shadow": true},
+      {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.fuel(vehicle.fuel_seconds|clockh)}", "color": "$green", "shadow": true}
+    ]}},
+    {"type": "place", "x": "floor(ui.width / 2 + 62)", "y": "$top + 24",
+      "child": {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.altitude(trunc(vehicle.altitude))}", "color": "$green", "shadow": true}},
+    {"type": "place", "x": "floor(ui.width / 2 + 110)", "y": "$top - 1.5",
+      "child": {"type": "tape", "value": 0, "vertical": true, "flip": true, "ppu": 1, "step": 3, "major_every": 4,
+        "extent": 25.5, "minor_length": 5, "major_length": 10, "color": "$green"}},
+    {"type": "place", "x": "floor(ui.width / 2 + 123)", "y": "floor(ui.height / 2 + 3 + 24 * -vehicle.vspeed / 20)",
+      "child": {"type": "stack", "children": [
+        {"type": "poly", "points": [0, 0, 6, 3, 6, -3], "color": "$green"},
+        {"type": "place", "x": 12, "y": -4, "child": {"type": "text", "text": "{trunc(vehicle.vspeed)}", "color": "$green", "shadow": true}}
+      ]}},
+    {"type": "when", "if": "local.third_person", "then": {"type": "place", "x": "ui.width / 2", "y": "ui.height / 2",
+      "child": {"type": "stack", "children": [{"type": "combinedassault:hud/flow_arrow"}, {"type": "combinedassault:hud/roll_wings"}]}}},
+    {"type": "when", "if": "local.operator", "then": {"type": "place", "x": "ui.width / 2 + 95", "y": "ui.height / 2 + 75",
+      "child": {"type": "stack", "children": [{"type": "combinedassault:hud/flow_arrow"}, {"type": "combinedassault:hud/pitch_ladder"}]}}}
+  ]}}
+}

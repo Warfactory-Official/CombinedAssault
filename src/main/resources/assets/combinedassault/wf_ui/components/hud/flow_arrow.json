@@ -1,0 +1,9 @@
+{
+  "use": ["combinedassault:hud"],
+  "root": {"type": "transform", "rotate": "rotary.flow_angle", "child": {"type": "stack", "children": [
+    {"type": "place", "x": -0.5, "y": "-rotary.flow_length",
+      "child": {"type": "rect", "w": 1, "h": "rotary.flow_length", "color": "$green"}},
+    {"type": "transform", "dy": "-rotary.flow_length - 3",
+      "child": {"type": "poly", "points": [0, 0, -2, 4, 2, 4], "color": "$green"}}
+  ]}}
+}

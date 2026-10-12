@@ -113,7 +113,7 @@ public class AircraftPartsGameTest {
             String report = String.format(Locale.ROOT, "[ramp] closed %.1f, open %.1f, deck %s", closed, ramp.getXRot(), deck);
             CombinedAssault.LOGGER.info(report);
             release(helper, 3, c5);
-            if (!deck || Math.abs(closed) > 0.01 || Math.abs(ramp.getXRot() + 20) > 0.01) {
+            if (!deck || Math.abs(closed) > 0.01 || Math.abs(ramp.getXRot() + 29) > 0.01) {
                 helper.fail(report);
             }
         }).thenSucceed();

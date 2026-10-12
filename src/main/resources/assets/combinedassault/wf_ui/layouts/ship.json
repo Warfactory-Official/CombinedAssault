@@ -1,0 +1,21 @@
+{
+  "use": ["combinedassault:hud"],
+  "root": {"type": "when", "if": "local.driver && ship.present", "then": {"type": "stack", "children": [
+    {"type": "place", "x": 6, "y": 6, "child": {"type": "combinedassault:hud/helm_console"}},
+    {"type": "place", "x": "ui.width - 74", "y": 6, "child": {"type": "stack", "children": [
+      {"type": "combinedassault:sounder"}, {"type": "combinedassault:depth_gauge"}]}},
+    {"type": "place", "x": "floor(ui.width / 2)", "y": "floor(ui.height / 2) + 44", "pivot": "top",
+      "child": {"type": "column", "gap": 1, "align": "center", "children": [
+        {"type": "when", "if": "!ship.afloat",
+          "then": {"type": "combinedassault:hud/warning", "key": "ui.combinedassault.helm.beached", "color": "$red", "shown": "blink(0.8)"},
+          "else": {"type": "when", "if": "ship.aground",
+            "then": {"type": "combinedassault:hud/warning", "key": "ui.combinedassault.helm.aground", "color": "$red", "shown": "blink(0.8)"},
+            "else": {"type": "when", "if": "ship.shallow",
+              "then": {"type": "combinedassault:hud/warning", "key": "ui.combinedassault.helm.shallow", "color": "$amber"}}}},
+        {"type": "when", "if": "ship.crush",
+          "then": {"type": "combinedassault:hud/warning", "key": "ui.combinedassault.helm.crush", "color": "$red", "shown": "blink(0.8)"}},
+        {"type": "when", "if": "!ship.power",
+          "then": {"type": "combinedassault:hud/warning", "key": "ui.combinedassault.helm.no_power", "color": "$amber"}}
+      ]}}
+  ]}}
+}

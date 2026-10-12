@@ -1,0 +1,11 @@
+{
+  "use": ["combinedassault:hud"],
+  "root": {"type": "when", "if": "local.scope && station.present", "then": {"type": "stack", "children": [
+    {"type": "combinedassault:optical_scope"},
+    {"type": "combinedassault:scope_sight", "color": "$green"},
+    {"type": "place", "x": "floor(ui.width / 2)", "y": "floor(ui.height / 2)",
+      "child": {"type": "combinedassault:engagement_envelope", "color": "$green"}},
+    {"type": "combinedassault:lock_markers"},
+    {"type": "place", "x": "ui.width / 2 - 80", "y": "ui.height / 2 + 80", "child": {"type": "combinedassault:vehicle_schematic"}}
+  ]}}
+}

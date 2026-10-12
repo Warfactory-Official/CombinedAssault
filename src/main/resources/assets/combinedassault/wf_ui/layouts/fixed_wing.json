@@ -1,0 +1,21 @@
+{
+  "use": ["combinedassault:hud"],
+  "constants": {"left": "floor(ui.width / 2 - 120)", "top": "floor(ui.height / 2 - 21)"},
+  "root": {"type": "when", "if": "local.driver", "then": {"type": "stack", "children": [
+    {"type": "place", "x": "$left", "y": "$top + 12", "child": {"type": "column", "gap": 4, "children": [
+      {"type": "row", "children": [
+        {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.throttle_level}", "color": "$green", "shadow": true},
+        {"type": "when", "if": "fixed_wing.brake",
+          "then": {"type": "text", "text": "{tr:ui.brake}", "color": "$red", "shadow": true},
+          "else": {"type": "when", "if": "trunc(fixed_wing.throttle) <= 100",
+            "then": {"type": "text", "text": "{trunc(fixed_wing.throttle)}", "color": "$green", "shadow": true},
+            "else": {"type": "text", "text": "{tr:ui.war_emergency_power}", "color": "$red", "shadow": true}}}
+      ]},
+      {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.speed(trunc(vehicle.speed))}", "color": "$green", "shadow": true},
+      {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.altitude(trunc(vehicle.altitude))}", "color": "$green", "shadow": true},
+      {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.fuel(vehicle.fuel_seconds|clockh)}", "color": "$green", "shadow": true}
+    ]}},
+    {"type": "when", "if": "local.operator", "then": {"type": "place", "x": "ui.width / 2 + 95", "y": "ui.height / 2 + 75",
+      "child": {"type": "combinedassault:hud/pitch_ladder"}}}
+  ]}}
+}

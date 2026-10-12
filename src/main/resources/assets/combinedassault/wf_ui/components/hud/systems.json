@@ -1,0 +1,25 @@
+{
+  "use": ["combinedassault:hud"],
+  "root": {"type": "anchor", "at": "bottom", "margin": 6, "dx": "-(ui.width % 2) / 2",
+    "child": {"type": "column", "children": [
+      {"type": "text", "text": "{vehicle.name}", "color": "vehicle.name_color", "shadow": true},
+      {"type": "sized", "w": 150, "h": 2},
+      {"type": "bar", "w": 150, "h": 3, "value": "vehicle.hull", "back": "#a0101014",
+        "fill": "vehicle.hull_state == 0 ? #ffe6e6e6 : vehicle.hull_state == 1 ? #ffe8d060 : vehicle.hull_state == 2 ? #ffe08830 : #ffb82820"},
+      {"type": "sized", "w": 150, "h": 3},
+      {"type": "sized", "w": 150, "h": "ceil(vehicle.system_count / 3) * 13 - 2", "child": {"type": "stack", "children": [
+        {"type": "repeat", "items": "vehicle.systems", "columns": 3, "gap": 2,
+          "child": {"type": "box", "min_width": 30, "min_height": 11, "align": "center", "border_width": 0,
+            "background": "system.state == 0 ? #ffe6e6e6 : system.state == 1 ? #ffe8d060 : system.state == 2 ? #ffe08830 : #ffb82820",
+            "child": {"type": "text", "text": "{system.label}", "color": "system.state == 3 ? #ffffffff : #ff202020", "scale": 0.6}}},
+        {"type": "place", "x": 150, "y": 0, "pivot": "top_right",
+          "child": {"type": "text", "text": "{vehicle.speed} km/h", "color": "#ffffffff", "shadow": true}},
+        {"type": "place", "x": 150, "y": 10, "pivot": "top_right",
+          "child": {"type": "text", "text": "{vehicle.fuel_label} {vehicle.fuel|.1}%", "color": "vehicle.fuel < 5 ? $red : $white",
+            "shadow": true, "scale": 0.5}},
+        {"type": "place", "x": 150, "y": 15.5, "pivot": "top_right",
+          "child": {"type": "text", "text": "POWER {vehicle.power|.1}%", "color": "vehicle.power < 30 ? $red : $white",
+            "shadow": true, "scale": 0.5}}
+      ]}}
+    ]}}
+}

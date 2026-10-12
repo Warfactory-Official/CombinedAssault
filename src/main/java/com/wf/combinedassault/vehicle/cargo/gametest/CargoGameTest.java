@@ -49,19 +49,25 @@ public class CargoGameTest {
 
     @GameTest(template = TEMPLATE, timeoutTicks = 600)
     public static void aHoldStowsAndUnloadsAVehicle(GameTestHelper helper) {
-        stowAndUnload(helper, 0, "c5", new Vec3(0, FLOOR, -10));
+        stowAndUnload(helper, 0, "c5", "humvee", new Vec3(0, FLOOR, -10));
+    }
+
+    /** Drive-in load (ca_c5_load): a 65 t tank fits the bay and stows. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 600)
+    public static void aGalaxyStowsAndUnloadsAMerkava(GameTestHelper helper) {
+        stowAndUnload(helper, 6, "c5", "merkava", new Vec3(0, FLOOR, -10));
     }
 
     /** Ramp hold: humvee parked on the sloped cabin floor. */
     @GameTest(template = TEMPLATE, timeoutTicks = 600)
     public static void aChinookStowsAndUnloadsAHumvee(GameTestHelper helper) {
-        stowAndUnload(helper, 5, "ch47", new Vec3(0, 1.6, -6.5));
+        stowAndUnload(helper, 5, "ch47", "humvee", new Vec3(0, 1.6, -6.5));
     }
 
-    private static void stowAndUnload(GameTestHelper helper, int index, String carrierId, Vec3 parking) {
+    private static void stowAndUnload(GameTestHelper helper, int index, String carrierId, String cargoId, Vec3 parking) {
         Lane lane = new Lane(helper, index);
         AbstractVehicle[] carrier = new AbstractVehicle[1];
-        AbstractVehicle[] humvee = new AbstractVehicle[1];
+        AbstractVehicle[] cargo = new AbstractVehicle[1];
         UUID[] id = new UUID[1];
         Vec3[] local = new Vec3[1];
         float[] before = new float[3];
@@ -70,20 +76,20 @@ public class CargoGameTest {
                 .thenIdle(40)
                 .thenExecute(() -> doors(carrier[0]).setOn(true))
                 .thenIdle(60)
-                .thenExecute(() -> humvee[0] = lane.spawnIn(carrier[0], "humvee", parking))
+                .thenExecute(() -> cargo[0] = lane.spawnIn(carrier[0], cargoId, parking))
                 .thenIdle(60)
                 .thenExecute(() -> {
-                    id[0] = humvee[0].getUUID();
-                    local[0] = humvee[0].position().subtract(carrier[0].position());
-                    before[0] = humvee[0].getHealth();
+                    id[0] = cargo[0].getUUID();
+                    local[0] = cargo[0].position().subtract(carrier[0].position());
+                    before[0] = cargo[0].getHealth();
                     before[1] = carrier[0].physicsEngine.mass;
-                    before[2] = humvee[0].physicsEngine.mass;
-                    lane.check(carrier[0].cargoHold().mayClose(doors(carrier[0]), null), "closing refused with a parked humvee in the bay");
+                    before[2] = cargo[0].physicsEngine.mass;
+                    lane.check(carrier[0].cargoHold().mayClose(doors(carrier[0]), null), "closing refused with a parked " + cargoId + " in the bay");
                     doors(carrier[0]).setOn(false);
                 })
                 .thenIdle(2)
                 .thenExecute(() -> {
-                    lane.check(humvee[0].isRemoved() && lane.level.getEntity(id[0]) == null, "humvee still in the world after stowing");
+                    lane.check(cargo[0].isRemoved() && lane.level.getEntity(id[0]) == null, cargoId + " still in the world after stowing");
                     lane.check(Math.abs(carrier[0].physicsEngine.mass - before[1] - before[2]) < 1, String.format(Locale.ROOT,
                             "carrier mass %.0f, expected %.0f + %.0f", carrier[0].physicsEngine.mass, before[1], before[2]));
                     CompoundTag saved = new CompoundTag();
@@ -91,14 +97,14 @@ public class CargoGameTest {
                     AbstractVehicle copy = (AbstractVehicle) carrier[0].getType().create(lane.level);
                     copy.load(saved);
                     lane.check(copy.cargoHold() != null && Math.abs(copy.cargoHold().mass() - before[2]) < 1,
-                            "stowed humvee lost in a save round trip");
+                            "stowed " + cargoId + " lost in a save round trip");
                     copy.discard();
                     doors(carrier[0]).setOn(true);
                 })
                 .thenIdle(3)
                 .thenExecute(() -> {
                     AbstractVehicle back = lane.level.getEntity(id[0]) instanceof AbstractVehicle v ? v : null;
-                    lane.check(back != null, "humvee not unloaded with the doors open on the ground");
+                    lane.check(back != null, cargoId + " not unloaded with the doors open on the ground");
                     Vec3 drift = back.position().subtract(carrier[0].position()).subtract(local[0]);
                     lane.check(drift.length() < 0.1, "unloaded " + drift.length() + " from its stowed pose");
                     lane.check(back.getHealth() == before[0], "health " + back.getHealth() + " != " + before[0]);

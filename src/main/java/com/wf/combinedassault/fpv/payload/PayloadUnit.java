@@ -59,8 +59,9 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
         if (vehicle == null) {
             return null;
         }
-        for (PartUnit<?> part : vehicle.getPartUnits()) {
-            if (part instanceof PayloadUnit hardpoint) {
+        List<PartUnit<?>> parts = vehicle.getPartUnits();
+        for (int i = 0; i < parts.size(); i++) {
+            if (parts.get(i) instanceof PayloadUnit hardpoint) {
                 return hardpoint;
             }
         }

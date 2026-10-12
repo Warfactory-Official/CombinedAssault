@@ -1,0 +1,9 @@
+{
+  "params": {"weapon": "key", "y": "num"},
+  "root": {"type": "place", "x": 106.5, "y": "$y", "pivot": "top",
+    "child": {"type": "column", "gap": 2, "align": "center", "children": [
+      {"type": "text", "text": "{$weapon.name}", "color": "#ffd0f0d8", "max_width": 33},
+      {"type": "text", "text": "{$weapon.ammo}/{$weapon.capacity}",
+        "color": "$weapon.reloading ? #ffff6040 : $weapon.ammo == 0 ? #ffff6040 : $weapon.ammo <= floor($weapon.capacity / 4) ? #ddffaa00 : #ff60e880"}
+    ]}}
+}

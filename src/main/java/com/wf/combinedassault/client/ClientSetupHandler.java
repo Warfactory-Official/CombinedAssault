@@ -11,10 +11,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import com.wf.combinedassault.compat.gemrender.GemRenderSetup;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
-import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
-import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.all.AllBlockEntities;
 import com.wf.combinedassault.all.AllBlocks;
@@ -22,9 +20,6 @@ import com.wf.combinedassault.all.AllEntities;
 import com.wf.combinedassault.all.AllMenus;
 import com.wf.combinedassault.client.screen.VehicleStorageScreen;
 import com.wf.combinedassault.all.AllParticleTypes;
-import com.wf.combinedassault.client.gui.*;
-import com.wf.combinedassault.fpv.client.FpvPayloadOverlay;
-import com.wf.combinedassault.indirect.client.IndirectFireOverlay;
 import com.wf.combinedassault.client.particle.BulletHoleParticle;
 import com.wf.combinedassault.client.particle.DustSmokeParticle;
 import com.wf.combinedassault.client.particle.DustStoneParticle;
@@ -53,6 +48,7 @@ public class ClientSetupHandler {
         com.wf.wflib.audio.client.AudioMixer.addCabin(com.wf.combinedassault.audio.CabinAcoustics::muffle);
         // Must precede renderer registration: reload racing ahead of this => built-in loader for the session.
         event.enqueueWork(GemRenderSetup::init);
+        event.enqueueWork(com.wf.combinedassault.client.hud.CaHudSource::register);
         event.enqueueWork(com.wf.combinedassault.vehicle.pose.client.SeatPoseAnim::register);
         event.enqueueWork(com.wf.combinedassault.vehicle.part.client.VehicleNodes::register);
         event.enqueueWork(() -> com.wf.wflib.client.map.WFMaps.addTool(
@@ -76,22 +72,6 @@ public class ClientSetupHandler {
 
         ItemBlockRenderTypes.setRenderLayer(AllBlocks.FIGURE_BOX_BLOCK.get(), RenderType.cutout());
         BlockEntityRenderers.register(AllBlockEntities.FIGURE_BOX_BLOCK_ENTITY.get(), FigureBoxBlockRenderer::new);
-    }
-
-    @SubscribeEvent
-    public static void onRegisterHud(RegisterGuiLayersEvent event) {
-        event.registerBelow(VanillaGuiLayers.CHAT, CombinedAssault.modLocation("vehicle"), new VehicleOverlay());
-        event.registerBelow(VanillaGuiLayers.CHAT, CombinedAssault.modLocation("vehicle_rotary_wing"), new RotaryWingVehicleOverlay());
-        event.registerBelow(VanillaGuiLayers.CHAT, CombinedAssault.modLocation("vehicle_fixed_wing"), new FixedWingVehicleOverlay());
-        event.registerBelow(VanillaGuiLayers.CHAT, CombinedAssault.modLocation("vehicle_ship"), new com.wf.combinedassault.naval.client.ShipOverlay());
-        event.registerBelow(VanillaGuiLayers.CHAT, CombinedAssault.modLocation("vehicle_aim_at"), new VehicleAimAtOverlay());
-        event.registerBelowAll(CombinedAssault.modLocation("vehicle_scope"), new VehicleScopeOverlay());
-        event.registerBelow(VanillaGuiLayers.CHAT, CombinedAssault.modLocation("vehicle_weapon"), new VehicleWeaponOverlay());
-        event.registerBelow(VanillaGuiLayers.CHAT, CombinedAssault.modLocation("vehicle_hit_indicator"), new VehicleHitIndicatorOverlay());
-        event.registerBelow(VanillaGuiLayers.CHAT, CombinedAssault.modLocation("vehicle_radar"), new VehicleRadarOverlay());
-        event.registerBelow(VanillaGuiLayers.CHAT, CombinedAssault.modLocation("vehicle_payload"), new FpvPayloadOverlay());
-        event.registerBelow(VanillaGuiLayers.CHAT, CombinedAssault.modLocation("vehicle_indirect"), new IndirectFireOverlay());
-        event.registerBelow(VanillaGuiLayers.CHAT, CombinedAssault.modLocation("vehicle_debug"), new VehicleDebugOverlay());
     }
 
     @SubscribeEvent

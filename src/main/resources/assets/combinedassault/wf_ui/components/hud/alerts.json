@@ -1,0 +1,21 @@
+{
+  "use": ["combinedassault:hud"],
+  "root": {"type": "stack", "children": [
+    {"type": "place", "x": "floor(ui.width / 2)", "y": "floor(ui.height / 2) - 45", "pivot": "top",
+      "child": {"type": "stack", "children": [
+        {"type": "when", "if": "local.lost_control",
+          "then": {"type": "text", "text": "{tr:ui.lost_control}", "color": "$red", "shadow": true},
+          "else": {"type": "when", "if": "local.overload",
+            "then": {"type": "text", "text": "{tr:ui.overload(local.g|.1)}G", "color": "$red", "shadow": true},
+            "else": {"type": "when", "if": "local.homing",
+              "then": {"type": "text", "text": "{tr:ui.homing}", "color": "$green", "shadow": true}}}},
+        {"type": "when", "if": "local.tip_shown && !local.homing",
+          "then": {"type": "text", "text": "{local.tip}", "color": "$red", "shadow": true}}
+      ]}},
+    {"type": "place", "x": "floor(ui.width / 2)", "y": "floor(ui.height / 2) - 55", "pivot": "top",
+      "child": {"type": "when", "if": "vehicle.missile_incoming",
+        "then": {"type": "text", "text": "{tr:ui.missile_incoming}", "color": "$red", "shadow": true},
+        "else": {"type": "when", "if": "vehicle.being_locked",
+          "then": {"type": "text", "text": "{tr:ui.being_locked}", "color": "$red", "shadow": true}}}}
+  ]}
+}

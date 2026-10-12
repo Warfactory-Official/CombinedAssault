@@ -9,7 +9,6 @@ import com.wf.combinedassault.api.custom.sync.SyncDataSerializers;
 import com.wf.combinedassault.custom.sync.PartUnitSyncData;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import com.wf.combinedassault.client.gui.VehicleOverlay;
 import com.wf.combinedassault.compat.wflib.Munitions;
 import com.wf.wflib.item.MissilePreset;
 import com.wf.wflib.missile.SeekerMode;
@@ -60,7 +59,7 @@ public class VehicleMissile extends AbstractVehicleWeapon<VehicleMissileWeaponDa
                 || missileWeaponUnit.getXRot() > data.getXRotMax()
                 || missileWeaponUnit.getYRot() < data.getYRotMin()
                 || missileWeaponUnit.getYRot() > data.getYRotMax()) {
-            VehicleOverlay.tips.put(System.currentTimeMillis(), Component.translatable("ui.out_of_launch_limits"));
+            com.wf.combinedassault.client.hud.HudTips.show(Component.translatable("ui.out_of_launch_limits"));
             return false;
         }
         if (homing()) {

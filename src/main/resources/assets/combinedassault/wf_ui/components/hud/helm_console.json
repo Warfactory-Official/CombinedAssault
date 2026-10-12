@@ -1,0 +1,42 @@
+{
+  "use": ["combinedassault:hud"],
+  "constants": {
+    "telegraph": "smooth(ship.throttle, 0.1)",
+    "knots": "smooth(ship.knots, 0.2)",
+    "rudder": "smooth(ship.rudder, 0.1)",
+    "order_color": "$telegraph < -0.05 ? $amber : $green"
+  },
+  "root": {"type": "stack", "children": [
+    {"type": "rect", "w": 126, "h": 102, "color": "$shade"},
+    {"type": "rect", "w": 1, "h": 102, "color": "$label"},
+    {"type": "place", "x": 5, "y": 5, "child": {"type": "stack", "children": [
+      {"type": "combinedassault:hud/console_row", "y": 0, "key": "ui.combinedassault.helm.engine",
+        "value": {"type": "text", "text": "{ship.order}", "color": "$order_color", "shadow": true}},
+      {"type": "combinedassault:hud/bipolar", "y": 12, "value": "$telegraph", "color": "$order_color"},
+      {"type": "combinedassault:hud/console_row", "y": 24, "key": "ui.combinedassault.helm.speed",
+        "value": {"type": "text", "text": "{tr:ui.combinedassault.helm.knots($knots|.1)}", "color": "$green", "shadow": true}},
+      {"type": "place", "y": 35, "child": {"type": "bar", "w": 116, "h": 4,
+        "value": "ship.max_knots > 0 ? $knots / ship.max_knots : 0", "fill": "$green", "back": "$track",
+        "marker": "ship.max_knots > 0 ? min(ship.ordered_knots / ship.max_knots, 0.99) : 0", "marker_color": "$label",
+        "divisions": 4, "tick_color": "$scale", "marker_overhang": 2}},
+      {"type": "combinedassault:hud/console_row", "y": 44, "key": "ui.combinedassault.helm.rudder",
+        "value": {"type": "when", "if": "round($rudder * 100) > 0",
+          "then": {"type": "text", "text": "{tr:ui.combinedassault.helm.starboard(round($rudder * 100))}", "color": "$green", "shadow": true},
+          "else": {"type": "when", "if": "round($rudder * 100) < 0",
+            "then": {"type": "text", "text": "{tr:ui.combinedassault.helm.port(-round($rudder * 100))}", "color": "$green", "shadow": true},
+            "else": {"type": "text", "text": "{tr:ui.combinedassault.helm.midships}", "color": "$green", "shadow": true}}}},
+      {"type": "combinedassault:hud/bipolar", "y": 56, "value": "$rudder", "color": "$green"},
+      {"type": "combinedassault:hud/console_row", "y": 69, "key": "ui.combinedassault.helm.course",
+        "value": {"type": "text", "text": "{mod(round(ship.course), 360)|03}", "color": "$green", "shadow": true}},
+      {"type": "place", "y": 81, "child": {"type": "stack", "children": [
+        {"type": "rect", "w": 116, "h": 14, "color": "$track"},
+        {"type": "place", "y": 1, "child": {"type": "tape", "value": "ship.course", "ppu": 2, "step": 5, "major_every": 2,
+          "extent": 58, "minor_length": 3, "major_length": 5, "labels": true, "label_offset": 5, "wrap": [0, 360],
+          "names": {"0": "N", "90": "E", "180": "S", "270": "W"}, "color": "$scale", "label_color": "$label",
+          "label_scale": 0.1, "label_pad": 2, "name_color": "$label", "major_color": "$label"}},
+        {"type": "place", "x": 58, "y": -4, "child": {"type": "rect", "w": 1, "h": 9, "color": "$green"}},
+        {"type": "place", "x": 56, "y": -4, "child": {"type": "rect", "w": 5, "h": 1, "color": "$green"}}
+      ]}}
+    ]}}
+  ]}
+}

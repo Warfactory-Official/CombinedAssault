@@ -16,12 +16,12 @@ import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 import com.wf.combinedassault.api.custom.sync.SyncDataSerializers;
-import com.wf.combinedassault.client.resource.ClientAssetsManager;
 import com.wf.combinedassault.custom.part.data.SuspensionUnitData;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.util.PhysicsHelper;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.PhysicsEngine;
+import com.wf.combinedassault.vehicle.collision.BoxBuffer;
+import com.wf.combinedassault.vehicle.parenting.CarrierLink;
 import com.wf.combinedassault.vehicle.structure.VehicleCubeGroup;
 import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
 
@@ -55,6 +55,9 @@ public class SuspensionUnit<T extends SuspensionUnitData> extends PartUnit<T> {
     /** Last simulate(): one row per probe that found ground. World xyz, unclamped compression, travel limits. */
     private int contactCount;
     private double[] contactXYZ = new double[3];
+    /** Per contact row: hit a carrier deck box, not a block. */
+    private boolean[] contactOnDeck = new boolean[1];
+    private boolean probeOnDeck;
     private double[] contactCompressions = new double[1];
     private double[] contactMins = new double[1];
     private double[] contactMaxes = new double[1];
@@ -94,6 +97,7 @@ public class SuspensionUnit<T extends SuspensionUnitData> extends PartUnit<T> {
         Arrays.fill(supportMaxCompressions, maxCompression);
         contactCount = 0;
         contactXYZ = new double[n * 3];
+        contactOnDeck = new boolean[n];
         contactCompressions = new double[n];
         contactMins = new double[n];
         contactMaxes = new double[n];
@@ -283,6 +287,7 @@ public class SuspensionUnit<T extends SuspensionUnitData> extends PartUnit<T> {
                 continue;
             }
             int row = contactCount++;
+            contactOnDeck[row] = probeOnDeck;
             contactXYZ[row * 3] = mountWorld.x + offset.x + direction.x * length;
             contactXYZ[row * 3 + 1] = mountWorld.y + offset.y + direction.y * length;
             contactXYZ[row * 3 + 2] = mountWorld.z + offset.z + direction.z * length;
@@ -355,7 +360,62 @@ public class SuspensionUnit<T extends SuspensionUnitData> extends PartUnit<T> {
                 }
             }
         }
-        return contactLength;
+        double deck = deckLength(ox, oy, oz, direction, probeMinLength, maxLength + CONTACT_EPSILON);
+        probeOnDeck = deck < contactLength;
+        return Math.min(contactLength, deck);
+    }
+
+    /** Ray entry through a carrier deck box's top face, in [from, to]; +inf none. Side entry = wall, hull's. */
+    private double deckLength(double ox, double oy, double oz, Vec3 direction, double from, double to) {
+        CarrierLink link = vehicle.carrierLink();
+        if (!link.active()) {
+            return Double.POSITIVE_INFINITY;
+        }
+        BoxBuffer boxes = link.deckBoxes();
+        Quaternionf deck = link.deckRotation();
+        Quaternionf piece = new Quaternionf();
+        Vector3f centre = new Vector3f(), o = new Vector3f(), d = new Vector3f();
+        double best = Double.POSITIVE_INFINITY;
+        for (int i = 0, size = boxes.size(); i < size; i++) {
+            if (!link.landing(i)) {
+                continue;
+            }
+            deck.transform(centre.set(link.deckFrame(i, 0), link.deckFrame(i, 1), link.deckFrame(i, 2)));
+            deck.mul(piece.set(link.deckFrame(i, 6), link.deckFrame(i, 7), link.deckFrame(i, 8), link.deckFrame(i, 9)), piece);
+            piece.transformInverse(o.set((float) (ox - link.pivotX() - centre.x), (float) (oy - link.pivotY() - centre.y),
+                    (float) (oz - link.pivotZ() - centre.z)));
+            piece.transformInverse(d.set((float) direction.x, (float) direction.y, (float) direction.z));
+            double near = Double.NEGATIVE_INFINITY, far = Double.POSITIVE_INFINITY;
+            int axis = -1;
+            for (int k = 0; k < 3 && near <= far; k++) {
+                double e = link.deckFrame(i, 3 + k), ok = o.get(k), dk = d.get(k);
+                if (Math.abs(dk) < 1.0e-9) {
+                    if (Math.abs(ok) > e) {
+                        far = Double.NEGATIVE_INFINITY;
+                    }
+                    continue;
+                }
+                double t1 = (-e - ok) / dk, t2 = (e - ok) / dk;
+                if (t1 > t2) {
+                    double t = t1;
+                    t1 = t2;
+                    t2 = t;
+                }
+                if (t1 > near) {
+                    near = t1;
+                    axis = k;
+                }
+                far = Math.min(far, t2);
+            }
+            if (axis == 1 && d.y < 0 && near <= far && near >= from && near <= to) {
+                best = Math.min(best, near);
+            }
+        }
+        return best;
+    }
+
+    public boolean contactOnDeck(int row) {
+        return contactOnDeck[row];
     }
 
     @Override

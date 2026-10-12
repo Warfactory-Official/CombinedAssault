@@ -8,11 +8,11 @@ import org.joml.Vector3f;
 import com.wf.combinedassault.all.AllConfigs;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.vehicle.collision.BoxBuffer;
-import com.wf.combinedassault.vehicle.collision.ContactSynthesis;
+import com.wf.combinedassault.vehicle.structure.ConvexHull;
 import com.wf.combinedassault.vehicle.collision.SweptHull;
 import com.wf.wflib.util.OBB;
-import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -23,6 +23,8 @@ public final class CarrierLink {
 
     /** Slack margin around the gather bound to compensate for frame coordinate rounding. */
     private static final double SELECT_MARGIN = 1.0;
+    /** |w| of a local rotation treated as none. */
+    private static final float IDENTITY_W = 1 - 1e-6f;
 
     @Nullable
     private AbstractVehicle carrier;
@@ -34,19 +36,31 @@ public final class CarrierLink {
 
     /** Carrier's frame. */
     private final BoxBuffer boxes = new BoxBuffer();
+    /** {@link DeckSnapshot#frames}, {@link DeckSnapshot#hulls}, {@link DeckSnapshot#landing} of {@link #boxes}, same order. */
+    private float[] frames = new float[DeckSnapshot.FRAME * 8];
+    private ConvexHull[] hulls = new ConvexHull[8];
+    private boolean[] landing = new boolean[8];
 
     /** The hull in the carrier's frame. Centre rewritten per cast; rotation fixed for the tick. */
     private final OBB localHull = new OBB(new Vector3f(), new Vector3f(), new Quaternionf());
     private final Quaternionf localRotation = new Quaternionf();
     private final OBB.SatFrame localFrame = new OBB.SatFrame();
-    private Vector3f[] localAxes = new Vector3f[3];
+
+    /** Unrotated pieces ({@link #boxes} exact); the rest cast in their own frame. */
+    private final BoxBuffer axisBoxes = new BoxBuffer();
+    private int[] oriented = new int[8];
+    private int orientedCount;
+    private final OBB pieceHull = new OBB(new Vector3f(), new Vector3f(), new Quaternionf());
+    private final OBB.SatFrame pieceFrame = new OBB.SatFrame();
+    private final BoxBuffer pieceBox = new BoxBuffer();
+    private final Quaternionf pieceInverse = new Quaternionf();
 
     /** Trial pose for overlaps, testing a rotation not yet adopted. */
     private final OBB turnHull = new OBB(new Vector3f(), new Vector3f(), new Quaternionf());
 
     private final Vector3d scratchLocal = new Vector3d();
-    private final Vector3d scratchWorld = new Vector3d();
     private final Vector3f scratchMove = new Vector3f();
+    private final Vector3f pieceMove = new Vector3f();
 
     /** Bottom-face contacts this solve found on the deck. Solve thread. */
     private int supportContacts;
@@ -80,6 +94,21 @@ public final class CarrierLink {
     /** Carrier frame. */
     public BoxBuffer deckBoxes() {
         return boxes;
+    }
+
+    /** Box i's oriented frame, {@link DeckSnapshot#frames} layout. */
+    public float deckFrame(int i, int k) {
+        return frames[i * DeckSnapshot.FRAME + k];
+    }
+
+    @Nullable
+    public ConvexHull deckHull(int i) {
+        return hulls[i];
+    }
+
+    /** Box i stood on (landing subset); else wall / roof of the carrier. */
+    public boolean landing(int i) {
+        return landing[i];
     }
 
     /** Carrier frame -> world rotation. */
@@ -117,6 +146,8 @@ public final class CarrierLink {
     private void reset() {
         carrier = null;
         boxes.clear();
+        axisBoxes.clear();
+        orientedCount = 0;
         supportContacts = 0;
         // Frame changes per bind => next derive must run.
         derivedFrom.set(Float.NaN, Float.NaN, Float.NaN, Float.NaN);
@@ -171,10 +202,34 @@ public final class CarrierLink {
             if (scratchLocal.y > maxY) maxY = scratchLocal.y;
             if (scratchLocal.z > maxZ) maxZ = scratchLocal.z;
         }
-        DeckFrame.select(deck.deckBoxes(), deck.deckCount(),
-                minX - SELECT_MARGIN, minY - SELECT_MARGIN, minZ - SELECT_MARGIN,
-                maxX + SELECT_MARGIN, maxY + SELECT_MARGIN, maxZ + SELECT_MARGIN,
-                boxes::add);
+        // Every solid piece: a rider leaves the carrier pair (broadphase), so walls collide here or never.
+        float[] all = deck.boxes(), allFrames = deck.frames();
+        for (int i = 0, count = deck.count(); i < count; i++) {
+            int o = i * 6;
+            if (all[o] > maxX + SELECT_MARGIN || all[o + 3] < minX - SELECT_MARGIN
+                    || all[o + 1] > maxY + SELECT_MARGIN || all[o + 4] < minY - SELECT_MARGIN
+                    || all[o + 2] > maxZ + SELECT_MARGIN || all[o + 5] < minZ - SELECT_MARGIN) {
+                continue;
+            }
+            int n = boxes.size(), f = n * DeckSnapshot.FRAME;
+            if (hulls.length <= n) {
+                frames = Arrays.copyOf(frames, frames.length * 2);
+                hulls = Arrays.copyOf(hulls, hulls.length * 2);
+                landing = Arrays.copyOf(landing, landing.length * 2);
+            }
+            System.arraycopy(allFrames, i * DeckSnapshot.FRAME, frames, f, DeckSnapshot.FRAME);
+            hulls[n] = deck.hulls()[i];
+            landing[n] = deck.landing()[i];
+            boxes.add(all[o], all[o + 1], all[o + 2], all[o + 3], all[o + 4], all[o + 5]);
+            if (Math.abs(frames[f + 9]) >= IDENTITY_W) {
+                axisBoxes.add(all[o], all[o + 1], all[o + 2], all[o + 3], all[o + 4], all[o + 5]);
+            } else {
+                if (orientedCount == oriented.length) {
+                    oriented = Arrays.copyOf(oriented, orientedCount * 2);
+                }
+                oriented[orientedCount++] = n;
+            }
+        }
         if (boxes.isEmpty()) {
             return false;
         }
@@ -193,7 +248,20 @@ public final class CarrierLink {
         DeckFrame.toLocalRotation(inverse, worldRotation, localRotation);
         localFrame.set(localRotation);
         localHull.rotation().set(localRotation);
-        localAxes = localHull.getAxes();
+    }
+
+    /** Box i's frame <- hull (carrier frame): {@link #pieceHull}, {@link #pieceFrame}, {@link #pieceBox}, {@link #pieceInverse}. */
+    private void toPiece(int i, OBB hull) {
+        int f = i * DeckSnapshot.FRAME;
+        pieceInverse.set(frames[f + 6], frames[f + 7], frames[f + 8], frames[f + 9]).conjugate();
+        pieceInverse.transform(scratchLocal.set(hull.centerX() - frames[f], hull.centerY() - frames[f + 1],
+                hull.centerZ() - frames[f + 2]));
+        pieceHull.setCenter(scratchLocal.x, scratchLocal.y, scratchLocal.z);
+        pieceHull.extents().set(hull.extents());
+        pieceInverse.mul(hull.rotation(), pieceHull.rotation());
+        pieceFrame.set(pieceHull.rotation());
+        pieceBox.clear();
+        pieceBox.add(-frames[f + 3], -frames[f + 4], -frames[f + 5], frames[f + 3], frames[f + 4], frames[f + 5]);
     }
 
     /**
@@ -214,78 +282,14 @@ public final class CarrierLink {
         // Transform movement to the carrier's frame.
         scratchMove.set((float) moveX, (float) moveY, (float) moveZ);
         inverse.transform(scratchMove);
-        return SweptHull.timeOfImpact(localHull, boxes,
+        double toi = SweptHull.timeOfImpact(localHull, axisBoxes,
                 scratchMove.x, scratchMove.y, scratchMove.z, null, localFrame);
-    }
-
-    /**
-     * Appends the deck's contacts for this pose to out.
-     * Runs synthesis in the carrier's frame and repairs contact positions to world space.
-     * @param pose the hull's world OBB at the pose being sampled
-     */
-    public void collect(VehicleCubeOBB hull, OBB pose, Vector3f[] worldAxes,
-                        @Nullable ContactSynthesis.ContactPool pool,
-                        List<VehicleCubeOBB.CubePoint> out) {
-        supportContacts = 0;
-        if (!active()) {
-            return;
+        for (int k = 0; k < orientedCount && toi > 0; k++) {
+            toPiece(oriented[k], localHull);
+            Vector3f move = pieceInverse.transform(pieceMove.set(scratchMove));
+            toi = Math.min(toi, SweptHull.timeOfImpact(pieceHull, pieceBox, move.x, move.y, move.z, null, pieceFrame));
         }
-        derive(pose.rotation());
-        // Full precision, as above.
-        DeckFrame.toLocal(inverse, pivotX, pivotY, pivotZ,
-                pose.centerX(), pose.centerY(), pose.centerZ(), scratchLocal);
-        localHull.setCenter(scratchLocal.x, scratchLocal.y, scratchLocal.z);
-        localHull.extents().set(pose.extents());
-
-        int before = out.size();
-        ContactSynthesis.collect(hull, localHull, localAxes, boxes, DECK_RESOLVER, pool, out);
-        for (int i = before, size = out.size(); i < size; i++) {
-            VehicleCubeOBB.CubePoint point = out.get(i);
-            VehicleCubeOBB.CubePointContext context = point.cubePointContext;
-            // Transform contact position and surface height to world space.
-            Vector3f local = point.cachedWorldPos();
-            DeckFrame.toWorld(rotation, pivotX, pivotY, pivotZ,
-                    local.x, context.surfaceY(), local.z, scratchWorld);
-            context.setSurfaceY(scratchWorld.y);
-            point.worldPos(pose, worldAxes);
-            if (point.cubeFace() == VehicleCubeOBB.CubeFace.BOTTOM) {
-                supportContacts++;
-            }
-        }
-    }
-
-    /**
-     * Probes a single point against the deck.
-     * @param worldPos the point's world position
-     * @return true when the deck is at that point, with the point's context filled in
-     */
-    public boolean contactAt(VehicleCubeOBB.CubePoint point, Vector3f worldPos) {
-        if (!active()) {
-            return false;
-        }
-        DeckFrame.toLocal(inverse, pivotX, pivotY, pivotZ,
-                worldPos.x, worldPos.y, worldPos.z, scratchLocal);
-        double x = scratchLocal.x;
-        double y = scratchLocal.y;
-        double z = scratchLocal.z;
-        for (int i = 0, size = boxes.size(); i < size; i++) {
-            // Use the same speculative margin as the sweep, or the probe finds nothing.
-            double margin = ContactSynthesis.CONTACT_MARGIN;
-            if (x < boxes.minX(i) - margin || x >= boxes.maxX(i) + margin
-                    || y < boxes.minY(i) - margin || y >= boxes.maxY(i) + margin
-                    || z < boxes.minZ(i) - margin || z >= boxes.maxZ(i) + margin) {
-                continue;
-            }
-            point.cubePointContext.clearCell();
-            point.cubePointContext.setBlockState(null);
-            DeckFrame.toWorld(rotation, pivotX, pivotY, pivotZ, x, boxes.maxY(i), z, scratchWorld);
-            point.cubePointContext.setSurfaceY(scratchWorld.y);
-            if (point.cubeFace() == VehicleCubeOBB.CubeFace.BOTTOM) {
-                supportContacts++;
-            }
-            return true;
-        }
-        return false;
+        return toi;
     }
 
     /**
@@ -302,18 +306,16 @@ public final class CarrierLink {
         turnHull.setCenter(scratchLocal.x, scratchLocal.y, scratchLocal.z);
         turnHull.extents().set(worldHull.extents());
         DeckFrame.toLocalRotation(inverse, worldHull.rotation(), turnHull.rotation());
-        return SweptHull.firstOverlappingBox(turnHull, boxes) >= 0;
+        if (SweptHull.firstOverlappingBox(turnHull, axisBoxes) >= 0) {
+            return true;
+        }
+        for (int k = 0; k < orientedCount; k++) {
+            toPiece(oriented[k], turnHull);
+            if (SweptHull.firstOverlappingBox(pieceHull, pieceBox) >= 0) {
+                return true;
+            }
+        }
+        return false;
     }
-
-    /**
-     * Fills in a deck contact with no block state.
-     * The surface is the box's own top, transformed to world space by collect.
-     */
-    private static final ContactSynthesis.ContactResolver DECK_RESOLVER = (point, worldPos, box) -> {
-        point.cubePointContext.clearCell();
-        point.cubePointContext.setBlockState(null);
-        point.cubePointContext.setSurfaceY(box.maxY);
-        return true;
-    };
 
 }

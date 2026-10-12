@@ -1,0 +1,11 @@
+{
+  "use": ["combinedassault:hud"],
+  "root": {"type": "transform", "scale": 0.7, "child": {"type": "stack", "children": [
+    {"type": "poly", "points": [-19, 0, -22, -3, -22, 3], "color": "$green"},
+    {"type": "place", "x": -60, "y": -46, "child": {"type": "sized", "w": 120, "h": 92, "align": "center", "clip": true,
+      "child": {"type": "transform", "rotate": "-vehicle.roll", "pivot": "center",
+        "child": {"type": "sized", "w": 0, "h": 0, "align": "center",
+          "child": {"type": "ladder", "pitch": "-vehicle.pitch", "ppd": 2, "step": 5, "range": 22, "dashes": 3, "dash": 4,
+            "dash_gap": 1, "centre_gap": 3, "thickness": 1, "label_offset": 32, "color": "$green"}}}}}
+  ]}}
+}

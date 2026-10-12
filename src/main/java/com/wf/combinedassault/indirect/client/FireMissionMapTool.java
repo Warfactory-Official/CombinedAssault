@@ -13,7 +13,7 @@ import com.wf.wflib.client.map.MapTool;
 import com.wf.wflib.client.map.MapView;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import com.wf.gemrender.ui.Canvas;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -150,7 +150,7 @@ public final class FireMissionMapTool implements MapTool {
     }
 
     @Override
-    public void render(GuiGraphics graphics, MapView view) {
+    public void render(Canvas graphics, MapView view) {
         WeaponUnit unit = station();
         if (unit == null || !view.dimension().equals(unit.getVehicle().level().dimension())) {
             return;
@@ -169,22 +169,22 @@ public final class FireMissionMapTool implements MapTool {
             MapDraw.line(graphics, tx, ty - 6, tx, ty + 6, 1.5f, COLOUR_TARGET);
         }
         var font = Minecraft.getInstance().font;
-        int right = graphics.guiWidth() - RIGHT_MARGIN;
+        int right = (int) graphics.width() - RIGHT_MARGIN;
         int y = TOP_MARGIN;
         if (target != null) {
             String line = String.format(Locale.ROOT, "TGT %d %d %d  RNG %dm", (int) Math.floor(target.x),
                     (int) Math.floor(target.y), (int) Math.floor(target.z), Math.round(distance(unit, target)));
-            graphics.drawString(font, line, right - font.width(line), y, COLOUR_TEXT, true);
+            graphics.text(line, right - font.width(line), y, COLOUR_TEXT, true);
             y += 10;
         }
         if (mission != null) {
             String line = String.format(Locale.ROOT, "FIRE MISSION  %s x%d", mission.round() == Items.AIR
                     ? "" : mission.round().getDescription().getString(), mission.remaining());
-            graphics.drawString(font, line, right - font.width(line), y, COLOUR_TEXT, true);
+            graphics.text(line, right - font.width(line), y, COLOUR_TEXT, true);
             y += 10;
         }
         if (said != null && Util.getMillis() - saidAt < SAY_MILLIS) {
-            graphics.drawString(font, said, right - font.width(said), y, COLOUR_TEXT, true);
+            graphics.text(said.getVisualOrderText(), right - font.width(said), y, COLOUR_TEXT, true);
         }
     }
 }

@@ -1,16 +1,18 @@
-"""Author a combinedassault glTF vehicle in Blender: frames, colliders, hit modules, sockets, armour, hinges, part
-clips, export. Every role is written into the node's glTF `extras` (docs/vehicle-pack-format.md §6).
+"""Author a combinedassault glTF vehicle in Blender: import a pack model, frames, colliders, hit modules, sockets,
+armour, hinges, part clips, texture set-up, player reference, check, export. Every role is written into the node's
+glTF `extras` (docs/vehicle-pack-format.md §6); extras the panels do not show survive import -> export.
 
 Frame: 1 unit = 1 block, world origin = vehicle origin, nose toward -Y, port +X, up +Z. The glTF exporter's
 Y-up conversion `(x, y, z) -> (x, z, -y)` then gives the vehicle frame (+Z forward, +X port, +Y up).
 
-Install: Edit > Preferences > Add-ons > Install from disk. Panels: Object, Material and Scene properties.
+Install: `python3 tools/blender/build_addon.py` -> build/combinedassault_tools.zip; Edit > Preferences > Add-ons >
+Install from Disk. Panels: Object, Material and Scene properties; File > Import > combinedassault pack model.
 """
 
 bl_info = {
     "name": "combinedassault tools",
     "author": "combinedassault",
-    "version": (3, 0, 0),
+    "version": (4, 0, 0),
     "blender": (4, 2, 0),
     "location": "Properties > Object / Material / Scene > combinedassault",
     "description": "Frames, colliders, hit modules, sockets, armour, part clips and pack export for combinedassault glTF vehicles",
@@ -20,33 +22,37 @@ bl_info = {
 import json
 import os
 import re
+import struct
 
 import bmesh
 import bpy
 from bpy.props import (BoolProperty, EnumProperty, FloatProperty, IntProperty, PointerProperty,
                        StringProperty)
 from bpy.types import Operator, Panel, PropertyGroup
+from bpy_extras.io_utils import ImportHelper
 from mathutils import Matrix, Vector
 
-# Must equal the game's vocabularies; test_combinedassault_tools.py parses the Java sources and compares.
-# ComponentKind names but crew, generic.
-SYSTEMS = ["hull", "engine", "track", "wheel", "turret", "barrel", "fuel", "ammo", "optics", "rotor",
-           "tail_rotor", "wing"]
-# NodeRole SOCKET kind.
-SOCKET_FIELDS = ["seat", "dismount", "view", "sight", "bolt", "era", "slat", "mount_point", "hitch", "towable",
-                 "axle", "exhaust", "vortex", "smoke", "afterburner", "camera", "camera_zoomed", "light", "cargo_bay",
-                 "center_of_mass", "pivot", "track", "propeller"]
+try:
+    from . import ca_reference, ca_validate
+except ImportError:  # loaded as a plain module (tests, sys.path = tools/blender)
+    import ca_reference
+    import ca_validate
+
+SYSTEMS = ca_validate.SYSTEMS
+SOCKET_FIELDS = ca_validate.SOCKET_FIELDS
 # Socket fields whose marker is a quad mesh (addon panel extent) rather than an empty.
 PANEL_FIELDS = {"era", "slat"}
 # Socket fields read from their mesh: panels + track (outline = path).
 MESH_FIELDS = PANEL_FIELDS | {"track"}
-# Socket fields with no interface (MountDefaults `none`).
-UNTARGETED = {"towable", "axle", "camera", "camera_zoomed", "exhaust", "vortex", "smoke", "afterburner", "light",
-              "cargo_bay", "center_of_mass", "pivot", "propeller"}
-ROLE = "combinedassaultRole"
-INTERFACE = "combinedassaultInterface"
-META = "combinedassault"
-HIDDEN = "gemrenderHidden"
+UNTARGETED = ca_validate.UNTARGETED
+ROLE = ca_validate.ROLE
+INTERFACE = ca_validate.INTERFACE
+META = ca_validate.META
+HIDDEN = ca_validate.HIDDEN
+RESOURCE = ca_validate.RESOURCE
+# combinedassault meta keys the panels own; any other key rides through from import (raw_extras).
+OWNED_META = {"main", "deck", "solid", "world", "name", "hit", "index", "system", "side", "skip", "swept", "health",
+              "x_rot_min", "x_rot_max", "y_rot_min", "y_rot_max"}
 ARMOR = re.compile(r"(?i)armou?r[_ ]?(\d+(?:\.\d+)?)")
 DECOR = re.compile(r"(?i)(?:^|[_ .])decor(?:$|[_ .])")
 
@@ -54,8 +60,7 @@ PLANAR_EPS = 1.0e-4
 CONVEX_EPS = 1.0e-4
 DEGENERATE_EPS = 1.0e-6
 IDENTITY_EPS = 1.0e-5
-# Clip name == part id, or <part id>.<anything>: the game scrubs it by that part's progress.
-CLIP_NAME = re.compile(r"^[a-z0-9_]+(\.[A-Za-z0-9_.]+)?$")
+CLIP_NAME = ca_validate.CLIP_NAME
 PLACES = 5
 
 ROLE_ITEMS = [
@@ -147,9 +152,6 @@ def check_collider(obj, depsgraph=None):
     if len(points) < 4 or len(faces) < 4:
         problems.append("needs at least 4 vertices and 4 faces (%d, %d)" % (len(points), len(faces)))
         return problems
-    gaps = open_edges(faces)
-    if gaps:
-        problems.append("is not closed: %d open edge(s), first %d-%d" % (len(gaps), gaps[0][0], gaps[0][1]))
     interior = sum(points, Vector()) / len(points)
     for index, face in enumerate(faces):
         plane = plane_of(points, face)
@@ -189,6 +191,12 @@ def check_object(obj, depsgraph=None):
         errors.append("%s frame names no part (interface)" % role.lower())
     if role == "COLLIDER":
         errors += check_collider(obj, depsgraph)
+        if obj.type == "MESH":
+            gaps = open_edges(faces_of(obj, depsgraph)[1])
+            if gaps:
+                # The game builds the hull from the faces alone: a T-junction is fine, a missing face is a hole.
+                warnings.append("is not closed: %d open edge(s), first %d-%d; fine for a vertex on another face's "
+                                "edge, a missing face leaves a hole" % (len(gaps), gaps[0][0], gaps[0][1]))
         if settings.main and role_of(frame_of(obj)) != "BODY":
             errors.append("main collider rides a part frame")
         if action is not None:
@@ -223,6 +231,8 @@ def check_object(obj, depsgraph=None):
                                                             else "quad"))
     if obj.type == "MESH" and is_mirrored(obj):
         errors.append("is mirrored: exports inside out. Apply scale, rebuild with a rotation")
+    if obj.type == "MESH" and role == "NONE" and obj.material_slots and not obj.data.uv_layers:
+        warnings.append("has no UV map: its texture cannot be placed")
     if obj.type == "MESH" and len(obj.data.uv_layers) > 1:
         warnings.append("has %d UV maps; GemRender draws TEXCOORD_0 only" % len(obj.data.uv_layers))
     if settings.posed and not local_is_identity(obj):
@@ -236,38 +246,35 @@ def check_scene(scene, depsgraph=None):
     if abs(scene.unit_settings.scale_length - 1.0) > 1e-6:
         warnings.append("scene unit scale is %.3f; the exporters ignore it (1 unit = 1 block)"
                         % scene.unit_settings.scale_length)
-    mains = [obj for obj in scene.objects if role_of(obj) == "COLLIDER" and obj.combinedassault.main]
+    objects = [obj for obj in scene.objects if not obj.combinedassault.reference]
+    mains = [obj for obj in objects if role_of(obj) == "COLLIDER" and obj.combinedassault.main]
     if len(mains) > 1:
         errors.append("more than one collider is Main: %s" % ", ".join(o.name for o in mains))
-    bodies = [obj for obj in scene.objects if role_of(obj) == "BODY"]
+    bodies = [obj for obj in objects if role_of(obj) == "BODY"]
     if len(bodies) != 1:
         errors.append("needs exactly one body frame, has %d" % len(bodies))
     seen = {}
-    for obj in scene.objects:
+    for obj in objects:
         if role_of(obj) in ("PART", "PITCH"):
             key = (role_of(obj), obj.combinedassault.target)
             if key in seen:
                 errors.append("%s %s on %s and %s" % (key[0].lower(), key[1], seen[key], obj.name))
             seen[key] = obj.name
-    for obj in scene.objects:
+    for obj in objects:
         e, w = check_object(obj, depsgraph)
         errors += ["%s %s" % (obj.name, m) for m in e]
         warnings += ["%s %s" % (obj.name, m) for m in w]
     for material in used_materials(scene):
-        if material.use_nodes:
-            for node in material.node_tree.nodes:
-                if node.type == "TEX_IMAGE" and node.image is not None:
-                    ext = os.path.splitext(node.image.filepath or node.image.name)[1].lower()
-                    if node.image.file_format != "PNG" and ext != ".png":
-                        warnings.append("material %s image %s is %s; GemRender atlases PNG"
-                                        % (material.name, node.image.name, node.image.file_format))
+        e, w = material_problems(material)
+        errors += ["material %s %s" % (material.name, m) for m in e]
+        warnings += ["material %s %s" % (material.name, m) for m in w]
     return errors, warnings
 
 
 def used_materials(scene):
     seen = []
     for obj in scene.objects:
-        if obj.type == "MESH" and role_of(obj) not in ("COLLIDER", "HIT", "SOCKET"):
+        if obj.type == "MESH" and role_of(obj) not in ("COLLIDER", "HIT", "SOCKET") and not obj.combinedassault.reference:
             for slot in obj.material_slots:
                 if slot.material is not None and slot.material not in seen:
                     seen.append(slot.material)
@@ -275,6 +282,22 @@ def used_materials(scene):
 
 
 # ---------------------------------------------------------------- colliders
+
+
+def hull_into(data, points):
+    """data = convex hull of points, coplanar triangles merged back into flat faces (every face a separating axis)."""
+    mesh = bmesh.new()
+    try:
+        for point in points:
+            mesh.verts.new(point)
+        bmesh.ops.remove_doubles(mesh, verts=mesh.verts, dist=ca_validate.EPS)
+        result = bmesh.ops.convex_hull(mesh, input=mesh.verts, use_existing_faces=False)
+        bmesh.ops.delete(mesh, geom=list({v for v in result["geom_interior"] + result["geom_unused"]
+                                          if isinstance(v, bmesh.types.BMVert)}), context="VERTS")
+        bmesh.ops.dissolve_limit(mesh, angle_limit=0.0017, verts=mesh.verts, edges=mesh.edges)
+        mesh.to_mesh(data)
+    finally:
+        mesh.free()
 
 
 def style_collider(obj):
@@ -313,7 +336,7 @@ def node_extras(obj):
         extras[ROLE] = settings.field if role == "SOCKET" else role.lower()
     if role in ("PART", "PITCH") or role == "SOCKET" and settings.target:
         extras[INTERFACE] = settings.target
-    if role in ("COLLIDER", "HIT", "HIT_SURFACE", "SOCKET"):
+    if role in ("COLLIDER", "HIT", "HIT_SURFACE", "SOCKET") or settings.hidden:
         extras[HIDDEN] = True
     if role == "COLLIDER":
         if settings.main:
@@ -322,6 +345,8 @@ def node_extras(obj):
             meta["deck"] = True
         if not settings.solid:
             meta["solid"] = False
+        if not settings.world:
+            meta["world"] = False
         if settings.label:
             meta["name"] = settings.label
         if settings.locked:
@@ -355,29 +380,450 @@ def node_extras(obj):
     return extras
 
 
-def relocate(gltf_path, ns, assets, scene=None):
+def merged_extras(obj):
+    """node_extras over the imported extras: panel-owned keys from the panels, every other key kept."""
+    raw = json.loads(obj.combinedassault.raw_extras or "{}")
+    for key in (ROLE, INTERFACE, HIDDEN):
+        raw.pop(key, None)
+    meta = {k: v for k, v in raw.pop(META, {}).items() if k not in OWNED_META}
+    hulls = {k: v for k, v in raw.pop("genHulls", {}).items() if k != "locked"}
+    out = node_extras(obj)
+    if meta:
+        out[META] = {**meta, **out.get(META, {})}
+    if hulls or "genHulls" in out:
+        out["genHulls"] = {**hulls, **out.get("genHulls", {})}
+    return {**raw, **out}
+
+
+def pack_location(path):
+    """`ns:<path>` when path lies under some <pack>/assets/<ns>/; None otherwise."""
+    parts = os.path.realpath(path).split(os.sep)
+    for i in range(len(parts) - 2, 0, -1):
+        if parts[i] == "assets":
+            return "%s:%s" % (parts[i + 1], "/".join(parts[i + 2:]))
+    return None
+
+
+def image_file(image):
+    """The image's own file on disk, or None (generated, packed, unsaved paint)."""
+    if image is None or image.packed_file is not None or image.is_dirty or not image.filepath:
+        return None
+    path = bpy.path.abspath(image.filepath, library=image.library)
+    return path if os.path.isfile(path) else None
+
+
+def relocate(gltf_path, ns, assets, scene=None, written=()):
     """URIs -> extras.resourceLocation, the form the mod's loaders read (GemRender needs it for images);
-    per-node role, interface, parameters -> extras (nodes are named after their objects)."""
+    per-node role, interface, parameters -> extras (nodes are named after their objects); material transparency and
+    extras. An image already in a pack keeps its file (shared textures, _damaged/_paint siblings): the copy the
+    exporter just wrote (`written`) is removed."""
     with open(gltf_path, encoding="utf-8") as source:
         gltf = json.load(source)
     if scene is not None:
         for node in gltf.get("nodes", []):
             obj = scene.objects.get(node.get("name", ""))
-            extras = node_extras(obj) if obj is not None else {}
+            extras = merged_extras(obj) if obj is not None else {}
             if extras:
                 node.setdefault("extras", {}).update(extras)
+        for material in gltf.get("materials", []):
+            source_material = bpy.data.materials.get(material.get("name", ""))
+            if source_material is not None:
+                material_out(source_material, material)
     here = os.path.dirname(gltf_path)
-    for entry in gltf.get("images", []) + gltf.get("buffers", []):
+    if scene is not None and len(gltf.get("buffers", [])) == 1 and "uri" in gltf["buffers"][0]:
+        bin_path = os.path.normpath(os.path.join(here, bpy.path.native_pathsep(gltf["buffers"][0]["uri"])))
+        with open(bin_path, "rb") as source:
+            data = rewrite_colliders(gltf, source.read(), scene)
+        with open(bin_path, "wb") as out:
+            out.write(data)
+        gltf["buffers"][0]["byteLength"] = len(data)
+    images = {}
+    for image in bpy.data.images:
+        images.setdefault(image.name, image)
+        images.setdefault(os.path.splitext(image.name)[0], image)
+    for entry in gltf.get("images", []):
+        uri = entry.get("uri")
+        if uri is None or uri.startswith("data:"):
+            continue
+        copy = os.path.normpath(os.path.join(here, bpy.path.native_pathsep(uri)))
+        source = image_file(images.get(entry.get("name", "")))
+        location = pack_location(source) if source else None
+        if location is not None and os.path.realpath(source) != os.path.realpath(copy):
+            if os.path.realpath(copy) in written:
+                os.remove(copy)
+        else:
+            location = resource_location(ns, assets, copy)
+        del entry["uri"]
+        entry.setdefault("extras", {})[RESOURCE] = location
+    for entry in gltf.get("buffers", []):
         uri = entry.get("uri")
         if uri is None or uri.startswith("data:"):
             continue
         del entry["uri"]
-        entry.setdefault("extras", {})["resourceLocation"] = resource_location(
+        entry.setdefault("extras", {})[RESOURCE] = resource_location(
             ns, assets, os.path.normpath(os.path.join(here, bpy.path.native_pathsep(uri))))
     gltf["asset"].setdefault("extras", {})["staged_by"] = "tools/blender/combinedassault_tools.py"
     with open(gltf_path, "w", encoding="utf-8") as out:
         json.dump(gltf, out, separators=(",", ":"), ensure_ascii=False)
     return gltf
+
+
+def rewrite_colliders(gltf, data, scene):
+    """Collider meshes -> one primitive per Blender face (shared POSITION): the game checks each authored face whole
+    (ModelRig.hull); one triangulated primitive is regrouped by plane and slivers fail. Returns the repacked buffer."""
+    blob = bytearray(data)
+
+    def view(payload, target):
+        while len(blob) % 4:
+            blob.append(0)
+        gltf["bufferViews"].append({"buffer": 0, "byteOffset": len(blob), "byteLength": len(payload),
+                                    "target": target})
+        blob.extend(payload)
+        return len(gltf["bufferViews"]) - 1
+
+    for node in gltf.get("nodes", []):
+        obj = scene.objects.get(node.get("name", ""))
+        if obj is None or obj.type != "MESH" or role_of(obj) != "COLLIDER" or "mesh" not in node:
+            continue
+        points = [(v.co.x, v.co.z, -v.co.y) for v in obj.data.vertices]
+        positions = view(b"".join(struct.pack("<3f", *p) for p in points), 34962)
+        gltf["accessors"].append({"bufferView": positions, "componentType": 5126, "count": len(points), "type": "VEC3",
+                                  "min": [min(p[a] for p in points) for a in range(3)],
+                                  "max": [max(p[a] for p in points) for a in range(3)]})
+        position = len(gltf["accessors"]) - 1
+        wide = len(points) > 65535
+        primitives = []
+        for polygon in obj.data.polygons:
+            loop = list(polygon.vertices)
+            fan = [i for k in range(1, len(loop) - 1) for i in (loop[0], loop[k], loop[k + 1])]
+            indices = view(struct.pack("<%d%s" % (len(fan), "I" if wide else "H"), *fan), 34963)
+            gltf["accessors"].append({"bufferView": indices, "componentType": 5125 if wide else 5123,
+                                      "count": len(fan), "type": "SCALAR"})
+            primitives.append({"attributes": {"POSITION": position}, "indices": len(gltf["accessors"]) - 1,
+                               "mode": 4})
+        gltf["meshes"].append({"name": obj.data.name, "primitives": primitives})
+        node["mesh"] = len(gltf["meshes"]) - 1
+    return repack(gltf, bytes(blob))
+
+
+def repack(gltf, data):
+    """Drop meshes no node uses, then accessors and buffer views nothing uses; one buffer. Returns its bytes."""
+    meshes = sorted({n["mesh"] for n in gltf.get("nodes", []) if "mesh" in n})
+    mesh_map = {old: new for new, old in enumerate(meshes)}
+    gltf["meshes"] = [gltf["meshes"][i] for i in meshes]
+    for node in gltf.get("nodes", []):
+        if "mesh" in node:
+            node["mesh"] = mesh_map[node["mesh"]]
+    used = set()
+    for mesh in gltf["meshes"]:
+        for primitive in mesh["primitives"]:
+            used.update(primitive["attributes"].values())
+            used.update(v for target in primitive.get("targets", []) for v in target.values())
+            if "indices" in primitive:
+                used.add(primitive["indices"])
+    for animation in gltf.get("animations", []):
+        for sampler in animation.get("samplers", []):
+            used.update((sampler["input"], sampler["output"]))
+    for skin in gltf.get("skins", []):
+        if "inverseBindMatrices" in skin:
+            used.add(skin["inverseBindMatrices"])
+    accessors = sorted(used)
+    acc_map = {old: new for new, old in enumerate(accessors)}
+    gltf["accessors"] = [gltf["accessors"][i] for i in accessors]
+    views = sorted({a["bufferView"] for a in gltf["accessors"] if "bufferView" in a}
+                   | {i["bufferView"] for i in gltf.get("images", []) if "bufferView" in i})
+    view_map, out = {}, bytearray()
+    for old in views:
+        entry = gltf["bufferViews"][old]
+        while len(out) % 4:
+            out.append(0)
+        start = entry.get("byteOffset", 0)
+        payload = data[start:start + entry["byteLength"]]
+        entry["byteOffset"] = len(out)
+        out.extend(payload)
+        view_map[old] = len(view_map)
+    gltf["bufferViews"] = [gltf["bufferViews"][i] for i in views]
+    for accessor in gltf["accessors"]:
+        if "bufferView" in accessor:
+            accessor["bufferView"] = view_map[accessor["bufferView"]]
+    for image in gltf.get("images", []):
+        if "bufferView" in image:
+            image["bufferView"] = view_map[image["bufferView"]]
+    for mesh in gltf["meshes"]:
+        for primitive in mesh["primitives"]:
+            primitive["attributes"] = {k: acc_map[v] for k, v in primitive["attributes"].items()}
+            if "targets" in primitive:
+                primitive["targets"] = [{k: acc_map[v] for k, v in t.items()} for t in primitive["targets"]]
+            if "indices" in primitive:
+                primitive["indices"] = acc_map[primitive["indices"]]
+    for animation in gltf.get("animations", []):
+        for sampler in animation.get("samplers", []):
+            sampler["input"], sampler["output"] = acc_map[sampler["input"]], acc_map[sampler["output"]]
+    for skin in gltf.get("skins", []):
+        if "inverseBindMatrices" in skin:
+            skin["inverseBindMatrices"] = acc_map[skin["inverseBindMatrices"]]
+    return bytes(out)
+
+
+def material_out(source, material):
+    """Panel transparency (AUTO = what the exporter derived) and imported extras onto one exported material."""
+    settings = source.combinedassault
+    if settings.alpha != "AUTO":
+        material["alphaMode"] = settings.alpha
+        material.pop("alphaCutoff", None)
+        if settings.alpha == "MASK":
+            material["alphaCutoff"] = float(settings.cutoff)
+    elif material.get("alphaMode") == "MASK":
+        cutoff = material.get("alphaCutoff", 0.5)
+        material["alphaCutoff"] = min(ca_validate.CUTOUTS, key=lambda c: abs(c - cutoff))
+    raw = json.loads(settings.raw_extras or "{}")
+    if raw:
+        material["extras"] = {**raw, **material.get("extras", {})}
+
+
+# ---------------------------------------------------------------- import
+
+
+def plain(value):
+    """Blender ID property -> JSON value."""
+    if hasattr(value, "to_dict"):
+        return value.to_dict()
+    if hasattr(value, "to_list"):
+        return value.to_list()
+    return value
+
+
+def take_extras(idblock):
+    """The glTF importer's custom properties (= extras), removed from the block."""
+    extras = {key: plain(idblock[key]) for key in list(idblock.keys()) if not key.startswith("_")}
+    for key in extras:
+        del idblock[key]
+    return extras
+
+
+def apply_extras(obj, extras):
+    """Panel settings from a node's glTF extras; the whole dict kept for export (merged_extras)."""
+    settings = obj.combinedassault
+    settings.raw_extras = json.dumps(extras) if extras else ""
+    role = extras.get(ROLE, "")
+    meta = extras.get(META, {})
+    settings.target = extras.get(INTERFACE, "")
+    if role in SOCKET_FIELDS:
+        settings.role = "SOCKET"
+        settings.field = role
+        settings.index = meta.get("index", -1)
+        return
+    if role.upper() not in {key for key, _, _ in ROLE_ITEMS}:
+        settings.hidden = bool(extras.get(HIDDEN))
+        role = ""
+    settings.role = role.upper() or "NONE"
+    if role == "collider":
+        settings.main = bool(meta.get("main"))
+        settings.deck = bool(meta.get("deck"))
+        settings.solid = meta.get("solid", True)
+        settings.world = meta.get("world", True)
+        settings.label = meta.get("name", "")
+        settings.hit_surface = bool(meta.get("hit"))
+        settings.locked = bool(extras.get("genHulls", {}).get("locked"))
+        style_collider(obj)
+        return
+    if role == "hit":
+        settings.system = meta.get("system", "engine")
+    elif meta.get("system") in SYSTEMS or meta.get("system") == "none":
+        settings.meta_system = meta["system"]
+    if role in ("hit", "hit_surface"):
+        obj.display_type = "WIRE"
+    settings.side = meta.get("side", "none").upper()
+    settings.meta_skip = bool(meta.get("skip"))
+    if "swept" in meta:
+        settings.meta_swept = "ON" if meta["swept"] else "OFF"
+    settings.meta_health = meta.get("health", 0.0)
+    if "x_rot_min" in meta or "x_rot_max" in meta:
+        settings.limit_pitch = True
+        settings.x_rot_min = meta.get("x_rot_min", -90.0)
+        settings.x_rot_max = meta.get("x_rot_max", 90.0)
+    if "y_rot_min" in meta or "y_rot_max" in meta:
+        settings.limit_yaw = True
+        settings.y_rot_min = meta.get("y_rot_min", -180.0)
+        settings.y_rot_max = meta.get("y_rot_max", 180.0)
+
+
+def import_pack_model(context, path):
+    """Pack glTF -> scene: resourceLocations resolved, roles onto the panels, export target = the same file.
+    Returns (objects, materials) imported."""
+    root, ns = ca_validate.pack_of(path)
+    if root is None:
+        raise ValueError("not inside <pack>/assets/<namespace>/models/: " + path)
+    with open(path, encoding="utf-8") as source:
+        gltf = json.load(source)
+    for entry in gltf.get("images", []) + gltf.get("buffers", []):
+        location = entry.get("extras", {}).get(RESOURCE)
+        if "uri" not in entry and location:
+            entry["uri"] = ca_validate.resolve(root, location).replace(os.sep, "/")
+    temp = os.path.join(bpy.app.tempdir or os.path.dirname(path), "combinedassault_import.gltf")
+    with open(temp, "w", encoding="utf-8") as out:
+        json.dump(gltf, out)
+    objects, materials = set(bpy.data.objects), set(bpy.data.materials)
+    try:
+        # Unpacked: an image packed into the .blend has no pack file to reference in place on export.
+        bpy.ops.import_scene.gltf(filepath=temp, import_pack_images=False)
+        model = ca_validate.Model(temp)
+    finally:
+        os.remove(temp)
+    new_objects = [obj for obj in bpy.data.objects if obj not in objects]
+    new_materials = [m for m in bpy.data.materials if m not in materials]
+    by_node = {re.sub(r"\.\d{3}$", "", obj.name): obj for obj in new_objects}
+    for obj in new_objects:
+        apply_extras(obj, take_extras(obj))
+    for index, node in enumerate(gltf.get("nodes", [])):
+        obj = by_node.get(node.get("name"))
+        if obj is not None and obj.type == "MESH" and obj.combinedassault.role == "COLLIDER":
+            # The importer splits vertices per face and triangulates; slivers then tilt past the game's 1e-4 checks.
+            built = ca_validate.collider_faces(model, index)
+            if built is not None:
+                points, loops = built
+                obj.data.clear_geometry()
+                obj.data.from_pydata([(x, -z, y) for x, y, z in points], [], loops)
+                obj.data.update()
+    by_name = {m.get("name"): m for m in gltf.get("materials", [])}
+    for material in new_materials:
+        take_extras(material)
+        source = by_name.get(material.name, {})
+        settings = material.combinedassault
+        settings.alpha = source.get("alphaMode", "OPAQUE")
+        cutoff = source.get("alphaCutoff", 0.5)
+        settings.cutoff = "%.1f" % min(ca_validate.CUTOUTS, key=lambda c: abs(c - cutoff))
+        settings.raw_extras = json.dumps(source["extras"]) if source.get("extras") else ""
+    export = context.scene.combinedassault_export
+    export.pack_root = root + os.sep
+    export.namespace = ns
+    model = os.path.relpath(path, os.path.join(root, "assets", ns, "models"))
+    export.model_path = os.path.splitext(model)[0].replace(os.sep, "/")
+    return new_objects, new_materials
+
+
+# ---------------------------------------------------------------- materials
+
+
+def principled(material):
+    if not material.use_nodes:
+        return None
+    return next((n for n in material.node_tree.nodes if n.type == "BSDF_PRINCIPLED"), None)
+
+
+def upstream(socket, depth=0):
+    """Nodes feeding socket, nearest first."""
+    if not socket.is_linked or depth > 6:
+        return []
+    node = socket.links[0].from_node
+    found = [node]
+    for entry in node.inputs:
+        found += upstream(entry, depth + 1)
+    return found
+
+
+def base_image_node(material):
+    bsdf = principled(material)
+    if bsdf is None:
+        return None
+    return next((n for n in upstream(bsdf.inputs["Base Color"]) if n.type == "TEX_IMAGE"), None)
+
+
+def material_problems(material):
+    """(errors, warnings) for how the exporter will write this material."""
+    errors, warnings = [], []
+    if not material.use_nodes:
+        return errors, ["has no node tree: exported flat white, untextured"]
+    images = [n for n in material.node_tree.nodes if n.type == "TEX_IMAGE"]
+    bsdf = principled(material)
+    if bsdf is None:
+        if images:
+            errors.append("has no Principled BSDF: the texture is not exported (use Set up texture)")
+        return errors, warnings
+    node = base_image_node(material)
+    if node is None:
+        if images:
+            errors.append("texture %s is not connected to Base Color: the game draws it untextured "
+                          "(use Set up texture)" % (images[0].image.name if images[0].image else "(empty)"))
+        return errors, warnings
+    chain = [n for n in upstream(bsdf.inputs["Base Color"]) if n != node]
+    between = [n for n in chain if n not in upstream(node.inputs["Vector"])]
+    if between:
+        warnings.append("Base Color goes through %s before the texture: the exporter keeps only the image"
+                        % ", ".join(sorted({n.bl_label for n in between})))
+    if node.image is None:
+        errors.append("image texture node has no image")
+        return errors, warnings
+    image = node.image
+    for feeder in upstream(node.inputs["Vector"]):
+        if feeder.type == "UVMAP" and feeder.uv_map:
+            warnings.append("texture reads UV map '%s'; GemRender reads each mesh's first UV map" % feeder.uv_map)
+        if feeder.type == "MAPPING":
+            warnings.append("texture goes through a Mapping node: the game ignores the offset/scale")
+    if image.source == "GENERATED" or not image.filepath and image.packed_file is None:
+        warnings.append("image %s was never saved to a file: exported as %s.png (rename it first)"
+                        % (image.name, os.path.splitext(image.name)[0]))
+    elif image.is_dirty:
+        warnings.append("image %s has unsaved painting: exported from memory into the pack" % image.name)
+    ext = os.path.splitext(image.filepath or image.name)[1].lower()
+    if image.file_format != "PNG" and ext != ".png":
+        warnings.append("image %s is %s; GemRender atlases PNG" % (image.name, image.file_format))
+    if material.combinedassault.alpha == "AUTO" and bsdf.inputs["Alpha"].is_linked:
+        warnings.append("Alpha is connected but Transparency is Auto: pick Cut-out (holes) or See-through (glass)")
+    return errors, warnings
+
+
+def setup_texture(material, image, alpha):
+    """Principled BSDF <- Image Texture (Closest, pixel art) on Base Color; Alpha linked unless OPAQUE."""
+    material.use_nodes = True
+    tree = material.node_tree
+    tree.nodes.clear()
+    out = tree.nodes.new("ShaderNodeOutputMaterial")
+    out.location = (300, 0)
+    bsdf = tree.nodes.new("ShaderNodeBsdfPrincipled")
+    bsdf.inputs["Metallic"].default_value = 0.0
+    bsdf.inputs["Roughness"].default_value = 1.0
+    texture = tree.nodes.new("ShaderNodeTexImage")
+    texture.location = (-400, 0)
+    texture.image = image
+    texture.interpolation = "Closest"
+    tree.links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
+    tree.links.new(texture.outputs["Color"], bsdf.inputs["Base Color"])
+    if alpha != "OPAQUE":
+        tree.links.new(texture.outputs["Alpha"], bsdf.inputs["Alpha"])
+    material.combinedassault.alpha = alpha
+
+
+# ---------------------------------------------------------------- player reference
+
+
+def add_player_reference(context, seated):
+    """Boxes at the 3D cursor (feet / seat point), facing the nose (-Y); never exported or checked."""
+    name = "player_seated" if seated else "player_standing"
+    collection = bpy.data.collections.get("combinedassault reference")
+    if collection is None:
+        collection = bpy.data.collections.new("combinedassault reference")
+        context.scene.collection.children.link(collection)
+    root = bpy.data.objects.new(name, None)
+    root.empty_display_type = "SINGLE_ARROW"
+    root.empty_display_size = ca_reference.EYE
+    root.combinedassault.reference = True
+    collection.objects.link(root)
+    for part, kind, points in ca_reference.solids(seated):
+        mesh = bpy.data.meshes.new("%s_%s" % (name, part))
+        # glTF frame (x, y up, z forward) -> Blender (x, -z, y).
+        mesh.from_pydata([(x, -z, y) for x, y, z in points], [], ca_reference.FACES)
+        mesh.update()
+        obj = bpy.data.objects.new(mesh.name, mesh)
+        obj.color = ca_reference.COLOURS[kind] + (1.0,)
+        if kind == "hitbox":
+            obj.display_type = "WIRE"
+        obj.combinedassault.reference = True
+        obj.hide_select = kind != "hitbox"
+        obj.parent = root
+        collection.objects.link(obj)
+    root.matrix_world = Matrix.Translation(context.scene.cursor.location)
+    return root
 
 
 # ---------------------------------------------------------------- properties
@@ -405,6 +851,15 @@ class CombinedAssaultObjectSettings(PropertyGroup):
                          default=False)
     hit_surface: BoolProperty(name="Hit surface",
                               description="Also replaces its parent's drawn subtree as hit surface", default=False)
+    world: BoolProperty(name="World",
+                        description="Off: vehicles only, blocks pass through (a ramp lip under the ground)",
+                        default=True)
+    hidden: BoolProperty(name="Hidden in game", description="Not drawn (gemrenderHidden); shapes and sockets always",
+                         default=False)
+    reference: BoolProperty(name="Reference", description="Size reference: never exported or checked",
+                            default=False)
+    raw_extras: StringProperty(name="Imported extras", description="glTF extras as imported (JSON)", default="",
+                               options={"HIDDEN"})
     # Frame limits -> part rot_info (degrees; x negative = up).
     limit_pitch: BoolProperty(name="Limit pitch", description="x_rot_min/max; on the pitch frame, else the part frame",
                               default=False)
@@ -436,6 +891,16 @@ class CombinedAssaultObjectSettings(PropertyGroup):
 
 class CombinedAssaultMaterialSettings(PropertyGroup):
     armor_mm: FloatProperty(name="Armour (mm RHA)", default=0.0, min=0.0, soft_max=1500.0)
+    alpha: EnumProperty(
+        name="Transparency", description="glTF alphaMode written on export",
+        items=[("AUTO", "Auto", "Whatever the exporter derives from the nodes"),
+               ("OPAQUE", "Solid", "Texture alpha ignored"),
+               ("MASK", "Cut-out", "Pixels below the cutoff are holes (grilles, decals); cheap"),
+               ("BLEND", "See-through", "Partly transparent (glass); sorted, costlier")],
+        default="AUTO")
+    cutoff: EnumProperty(name="Cutoff", description="Alpha below this is a hole (the game has these three)",
+                         items=[("0.5", "0.5", ""), ("0.1", "0.1", ""), ("0.0", "0.0", "")], default="0.5")
+    raw_extras: StringProperty(name="Imported extras", default="", options={"HIDDEN"})
 
 
 class CombinedAssaultExportSettings(PropertyGroup):
@@ -466,20 +931,8 @@ class COMBINEDASSAULT_OT_make_hull(Operator):
     def execute(self, context):
         sources = [obj for obj in context.selected_objects if obj.type == "MESH"]
         depsgraph = context.evaluated_depsgraph_get()
-        mesh = bmesh.new()
-        try:
-            for source in sources:
-                for point in faces_of(source, depsgraph)[0]:
-                    mesh.verts.new(point)
-            result = bmesh.ops.convex_hull(mesh, input=mesh.verts, use_existing_faces=False)
-            bmesh.ops.delete(mesh, geom=result["geom_interior"], context="VERTS")
-            bmesh.ops.delete(mesh, geom=result["geom_unused"], context="VERTS")
-            # Coplanar triangles back into flat faces: every face is a separating axis.
-            bmesh.ops.dissolve_limit(mesh, angle_limit=0.0017, verts=mesh.verts, edges=mesh.edges)
-            data = bpy.data.meshes.new(sources[0].name + "_hull")
-            mesh.to_mesh(data)
-        finally:
-            mesh.free()
+        data = bpy.data.meshes.new(sources[0].name + "_hull")
+        hull_into(data, [p for source in sources for p in faces_of(source, depsgraph)[0]])
         hull = bpy.data.objects.new(sources[0].name + "_hull", data)
         context.collection.objects.link(hull)
         frame = frame_of(sources[0])
@@ -752,22 +1205,40 @@ class COMBINEDASSAULT_OT_export(Operator):
             self.report({"ERROR"}, "nothing written: %d error(s)" % len(errors))
             return {"CANCELLED"}
         gltf_path, texture_dir, ns, assets = pack_paths(scene)
-        export_gltf(context, gltf_path, texture_dir)
-        relocate(gltf_path, ns, assets, scene)
+        made = []  # folders this export creates for textures, innermost first
+        folder = texture_dir
+        while not os.path.isdir(folder):
+            made.append(folder)
+            folder = os.path.dirname(folder)
+        written = export_gltf(context, gltf_path, texture_dir)
+        relocate(gltf_path, ns, assets, scene, written)
+        for folder in made:
+            if os.listdir(folder):
+                break
+            os.rmdir(folder)
+        errors, warnings, _ = ca_validate.validate(gltf_path)
+        for message in warnings:
+            self.report({"WARNING"}, "written file: " + message)
+        for message in errors:
+            self.report({"ERROR"}, "written file: " + message)
+        settings.note = "wrote %s: %d error(s), %d warning(s)" % (os.path.basename(gltf_path), len(errors),
+                                                                   len(warnings))
         self.report({"INFO"}, "wrote " + gltf_path)
         return {"FINISHED"}
 
 
 def export_gltf(context, gltf_path, texture_dir):
-    """Every visible object; separate .gltf/.bin, textures into the pack's textures/ tree. Actions -> clips,
-    sampled per frame (constraints, drivers baked); same-named actions on several objects -> one clip."""
+    """Every visible object but references; separate .gltf/.bin, textures into the pack's textures/ tree. Actions ->
+    clips, sampled per frame (constraints, drivers baked); same-named actions on several objects -> one clip.
+    Returns the texture files this export created (real paths)."""
     os.makedirs(os.path.dirname(gltf_path), exist_ok=True)
     os.makedirs(texture_dir, exist_ok=True)
+    before = {os.path.realpath(os.path.join(texture_dir, f)) for f in os.listdir(texture_dir)}
     selection = list(context.selected_objects)
     active = context.view_layer.objects.active
     try:
         for obj in context.scene.objects:
-            obj.select_set(obj.visible_get())
+            obj.select_set(obj.visible_get() and not obj.combinedassault.reference)
         bpy.ops.export_scene.gltf(
             filepath=gltf_path,
             export_format="GLTF_SEPARATE",
@@ -786,6 +1257,76 @@ def export_gltf(context, gltf_path, texture_dir):
         for obj in context.scene.objects:
             obj.select_set(obj in selection)
         context.view_layer.objects.active = active
+    return {os.path.realpath(os.path.join(texture_dir, f)) for f in os.listdir(texture_dir)} - before
+
+
+class COMBINEDASSAULT_OT_import(Operator, ImportHelper):
+    """Open a model from a pack (assets/<namespace>/models/...): textures found, roles shown on the panels, Export
+    writes back to the same file"""
+
+    bl_idname = "combinedassault.import_model"
+    bl_label = "Import pack model"
+    bl_options = {"REGISTER", "UNDO"}
+
+    filename_ext = ".gltf"
+    filter_glob: StringProperty(default="*.gltf", options={"HIDDEN"})
+
+    def execute(self, context):
+        try:
+            objects, materials = import_pack_model(context, self.filepath)
+        except ValueError as e:
+            self.report({"ERROR"}, str(e))
+            return {"CANCELLED"}
+        errors, warnings, _ = ca_validate.validate(self.filepath)
+        for message in errors:
+            self.report({"WARNING"}, "file already had: " + message)
+        self.report({"INFO"}, "imported %d objects, %d materials; Export writes back to %s"
+                    % (len(objects), len(materials), context.scene.combinedassault_export.model_path))
+        return {"FINISHED"}
+
+
+class COMBINEDASSAULT_OT_setup_texture(Operator, ImportHelper):
+    """Wire a PNG into the active material the way the game reads it: Image Texture -> Base Color (pixel-sharp)"""
+
+    bl_idname = "combinedassault.setup_texture"
+    bl_label = "Set up texture"
+    bl_options = {"REGISTER", "UNDO"}
+
+    filename_ext = ".png"
+    filter_glob: StringProperty(default="*.png", options={"HIDDEN"})
+    alpha: EnumProperty(name="Transparency", items=[("OPAQUE", "Solid", ""), ("MASK", "Cut-out", "Holes where alpha "
+                                                     "is low"), ("BLEND", "See-through", "Glass")], default="OPAQUE")
+
+    @classmethod
+    def poll(cls, context):
+        return context.material is not None
+
+    def execute(self, context):
+        image = bpy.data.images.load(self.filepath, check_existing=True)
+        setup_texture(context.material, image, self.alpha)
+        if pack_location(self.filepath) is None:
+            self.report({"WARNING"}, "%s is outside a pack: Export copies it into the pack's textures folder"
+                        % os.path.basename(self.filepath))
+        return {"FINISHED"}
+
+
+class COMBINEDASSAULT_OT_player_reference(Operator):
+    """Minecraft player boxes at the 3D cursor (feet or seat point), facing the nose; never exported"""
+
+    bl_idname = "combinedassault.player_reference"
+    bl_label = "Add player reference"
+    bl_options = {"REGISTER", "UNDO"}
+
+    seated: BoolProperty(name="Seated", description="Riding pose; place the cursor on the seat socket",
+                         default=False)
+
+    def execute(self, context):
+        add_player_reference(context, self.seated)
+        return {"FINISHED"}
+
+
+def menu_import(self, context):
+    self.layout.operator(COMBINEDASSAULT_OT_import.bl_idname, text="combinedassault pack model (.gltf)")
 
 
 # ---------------------------------------------------------------- panels
@@ -816,6 +1357,9 @@ class COMBINEDASSAULT_PT_object(Panel):
         layout = self.layout
         obj = context.object
         settings = obj.combinedassault
+        if settings.reference:
+            layout.label(text="Size reference: not exported", icon="INFO")
+            return
         layout.prop(settings, "role")
         role = settings.role
         if role in ("PART", "PITCH"):
@@ -834,7 +1378,10 @@ class COMBINEDASSAULT_PT_object(Panel):
         elif role == "COLLIDER":
             layout.prop(settings, "label")
             row = layout.row()
-            for key in ("main", "solid", "deck", "locked", "hit_surface"):
+            for key in ("main", "solid", "deck", "world"):
+                row.prop(settings, key)
+            row = layout.row()
+            for key in ("locked", "hit_surface"):
                 row.prop(settings, key)
         elif role == "HIT":
             layout.prop(settings, "system")
@@ -843,6 +1390,8 @@ class COMBINEDASSAULT_PT_object(Panel):
             layout.prop(settings, "field")
             layout.prop(settings, "target")
             layout.prop(settings, "index")
+        if role in ("NONE", "BODY", "PART", "PITCH"):
+            layout.prop(settings, "hidden")
         if role != "COLLIDER":
             layout.prop(settings, "posed")
         if role in ("NONE", "BODY", "PART", "PITCH", "HIT", "HIT_SURFACE"):
@@ -882,6 +1431,22 @@ class COMBINEDASSAULT_PT_material(Panel):
         decor = DECOR.search(material.name)
         layout.label(text="game reads: %s" % ("decor (drawn only)" if decor
                                                  else "%s mm" % armor.group(1) if armor else "surface, no plate"))
+        layout.operator("combinedassault.setup_texture", icon="TEXTURE")
+        row = layout.row()
+        row.prop(material.combinedassault, "alpha")
+        if material.combinedassault.alpha == "MASK":
+            row.prop(material.combinedassault, "cutoff")
+        node = base_image_node(material)
+        if node is not None and node.image is not None:
+            source = image_file(node.image)
+            layout.label(text="texture: " + (pack_location(source) or source if source else node.image.name + " (memory)"),
+                         icon="IMAGE_DATA")
+        errors, warnings = material_problems(material)
+        if errors or warnings:
+            box = layout.box()
+            for message, icon in [(m, "ERROR") for m in errors] + [(m, "INFO") for m in warnings]:
+                for i, line in enumerate(wrap(message)):
+                    box.label(text=line, icon=icon if i == 0 else "NONE")
         layout.prop(material.combinedassault, "armor_mm")
         row = layout.row()
         row.operator("combinedassault.tag_material", text="Tag armour").decor = False
@@ -898,11 +1463,14 @@ class COMBINEDASSAULT_PT_scene(Panel):
     def draw(self, context):
         layout = self.layout
         settings = context.scene.combinedassault_export
+        layout.operator("combinedassault.import_model", icon="IMPORT")
         layout.label(text="1 unit = 1 block, nose -Y, port +X, up +Z")
         for key in ("pack_root", "namespace", "model_path"):
             layout.prop(settings, key)
         counts = {}
         for obj in context.scene.objects:
+            if obj.combinedassault.reference:
+                continue
             counts[role_of(obj)] = counts.get(role_of(obj), 0) + 1
         layout.label(text="frames %d, colliders %d, hit modules %d, sockets %d"
                           % (sum(counts.get(r, 0) for r in FRAMES), counts.get("COLLIDER", 0), counts.get("HIT", 0),
@@ -914,6 +1482,9 @@ class COMBINEDASSAULT_PT_scene(Panel):
         row.operator("combinedassault.add_socket", icon="EMPTY_ARROWS")
         row.operator("combinedassault.make_hinge", icon="CON_PIVOT")
         layout.operator("combinedassault.key_clip", icon="KEY_HLT")
+        row = layout.row()
+        row.operator("combinedassault.player_reference", text="Player standing", icon="ARMATURE_DATA").seated = False
+        row.operator("combinedassault.player_reference", text="Player seated", icon="ARMATURE_DATA").seated = True
         layout.operator("combinedassault.check", icon="CHECKMARK")
         layout.operator("combinedassault.export", icon="EXPORT")
 
@@ -930,6 +1501,9 @@ CLASSES = (
     COMBINEDASSAULT_OT_tag_material,
     COMBINEDASSAULT_OT_check,
     COMBINEDASSAULT_OT_export,
+    COMBINEDASSAULT_OT_import,
+    COMBINEDASSAULT_OT_setup_texture,
+    COMBINEDASSAULT_OT_player_reference,
     COMBINEDASSAULT_PT_object,
     COMBINEDASSAULT_PT_material,
     COMBINEDASSAULT_PT_scene,
@@ -942,9 +1516,11 @@ def register():
     bpy.types.Object.combinedassault = PointerProperty(type=CombinedAssaultObjectSettings)
     bpy.types.Material.combinedassault = PointerProperty(type=CombinedAssaultMaterialSettings)
     bpy.types.Scene.combinedassault_export = PointerProperty(type=CombinedAssaultExportSettings)
+    bpy.types.TOPBAR_MT_file_import.append(menu_import)
 
 
 def unregister():
+    bpy.types.TOPBAR_MT_file_import.remove(menu_import)
     del bpy.types.Scene.combinedassault_export
     del bpy.types.Material.combinedassault
     del bpy.types.Object.combinedassault

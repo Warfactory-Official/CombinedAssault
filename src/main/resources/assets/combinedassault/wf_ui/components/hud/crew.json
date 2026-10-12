@@ -1,0 +1,6 @@
+{
+  "use": ["combinedassault:hud"],
+  "root": {"type": "place", "x": "floor(ui.width / 2) - 160", "y": "floor(ui.height / 2) + floor(ui.height / 5)",
+    "child": {"type": "repeat", "items": "vehicle.seats", "vertical": true, "gap": 2,
+      "child": {"type": "text", "text": "[{seat.name}]", "color": "$green", "shadow": true}}}
+}

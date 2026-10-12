@@ -1,0 +1,17 @@
+{
+  "use": ["combinedassault:hud"],
+  "root": {"type": "stack", "children": [
+    {"type": "place", "x": -17, "child": {"type": "rect", "w": 4, "h": 1, "color": "$green"}},
+    {"type": "place", "x": -12, "child": {"type": "rect", "w": 4, "h": 1, "color": "$green"}},
+    {"type": "place", "x": -7, "child": {"type": "rect", "w": 4, "h": 1, "color": "$green"}},
+    {"type": "place", "x": 3, "child": {"type": "rect", "w": 4, "h": 1, "color": "$green"}},
+    {"type": "place", "x": 8, "child": {"type": "rect", "w": 4, "h": 1, "color": "$green"}},
+    {"type": "place", "x": 13, "child": {"type": "rect", "w": 4, "h": 1, "color": "$green"}},
+    {"type": "transform", "rotate": "vehicle.roll", "child": {"type": "stack", "children": [
+      {"type": "place", "x": -11, "child": {"type": "rect", "w": 9, "h": 0.6, "color": "$green"}},
+      {"type": "place", "x": -3, "child": {"type": "rect", "w": 1, "h": 1.8, "color": "$green"}},
+      {"type": "place", "x": 2, "child": {"type": "rect", "w": 1, "h": 1.8, "color": "$green"}},
+      {"type": "place", "x": 2, "child": {"type": "rect", "w": 9, "h": 0.6, "color": "$green"}}
+    ]}}
+  ]}
+}

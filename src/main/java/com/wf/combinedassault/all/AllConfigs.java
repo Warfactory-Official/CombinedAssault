@@ -252,6 +252,8 @@ public class AllConfigs {
         public final ModConfigSpec.ConfigValue<List<? extends String>> thirdPersonClasses;
         public final ModConfigSpec.ConfigValue<List<? extends String>> thirdPersonAllow;
         public final ModConfigSpec.ConfigValue<List<? extends String>> thirdPersonDeny;
+        public final ModConfigSpec.ConfigValue<Integer> leadLoadTicks;
+        public final ModConfigSpec.ConfigValue<Integer> altitudeViewFloor;
 
         public ServerConfig(ModConfigSpec.Builder builder) {
             serverBroadcastEntitiesInterval = builder.comment("服务端向玩家广播其所在世界超视距实体的时间间隔（单位：tick）")
@@ -273,6 +275,12 @@ public class AllConfigs {
             thirdPersonDeny = builder.comment("Vehicle ids refused regardless of class or allow.")
                     .defineListAllowEmpty("deny", List.of(), () -> "", value -> value instanceof String);
             builder.pop();
+            leadLoadTicks = builder.comment("Players moving faster than 1 block/tick (riding or flying): load the chunks their view will reach",
+                            "within this many ticks ahead of time, capped at one view distance. 0 = off.")
+                    .defineInRange("leadLoadTicks", 40, 0, 400);
+            altitudeViewFloor = builder.comment("With Boxy: chunk view shrinks with height over terrain (LOD draws beyond), down to this radius.",
+                            "Vehicles past the shrunk view need Boxy trackedEntityTypes \"combinedassault:*\", else they vanish. 0 = off.")
+                    .defineInRange("altitudeViewFloor", 0, 0, 32);
         }
 
     }

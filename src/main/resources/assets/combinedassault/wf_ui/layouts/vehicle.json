@@ -1,0 +1,13 @@
+{
+  "root": {"type": "stack", "children": [
+    {"type": "combinedassault:hud/crew"},
+    {"type": "when", "if": "!local.third_person", "then": {"type": "combinedassault:hud/compass"}},
+    {"type": "when", "if": "!vehicle.none", "then": {"type": "combinedassault:hud/systems"}},
+    {"type": "combinedassault:hud/alerts"},
+    {"type": "when", "if": "station.present", "then": {"type": "combinedassault:hud/station"}},
+    {"type": "when", "if": "payload.loaded", "then": {"type": "combinedassault:hud/payload"}},
+    {"type": "place", "x": "ui.width - floor(ui.width / 8)", "y": "ui.height / 2 + floor(ui.height / 5)",
+      "child": {"type": "combinedassault:hit_panel"}},
+    {"type": "combinedassault:debug_dump"}
+  ]}
+}

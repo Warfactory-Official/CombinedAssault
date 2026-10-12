@@ -40,6 +40,7 @@ import com.wf.wflib.api.SeekerDecoy;
 import com.wf.combinedassault.api.event.HitVehicleEvent;
 import com.wf.combinedassault.api.event.VehicleFireEvent;
 import com.wf.combinedassault.command.RootCommand;
+import com.wf.combinedassault.vehicle.LeadTickets;
 import com.wf.combinedassault.entity.misc.RadarMarkerEntity;
 import com.wf.combinedassault.ballistics.addon.AddonStrike;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
@@ -265,6 +266,7 @@ public class AllEvents {
             for (ServerLevel level : server.getAllLevels()) {
                 VehicleExplosion.tick(level);
             }
+            LeadTickets.tick(server);
             if (server.getTickCount() % AllConfigs.server.serverBroadcastEntitiesInterval.get() == 0) {
                 for (ServerLevel level : server.getAllLevels()) {
                     // Currently used only by radar.

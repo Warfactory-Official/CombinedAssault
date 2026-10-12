@@ -2,6 +2,7 @@
 
   uv venv --python 3.13 bpyenv && uv pip install --python bpyenv/bin/python bpy
   bpyenv/bin/python tools/blender/test_combinedassault_tools.py
+  or: blender -b --factory-startup --python "$PWD/tools/blender/test_combinedassault_tools.py"   (Flatpak: absolute path)
 
 Builds a small vehicle, checks it, exports it into a temp pack and reads the files back. Also compares the
 add-on's vocabularies with the Java sources they must match.
@@ -10,6 +11,7 @@ import json
 import math
 import os
 import re
+import shutil
 import sys
 import tempfile
 
@@ -259,8 +261,198 @@ def run():
     materials = [m["name"] for m in gltf["materials"]]
     check("armour material exported", "paint_armor_80" in materials, str(materials))
 
+    roundtrip("ground/humvee/humvee", ["humvee"])
+    roundtrip("aircraft/c5/c5", ["c5"])
+    validator_refuses()
+    texture_setup(work)
+    player_reference()
+
     print("SUMMARY %d failure(s)" % len(FAILURES))
     return 1 if FAILURES else 0
+
+
+PACK = os.path.join(REPO, "src/main/resources/combinedassault_packs/combinedassault")
+
+
+def fresh_scene():
+    """Empty file; registered classes survive the reset."""
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    if not hasattr(bpy.types.Object, "combinedassault"):
+        T.register()
+
+
+def roundtrip(model, textures):
+    """Pack model copied to a temp pack -> import -> export in place: same roles, extras, materials, textures."""
+    fresh_scene()
+    pack = tempfile.mkdtemp(prefix="combinedassault_rt_")
+    base = os.path.join(PACK, "assets/combinedassault")
+    for rel in [os.path.join("models", model + ".gltf"), os.path.join("models", model + ".bin")] + [
+            os.path.join("textures", os.path.dirname(model), t + suffix + ".png") for t in textures
+            for suffix in ("", "_damaged", "_wrecked", "_paint")]:
+        if os.path.isfile(os.path.join(base, rel)):
+            os.makedirs(os.path.dirname(os.path.join(pack, "assets/combinedassault", rel)), exist_ok=True)
+            shutil.copy(os.path.join(base, rel), os.path.join(pack, "assets/combinedassault", rel))
+    path = os.path.join(pack, "assets/combinedassault/models", model + ".gltf")
+    with open(path, encoding="utf-8") as source:
+        original = json.load(source)
+    texture_dir = os.path.join(pack, "assets/combinedassault/textures", os.path.dirname(model))
+    before = sorted(os.listdir(texture_dir))
+    result = bpy.ops.combinedassault.import_model(filepath=path)
+    check("%s imported" % model, result == {"FINISHED"}, str(result))
+    scene = bpy.context.scene
+    settings = scene.combinedassault_export
+    check("%s export target = the imported file" % model, T.pack_paths(scene)[0] == path, T.pack_paths(scene)[0])
+    bodies = [o.name for o in scene.objects if o.combinedassault.role == "BODY"]
+    check("%s body role restored" % model, len(bodies) == 1, str(bodies))
+    errors, warnings = T.check_scene(scene, bpy.context.evaluated_depsgraph_get())
+    check("%s imported scene passes the check" % model, not errors, str(errors[:5]))
+    result = bpy.ops.combinedassault.export()
+    check("%s re-exported" % model, result == {"FINISHED"}, str(result))
+    with open(path, encoding="utf-8") as source:
+        out = json.load(source)
+    want = {n["name"]: n.get("extras", {}) for n in original["nodes"]}
+    got = {n["name"]: n.get("extras", {}) for n in out["nodes"]}
+    lost = [k for k in want if want[k] != got.get(k)]
+    check("%s every node's extras survive" % model, not lost,
+          "; ".join("%s: %s -> %s" % (k, want[k], got.get(k)) for k in lost[:4]))
+    images = lambda g: sorted(i.get("extras", {}).get(T.RESOURCE) for i in g.get("images", []))
+    check("%s images keep their pack files" % model, images(out) == images(original),
+          "%s -> %s" % (images(original), images(out)))
+    check("%s imported images reference their pack files" % model,
+          all(T.image_file(i) is not None for i in bpy.data.images if i.users), str([i.name for i in bpy.data.images]))
+    check("%s no texture copies left" % model, sorted(os.listdir(texture_dir)) == before,
+          str(sorted(set(os.listdir(texture_dir)) ^ set(before))))
+    mat = lambda g: {m["name"]: (m.get("alphaMode", "OPAQUE"), m.get("alphaCutoff", 0.5) if m.get("alphaMode") == "MASK"
+                                 else None, m.get("extras")) for m in g.get("materials", [])}
+    check("%s material transparency + extras survive" % model, mat(out) == mat(original),
+          "%s -> %s" % (mat(original), mat(out)))
+    check("%s clips survive" % model, sorted(a["name"] for a in out.get("animations", []))
+          == sorted(a["name"] for a in original.get("animations", [])))
+    errors, _, _ = T.ca_validate.validate(path)
+    check("%s validator passes the export" % model, not errors, str(errors[:5]))
+    # Saved as a new model elsewhere: textures still referenced in place, no copies, no empty folder.
+    settings.model_path = os.path.dirname(model) + "_copy/" + os.path.basename(model)
+    settings.namespace = "copyns"
+    elsewhere = os.path.join(pack, "assets/copyns/textures")
+    bpy.ops.combinedassault.export()
+    with open(T.pack_paths(scene)[0], encoding="utf-8") as source:
+        copy = json.load(source)
+    check("%s saved elsewhere keeps the pack textures" % model, images(copy) == images(original),
+          "%s -> %s" % (images(original), images(copy)))
+    check("%s saved elsewhere makes no texture folder" % model, not os.path.exists(elsewhere), elsewhere)
+    shutil.rmtree(pack)
+
+
+def validator_refuses():
+    """Hand-broken copies of a good model: each caught."""
+    good = os.path.join(PACK, "assets/combinedassault/models/ground/humvee/humvee.gltf")
+    with open(good, encoding="utf-8") as source:
+        base = json.load(source)
+    errors, _, _ = T.ca_validate.validate(good)
+    check("validator passes the shipped humvee", not errors, str(errors))
+    folder = os.path.dirname(good)
+
+    def broken(what, edit, expect):
+        gltf = json.loads(json.dumps(base))
+        edit(gltf)
+        path = os.path.join(folder, "_validator_case.gltf")
+        try:
+            with open(path, "w", encoding="utf-8") as out:
+                json.dump(gltf, out)
+            errors, _, _ = T.ca_validate.validate(path)
+        finally:
+            os.remove(path)
+        check("validator refuses " + what, any(expect in e for e in errors), str(errors[:3]))
+
+    def uri(g):
+        g["images"][0]["uri"] = "humvee.png"
+        del g["images"][0]["extras"]
+    broken("an image with a uri", uri, "untextured")
+    broken("a second UV map", lambda g: g["materials"][0]["pbrMetallicRoughness"]["baseColorTexture"].update(texCoord=1),
+           "first UV map")
+    broken("a missing texture file", lambda g: g["images"][0]["extras"].update(
+        resourceLocation="combinedassault:textures/ground/humvee/nope.png"), "file missing")
+    body = next(i for i, n in enumerate(base["nodes"]) if n.get("extras", {}).get(T.ROLE) == "body")
+    collider = next(i for i, n in enumerate(base["nodes"]) if n.get("extras", {}).get(T.ROLE) == "collider")
+    broken("two bodies", lambda g: g["nodes"][collider]["extras"].update({T.ROLE: "body"}), "exactly one")
+    broken("an unknown collider key", lambda g: g["nodes"][collider]["extras"].setdefault(T.META, {}).update(
+        bouncy=True), "unknown key")
+    broken("a moved body", lambda g: g["nodes"][body].update(translation=[0, 1, 0]), "not at the model origin")
+    broken("an unknown role", lambda g: g["nodes"][collider]["extras"].update({T.ROLE: "colider"}), "unknown role")
+
+
+def texture_setup(work):
+    """Unconnected texture => error; Set up texture => clean, pixel-sharp, cut-out written."""
+    fresh_scene()
+    scene = bpy.context.scene
+    body = bpy.data.objects.new("tank", None)
+    scene.collection.objects.link(body)
+    body.combinedassault.role = "BODY"
+    hull = box("hull", (0, 0, 1), (2, 4, 1))
+    hull.parent = body
+    material = bpy.data.materials.new("skin")
+    material.use_nodes = True
+    hull.data.materials.append(material)
+    path = os.path.join(work, "skin.png")
+    image = bpy.data.images.new("skin", 4, 4, alpha=True)
+    image.filepath_raw = path
+    image.file_format = "PNG"
+    image.save()
+    loose = material.node_tree.nodes.new("ShaderNodeTexImage")
+    loose.image = image
+    errors, _ = T.check_scene(scene)
+    check("unconnected texture refused", any("not connected to Base Color" in e for e in errors), str(errors))
+    T.setup_texture(material, image, "MASK")
+    errors, warnings = T.material_problems(material)
+    check("Set up texture leaves no material problem", not errors and not warnings, str(errors + warnings))
+    check("texture is pixel-sharp", T.base_image_node(material).interpolation == "Closest")
+    pack = tempfile.mkdtemp(prefix="combinedassault_tex_")
+    settings = scene.combinedassault_export
+    settings.pack_root = pack
+    settings.model_path = "test/skin/skin"
+    result = bpy.ops.combinedassault.export()
+    check("textured export finished", result == {"FINISHED"}, str(result))
+    gltf_path = os.path.join(pack, "assets/combinedassault/models/test/skin/skin.gltf")
+    with open(gltf_path, encoding="utf-8") as source:
+        gltf = json.load(source)
+    written = gltf["materials"][0]
+    check("cut-out written as MASK 0.5", written.get("alphaMode") == "MASK" and written.get("alphaCutoff", 0.5) == 0.5,
+          str(written))
+    check("outside-pack texture copied into the pack", gltf["images"][0]["extras"][T.RESOURCE]
+          == "combinedassault:textures/test/skin/skin.png", str(gltf["images"]))
+    errors, _, _ = T.ca_validate.validate(gltf_path)
+    check("validator passes the textured export", not errors, str(errors))
+    shutil.rmtree(pack)
+
+
+def player_reference():
+    fresh_scene()
+    scene = bpy.context.scene
+    body = bpy.data.objects.new("tank", None)
+    scene.collection.objects.link(body)
+    body.combinedassault.role = "BODY"
+    hull = box("hull", (0, 0, 1), (2, 4, 1))
+    hull.parent = body
+    bpy.ops.combinedassault.player_reference(seated=False)
+    bpy.ops.combinedassault.player_reference(seated=True)
+    refs = [o for o in scene.objects if o.combinedassault.reference]
+    top = max(v.co.z for o in refs if o.type == "MESH" and "standing" in o.name and "hitbox" not in o.name
+              for v in o.data.vertices)
+    check("standing player 1.875 tall", abs(top - 1.875) < 1e-4, str(top))
+    seated_feet = min(v.co.y for o in refs if o.type == "MESH" and "seated_leg" in o.name.replace("player_", "")
+                      for v in o.data.vertices)
+    check("seated legs reach forward (-Y = nose)", seated_feet < -0.6, str(seated_feet))
+    errors, _ = T.check_scene(scene)
+    check("reference never checked", not errors, str(errors))
+    pack = tempfile.mkdtemp(prefix="combinedassault_ref_")
+    settings = scene.combinedassault_export
+    settings.pack_root = pack
+    settings.model_path = "test/ref/ref"
+    bpy.ops.combinedassault.export()
+    with open(os.path.join(pack, "assets/combinedassault/models/test/ref/ref.gltf"), encoding="utf-8") as source:
+        names = [n["name"] for n in json.load(source)["nodes"]]
+    check("reference never exported", not any("player" in n for n in names), str(names))
+    shutil.rmtree(pack)
 
 
 if __name__ == "__main__":

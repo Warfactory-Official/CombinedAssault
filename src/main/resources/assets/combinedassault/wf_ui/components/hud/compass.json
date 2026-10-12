@@ -1,0 +1,12 @@
+{
+  "use": ["combinedassault:hud"],
+  "root": {"type": "stack", "children": [
+    {"type": "place", "x": "ui.width / 2", "y": 13, "pivot": "top",
+      "child": {"type": "tape", "value": "camera.yaw", "ppu": 4, "step": 5, "major_every": 3, "extent": "clamp(floor(ui.width / 2) - 160, 40, 120)",
+        "minor_length": 5, "major_length": 7, "labels": true, "label_offset": 11, "wrap": [-180, 180],
+        "names": {"0": "S", "45": "SW", "90": "W", "135": "NW", "-180": "N", "-135": "NE", "-90": "E", "-45": "SE"},
+        "color": "$green"}},
+    {"type": "place", "x": "ui.width / 2", "y": 35, "pivot": "top",
+      "child": {"type": "poly", "points": [0, 0, -3, 6, 3, 6], "color": "$green"}}
+  ]}
+}
