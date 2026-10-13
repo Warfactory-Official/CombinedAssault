@@ -1,7 +1,7 @@
 package com.wf.combinedassault.uav.net;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.uav.client.UavTabletScreen;
+import com.wf.combinedassault.uav.client.UavPdaApp;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -15,8 +15,8 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import java.util.List;
 import java.util.UUID;
 
-/** Tablet list + selected vehicle's readout. {@code open}: from item use => open the screen. */
-public record UavTabletState(boolean open, int selected, List<Entry> entries) implements CustomPacketPayload {
+/** PDA UAV app: linked list + each one's readout. */
+public record UavTabletState(int selected, List<Entry> entries) implements CustomPacketPayload {
 
     public static final Type<UavTabletState> TYPE = new Type<>(CombinedAssault.modLocation("uav_tablet_state"));
 
@@ -24,7 +24,7 @@ public record UavTabletState(boolean open, int selected, List<Entry> entries) im
         ONLINE, OCCUPIED, ASLEEP, DESTROYED, OTHER_DIMENSION, UNKNOWN;
 
         public String key() {
-            return "tablet.combinedassault.status." + name().toLowerCase(java.util.Locale.ROOT);
+            return "pda.combinedassault.uav.status." + name().toLowerCase(java.util.Locale.ROOT);
         }
     }
 
@@ -71,11 +71,11 @@ public record UavTabletState(boolean open, int selected, List<Entry> entries) im
     }
 
     public static final StreamCodec<RegistryFriendlyByteBuf, UavTabletState> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.BOOL, UavTabletState::open, ByteBufCodecs.VAR_INT, UavTabletState::selected,
+            ByteBufCodecs.VAR_INT, UavTabletState::selected,
             Entry.CODEC.apply(ByteBufCodecs.list()), UavTabletState::entries, UavTabletState::new);
 
     public static void handle(UavTabletState message, IPayloadContext context) {
-        context.enqueueWork(() -> UavTabletScreen.accept(message));
+        context.enqueueWork(() -> UavPdaApp.accept(message));
     }
 
     @Override

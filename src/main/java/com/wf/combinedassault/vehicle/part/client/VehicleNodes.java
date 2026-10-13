@@ -2,11 +2,13 @@ package com.wf.combinedassault.vehicle.part.client;
 
 import com.wf.combinedassault.airdefense.client.AirDefenseProbe;
 import com.wf.combinedassault.all.AllItems;
+import com.wf.combinedassault.ballistics.ArmorRegions;
 import com.wf.combinedassault.ballistics.addon.AddonActions;
 import com.wf.combinedassault.ballistics.addon.AddonArmorLayer;
 import com.wf.combinedassault.ballistics.addon.AddonFit;
 import com.wf.combinedassault.ballistics.addon.AddonTargeting;
 import com.wf.combinedassault.ballistics.addon.client.AddonProbe;
+import com.wf.combinedassault.ballistics.component.ArmorRepair;
 import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.ballistics.component.ComponentState;
 import com.wf.combinedassault.ballistics.component.SystemRepair;
@@ -17,10 +19,14 @@ import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.util.VectorUtil;
 import com.wf.combinedassault.vehicle.hit.VehicleHits;
 import com.wf.combinedassault.vehicle.part.AccessActions;
+import com.wf.combinedassault.vehicle.part.BarrelCharge;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import com.wf.combinedassault.vehicle.part.WeaponActions;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
+import com.wf.combinedassault.vehicle.pojo.Bolt;
+import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
+import com.wf.wflib.util.OBB;
 import com.wf.wflib.probe.ProbeAction;
 import com.wf.wflib.probe.ProbeContext;
 import com.wf.wflib.probe.ProbeElement;
@@ -42,7 +48,8 @@ import java.util.List;
 
 /**
  * Probe nodes on a vehicle, on foot: doors, free seats, hull (storage, systems grid, air defence, repairs without a place),
- * damaged systems at their nearest member, ERA/slat mounts (kit carried), weapon mounts (modding tool carried).
+ * damaged systems at their nearest member, worn armour faces, ERA/slat mounts (kit carried), weapon mounts (modding tool
+ * carried), large-bore muzzles (thermite charge carried).
  */
 public final class VehicleNodes {
 
@@ -54,6 +61,7 @@ public final class VehicleNodes {
     private static final int MOUNT_EMPTY = 0xFF8A8A8A;
     private static final int MOUNT_FITTED = 0xFF9ACD60;
     private static final int WEAPON = 0xFFFF9040;
+    private static final int THERMITE = 0xFFFF5A1E;
     /** Seat eye point -> node, m. */
     private static final double SEAT_DROP = 0.3;
 
@@ -104,6 +112,10 @@ public final class VehicleNodes {
             }
         }
         systems(out, ctx, vehicle, drift);
+        armor(out, ctx, vehicle, drift);
+        if (ProbeInventory.has(player, BarrelCharge::thermite)) {
+            barrels(out, vehicle, drift);
+        }
         if (!vehicle.addonArmor().isEmpty() && carriesAddonKit(player)) {
             AddonTargeting.Target target = aimed ? AddonTargeting.underCrosshair(player) : null;
             AddonArmorLayer layer = vehicle.addonArmor();
@@ -162,6 +174,66 @@ public final class VehicleNodes {
                 SystemsProbe.repair(info, ctx, cell);
             }
         }).colour(HULL).radius(0.5));
+    }
+
+    /** One node per worn armour face, at the face centre of the main box. */
+    private static void armor(List<ProbeNode> out, ProbeContext ctx, AbstractVehicle vehicle, Vec3 drift) {
+        VehicleCubeOBB main = vehicle.getMainCubeOBB();
+        if (vehicle.armorProfile == null || !vehicle.armorProfile.isDefined() || main == null) {
+            return;
+        }
+        ArmorRegions regions = vehicle.armorRegions();
+        OBB box = main.obb();
+        Vector3f[] axes = box.getAxes();
+        Vector3f ext = box.extents();
+        for (ArmorRegions.Face face : ArmorRegions.Face.VALUES) {
+            if (!regions.worn(face) || vehicle.armorProfile.nominal(face.profile) <= 0) {
+                continue;
+            }
+            int axis = switch (face) {
+                case LEFT, RIGHT -> 0;
+                case TOP, BOTTOM -> 1;
+                case FRONT, REAR -> 2;
+            };
+            float sign = face == ArmorRegions.Face.REAR || face == ArmorRegions.Face.RIGHT
+                    || face == ArmorRegions.Face.BOTTOM ? -1 : 1;
+            Vec3 normal = new Vec3(new Vector3f(axes[axis]).mul(sign));
+            Vec3 at = box.centerVec().add(normal.scale(ext.get(axis)));
+            float integrity = regions.integrity(face);
+            ComponentState state = ComponentState.of(integrity);
+            out.add(new ProbeNode("armor:" + face.ordinal(), at.add(drift), info -> {
+                info.title(Component.translatable(PROBE + "armor." + face.key()), SystemsHud.colour(state));
+                info.entry(Component.translatable(PROBE + "integrity"),
+                        Component.literal(Math.round(integrity * 100) + "%"));
+                ProbeAction repair = ProbeAction.of(ArmorRepair.ACTION, face.ordinal(),
+                        Component.translatable(PROBE + "armor_repair")).timed(ArmorRepair.TICKS);
+                ItemStack tool = SystemRepair.tool(ctx.player(), ComponentKind.HULL);
+                if (!tool.isEmpty()) {
+                    repair = repair.withIcon(new ProbeElement.Icon(tool, 10, false));
+                }
+                Component refusal = ArmorRepair.refusal(ctx.player(), vehicle, face);
+                info.action(refusal == null ? repair : repair.unavailable(refusal));
+            }).colour(SystemsHud.colour(state)).normal(normal));
+        }
+    }
+
+    /** Large-bore muzzles: drop a carried thermite charge down the barrel. */
+    private static void barrels(List<ProbeNode> out, AbstractVehicle vehicle, Vec3 drift) {
+        for (PartUnit<?> part : vehicle.getPartUnits()) {
+            if (!(part instanceof WeaponUnit unit) || !BarrelCharge.accepts(unit)) {
+                continue;
+            }
+            List<Bolt> bolts = unit.getBolts();
+            for (int b = 0; b < bolts.size(); b++) {
+                Vec3[] muzzle = BarrelCharge.muzzle(unit, bolts.get(b));
+                int arg = BarrelCharge.arg(unit.getIndex(), b);
+                out.add(new ProbeNode("barrel:" + arg, muzzle[0].add(drift), info -> {
+                    info.title(PartNames.name(unit));
+                    info.action(ProbeAction.of(BarrelCharge.ACTION, arg,
+                            Component.translatable(PROBE + "barrel_charge")).timed(BarrelCharge.INSERT_TICKS));
+                }).colour(THERMITE).normal(muzzle[1]).reach(BarrelCharge.REACH));
+            }
+        }
     }
 
     @Nullable

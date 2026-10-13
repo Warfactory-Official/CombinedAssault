@@ -89,7 +89,7 @@ Every field the mod reads from a pack: unit, default. Defaults from the deserial
 | `hitbox` | bool | `true` | `false` => no hit mesh: colliders are the hit surface, default pools only |
 | `center_offset` | Vec3 | `[0,0,0]` | the point the hull rotates about, and the origin of the deck frame; glTF `pivot` socket |
 | `parts` | array | `[]` | see [§4](#4-parts) |
-| `uav` | bool | `false` | operated remotely (UAV tablet); the operator's body stays behind, standing; no storage over the link |
+| `uav` | bool | `false` | operated remotely (wflib PDA, UAVs app); the operator's body stays behind, standing; no storage over the link |
 | `can_wade` | bool | `false` | |
 | `with_warning_receiver` | bool | `false` | carries an RWR |
 | `protect_passenger` | bool | `true` | |
@@ -106,7 +106,7 @@ Every field the mod reads from a pack: unit, default. Defaults from the deserial
 | `mountable` | object | — | [§3.9](#39-mount_points-and-mountable) |
 | `attributes` | object | — | per-type and required for all but `generic`, which has none — [§3.10](#310-attributes-per-type) |
 
-- UAV tablet (`uav_controller`): use on a UAV => linked (<= 16; wflib `CameraChannels` on the stack = feed entitlement). Use => list + live feed of the selected one (wflib `CameraSources`, kind `MOUNTED`, lens = seat 0 sight, else view) + systems, link, fuel, ammo; Connect / Remove. Selecting an unloaded UAV wakes it (`HostWakeup`).
+- UAVs = wflib PDA app (`UavPdaApp`; `uav_controller` removed, no migration). Sneak + use PDA on a UAV => linked (<= 16; `combinedassault:uav_links` `CameraChannels` on the PDA, feed entitlement via `CameraNet.entitle`; wflib `CHANNELS` stays the camera list). App: list + live feed of the selected one (wflib `CameraSources`, kind `MOUNTED`, lens = seat 0 sight, else view) + systems, link, fuel, ammo; CONNECT (lowers PDA) / REMOVE / FULL. Selecting an unloaded UAV wakes it (`HostWakeup`).
 
 ### 3.3 `view_info`
 
@@ -175,7 +175,13 @@ Nominal plate in millimetres of RHA, one number per face (front/side/rear/top/bo
 | --- | --- | --- |
 | `front` / `side` / `rear` / `top` / `bottom` | float | `0` | |
 | `ricochet_angle` | float | `70` | degrees from the normal past which a shot skates off, unless overmatched; WFLib KINETIC / SMALL_ARMS rounds then fly on deflected (WFLib guide §29e; shooter's readout RICOCHET), others do no damage |
-| `wear_floor` | float | `0.6` | fraction of the plate still worth something at zero health |
+| `wear_floor` | float | `0.6` | fraction of the plate a fully worn region keeps |
+
+- Wear per region (6 faces of the main collider x 3x3 cells, `ArmorRegions`); thickness `nominal x lerp(1 - wear, wear_floor, 1)`. Hull health no longer thins armour.
+- Region durability `4 x nominal mm` points; every positioned hit adds `damage x share`: rounds 0.3, blasts 0.2 (+50% to same-face neighbours), thermite 1.2 (+35%), collisions 0.05 (+50%), other 0.2.
+- Probe: node per worn face (lowest cell %); "Patch armour" = one 25% band off the face, hull tool, 3 s.
+- Thermite (WFLib `ThermalAttackEvent`): hull point nearest the charge takes `heat` as `combinedassault:thermite` (no threshold, no armour answer, struck system); charge low and outboard under a track => that track x1.5.
+- Barrel charge: weapon part with a member >= 75 mm (round in it, else reload default) => muzzle probe node while a thermite charge is carried; 1.5 s to drop it in. After its fuse: part health 0, sparks out of the muzzle, `LOADER` seat occupants burn (`combinedassault:breech_fire` passes `protect_passenger`).
 
 ### 3.8 `storage`
 
@@ -413,7 +419,8 @@ that type adds — there is no nested `data` object.
 | `with_focus_locker` | bool | `false` | |
 | `with_thermal_imager` | bool | `false` | `crt` only; WFLib `wf_cam_thermal` chain |
 | `loading` | enum | `self` | `self`, `autoloader`, `manual`; read only under `crew.required`. `manual`: no `loader` aboard => no reload. `autoloader`: loader aboard => reload * `crew.loaderReloadMultiplier`. Loader aboard on either => ammo type (multi switch) is the loader's, cycling every served station |
-| `with_night_vision` | bool | `false` | `crt` only; WFLib `wf_cam_lowlight` chain. Cycle key: optical -> thermal -> night vision, unfitted skipped |
+| `with_night_vision` | bool | `false` | `crt` only; WFLib `wf_cam_intensifier` chain (image intensifier) |
+| `with_ir` | bool | `false` | `crt` only; WFLib `wf_cam_ir` chain (active IR: own illuminator, sees through smoke). Illuminator synced per seat (`AbstractVehicle.IR_SIGHTS`) => other players' goggles see it. Cycle key: optical -> thermal -> night vision -> IR, unfitted skipped |
 | `zoom_min` / `zoom_max` | float | `1` / `8` | |
 | `crosshair_style` | enum | `circle` | `none`, `circle`, `square`, `cross`, `big_cross` |
 
@@ -898,6 +905,7 @@ Top left, `MANUAL`/`AUTO` only: quadrant (stops, barrel, laid mark), ELEV vs GUN
 
 - Operator of a `map` station, on a map host (wflib `client/map`: JourneyMap, Xaero's World Map): toolbar "Fire mission" armed => click designates; right-click menu => round kind (loaded count) -> 1 / 2 / 4 / all (Xaero: second menu at the cursor).
 - Mission: `AUTO` laying, round selected, each round fired once laid (missile 1°, gun 0.1°) and ready; ends at the count or when the kind runs out.
+- Call for fire (wflib PDA carrier, any map host incl. the PDA's embedded map): menu "PDA: call for fire here" -> `CallForFirePacket` -> server: PDA + uplink (`Uplink.of != NONE`) else refused -> `FireRequestPacket` to same-side (`MarkerStore.side`) players seated at a `map` station, same dimension. Operator: request cross + observer name on the map, menu "Fire request <obs>: designate", PDA alert; firing stays the operator's order. Requests live 120 s, 8 kept.
 - Target height: rack rounds from an `indirect_fire` station take the surface server-side once the target chunk loads (map heights over unexplored ground read 64).
 - Default key clashes, rebind one of each: JourneyMap fullscreen `J` = leave-vehicle `J`; Xaero map `M` = tow-couple `M` (and wflib TV view); Xaero minimap settings `Y` = indirect mode `Y`.
 - Xaero minimap default top left = indirect panel: move one.

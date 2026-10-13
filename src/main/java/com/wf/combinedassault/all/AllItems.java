@@ -20,7 +20,6 @@ public class AllItems {
     public static final DeferredHolder<Item, VehicleSpawnItem> VEHICLE_SPAWN_ITEM = registerItem(AllTabs.Category.VEHICLE, "vehicle_spawn_item", () -> new VehicleSpawnItem(new Item.Properties().durability(1)));
     public static final DeferredHolder<Item, PlainTextureItem> PLAIN_TEXTURE_ITEM = registerItem(AllTabs.Category.NONE, "plain_texture_item", () -> new PlainTextureItem(new Item.Properties().durability(1)));
     public static final DeferredHolder<Item, Item> FUEL_TANK = registerItem(AllTabs.Category.MISC, "fuel_tank", () -> new FuelTankItem(new Item.Properties().durability(125)));
-    public static final DeferredHolder<Item, Item> UAV_CONTROLLER = registerItem(AllTabs.Category.MISC, "uav_controller", () -> new UavControllerItem(new Item.Properties().stacksTo(1)));
     public static final DeferredHolder<Item, Item> FIGURE_BOX = registerItem(AllTabs.Category.MISC, "figure_box", () -> new FigureBoxItem(new Item.Properties().stacksTo(1)));
     public static final DeferredHolder<Item, Item> MACHINE_MAX_BLOCK = registerItem(AllTabs.Category.MISC, "machine_max_block", () -> new MachineMaxBlockItem(AllBlocks.MACHINE_MAX_BLOCK.get(), new Item.Properties().stacksTo(1)));
     public static final DeferredHolder<Item, RepairToolItem> REPAIR_TOOL = registerItem(AllTabs.Category.MISC, "repair_tool", RepairToolItem::new);

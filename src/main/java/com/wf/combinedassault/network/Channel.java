@@ -7,6 +7,8 @@ import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.fpv.net.FpvTriggerMessage;
 import com.wf.combinedassault.network.message.*;
 import com.wf.combinedassault.tow.net.TowCoupleMessage;
+import com.wf.combinedassault.indirect.net.CallForFirePacket;
+import com.wf.combinedassault.indirect.net.FireRequestPacket;
 import com.wf.combinedassault.uav.net.UavTabletAction;
 import com.wf.combinedassault.uav.net.UavTabletState;
 
@@ -48,9 +50,14 @@ public class Channel {
         registrar.playToServer(TowCoupleMessage.TYPE, TowCoupleMessage.STREAM_CODEC, TowCoupleMessage::handle);
         registrar.playToServer(UavTabletAction.TYPE, UavTabletAction.STREAM_CODEC, UavTabletAction::handle);
         registrar.playToClient(UavTabletState.TYPE, UavTabletState.STREAM_CODEC, UavTabletState::handle);
+        registrar.playToServer(CallForFirePacket.TYPE, CallForFirePacket.STREAM_CODEC, CallForFirePacket::handle);
+        registrar.playToClient(FireRequestPacket.TYPE, FireRequestPacket.STREAM_CODEC, FireRequestPacket::handle);
         registrar.playToServer(com.wf.combinedassault.vehicle.light.LightToggleMessage.TYPE,
                 com.wf.combinedassault.vehicle.light.LightToggleMessage.STREAM_CODEC,
                 com.wf.combinedassault.vehicle.light.LightToggleMessage::handle);
+        registrar.playToServer(com.wf.combinedassault.vehicle.light.IrSightMessage.TYPE,
+                com.wf.combinedassault.vehicle.light.IrSightMessage.STREAM_CODEC,
+                com.wf.combinedassault.vehicle.light.IrSightMessage::handle);
     }
 
 }

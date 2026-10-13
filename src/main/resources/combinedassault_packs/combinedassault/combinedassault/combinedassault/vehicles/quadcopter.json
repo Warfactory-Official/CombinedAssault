@@ -53,6 +53,7 @@
                 0.2
             ],
             "optical_sight_type": "crt",
+            "with_ir": true,
             "zoom_max": 8,
             "weapons": []
         }

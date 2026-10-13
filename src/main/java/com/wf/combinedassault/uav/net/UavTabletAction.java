@@ -8,7 +8,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-/** Tablet screen -> server. {@code index} = channel; ignored by REFRESH. */
+/** PDA UAV app -> server. {@code index} = link; ignored by REFRESH. */
 public record UavTabletAction(Kind kind, int index) implements CustomPacketPayload {
 
     public static final Type<UavTabletAction> TYPE = new Type<>(CombinedAssault.modLocation("uav_tablet_action"));

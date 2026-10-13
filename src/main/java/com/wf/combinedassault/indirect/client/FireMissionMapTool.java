@@ -27,7 +27,8 @@ import java.util.Locale;
 
 /**
  * Strikes ordered from the fullscreen map by the operator of an {@code indirect_fire.map} station: click
- * designates, right-click menu orders rounds per loaded kind. Missions execute through {@link FireMissions}.
+ * designates, right-click menu orders rounds per loaded kind; PDA observers' requests ({@link FireRequests}) drawn
+ * and designatable. Missions execute through {@link FireMissions}.
  */
 public final class FireMissionMapTool implements MapTool {
 
@@ -98,6 +99,13 @@ public final class FireMissionMapTool implements MapTool {
         }
         menu.item("Fire mission: designate here", pos -> designated = target(pos.getX() + 0.5, pos.getY(),
                 pos.getZ() + 0.5));
+        for (FireRequests.Request request : FireRequests.pending()) {
+            menu.item(String.format(Locale.ROOT, "Fire request %s: designate %d %d", request.observer(),
+                    (int) Math.floor(request.target().x), (int) Math.floor(request.target().z)), pos -> {
+                designated = request.target();
+                FireRequests.dismiss(request);
+            });
+        }
         for (Item round : FireMissions.orderable(unit)) {
             int loaded = FireMissions.loaded(unit, round);
             String name = round == Items.AIR ? "loaded round" : round.getDescription().getString();
@@ -167,6 +175,15 @@ public final class FireMissionMapTool implements MapTool {
             MapDraw.dashed(graphics, fx, fy, tx, ty, 1.0f, COLOUR_LINE, 4.0);
             MapDraw.line(graphics, tx - 6, ty, tx + 6, ty, 1.5f, COLOUR_TARGET);
             MapDraw.line(graphics, tx, ty - 6, tx, ty + 6, 1.5f, COLOUR_TARGET);
+        }
+        List<FireRequests.Request> requests = FireRequests.pending();
+        for (int i = 0; i < requests.size(); i++) {
+            FireRequests.Request request = requests.get(i);
+            double rx = view.toScreenX(request.target().x);
+            double ry = view.toScreenY(request.target().z);
+            MapDraw.line(graphics, rx - 5, ry - 5, rx + 5, ry + 5, 1.5f, COLOUR_TEXT);
+            MapDraw.line(graphics, rx - 5, ry + 5, rx + 5, ry - 5, 1.5f, COLOUR_TEXT);
+            graphics.text(request.observer(), (float) rx + 7, (float) ry - 4, COLOUR_TEXT, true);
         }
         var font = Minecraft.getInstance().font;
         int right = (int) graphics.width() - RIGHT_MARGIN;

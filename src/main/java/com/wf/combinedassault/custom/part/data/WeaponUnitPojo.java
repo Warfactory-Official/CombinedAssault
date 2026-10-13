@@ -55,6 +55,9 @@ public class WeaponUnitPojo extends RotatableUnitPojo {
     @SerializedName("with_night_vision")
     public boolean withNightVision = false;
 
+    @SerializedName("with_ir")
+    public boolean withIr = false;
+
     @SerializedName("loading")
     public WeaponLoading loading = WeaponLoading.SELF;
 

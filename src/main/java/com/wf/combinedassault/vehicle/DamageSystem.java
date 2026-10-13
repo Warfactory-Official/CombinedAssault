@@ -14,6 +14,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.all.AllDamageTypes;
 import com.wf.combinedassault.api.event.HitVehicleEvent;
+import com.wf.combinedassault.ballistics.ArmorRegions;
 import com.wf.combinedassault.ballistics.BallisticResult;
 import com.wf.combinedassault.ballistics.Ballistics;
 import com.wf.combinedassault.ballistics.addon.AddonStrike;
@@ -79,7 +80,8 @@ public class DamageSystem {
             }
             caliber = round.threat().caliberMm();
         }
-        if (damageSource.is(AllDamageTypes.VEHICLE_COLLISION) && damageSource.getDirectEntity() == vehicle) {
+        if (damageSource.is(AllDamageTypes.VEHICLE_COLLISION) && damageSource.getDirectEntity() == vehicle
+                || damageSource.is(AllDamageTypes.THERMITE)) {
             hitPos = damageSource.getSourcePosition();
         }
         if (explosion) {
@@ -94,6 +96,9 @@ public class DamageSystem {
         if (amount < 0.1) {
             amount = 0;
         }
+        float incoming = amount;
+        // Thermite burns through: no threshold, no armour answer; hull + struck system take it whole.
+        boolean thermal = damageSource.is(AllDamageTypes.THERMITE);
         // null: no armour model answer (no armour, no penetration round, not a shot) => stock threshold/core-line path below.
         BallisticResult ballistic = Ballistics.resolve(vehicle, damageSource, amount, hitPos, hitPartUnit, penetrationScale);
         if (ballistic == null && hitPartUnit != null && hitPartUnit.isDefensive() && !hitPartUnit.isDetached()) {
@@ -111,7 +116,7 @@ public class DamageSystem {
                 hitPartUnit.hurt(damageSource, ballistic.partDamage());
             }
             amount = ballistic.hullDamage();
-        } else if (amount < vehicle.defenseStats.damageThreshold) {
+        } else if (amount < vehicle.defenseStats.damageThreshold && !thermal) {
             amount = 0.1f;
         } else {
             if (hitPos == null) {
@@ -129,6 +134,14 @@ public class DamageSystem {
         }
         if (round != null && hitPos != null) {
             hitEffect(vehicle, round, hitPos, ballistic);
+        }
+        if (hitPos != null) {
+            ArmorRegions.Kind kind = round != null ? ArmorRegions.Kind.KINETIC
+                    : explosion ? ArmorRegions.Kind.BLAST
+                    : thermal ? ArmorRegions.Kind.THERMAL
+                    : damageSource.is(AllDamageTypes.VEHICLE_COLLISION) ? ArmorRegions.Kind.COLLISION
+                    : ArmorRegions.Kind.OTHER;
+            wearArmor(vehicle, hitPos, ballistic == null ? null : ballistic.normal().toVector3f(), incoming, kind);
         }
         // Core-line falloff applies to hull only; struck system takes the hit whole.
         float systemAmount = amount;
@@ -187,6 +200,19 @@ public class DamageSystem {
         vehicle.setHealth(Math.max(0, hull));
         if (hull < 0 && !vehicle.isDestroyed()) {
             VehicleSystems.overflow(vehicle, -hull);
+        }
+    }
+
+    /** Wears the armour region at {@code at}; no profile / unarmoured face => nothing. */
+    public static void wearArmor(AbstractVehicle vehicle, Vec3 at, @Nullable Vector3f normal, float damage,
+                                 ArmorRegions.Kind kind) {
+        if (vehicle.armorProfile == null || !vehicle.armorProfile.isDefined()) {
+            return;
+        }
+        int region = ArmorRegions.region(vehicle, at, normal);
+        if (region >= 0) {
+            vehicle.armorRegions().apply(region, damage, kind,
+                    vehicle.armorProfile.nominal(ArmorRegions.face(region).profile));
         }
     }
 

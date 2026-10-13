@@ -3,6 +3,8 @@ package com.wf.combinedassault.entity.vehicle;
 import com.wf.wflib.audio.EngineSound;
 import com.wf.combinedassault.audio.VehicleAudio;
 import java.util.List;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import com.wf.combinedassault.vehicle.light.VehicleLight;
 import java.util.Optional;
@@ -179,8 +181,11 @@ public abstract class AbstractVehicle extends ContainerCraft
     public static final EntityDataAccessor<Boolean> DESTROYED = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.BOOLEAN);
     /** {@link VehicleLight.Kind#bit()} set => that group on. */
     public static final EntityDataAccessor<Byte> LIGHTS = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.BYTE);
+    /** Bit = seat index whose sight is in IR (own illuminator). Not saved; seat changing hands cleared. */
+    public static final EntityDataAccessor<Integer> IR_SIGHTS = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.INT);
     /** {@link HullComponents#toSync()}: pool health by id, for the HUD and probe. */
     public static final EntityDataAccessor<CompoundTag> SYSTEMS = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.COMPOUND_TAG);
+    public static final EntityDataAccessor<CompoundTag> ARMOR_WEAR = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.COMPOUND_TAG);
     public static final EntityDataAccessor<CompoundTag> DETACHED_ANCHORS = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.COMPOUND_TAG);
     /** Stowed cargo as drawn: {@code v} = [{m: model, p: local pos, q: local rotation}]. */
     public static final EntityDataAccessor<CompoundTag> CARGO_VIEW = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.COMPOUND_TAG);
@@ -216,6 +221,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     private Component name;
     public final ControlUnit controlUnit;
     public List<Seat> seats;
+    /** Server: passenger id that set each {@link #IR_SIGHTS} bit. */
+    private final Int2IntMap irSightOwners = new Int2IntOpenHashMap();
     protected final List<PartUnit<?>> partUnits;
     protected Map<String, PartUnit<?>> partUnitMap;
     protected final List<SuspensionUnit<?>> suspensionUnits;
@@ -228,6 +235,7 @@ public abstract class AbstractVehicle extends ContainerCraft
     public EnergyInfo energyInfo;
     public DefenseStats defenseStats;
     public ArmorProfile armorProfile;
+    private final com.wf.combinedassault.ballistics.ArmorRegions armorRegions = new com.wf.combinedassault.ballistics.ArmorRegions();
     public Vec3 centerOffset;
     public float curbWeight;
     /** Chassis mass added per kilogram of cargo; see StorageInfo#cargoMassPerKg. */
@@ -455,7 +463,9 @@ public abstract class AbstractVehicle extends ContainerCraft
         builder.define(ENGINE_ON, false);
         builder.define(DESTROYED, false);
         builder.define(LIGHTS, (byte) 0);
+        builder.define(IR_SIGHTS, 0);
         builder.define(SYSTEMS, new CompoundTag());
+        builder.define(ARMOR_WEAR, new CompoundTag());
         builder.define(DETACHED_ANCHORS, new CompoundTag());
         builder.define(CARGO_VIEW, new CompoundTag());
         builder.define(PARACHUTE_DEPLOYED, false);
@@ -476,6 +486,9 @@ public abstract class AbstractVehicle extends ContainerCraft
         if (level().isClientSide() && hullComponents != null
                 && dataValues.stream().anyMatch(value -> value.id() == SYSTEMS.id())) {
             hullComponents.fromSync(entityData.get(SYSTEMS));
+        }
+        if (level().isClientSide() && dataValues.stream().anyMatch(value -> value.id() == ARMOR_WEAR.id())) {
+            armorRegions.fromSync(entityData.get(ARMOR_WEAR));
         }
         if (dataValues.stream().anyMatch(value -> value.id() == X_ROT.id() || value.id() == Y_ROT.id() || value.id() == Z_ROT.id())) {
             float targetXRot = entityData.get(X_ROT);
@@ -511,6 +524,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             // than building them just to write them out unchanged.
             compound.merge(hullComponentSave);
         }
+        armorRegions.save(compound);
         CompoundTag camoTag = camoLayer.save();
         if (!camoTag.isEmpty()) {
             compound.put("Camo", camoTag);
@@ -553,6 +567,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         // may not exist yet. Applied the first time anything asks what condition they are in.
         hullComponentSave = compound.copy();
         hullComponents = null;
+        armorRegions.load(compound);
         if (compound.contains("Engine")) {
             // Raw: toggleEngine's system gate would build the pools before their pieces exist.
             entityData.set(ENGINE_ON, compound.getBoolean("Engine"));
@@ -945,8 +960,12 @@ public abstract class AbstractVehicle extends ContainerCraft
         TrialProfile.stop(TrialProfile.Stage.BASE, baseAt);
         long upkeepAt = TrialProfile.start();
         if (!level().isClientSide() && !this.isRemoved()) {
+            clearVacantIrSights();
             if (hullComponents != null && hullComponents.dirty()) {
                 entityData.set(SYSTEMS, hullComponents.toSync());
+            }
+            if (armorRegions.dirty()) {
+                entityData.set(ARMOR_WEAR, armorRegions.toSync());
             }
             if (isEngineOn() && !VehicleSystems.engineWorks(this)) {
                 toggleEngine(false);
@@ -2685,6 +2704,28 @@ public abstract class AbstractVehicle extends ContainerCraft
         entityData.set(LIGHTS, (byte) (entityData.get(LIGHTS) ^ kind.bit()));
     }
 
+    /** Seats with the sight in IR; destroyed => none. */
+    public int irSights() {
+        return isDestroyed() ? 0 : entityData.get(IR_SIGHTS);
+    }
+
+    public void setIrSight(int seatIndex, boolean on) {
+        irSightOwners.put(seatIndex, seats.get(seatIndex).passengerId.intValue());
+        int mask = entityData.get(IR_SIGHTS);
+        entityData.set(IR_SIGHTS, on ? mask | 1 << seatIndex : mask & ~(1 << seatIndex));
+    }
+
+    private void clearVacantIrSights() {
+        int mask = entityData.get(IR_SIGHTS);
+        for (int bits = mask; bits != 0; bits &= bits - 1) {
+            int seat = Integer.numberOfTrailingZeros(bits);
+            if (seats.get(seat).passengerId != irSightOwners.get(seat)) {
+                mask &= ~(1 << seat);
+            }
+        }
+        entityData.set(IR_SIGHTS, mask);
+    }
+
     public boolean isDestroyed() {
         return entityData.get(DESTROYED);
     }
@@ -3196,6 +3237,10 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     public double climbToi(OBB hull, BoxBuffer near, double lift, OBB.SatFrame frame) {
         return castToi(hull, near, 0, lift, 0, null, frame);
+    }
+
+    public com.wf.combinedassault.ballistics.ArmorRegions armorRegions() {
+        return armorRegions;
     }
 
     /**

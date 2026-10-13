@@ -18,6 +18,7 @@ import com.wf.combinedassault.custom.CommonAssetsManager;
 import com.wf.combinedassault.pack.CombinedPacks;
 import com.wf.combinedassault.pack.PackHandshake;
 import com.wf.combinedassault.uav.UavCamera;
+import com.wf.combinedassault.uav.UavTablet;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
 
@@ -35,6 +36,7 @@ public class CombinedAssault {
         modEventBus.addListener(AddPackFindersEvent.class, CombinedPacks::onAddPackFinders);
         modEventBus.addListener(FMLCommonSetupEvent.class, event -> event.enqueueWork(CommonAssetsManager::ensureLoaded));
         modEventBus.addListener(FMLCommonSetupEvent.class, event -> event.enqueueWork(UavCamera::register));
+        modEventBus.addListener(FMLCommonSetupEvent.class, event -> event.enqueueWork(UavTablet::register));
         AllConfigs.register(ModLoadingContext.get(), modEventBus);
         AllBlocks.register(modEventBus);
         AllBlockEntities.register(modEventBus);
@@ -58,6 +60,8 @@ public class CombinedAssault {
         com.wf.combinedassault.airdefense.AirDefenseActions.register();
         com.wf.combinedassault.vehicle.pose.SeatPoses.register();
         com.wf.combinedassault.ballistics.component.SystemRepair.register();
+        com.wf.combinedassault.ballistics.component.ArmorRepair.register();
+        com.wf.combinedassault.vehicle.part.BarrelCharge.register();
         modEventBus.register(Channel.class);
     }
 

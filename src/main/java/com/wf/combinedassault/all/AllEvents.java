@@ -1,5 +1,7 @@
 package com.wf.combinedassault.all;
 
+import com.wf.combinedassault.uav.UavTablet;
+import com.wf.wflib.pda.Pda;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -139,6 +141,14 @@ public class AllEvents {
         public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
             ItemStack itemStack = event.getItemStack();
             Player player = event.getEntity();
+            if (Pda.is(itemStack)) {
+                InteractionResult result = UavTablet.interact(itemStack, player, event.getTarget());
+                if (result != InteractionResult.PASS) {
+                    event.setCancellationResult(result);
+                    event.setCanceled(true);
+                    return;
+                }
+            }
             if (itemStack.getItem() instanceof VehicleItem vehicleItem) {
                 InteractionResult result = vehicleItem.interactEntity(itemStack, player, event.getTarget(), event.getHand());
                 if (result != null && result != InteractionResult.PASS) {
@@ -194,7 +204,8 @@ public class AllEvents {
                 }
                 PartUnit<?> seat = vehicle.getOwnOperatorUnit(event.getEntity());
                 Boolean protect = seat == null ? null : seat.getData().getProtectPassenger();
-                if (protect == null ? vehicle.protectPassenger : protect) {
+                if ((protect == null ? vehicle.protectPassenger : protect)
+                        && !event.getSource().is(AllDamageTypes.BREECH_FIRE)) {
                     event.setNewDamage(0);
                 }
             }

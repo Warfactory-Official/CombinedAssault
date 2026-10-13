@@ -36,6 +36,7 @@ public class ArmorResolver implements BallisticResolver {
         Vec3 end = hitPos.add(shotDir.scale(0.1));
         Vector3f worldNormal;
         float nominal;
+        Vec3 struck;
         if (vehicle.hits() != null) {
             // hit.armor() from an armor_<mm> material on the struck face; else per-face nominal.
             VehicleHits.Hit hit = vehicle.hits().surface(start, end);
@@ -43,6 +44,7 @@ public class ArmorResolver implements BallisticResolver {
                 return null;
             }
             worldNormal = hit.normal();
+            struck = hit.point();
             ArmorFace face = ArmorFace.of(toVehicleFrame(vehicle, worldNormal));
             nominal = hit.armor() > 0 ? hit.armor() : profile.nominal(face);
         } else {
@@ -51,13 +53,15 @@ public class ArmorResolver implements BallisticResolver {
                 return null;
             }
             worldNormal = VectorUtil.faceNormal(hit.obb(), hit.hitPos());
+            struck = hit.hitPos();
             nominal = profile.nominal(ArmorFace.of(toVehicleFrame(vehicle, worldNormal)));
         }
         if (nominal <= 0) {
             return null;
         }
 
-        float wear = Mth.lerp(healthRatio(vehicle), profile.wearFloor, 1.0f);
+        float wear = vehicle.armorRegions().thicknessScale(ArmorRegions.region(vehicle, struck, worldNormal),
+                profile.wearFloor);
         float cos = (float) -shotDir.dot(new Vec3(worldNormal));
         if (cos <= 0) {
             // cos<=0: grazed an edge, named face's normal points away from the shot. Clamp to
@@ -100,11 +104,6 @@ public class ArmorResolver implements BallisticResolver {
         Vector3f local = new Vector3f(worldNormal);
         new Quaternionf(vehicle.rotYXZ()).conjugate().transform(local);
         return local;
-    }
-
-    private static float healthRatio(AbstractVehicle vehicle) {
-        float max = vehicle.getMaxHealth();
-        return max <= 0 ? 1.0f : Mth.clamp(vehicle.getHealth() / max, 0, 1);
     }
 
 }

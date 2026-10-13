@@ -51,6 +51,7 @@
             "optical_sight_type": "crt",
             "with_thermal_imager": true,
             "with_night_vision": true,
+            "with_ir": true,
             "zoom_max": 12,
             "weapons": [
                 {

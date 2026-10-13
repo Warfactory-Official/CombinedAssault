@@ -81,6 +81,7 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     private final boolean withFocusLocker;
     private final boolean withThermalImager;
     private final boolean withNightVision;
+    private final boolean withIr;
     private final WeaponLoading loading;
     private final float zoomMin;
     private final float zoomMax;
@@ -144,6 +145,7 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         this.withFocusLocker = data.withFocusLocker();
         this.withThermalImager = data.withThermalImager();
         this.withNightVision = data.withNightVision();
+        this.withIr = data.withIr();
         this.loading = data.getLoading();
         this.zoomMin = data.getZoomMin();
         this.zoomMax = data.getZoomMax();
@@ -1124,7 +1126,8 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         return switch (mode) {
             case OPTICAL -> true;
             case THERMAL -> withThermalImager;
-            case LOWLIGHT -> withNightVision;
+            case INTENSIFIER -> withNightVision;
+            case IR -> withIr;
         };
     }
 

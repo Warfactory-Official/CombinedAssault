@@ -3,6 +3,7 @@ package com.wf.combinedassault.ballistics.gametest;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.api.event.HitVehicleEvent;
 import com.wf.combinedassault.ballistics.ArmorFace;
+import com.wf.combinedassault.ballistics.ArmorRegions;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.gametest.TestLanes;
 import com.wf.combinedassault.vehicle.hit.VehicleHits;
@@ -150,12 +151,16 @@ public class SmallArmsArmorGameTest {
 
     /**
      * Probe the hull face at {@code height} along local {@code face}, then launch {@code round} from 3 blocks off at
-     * {@code incidence} deg from its normal (tilted along the face, horizontally). Health restored first: wear stays 1.
+     * {@code incidence} deg from its normal (tilted along the face, horizontally). Health and armour wear restored
+     * first: every shot meets fresh plate.
      */
     private static Shot fire(GameTestHelper helper, AbstractVehicle vehicle, ResourceLocation round, double speedFactor,
                              double incidence, ArmorFace face, double height) {
         ServerLevel level = helper.getLevel();
         vehicle.setHealth(vehicle.getMaxHealth());
+        for (ArmorRegions.Face f : ArmorRegions.Face.VALUES) {
+            vehicle.armorRegions().repair(f, 1);
+        }
         HITS.removeIf(h -> h.entityId == vehicle.getId());
         Quaternionf rot = new Quaternionf(vehicle.rotYXZ());
         Vector3f out = rot.transform(face == ArmorFace.FRONT ? new Vector3f(0, 0, 1) : new Vector3f(1, 0, 0));

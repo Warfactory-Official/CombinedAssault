@@ -8,9 +8,13 @@ import com.wf.combinedassault.vehicle.hit.ModelData;
 import com.wf.combinedassault.vehicle.hit.ModelMounts;
 import com.wf.combinedassault.vehicle.light.LightToggleMessage;
 import com.wf.combinedassault.vehicle.light.VehicleLight;
+import com.wf.combinedassault.vehicle.part.WeaponUnit;
+import com.wf.combinedassault.vehicle.pojo.AimContext;
+import com.wf.combinedassault.util.VectorUtil;
 import com.wf.gemrender.light.LightCookie;
 import com.wf.gemrender.light.LightSink;
 import com.wf.gemrender.light.Lights;
+import com.wf.wflib.nvg.client.NvgIllumination;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -38,6 +42,8 @@ import java.util.Map;
  * Light nodes -> GemRender spots at the last published pose (one frame behind the turret); not yet drawn => rest
  * pose. Light node absent from the drawn model (part mount graft) => nearest drawn ancestor's pose x rest offset.
  * Key: driver -> {@code HEAD}, other crew -> {@code SEARCH}; a vehicle with one group -> that group.
+ * <p>{@link AbstractVehicle#irSights()} stations -> IR sight illuminator along the gun; own station: wflib draws
+ * it at the sight camera.
  */
 @EventBusSubscriber(value = Dist.CLIENT)
 public final class VehicleLights {
@@ -91,7 +97,11 @@ public final class VehicleLights {
         // Camera-relative: float precision far from the origin.
         Vec3 camera = mc.gameRenderer.getMainCamera().getPosition();
         for (Entity entity : mc.level.entitiesForRendering()) {
-            if (!(entity instanceof AbstractVehicle vehicle) || vehicle.lightsOn() == 0) {
+            if (!(entity instanceof AbstractVehicle vehicle)) {
+                continue;
+            }
+            irSights(sink, vehicle, mc.player == null ? -1 : mc.player.getId());
+            if (vehicle.lightsOn() == 0) {
                 continue;
             }
             int on = vehicle.lightsOn();
@@ -120,6 +130,21 @@ public final class VehicleLights {
                         light.cookie() == null ? null : COOKIES.computeIfAbsent(light.cookie(), Lights::cookie),
                         light.shadow());
                 submitted++;
+            }
+        }
+    }
+
+    private static void irSights(LightSink sink, AbstractVehicle vehicle, int self) {
+        for (int bits = vehicle.irSights(); bits != 0; bits &= bits - 1) {
+            int index = Integer.numberOfTrailingZeros(bits);
+            if (index >= vehicle.seats.size()) {
+                return;
+            }
+            AbstractVehicle.Seat seat = vehicle.seats.get(index);
+            if (seat.passengerId != self && seat.partUnit instanceof WeaponUnit unit) {
+                AimContext aim = unit.aimContext();
+                NvgIllumination.sight(sink, unit.worldCameraPosition(),
+                        VectorUtil.rotToVec(aim.direction.x, aim.direction.y).normalize());
             }
         }
     }

@@ -31,6 +31,7 @@ public class WeaponUnitData extends RotatableUnitData {
     private boolean withFocusLocker;
     private boolean withThermalImager;
     private boolean withNightVision;
+    private boolean withIr;
     private WeaponLoading loading = WeaponLoading.SELF;
     private float zoomMin;
     private float zoomMax;
@@ -67,6 +68,7 @@ public class WeaponUnitData extends RotatableUnitData {
         this.withFocusLocker = pojo.withFocusLocker;
         this.withThermalImager = pojo.withThermalImager;
         this.withNightVision = pojo.withNightVision;
+        this.withIr = pojo.withIr;
         this.loading = pojo.loading;
         this.zoomMin = pojo.zoomMin;
         this.zoomMax = pojo.zoomMax;
@@ -170,6 +172,10 @@ public class WeaponUnitData extends RotatableUnitData {
 
     public boolean withNightVision() {
         return withNightVision;
+    }
+
+    public boolean withIr() {
+        return withIr;
     }
 
     public WeaponLoading getLoading() {

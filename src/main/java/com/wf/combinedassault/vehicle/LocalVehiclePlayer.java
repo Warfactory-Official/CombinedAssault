@@ -30,6 +30,7 @@ import com.wf.wflib.MissileEntity;
 import com.wf.combinedassault.network.message.ClientVehicleAction;
 import com.wf.combinedassault.util.VectorUtil;
 import com.wf.combinedassault.vehicle.control.InputHandler;
+import com.wf.combinedassault.vehicle.light.IrSightMessage;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
 import com.wf.combinedassault.vehicle.pojo.AimContext;
@@ -61,6 +62,8 @@ public class LocalVehiclePlayer {
     public double aimLocationDistance;
     public boolean outOfRangeFinding;
     public CameraMode sightMode = CameraMode.OPTICAL;
+    private int irSightVehicle = -1;
+    private boolean irSight;
     /** False right after scope entry: camera keeps the pre-scope aim direction until mouse clears the {@code 0.5} deg deadzone. */
     public boolean mouseTurnedAfterScope;
     public AbstractVehicle.Seat seat;
@@ -292,6 +295,19 @@ public class LocalVehiclePlayer {
             } else {
                 switchViewType(ViewType.OPERATOR);
             }
+        }
+    }
+
+    /** Left vehicle => server clears the vacated seat; no message. */
+    private void syncIrSight(AbstractVehicle vehicle, boolean on) {
+        int id = vehicle == null ? -1 : vehicle.getId();
+        if (id != irSightVehicle) {
+            irSightVehicle = id;
+            irSight = false;
+        }
+        if (vehicle != null && on != irSight) {
+            irSight = on;
+            PacketDistributor.sendToServer(new IrSightMessage(id, on));
         }
     }
 
@@ -613,14 +629,17 @@ public class LocalVehiclePlayer {
         if (vehicle != null && vehicle.getOwnOperatorUnit(player) instanceof WeaponUnit ownWeaponUnit) {
             weaponUnit = ownWeaponUnit;
         }
+        boolean ir = false;
         if (viewType == ViewType.SCOPE && weaponUnit != null
                 && weaponUnit.getOpticalSightType() == WeaponUnitData.OpticalSightType.CRT) {
+            ir = sightMode == CameraMode.IR && weaponUnit.fitted(sightMode);
             ScreenSensor.set(weaponUnit.fitted(sightMode) ? sightMode : CameraMode.OPTICAL, 1.0f);
         } else if (vehicle != null && vehicle.uav && viewType != ViewType.THIRD_PERSON) {
             ScreenSensor.set(CameraMode.OPTICAL, 1.0f);
         } else {
             ScreenSensor.set(null, 1.0f);
         }
+        syncIrSight(vehicle, ir);
         if (OverloadHandler.isActive()) {
             if (vehicle == null) {
                 OverloadHandler.setActive(false);
