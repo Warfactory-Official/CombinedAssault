@@ -5,6 +5,7 @@ import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.util.VectorUtil;
 import com.wf.combinedassault.vehicle.part.MissileHolderUnit;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
+import com.wf.combinedassault.vehicle.weapon.VehicleLaser;
 import com.wf.combinedassault.vehicle.weapon.VehicleMissile;
 import com.wf.wflib.entity.InterceptTarget;
 import com.wf.wflib.intercept.InterceptBattery;
@@ -38,6 +39,8 @@ public final class AirDefense implements InterceptBattery.Mount {
     }
 
     public static final int MAX_SALVO = 2;
+    /** Lead solver speed for a beam, blocks/tick: lead ~ 0. */
+    private static final double BEAM_SPEED = 1.0e6;
     private static final double LAID = Math.toRadians(2.0);
     /** Manual lock pick, radians off the sight line. */
     private static final double LOCK_CONE = Math.toRadians(3.0);
@@ -74,9 +77,10 @@ public final class AirDefense implements InterceptBattery.Mount {
             return;
         }
         this.running = true;
+        boolean beam = this.laser() != null;
         this.state = this.battery().tick(sl, new InterceptBattery.Settings(this.spec.range(),
-                this.source == Source.ORGANIC, this.spec.mast(), this.salvo, this.spec.salvoSpacing(),
-                this.spec.cooldown()));
+                this.source == Source.ORGANIC, this.spec.mast(), beam ? this.spec.dwell() : this.salvo,
+                beam ? 0 : this.spec.salvoSpacing(), this.spec.cooldown()));
     }
 
     private InterceptBattery battery() {
@@ -124,6 +128,10 @@ public final class AirDefense implements InterceptBattery.Mount {
 
     @Override
     public double interceptorSpeed() {
+        VehicleLaser laser = this.laser();
+        if (laser != null) {
+            return laser.ready() ? BEAM_SPEED : Double.NaN;
+        }
         VehicleMissile launcher = this.launcher();
         MissileHolderUnit holder = launcher == null ? null : launcher.missileHolder();
         int slot = holder == null ? -1 : holder.nextLoaded(WfLibCompat::isInterceptor);
@@ -146,6 +154,10 @@ public final class AirDefense implements InterceptBattery.Mount {
 
     @Override
     public boolean fire(InterceptTarget target) {
+        VehicleLaser laser = this.laser();
+        if (laser != null) {
+            return laser.burn(target.interceptEntity(), null);
+        }
         VehicleMissile launcher = this.launcher();
         return launcher != null && launcher.fireRound(WfLibCompat::isInterceptor, target.interceptEntity());
     }
@@ -153,6 +165,11 @@ public final class AirDefense implements InterceptBattery.Mount {
     @Override
     public boolean valid() {
         return this.unit.getVehicle().isAlive();
+    }
+
+    @Nullable
+    private VehicleLaser laser() {
+        return this.unit.getCurrentWeapon().orElse(null) instanceof VehicleLaser laser ? laser : null;
     }
 
     @Nullable
@@ -188,6 +205,11 @@ public final class AirDefense implements InterceptBattery.Mount {
 
     public InterceptBattery.State state() {
         return this.state;
+    }
+
+    @Nullable
+    public UUID target() {
+        return this.battery == null ? null : this.battery.target();
     }
 
     public int interceptors() {

@@ -33,6 +33,11 @@ public class AllVehicleWeaponTypes {
             "missile", json -> GsonUtil.GSON.fromJson(json, VehicleMissileWeaponData.class), VehicleMissile::new
     );
 
+    public static final DeferredHolder<VehicleWeaponType<?, ?>, VehicleWeaponType<com.wf.combinedassault.vehicle.weapon.VehicleLaser, com.wf.combinedassault.custom.weapon.data.VehicleLaserWeaponData>> LASER = register(
+            "laser", json -> GsonUtil.GSON.fromJson(json, com.wf.combinedassault.custom.weapon.data.VehicleLaserWeaponData.class),
+            com.wf.combinedassault.vehicle.weapon.VehicleLaser::new
+    );
+
     public static final DeferredHolder<VehicleWeaponType<?, ?>, VehicleWeaponType<VehicleDecoyFlare, BaseVehicleWeaponData>> DECOY_FLARE = register(
             "decoy_flare", json -> GsonUtil.GSON.fromJson(json, BaseVehicleWeaponData.class), VehicleDecoyFlare::new
     );

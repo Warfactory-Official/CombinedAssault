@@ -1,6 +1,8 @@
 package com.wf.combinedassault.vehicle;
 
+import com.wf.wflib.client.cam.DroneCamHud;
 import com.wf.wflib.client.cam.ScreenSensor;
+import com.wf.wflib.pda.client.PdaClient;
 import com.wf.wflib.drone.cam.CameraMode;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
@@ -20,6 +22,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.all.AllConfigs;
+import com.wf.combinedassault.all.AllKeys;
 import com.wf.combinedassault.api.entity.RemoteTickEntity;
 import com.wf.combinedassault.client.screen.CoordinateInputScreen;
 import com.wf.combinedassault.client.shader.OverloadHandler;
@@ -70,6 +73,8 @@ public class LocalVehiclePlayer {
     public boolean toLeave;
     public AbstractVehicle vehicle;
     public ViewType viewType = ViewType.THIRD_PERSON;
+    /** {@link ScreenSensor} written by this view; other owners (wflib drone pilot) keep it otherwise. */
+    private boolean sensing;
     public int onVehicleTickCount;
     public AbstractVehicle lookAtVehicle;
     public PartUnit<?> lookAtPartUnit;
@@ -241,7 +246,7 @@ public class LocalVehiclePlayer {
         if (viewType == ViewType.THIRD_PERSON || viewType == ViewType.OPERATOR) {
             try {
                 if (partUnit instanceof WeaponUnit weaponUnit) {
-                    if (!(InputHandler.freeCamera || playerLerpSteps > 0) || vehicle instanceof RotaryWingVehicle) {
+                    if (!(InputHandler.freeCamera || playerLerpSteps > 0) || vehicle instanceof RotaryWingVehicle || vehicle.uav) {
                         weaponUnit.aim(freeAimPos());
                     }
                 }
@@ -371,8 +376,12 @@ public class LocalVehiclePlayer {
     public void toSeat(AbstractVehicle.Seat seat, AbstractVehicle vehicle) {
         boolean enter = this.seat == null && seat != null;
         if (seat == null) {
+            AbstractVehicle left = this.vehicle;
             toLeave = false;
             clear();
+            if (left != null && left.uav) {
+                PdaClient.watch(left.getId());
+            }
             return;
         }
         this.seat = seat;
@@ -630,14 +639,21 @@ public class LocalVehiclePlayer {
             weaponUnit = ownWeaponUnit;
         }
         boolean ir = false;
+        float link = vehicle != null && vehicle.uav ? vehicle.link() : 1.0f;
+        if (vehicle != null && vehicle.uav) {
+            DroneCamHud.pilot(link, AllKeys.LEAVE_VEHICLE, InputHandler.uavFreeLook);
+        }
         if (viewType == ViewType.SCOPE && weaponUnit != null
                 && weaponUnit.getOpticalSightType() == WeaponUnitData.OpticalSightType.CRT) {
             ir = sightMode == CameraMode.IR && weaponUnit.fitted(sightMode);
-            ScreenSensor.set(weaponUnit.fitted(sightMode) ? sightMode : CameraMode.OPTICAL, 1.0f);
+            ScreenSensor.set(weaponUnit.fitted(sightMode) ? sightMode : CameraMode.OPTICAL, link);
+            sensing = true;
         } else if (vehicle != null && vehicle.uav && viewType != ViewType.THIRD_PERSON) {
-            ScreenSensor.set(CameraMode.OPTICAL, 1.0f);
-        } else {
+            ScreenSensor.set(CameraMode.OPTICAL, link);
+            sensing = true;
+        } else if (sensing) {
             ScreenSensor.set(null, 1.0f);
+            sensing = false;
         }
         syncIrSight(vehicle, ir);
         if (OverloadHandler.isActive()) {
@@ -658,7 +674,10 @@ public class LocalVehiclePlayer {
         vehicle = null;
         serverEntities.clear();
         missiles.clear();
-        ScreenSensor.set(null, 1.0f);
+        if (sensing) {
+            ScreenSensor.set(null, 1.0f);
+            sensing = false;
+        }
         OverloadHandler.setActive(false);
     }
 

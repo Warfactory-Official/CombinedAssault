@@ -1,6 +1,5 @@
 package com.wf.combinedassault.all;
 
-import com.wf.wflib.drone.cam.CameraChannels;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.neoforged.bus.api.IEventBus;
@@ -16,10 +15,6 @@ public class AllDataComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<SimpleFluidContent>> FLUID = DATA_COMPONENTS
             .register("fluid", () -> DataComponentType.<SimpleFluidContent>builder().persistent(SimpleFluidContent.CODEC).build());
 
-    /** UAVs linked to a wflib PDA (wflib camera {@code CHANNELS} stays the camera list). */
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<CameraChannels>> UAV_LINKS = DATA_COMPONENTS
-            .register("uav_links", () -> DataComponentType.<CameraChannels>builder().persistent(CameraChannels.CODEC)
-                    .networkSynchronized(CameraChannels.STREAM_CODEC).build());
 
     public static void register(IEventBus eventBus) {
         DATA_COMPONENTS.register(eventBus);

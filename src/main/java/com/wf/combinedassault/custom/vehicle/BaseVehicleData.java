@@ -19,6 +19,8 @@ import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.ballistics.ArmorProfile;
 import com.wf.combinedassault.ballistics.addon.AddonMount;
 import com.wf.combinedassault.ballistics.addon.AddonMountInfo;
+import com.wf.combinedassault.vehicle.pojo.AutonomyInfo;
+import com.wf.combinedassault.vehicle.pojo.LoadoutInfo;
 import com.wf.combinedassault.vehicle.pojo.DefenseStats;
 import com.wf.combinedassault.vehicle.pojo.EnergyInfo;
 import com.wf.combinedassault.vehicle.pojo.PhysicsInfo;
@@ -63,6 +65,9 @@ public class BaseVehicleData<T extends AbstractVehicle> {
     protected ArmorProfile armor;
     protected List<AddonMount> addonMounts = List.of();
     protected boolean uav;
+    @Nullable
+    protected AutonomyInfo autonomy;
+    protected List<LoadoutInfo> loadouts = List.of();
     protected boolean canWade;
     protected boolean withWarningReceiver;
     protected boolean protectPassenger;
@@ -142,6 +147,8 @@ public class BaseVehicleData<T extends AbstractVehicle> {
         this.cargo = pojo.cargo == null ? CargoInfo.NONE : pojo.cargo;
         this.armor = pojo.armor;
         this.uav = pojo.uav;
+        this.autonomy = pojo.uav ? pojo.autonomy : null;
+        this.loadouts = pojo.loadouts == null ? List.of() : List.copyOf(pojo.loadouts);
         this.canWade = pojo.canWade;
         this.withWarningReceiver = pojo.withWarningReceiver;
         this.protectPassenger = pojo.protectPassenger;
@@ -479,6 +486,15 @@ public class BaseVehicleData<T extends AbstractVehicle> {
 
     public boolean isUav() {
         return uav;
+    }
+
+    @Nullable
+    public AutonomyInfo getAutonomy() {
+        return autonomy;
+    }
+
+    public List<LoadoutInfo> getLoadouts() {
+        return loadouts;
     }
 
     public boolean canWade() {

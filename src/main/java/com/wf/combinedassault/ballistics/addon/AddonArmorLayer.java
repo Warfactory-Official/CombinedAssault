@@ -74,6 +74,23 @@ public final class AddonArmorLayer {
         return false;
     }
 
+    /** kg: live ERA bricks, slat by intact bars. */
+    public float mass() {
+        float kg = 0;
+        for (int i = 0; i < states.length; i++) {
+            AddonMountState state = states[i];
+            if (state.isEmpty()) {
+                continue;
+            }
+            if (state.fit.kind == AddonKind.ERA) {
+                kg += state.liveCells() * state.fit.kilograms;
+            } else if (state.bars.length > 0) {
+                kg += mounts.get(i).installCost(state.fit) * state.fit.kilograms * state.intactBars() / state.bars.length;
+            }
+        }
+        return kg;
+    }
+
     /** Bumped on every state change; the renderer rebuilds a mount's buffer when it moves. */
     public int version() {
         return version;

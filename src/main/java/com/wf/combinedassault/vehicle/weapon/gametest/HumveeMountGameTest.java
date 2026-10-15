@@ -20,7 +20,13 @@ import com.wf.combinedassault.custom.CommonAssetsManager;
 import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.vehicle.hit.VehicleHits;
+import com.wf.combinedassault.vehicle.loadout.Loadouts;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.GameType;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import com.wf.combinedassault.vehicle.pojo.AimContext;
 import com.wf.combinedassault.vehicle.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.vehicle.weapon.VehicleCannon;
@@ -38,9 +44,9 @@ public class HumveeMountGameTest {
     private static final String TEMPLATE = "empty";
     private static final ResourceLocation M430 = ResourceLocation.fromNamespaceAndPath("wflib", "40x53/he");
     private static final ResourceLocation BMG = ResourceLocation.fromNamespaceAndPath("wflib", "12.7x99/ball");
-    private static final ResourceLocation MK19_HUMVEE = CombinedAssault.modLocation("humvee_mk19");
-    private static final ResourceLocation M2_HUMVEE = CombinedAssault.modLocation("humvee_m2");
-    private static final ResourceLocation PLAIN = CombinedAssault.modLocation("humvee");
+    private static final String MK19_HUMVEE = "mk19";
+    private static final String M2_HUMVEE = "m2";
+    private static final ResourceLocation HUMVEE = CombinedAssault.modLocation("humvee");
     private static final ResourceLocation MK19 = CombinedAssault.modLocation("mk19");
     private static final ResourceLocation M2 = CombinedAssault.modLocation("gun_12.7mm");
     /** stage_emb4_humvee: T(MUZZLE), T(M2_MUZZLE) = (p + (0, 0.34, 0)) * 0.9, vehicle frame. */
@@ -53,7 +59,7 @@ public class HumveeMountGameTest {
     @GameTest(template = TEMPLATE, timeoutTicks = 100)
     public static void eachGunMountPutsTheMuzzleAtItsBarrelTip(GameTestHelper helper) {
         for (var c : List.of(new Object[]{MK19_HUMVEE, MK19_MUZZLE}, new Object[]{M2_HUMVEE, M2_MUZZLE})) {
-            WeaponUnit unit = roofMount(helper, (ResourceLocation) c[0]);
+            WeaponUnit unit = roofMount(helper, (String) c[0]);
             if (unit == null) {
                 return;
             }
@@ -70,7 +76,7 @@ public class HumveeMountGameTest {
     @GameTest(template = TEMPLATE, timeoutTicks = 100)
     public static void theMuzzleTraversesWithTheRing(GameTestHelper helper) {
         for (var c : List.of(new Object[]{MK19_HUMVEE, MK19_MUZZLE}, new Object[]{M2_HUMVEE, M2_MUZZLE})) {
-            WeaponUnit unit = roofMount(helper, (ResourceLocation) c[0]);
+            WeaponUnit unit = roofMount(helper, (String) c[0]);
             if (unit == null) {
                 return;
             }
@@ -160,25 +166,61 @@ public class HumveeMountGameTest {
         helper.succeed();
     }
 
+    /** Gun follows the loadout: seat switching and direct tool swaps refused, name follows the gun. */
     @GameTest(template = TEMPLATE, timeoutTicks = 100)
-    public static void theModdingToolSwapsTheGunNotTheSeat(GameTestHelper helper) {
+    public static void theLoadoutPicksTheGunNotTheSeat(GameTestHelper helper) {
         WeaponUnit unit = roofMount(helper, MK19_HUMVEE);
         if (unit == null) {
             return;
         }
+        AbstractVehicle vehicle = unit.getVehicle();
         unit.switchWeapon(false, true, false);
         ResourceLocation fromSeat = unit.currentWeaponId();
-        unit.switchWeapon(false, true, true);
-        ResourceLocation fromTool = unit.currentWeaponId();
-        boolean interactive = unit.isInteractive();
-        Object name = unit.getVehicle().getDisplayName().getContents() instanceof TranslatableContents t ? t.getKey()
-                : unit.getVehicle().getDisplayName().getString();
-        unit.getVehicle().discard();
-        if (!MK19.equals(fromSeat) || !M2.equals(fromTool) || !interactive || !"entity.combinedassault.humvee_m2".equals(name)) {
-            helper.fail("seat switch -> " + fromSeat + " (want " + MK19 + "), modding tool -> " + fromTool + " (want " + M2
-                    + "), interactive " + interactive + ", name " + name + " (want the M2 Humvee's)");
+        fit(vehicle, M2_HUMVEE);
+        ResourceLocation fromLoadout = unit.currentWeaponId();
+        Object name = vehicle.getDisplayName().getContents() instanceof TranslatableContents t ? t.getKey()
+                : vehicle.getDisplayName().getString();
+        boolean managed = Loadouts.manages(vehicle, unit);
+        vehicle.discard();
+        if (!MK19.equals(fromSeat) || !M2.equals(fromLoadout) || !managed
+                || !"entity.combinedassault.humvee_m2".equals(name)) {
+            helper.fail("seat switch -> " + fromSeat + " (want " + MK19 + "), loadout -> " + fromLoadout + " (want " + M2
+                    + "), managed " + managed + ", name " + name + " (want the M2 Humvee's)");
             return;
         }
+        helper.succeed();
+    }
+
+    /** Fitting pays the install cost; taking it off refunds it and the gun stops firing. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    public static void fittingTheGunCostsMaterials(GameTestHelper helper) {
+        AbstractVehicle vehicle = spawn(helper, HUMVEE);
+        if (vehicle == null) {
+            return;
+        }
+        WeaponUnit unit = (WeaponUnit) vehicle.getPartUnit("roof_mount").orElseThrow();
+        Loadouts.select(vehicle, index(vehicle, M2_HUMVEE), null);
+        boolean unfittedSilent = unit.currentWeaponId() == null;
+        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        player.setGameMode(GameType.SURVIVAL);
+        Vec3 near = unit.worldPivotPosition();
+        player.moveTo(near.x + 1, near.y - player.getEyeHeight(), near.z);
+        player.getInventory().clearContent();
+        boolean refused = Loadouts.install(player, vehicle);
+        player.getInventory().add(new ItemStack(Items.IRON_INGOT, 30));
+        player.getInventory().add(new ItemStack(Items.REDSTONE, 4));
+        boolean fitted = Loadouts.install(player, vehicle);
+        int ironLeft = player.getInventory().countItem(Items.IRON_INGOT);
+        ResourceLocation gun = unit.currentWeaponId();
+        boolean removed = Loadouts.remove(player, vehicle);
+        int ironBack = player.getInventory().countItem(Items.IRON_INGOT);
+        boolean silentAgain = unit.currentWeaponId() == null;
+        player.getInventory().clearContent();
+        vehicle.discard();
+        helper.assertTrue(unfittedSilent, "selected but unfitted gun answers " + unit.currentWeaponId());
+        helper.assertTrue(!refused && fitted && ironLeft == 6 && M2.equals(gun),
+                "refused " + refused + ", fitted " + fitted + ", iron left " + ironLeft + ", gun " + gun);
+        helper.assertTrue(removed && ironBack == 30 && silentAgain, "removed " + removed + ", iron " + ironBack);
         helper.succeed();
     }
 
@@ -192,8 +234,7 @@ public class HumveeMountGameTest {
         AbstractVehicle vehicle = before.getVehicle();
         int parts = vehicle.getPartUnits().size();
         vehicle.load(vehicle.saveWithoutId(new CompoundTag()));
-        WeaponUnit unit = (WeaponUnit) vehicle.getPartUnit("roof_mount").orElseThrow();
-        unit.switchWeapon(false, true, true);
+        fit(vehicle, M2_HUMVEE);
         long listed = vehicle.getPartUnits().stream().filter(p -> p.getId().equals("roof_mount")).count();
         Object name = vehicle.getDisplayName().getContents() instanceof TranslatableContents t ? t.getKey() : null;
         int after = vehicle.getPartUnits().size();
@@ -217,12 +258,12 @@ public class HumveeMountGameTest {
         VehicleHits hits = vehicle.hits();
         boolean mk19Hit = hits.trace(top, bottom, i -> hits.part(i) == unit && hits.live(i)) != null;
         Vec3 mk19Muzzle = unit.aimContext().from.subtract(vehicle.position());
-        unit.selectWeaponIndex(false, 1, true);
+        fit(vehicle, M2_HUMVEE);
         boolean m2Hit = hits.trace(top, bottom, i -> hits.part(i) == unit && hits.live(i)) != null;
         Vec3 m2Muzzle = unit.aimContext().from.subtract(vehicle.position());
         CompoundTag saved = vehicle.saveWithoutId(new CompoundTag());
         vehicle.discard();
-        AbstractVehicle reloaded = spawn(helper, MK19_HUMVEE);
+        AbstractVehicle reloaded = spawn(helper, HUMVEE);
         if (reloaded == null) {
             return;
         }
@@ -238,20 +279,18 @@ public class HumveeMountGameTest {
         helper.succeed();
     }
 
+    /** Spawns unarmed: the roof ring is there, no gun answers, nothing fires. */
     @GameTest(template = TEMPLATE, timeoutTicks = 100)
-    public static void thePlainHumveeIsUnarmed(GameTestHelper helper) {
-        AbstractVehicle vehicle = spawn(helper, PLAIN);
+    public static void theHumveeSpawnsUnarmed(GameTestHelper helper) {
+        AbstractVehicle vehicle = spawn(helper, HUMVEE);
         if (vehicle == null) {
             return;
         }
-        List<String> armed = vehicle.getPartUnits().stream()
-                .filter(part -> part instanceof WeaponUnit || !part.getData().getMounts().isEmpty())
-                .map(part -> part.getId()).toList();
+        WeaponUnit unit = (WeaponUnit) vehicle.getPartUnit("roof_mount").orElseThrow();
+        String loadout = vehicle.loadout() == null ? null : vehicle.loadout().id;
+        ResourceLocation gun = unit.currentWeaponId();
         vehicle.discard();
-        if (!armed.isEmpty()) {
-            helper.fail("plain Humvee carries " + armed);
-            return;
-        }
+        helper.assertTrue("unarmed".equals(loadout) && gun == null, "spawned " + loadout + " with gun " + gun);
         helper.succeed();
     }
 
@@ -275,17 +314,34 @@ public class HumveeMountGameTest {
         return preset;
     }
 
+    /** Humvee with {@code loadout} selected and fitted. */
     @Nullable
-    private static WeaponUnit roofMount(GameTestHelper helper, ResourceLocation id) {
-        AbstractVehicle vehicle = spawn(helper, id);
+    private static WeaponUnit roofMount(GameTestHelper helper, String loadout) {
+        AbstractVehicle vehicle = spawn(helper, HUMVEE);
         if (vehicle == null) {
             return null;
         }
         if (!(vehicle.getPartUnit("roof_mount").orElse(null) instanceof WeaponUnit unit)) {
-            helper.fail(id + " has no roof_mount weapon part");
+            helper.fail("humvee has no roof_mount weapon part");
             return null;
         }
+        fit(vehicle, loadout);
         return unit;
+    }
+
+    private static int index(AbstractVehicle vehicle, String loadout) {
+        for (int i = 0; i < vehicle.loadouts().size(); i++) {
+            if (vehicle.loadouts().get(i).id.equals(loadout)) {
+                return i;
+            }
+        }
+        throw new IllegalArgumentException("no loadout " + loadout);
+    }
+
+    private static void fit(AbstractVehicle vehicle, String loadout) {
+        int i = index(vehicle, loadout);
+        Loadouts.select(vehicle, i, null);
+        vehicle.setLoadout(i, true);
     }
 
     @Nullable

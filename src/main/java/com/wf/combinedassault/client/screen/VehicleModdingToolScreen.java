@@ -24,6 +24,8 @@ import com.wf.combinedassault.client.resource.ClientAssetsManager;
 import com.wf.combinedassault.client.resource.vehicle.BaseDisplay;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.network.message.ClientVehicleChangeDisplay;
+import com.wf.combinedassault.network.message.ClientVehicleSelectLoadout;
+import com.wf.combinedassault.vehicle.loadout.Loadouts;
 import com.wf.combinedassault.util.AuiTextHelper;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
@@ -48,6 +50,9 @@ public class VehicleModdingToolScreen extends ApricityScreen {
     private Element description;
     private Element previewAnchor;
     private Element weaponButton;
+    private Element loadoutButton;
+    /** Shown until the server's sync lands. */
+    private int loadoutShown;
     private Element smokeControls;
     private Element smokeRInput;
     private Element smokeGInput;
@@ -94,6 +99,7 @@ public class VehicleModdingToolScreen extends ApricityScreen {
         description = element("vehicle-description");
         previewAnchor = element("modding-preview");
         weaponButton = element("weapon-button");
+        loadoutButton = element("loadout-button");
         smokeControls = element("smoke-controls");
         smokeRInput = element("smoke-red");
         smokeGInput = element("smoke-green");
@@ -116,6 +122,15 @@ public class VehicleModdingToolScreen extends ApricityScreen {
                 weaponButton.setDisabled(true);
             }
         }
+        if (loadoutButton != null) {
+            loadoutShown = vehicle.loadoutIndex();
+            if (vehicle.loadouts().isEmpty()) {
+                loadoutButton.setInlineStyleProperty("display", "none");
+            } else {
+                loadoutButton.addEventListener("click", event -> cycleLoadout());
+                showLoadout();
+            }
+        }
         bindSmokeControls();
         applyFilter(filter);
         refreshVehicleProfile();
@@ -123,9 +138,24 @@ public class VehicleModdingToolScreen extends ApricityScreen {
 
     private Element element(String id) { return document.getElementById(id); }
 
+    /** Free: hardware comes back to the player; refit at the probe node. */
+    private void cycleLoadout() {
+        loadoutShown = (Math.max(0, loadoutShown) + 1) % vehicle.loadouts().size();
+        PacketDistributor.sendToServer(new ClientVehicleSelectLoadout(vehicle.getId(), loadoutShown));
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+        showLoadout();
+    }
+
+    private void showLoadout() {
+        String id = loadoutShown < 0 ? "--" : vehicle.loadouts().get(loadoutShown).id;
+        setText(loadoutButton, Component.translatable("loadout.combinedassault.button",
+                Component.translatable("loadout.combinedassault." + id)).getString());
+    }
+
     private boolean hasWeaponSelections() {
         return vehicle.getPartUnits().stream().anyMatch(partUnit ->
-                partUnit instanceof WeaponUnit weaponUnit && weaponUnit.isInteractive() && weaponUnit.weapons.size() > 1);
+                partUnit instanceof WeaponUnit weaponUnit && weaponUnit.isInteractive() && weaponUnit.weapons.size() > 1
+                        && !Loadouts.manages(vehicle, weaponUnit));
     }
 
     private void buildDisplayCatalog() {

@@ -6,7 +6,7 @@
   "combinedassault.z10": "Z-10",
   "combinedassault.motorcycle": "Motorcycle",
   "combinedassault.hiace": "Hiace",
-  "combinedassault.quadcopter": "Quadcopter Drone",
+  "combinedassault.mavic": "Mavic Drone",
   "combinedassault.m1a2": "M1A2",
   "combinedassault.cssa5": "CS/SA5",
   "combinedassault.ah64d": "AH-64D",
@@ -26,7 +26,7 @@
   "entity.combinedassault.z10": "Z-10",
   "entity.combinedassault.motorcycle": "Motorcycle",
   "entity.combinedassault.hiace": "Hiace",
-  "entity.combinedassault.quadcopter": "Quadcopter Drone",
+  "entity.combinedassault.mavic": "Mavic Drone",
   "entity.combinedassault.m1a2": "M1A2",
   "entity.combinedassault.cssa5": "CS/SA5",
   "entity.combinedassault.ah64d": "AH-64D",
@@ -136,5 +136,11 @@
   "part.combinedassault.pod": "Launch pod",
   "part.combinedassault.driver": "Driver",
   "part.combinedassault.commander": "Commander",
-  "part.combinedassault.canisters": "Missile canisters"
+  "part.combinedassault.canisters": "Missile canisters",
+  "combinedassault.laser_trailer": "HEL laser trailer",
+  "entity.combinedassault.laser_trailer": "HEL laser trailer",
+  "combinedassault.laser_emplacement": "HEL laser emplacement",
+  "entity.combinedassault.laser_emplacement": "HEL laser emplacement",
+  "vehicle.weapon.laser": "HEL laser",
+  "part.combinedassault.laser": "Laser turret"
 }

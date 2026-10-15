@@ -90,6 +90,8 @@ Every field the mod reads from a pack: unit, default. Defaults from the deserial
 | `center_offset` | Vec3 | `[0,0,0]` | the point the hull rotates about, and the origin of the deck frame; glTF `pivot` socket |
 | `parts` | array | `[]` | see [§4](#4-parts) |
 | `uav` | bool | `false` | operated remotely (wflib PDA, UAVs app); the operator's body stays behind, standing; no storage over the link |
+| `autonomy` | object | absent | `uav` only; wflib autopilot body — [§19](#19-autonomy) |
+| `loadouts` | array | `[]` | configurations picked with the modding tool — [§20](#20-loadouts) |
 | `can_wade` | bool | `false` | |
 | `with_warning_receiver` | bool | `false` | carries an RWR |
 | `protect_passenger` | bool | `true` | |
@@ -106,7 +108,9 @@ Every field the mod reads from a pack: unit, default. Defaults from the deserial
 | `mountable` | object | — | [§3.9](#39-mount_points-and-mountable) |
 | `attributes` | object | — | per-type and required for all but `generic`, which has none — [§3.10](#310-attributes-per-type) |
 
-- UAVs = wflib PDA app (`UavPdaApp`; `uav_controller` removed, no migration). Sneak + use PDA on a UAV => linked (<= 16; `combinedassault:uav_links` `CameraChannels` on the PDA, feed entitlement via `CameraNet.entitle`; wflib `CHANNELS` stays the camera list). App: list + live feed of the selected one (wflib `CameraSources`, kind `MOUNTED`, lens = seat 0 sight, else view) + systems, link, fuel, ammo; CONNECT (lowers PDA) / REMOVE / FULL. Selecting an unloaded UAV wakes it (`HostWakeup`).
+- Link: synced `LINK` = wflib `Datalink` from the operator's parked body to seat 0 sight (`UavCamera.RANGE` 4000). Picture `Degrade`, `DroneCamHud` meter. Lost => inputs neutral (both sides), operator fire refused, `autonomy` body flies its program or holds. Leaving a remote UAV with the PDA in hand => its feed full screen; attack there re-CONNECTs. EMP / portable jammer => link 0 (wflib `Datalink`). wflib `drone_net` pins UAVs <= 25 kg (`UavCamera.NET_MAX_KG`).
+- UAV controls: leave = `leave_vehicle` (sneak = DOWN). `free_camera` toggles on UAVs (held elsewhere): mouse turns the seat 0 sight only, heading held, Q/E still yaw. Feed lens = seat 0 `sight` socket (Mavic: gimbal camera face).
+- UAVs = wflib PDA Drones app via `RemoteBody` (`uav/UavTablet`; `uav_links` component and CA app removed, no migration). Sneak + use PDA on a UAV => wflib `CHANNELS` (cap = wflib camera channel config). Feed: wflib `CameraSources`, kind `MOUNTED`, lens = seat 0 sight, else view. Entry: systems cells, ammo, fuel/charge, link; CONNECT = remote ride (side's allies, a free seat). `autonomy` => DISPATCH to it directly.
 
 ### 3.3 `view_info`
 
@@ -164,6 +168,7 @@ Also valid on an individual part, where it overrides the vehicle's.
 | `impact_multiplier` | float | `0.1` |
 | `impact_speed_threshold` | float | `10`; aircraft `5` |
 | `damage_transfer_coefficient` | float | `1` |
+| `laser_resistance` | float | `1` | scales mass/armour term of wflib `LaserDamage` |
 
 Impact: `dv` = contact-cancelled velocity (m/s). `dv > impact_speed_threshold` => `0.5 * mass_t * dv^2 * impact_multiplier` at the contact centroid (struck system included).
 
@@ -294,7 +299,8 @@ Both ground types also take a top-level `landing_gear_part_id` where applicable.
 | `max_air_speed` | float | — | blocks/tick; arcade drag reaches it at 20° nose-down |
 | `fast_roping` | bool | `false` | |
 | `fast_roping_door_id` | string | — | |
-| `fpv` | object | absent | direct attitude control; absent means the stock helicopter model — [§8](#8-fpv-attitude-control) |
+| `fpv` | object | absent | direct attitude control; absent means the stock helicopter model — [§8](#8-multirotor-and-fpv-flight) |
+| `multirotor` | object | absent | multirotor force law replaces `main_rotor_force`/arcade aero — [§8](#8-multirotor-and-fpv-flight) |
 
 **`fixed_wing_vehicle`** — plus top-level `landing_gear_part_id`, `airbrake_part_id`, `thrust_part_id`
 
@@ -472,6 +478,8 @@ Each entry takes one of three shapes:
 | | `stow_when_towed` | bool | `false` | landing leg: towed => reach 0, drawn at bind (modelled stowed); else reaches the ground; 2 s stroke |
 | `track` | `tracks` | Vec3[][] | `track` sockets — each inner list is one closed track path |
 | | `track_width` | float | `0.5` | collision box width per track |
+| `payload` | `payload` | object | absent | `{"type": id, ...}` fixed payload; with `loadouts` leave out (loadout equips it) |
+| | `attach_offset` | Vec3 | `[0,0,0]` | blast / drop origin |
 | `radar` | `radar_type` | string | `""` |
 | | `scan_sector_angle` | float | `45` |
 | | `max_scan_distance` | float | `256` |
@@ -496,6 +504,7 @@ Rounds have no recipes in CA or WFLib; crafting = pack (GregTech).
 | `combinedassault:aerial_bomb` | |
 | `combinedassault:missile` | [5.4](#54-missile) |
 | `combinedassault:decoy_flare` | flare key |
+| `combinedassault:laser` | `power` (rated wflib laser damage/tick, `1`), `range` (`96`), `energy_per_tick` (vehicle energy, `0.0005`); no ammo/reload; one beam tick per shot, first entity on the aim line |
 
 ### 5.2 Fields every weapon has
 
@@ -504,7 +513,7 @@ Rounds have no recipes in CA or WFLib; crafting = pack (GregTech).
 | `name` | string | `vehicle.weapon.unknown` | translation key |
 | `inaccuracy` | float | `0.5` | triangle spread `0.0172275 x (inaccuracy + preset dispersion)` per axis |
 | `recoil` | float | `0` | sprung hull pitch / roll kick; unsprung (emplacement, trailer) => none |
-| `shoot_interval` | long | `100` | milliseconds |
+| `shoot_interval` | long | `100` | milliseconds; `< 50` => `50 / shoot_interval` rounds per shot (fractional carry), launched `k / n` into the tick (shots arrive <= 1/tick) |
 | `max_capacity` | int | `64` | rounds ready |
 | `reload.time` | int | — | ticks |
 | `reload.ammo` | ingredient | *required* (except `holder_only`) | item, `#tag`, or a list of either; list order = creative default first |
@@ -596,7 +605,7 @@ Ship script context: `getShaft()` (telegraph summed per powered tick, lerped), `
   "result": {
     "id": "combinedassault:vehicle_spawn_item",
     "count": 1,
-    "components": { "minecraft:custom_data": { "CombinedAssaultId": "combinedassault:fpv_drone" } }
+    "components": { "minecraft:custom_data": { "CombinedAssaultId": "combinedassault:mavic" } }
   },
   "printingTime": 300
 }
@@ -824,50 +833,59 @@ Sound = event id string, or:
 
 ## 7. Mass and cargo weight
 
-A vehicle's physics mass is:
-
 ```
 mass = physics_info.mass          (curb weight)
      + fuel                       (electric: the full battery, whatever the charge)
+     + fitted parts               (payloads, addon armour: ERA brick 5.6 / 13 kg, slat 25 kg/m²)
      + cargo kilograms × storage.cargo_mass_per_kg
 ```
 
-A tank gets lighter as it empties, so a fuel vehicle handles better on the last quarter than the
-first. A battery does not, so an electric one carries `energy_capacity` of mass from full to flat.
-
-Mass divides thrust in every drivetrain, so a loaded truck accelerates and brakes worse than an empty
-one for free, without a separate handling stat.
-
-**Cargo weight is optional and comes from Ultimate Weight (`wfweight`).** Without that mod there is
-no source of per-item weight, cargo contributes nothing, and a full hold drives exactly like an empty
-one. The integration is bound reflectively and fails closed, so nothing needs to change in a pack to
-run with or without it — set `cargo_mass_per_kg` and it takes effect for the people who have it.
-
-The hold is recounted at most once a second and only when its contents changed, so a thousand-slot
-truck being fed by a hopper is not a thousand weight lookups per tick.
+- Battery mass constant from full to flat; tank lightens as it burns.
+- Mass divides thrust in every drivetrain; no separate handling stat.
+- Cargo kg only with Ultimate Weight (`wfweight`, reflective, fails closed). Hold recounted <= 1/s, only on change.
+- Parts recomputed per server tick, synced (`PART_MASS`) => client prediction agrees.
 
 ---
 
-## 8. FPV attitude control
+## 8. Multirotor and FPV flight
 
-An optional `attributes.fpv` object on a `rotary_wing_vehicle` replaces the stock helicopter attitude
-model with direct, mouse-driven attitude. The stock model clamps yaw to a sideslip limit that closes
-to 15° at speed and weathervanes the nose back into the airflow — correct for a helicopter, wrong for
-a racing drone. Thrust is untouched, so pointing down and holding collective is still a dive.
+### 8.1 `attributes.multirotor`
+
+wflib `Multirotor` force law: thrust along the tilted disc only, airframe drag, gravity owned by the model
+(vehicle `noGravity`). `thrust / (mass·9.8)` = live T/W => payload and fuel mass cost climb and top speed.
+Skips `main_rotor_force`, arcade aero, `max_air_speed`.
 
 | field | default | notes |
 | --- | --- | --- |
-| `response` | `0.35` | fraction of the remaining angle closed per tick; clamped to 0.01–1 |
-| `yaw_rate` | `6.0` | degrees per tick of yaw authority |
-| `pitch_bias` | `25.0` | degrees of forward pitch at full stick |
-| `bank_per_yaw` | `4.0` | degrees of roll per degree of yaw rate |
+| `thrust` | required | N, all rotors at full output |
+| `max_tilt` | `45` | deg; with drag sets top speed |
+| `tilt_rate` | `10` | deg/tick |
+| `linear_drag` / `quadratic_drag` | `0.04` / `0.02` | per tick, × v / × v² (blocks/tick) |
+| `velocity_gain` / `vertical_gain` | `0.8` / `0.28` | STABILIZED velocity loop |
+| `max_climb` / `max_descent` | `0.6` / `0.45` | blocks/tick; unpowered => no descent limit |
+| `max_speed` / `climb_speed` | `0.9` / `0.3` | STABILIZED stick authority, blocks/tick |
+| `yaw_rate` / `yaw_response` | `8` / `0.35` | deg/tick cap; fraction of mouse-yaw error per tick |
+| `mode` | `stabilized` | `stabilized` \| `fpv`; hover key toggles |
+| `fpv` | `{}` | FPV attitude, keys as §8.2 |
+
+- STABILIZED: WASD/space/ctrl = velocity setpoint in heading frame, mouse = heading. Same controller as autopilot.
+- FPV: §8.2 attitude; collective = throttle.
+- Not client-predicted.
+
+### 8.2 `attributes.fpv`
+
+Direct mouse attitude, no sideslip limit/weathervaning. Thrust untouched: nose down + collective = dive.
+
+| field | default | notes |
+| --- | --- | --- |
+| `response` | `0.35` | fraction of remaining angle closed per tick; 0.01–1 |
+| `yaw_rate` | `6.0` | deg/tick |
+| `pitch_bias` | `25.0` | deg forward pitch at full stick |
+| `bank_per_yaw` | `4.0` | deg roll per deg/tick yaw |
 | `max_bank` | `45.0` | |
 | `max_pitch` | `80.0` | |
 
-The shipped `fpv_drone` runs hotter than these defaults — `yaw_rate` 8, `pitch_bias` 30, `max_bank`
-55 — which is a reasonable starting point for a racing drone rather than a camera one.
-
-Omitting the block entirely leaves the vehicle on the stock model.
+Absent => stock model.
 
 ---
 
@@ -1014,11 +1032,8 @@ an entity.
 
 ### 10.6 Making a shipped vehicle electric
 
-Nothing in the default pack is electric — the drones are the obvious candidates, but converting one
-would leave anybody without an FE mod unable to charge it. To do it in your own pack, the whole
-change is the `energy_info` block above dropped into `fpv_drone.json` or `quadcopter.json`. Existing
-vehicles in the world keep their stored energy across the switch, because energy is stored in units
-either way; only the way you top it up changes.
+- None shipped electric: no FE mod => no charging. Drones are the candidates.
+- Own pack: `energy_info` above into `mavic.json`. Stored energy kept across the switch (units either way).
 
 ---
 
@@ -1315,7 +1330,8 @@ Cargo parachute (`combinedassault:cargo_parachute`): use on a vehicle to fit, sn
 
 ## 18. Air defence
 
-- Per station: `air_defense` ([§4.4](#44-weapon-stations--weapon-auto_weapon)). Shipped: `mim104` (`uav`; four `LARGE` canisters on the elevating launcher; `indirect_fire` map).
+- Per station: `air_defense` ([§4.4](#44-weapon-stations--weapon-auto_weapon)). Shipped: `mim104` (`uav`; four `LARGE` canisters on the elevating launcher; `indirect_fire` map); `laser_trailer` (mim104 model, placeholder), `laser_emplacement` (mk15 model, placeholder; `mountable` `naval_emplacement`): weapon `laser`.
+- Laser station `AUTO`: same battery; lead speed 1e6, fire = beam tick with clear line, energy-gated. Damage: wflib `LaserDamage` per vehicle mass (kg) + nominal armour of the face toward the source; `DamageSystem` LASER = no threshold, THERMAL wear at nearest hull point. Measured: Mavic burns, MQ-9 > 95 % after 100 beam ticks (`LaserGameTest`).
 
 | field | default | |
 | --- | --- | --- |
@@ -1324,6 +1340,7 @@ Cargo parachute (`combinedassault:cargo_parachute`): use on a vehicle to fit, sn
 | `min_elevation` / `max_elevation` | `15` / `80` | launch window, degrees up; lead point outside => clamped |
 | `salvo_spacing` | `10` | ticks between rounds of a salvo (>= weapon `shoot_interval`) |
 | `cooldown` | `40` | ticks after a salvo |
+| `dwell` | `40` | laser station: beam ticks per engagement (replaces salvo/spacing) |
 
 - Hull node: mode `MANUAL` / `AUTO`, target source (radar network / own radar), salvo 1 / 2, claim / release.
 - Owner = claimed side (WarForge faction, else scoreboard team), else crew team. Settings, claim and UAV controller pairing: owner's allies only; anyone while unowned. Missiles carry the owner's side.
@@ -1333,4 +1350,63 @@ Cargo parachute (`combinedassault:cargo_parachute`): use on a vehicle to fit, sn
   - own radar: surveillance radar registered on the owner's net (feeds it too).
   - Unowned => private net: the shared unaffiliated net reads unaffiliated missiles as friendly.
 - Interceptor leaves along its canister (WFLib `intercept` ascent keeps a launch velocity).
-- Gap: aircraft and vehicles are not WFLib `InterceptTarget` => never engaged.
+- `uav` vehicles = `InterceptTarget` class `DRONE` (side = claim, else operator faction). Gap: manned aircraft/vehicles are not => never engaged.
+
+---
+
+## 19. Autonomy
+
+`uav` + `autonomy` => `VehicleDrone`: wflib `ControllableDrone` (missions, squads, telemetry, pads). Absent => manual only.
+
+| field | default | notes |
+| --- | --- | --- |
+| `tasks` | `[]` | wflib `DroneTask.Kind` ids flown: `moveto`, `loiter`, `exfil`, ...; others refused at dispatch |
+| `cruise_speed` | wflib `0.75` | blocks/tick |
+| `cruise_altitude` | wflib `40` | blocks AGL; ground pilot forces `0` |
+| `min_speed` | `0.8` | fixed wing: orbit / climb-out floor; rotates at 0.9x on the roll |
+| `release_speed` | cruise | attack-run speed, blocks/tick |
+
+Pilot by class: `multirotor` => `Multirotor.step` setpoint; rotary => hover loop with velocity target; `fixed_wing_vehicle` => aim + throttle steps, slow setpoint = orbit; wheeled/tracked => steer + bang-bang speed. `generic` has none (refused).
+
+- Plans fly only while nobody is aboard: remote pilot suspends; dismount => resumes from current position.
+- Airborne => engine on, own chunk tickets along the route; landed IDLE => engine off.
+- Charge = energy / full-power burn x wflib hover drain => wflib reserves apply unchanged.
+- Drone pad: an idle body within 8 blocks that flies the kind takes the pad's dispatch before a wflib drone is spawned; home = pad.
+- Gaps: fixed wing lands by descending orbit (no runway approach); ground pilot has no path planning.
+
+---
+
+## 20. Loadouts
+
+```json
+"loadouts": [
+  {"id": "plain", "flight_mode": "stabilized"},
+  {"id": "kamikaze", "part": "hardpoint", "payload": {"type": "combinedassault:warhead", "arming_ticks": 40}, "flight_mode": "fpv"},
+  {"id": "m2", "part": "roof_mount", "weapon": "combinedassault:gun_12.7mm",
+   "install": [{"item": "minecraft:iron_ingot", "count": 24}]}
+]
+```
+
+| field | notes |
+| --- | --- |
+| `id` | lang `loadout.combinedassault.<id>` |
+| `part` | part the hardware goes on; absent = nothing to fit |
+| `payload` | `payload` part: type + config; strapped items = cost |
+| `weapon` | weapon part: one of its `weapons`, selected while fitted |
+| `install` | weapon hardware cost; `item` = id or `#tag` (tag costs not refunded) |
+| `flight_mode` | multirotor default on selection |
+
+- First loadout applied at first spawn. Modding tool button cycles: free, fitted hardware back to the player.
+- Probe node on `part`: strap one accepted item per action / fit (pays `install`); take off => refund.
+- UAV + use with item: current payload accepts => strapped; else first payload loadout accepting it selected, then strapped. Item fits => hull probe storage row omitted (else it claims use).
+- Loadout-named weapon part: unfitted => no gun (`currentWeaponId` null, mounts hidden, never fires); direct tool swaps refused.
+- Load errors: unknown part, wrong part kind, unknown payload type / weapon, both or neither of `payload`/`weapon`.
+
+| payload type | holds | trigger | config |
+| --- | --- | --- | --- |
+| `warhead` | 1 `#c:ammo/rockets/explosive` (wflib `StrappedExplosive`) | impact >= `fuze_speed`, operator, shot down; consumes drone | `arming_ticks` 40, `fuze_speed` 0.12, `hit_damage` 30, `slots` 1 |
+| `grenade_rack` | `#mineassault:drone_droppable` `ChargeItem`s | operator only; one dropped per trigger, drone velocity, full fuse | `slots` 4 (<= 4 synced) |
+
+- Autopilot STRIKE ([§19](#19-autonomy)): offered only while loaded; rack drops one per release tick (stick); `warhead` => terminal dive on the aim point.
+- Shipped: `mavic` (plain / kamikaze / bomber), `humvee` (unarmed / m2 / mk19).
+

@@ -5,8 +5,9 @@ plain glTF export (`uri`) => untextured in game.
 
 ## Blender add-on (`tools/blender/`)
 
-Install: `python3 tools/blender/build_addon.py` -> `build/combinedassault_tools.zip`; Blender > Edit > Preferences >
-Add-ons > Install from Disk. Blender 4.2+ (tested 5.2).
+Install: `python3 tools/blender/build_addon.py` -> `build/combinedassault_tools.zip` (extension:
+`tools/blender/blender_manifest.toml`); Blender > Edit > Preferences > Get Extensions > Install from Disk. Blender 4.2+
+(tested 5.2).
 
 | task | where |
 |---|---|

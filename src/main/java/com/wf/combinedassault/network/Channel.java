@@ -9,8 +9,6 @@ import com.wf.combinedassault.network.message.*;
 import com.wf.combinedassault.tow.net.TowCoupleMessage;
 import com.wf.combinedassault.indirect.net.CallForFirePacket;
 import com.wf.combinedassault.indirect.net.FireRequestPacket;
-import com.wf.combinedassault.uav.net.UavTabletAction;
-import com.wf.combinedassault.uav.net.UavTabletState;
 
 public class Channel {
 
@@ -43,13 +41,14 @@ public class Channel {
         registrar.playToClient(ServerBroadcastEntities.TYPE, ServerBroadcastEntities.STREAM_CODEC, ServerBroadcastEntities::handle);
         registrar.playToServer(ClientRadarAction.TYPE, ClientRadarAction.STREAM_CODEC, ClientRadarAction::handle);
         registrar.playToServer(ClientVehicleSelectPartWeapon.TYPE, ClientVehicleSelectPartWeapon.STREAM_CODEC, ClientVehicleSelectPartWeapon::handle);
+        registrar.playToServer(com.wf.combinedassault.network.message.ClientVehicleSelectLoadout.TYPE,
+                com.wf.combinedassault.network.message.ClientVehicleSelectLoadout.STREAM_CODEC,
+                com.wf.combinedassault.network.message.ClientVehicleSelectLoadout::handle);
         registrar.playToServer(ClientOpenParachute.TYPE, ClientOpenParachute.STREAM_CODEC, ClientOpenParachute::handle);
         registrar.playToServer(FpvTriggerMessage.TYPE, FpvTriggerMessage.STREAM_CODEC, FpvTriggerMessage::handle);
         registrar.playToClient(ServerDeckRejoin.TYPE, ServerDeckRejoin.STREAM_CODEC, ServerDeckRejoin::handle);
         registrar.playToClient(ServerHitEffect.TYPE, ServerHitEffect.STREAM_CODEC, ServerHitEffect::handle);
         registrar.playToServer(TowCoupleMessage.TYPE, TowCoupleMessage.STREAM_CODEC, TowCoupleMessage::handle);
-        registrar.playToServer(UavTabletAction.TYPE, UavTabletAction.STREAM_CODEC, UavTabletAction::handle);
-        registrar.playToClient(UavTabletState.TYPE, UavTabletState.STREAM_CODEC, UavTabletState::handle);
         registrar.playToServer(CallForFirePacket.TYPE, CallForFirePacket.STREAM_CODEC, CallForFirePacket::handle);
         registrar.playToClient(FireRequestPacket.TYPE, FireRequestPacket.STREAM_CODEC, FireRequestPacket::handle);
         registrar.playToServer(com.wf.combinedassault.vehicle.light.LightToggleMessage.TYPE,

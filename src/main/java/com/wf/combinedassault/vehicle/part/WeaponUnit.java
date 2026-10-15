@@ -51,6 +51,7 @@ import com.wf.combinedassault.util.VectorUtil;
 import com.wf.combinedassault.indirect.GunLaying;
 import com.wf.combinedassault.indirect.IndirectFire;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.loadout.Loadouts;
 import com.wf.combinedassault.vehicle.pojo.AimContext;
 import com.wf.combinedassault.vehicle.pojo.Bolt;
 import com.wf.combinedassault.vehicle.pojo.WarnType;
@@ -597,7 +598,7 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     @Override
     public boolean onInteract(Player player, InteractionHand hand) {
         if (!vehicle.level().isClientSide() && hand == InteractionHand.MAIN_HAND && isInteractive() && player.isShiftKeyDown()) {
-            if (player.getItemInHand(hand).getItem() == AllItems.MODDING_TOOL.get()) {
+            if (player.getItemInHand(hand).getItem() == AllItems.MODDING_TOOL.get() && !Loadouts.manages(vehicle, this)) {
                 switchWeapon(false, true, true);
                 AbstractVehicleWeapon<?> weapon = getCurrentWeapon().get();
                 player.displayClientMessage(Component.translatable("tips.use_weapon", weapon.getDisplayName()), true);
@@ -693,7 +694,8 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     }
 
     public void shoot(int weaponIndex, List<AimContext> aimContexts, @Nullable LivingEntity operator) {
-        if (ComponentDamage.state(this) == ComponentState.BROKEN) {
+        if (!Loadouts.fitted(vehicle, this) || ComponentDamage.state(this) == ComponentState.BROKEN
+                || operator != null && vehicle.linkLost()) {
             // Wrecked well before the part is annihilated, which is when the stock gate fires.
             return;
         }
@@ -1071,8 +1073,12 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         return bolts != null ? bolts : PIVOT_BOLT;
     }
 
+    /** Null while a loadout names this part and its hardware is off: mounts hidden, nothing fires. */
     @Nullable
     public ResourceLocation currentWeaponId() {
+        if (!Loadouts.fitted(vehicle, this)) {
+            return null;
+        }
         return getCurrentWeapon().map(weapon -> weapon.getData().getWeaponId()).orElse(null);
     }
 

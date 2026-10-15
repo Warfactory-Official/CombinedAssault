@@ -23,6 +23,12 @@ public final class FpvPayloadTypes {
             type -> new WarheadPayload(type, new com.google.gson.JsonObject())
     ));
 
+    public static final FpvPayloadType GRENADE_RACK = register(new FpvPayloadType(
+            CombinedAssault.modLocation("grenade_rack"),
+            GrenadeRackPayload::new,
+            type -> new GrenadeRackPayload(type, new com.google.gson.JsonObject())
+    ));
+
     private FpvPayloadTypes() {
     }
 

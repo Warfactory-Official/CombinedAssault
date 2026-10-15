@@ -1,0 +1,62 @@
+{
+    "type": "combinedassault:generic",
+    "attributes": {},
+    "max_health": 200,
+    "view_info": {
+        "third_person_distance": 6,
+        "third_person_distance_zoomed": 0
+    },
+    "energy_info": {
+        "energy_capacity": 1000,
+        "energy_consumption_per_tick": 0.01
+    },
+    "uav": true,
+    "mountable": {
+        "enabled": true,
+        "tags": [
+            "emplacement",
+            "naval_emplacement"
+        ]
+    },
+    "parts": [
+        {
+            "id": "ciws",
+            "name": "ciws",
+            "type": "combinedassault:weapon",
+            "crew_roles": [
+                "driver",
+                "gunner"
+            ],
+            "max_health": 150,
+            "component": "turret",
+            "detachable": false,
+            "operator_on_weapon_unit": true,
+            "fire_control_sensor_type": "rf",
+            "optical_sight_type": "crt",
+            "crosshair_style": "square",
+            "with_thermal_imager": true,
+            "zoom_max": 6,
+            "rot_info": {
+                "x_rot_speed": 6,
+                "y_rot_speed": 6,
+                "need_power": false
+            },
+            "weapons": [
+                "combinedassault:laser"
+            ],
+            "air_defense": {
+                "range": 160,
+                "min_elevation": -10,
+                "max_elevation": 85,
+                "cooldown": 10,
+                "dwell": 40
+            }
+        }
+    ],
+    "model": "combinedassault:models/emplacement/mk15/mk15.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/mk15.png",
+        "controller": "combinedassault:mk15_controller",
+        "tab_index": 603
+    }
+}

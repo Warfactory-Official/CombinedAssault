@@ -2,7 +2,7 @@
   "type": "combinedassault:vehicle_printing",
   "materials": [
     {
-      "count": 150,
+      "count": 48,
       "ingredient": {
         "tag": "c:ingots/iron"
       }
@@ -20,21 +20,21 @@
       }
     },
     {
-      "count": 12,
+      "count": 4,
       "ingredient": {
         "item": "minecraft:glass_pane"
       }
     },
     {
-      "count": 2,
+      "count": 4,
       "ingredient": {
-        "item": "minecraft:furnace"
+        "item": "minecraft:dispenser"
       }
     },
     {
-      "count": 24,
+      "count": 8,
       "ingredient": {
-        "item": "minecraft:gunpowder"
+        "item": "minecraft:lapis_lazuli"
       }
     }
   ],
@@ -43,9 +43,9 @@
     "count": 1,
     "components": {
       "minecraft:custom_data": {
-        "CombinedAssaultId": "combinedassault:humvee_m2"
+        "CombinedAssaultId": "combinedassault:mavic"
       }
     }
   },
-  "printingTime": 2000
+  "printingTime": 800
 }

@@ -986,8 +986,11 @@
    ],
    "extras": {
     "combinedassaultRole": "part",
-    "combinedassaultInterface": "camera"
-   }
+    "combinedassaultInterface": "sighting_system"
+   },
+   "children": [
+    89
+   ]
   },
   {
    "name": "collider_vehicle_body_0",
@@ -1222,6 +1225,19 @@
    "extras": {
     "gemrenderHidden": true,
     "combinedassaultRole": "center_of_mass"
+   }
+  },
+  {
+   "name": "sight_sighting_system",
+   "translation": [
+    0.0,
+    0.0,
+    0.1
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "sight",
+    "combinedassaultInterface": "sighting_system"
    }
   }
  ],

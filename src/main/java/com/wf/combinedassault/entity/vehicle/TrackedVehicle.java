@@ -103,7 +103,7 @@ public class TrackedVehicle extends AbstractVehicle
 
     @Override
     protected Vec3 tickMove() {
-        if (getDriver() == null) {
+        if (getDriver() == null && !autopilotControl) {
             controlUnit.reset();
         }
 

@@ -1,0 +1,14 @@
+schema_version = "1.0.0"
+
+id = "combinedassault_tools"
+version = "4.0.0"
+name = "combinedassault tools"
+tagline = "Frames, colliders, hit modules, sockets, armour and pack export"
+maintainer = "combinedassault"
+type = "add-on"
+tags = ["Import-Export"]
+blender_version_min = "4.2.0"
+license = ["SPDX:GPL-3.0-or-later"]
+
+[permissions]
+files = "Import and export pack models"

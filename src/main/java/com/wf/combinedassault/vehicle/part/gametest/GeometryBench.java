@@ -31,7 +31,7 @@ import java.util.Optional;
 @GameTestHolder(ClimbBench.NAMESPACE)
 public class GeometryBench {
 
-    private static final String[] VEHICLES = {"humvee", "humvee_mk19", "m1129", "centauro", "m983", "mim104", "m1a2", "t84", "t90", "merkava"};
+    private static final String[] VEHICLES = {"humvee", "m1129", "centauro", "m983", "mim104", "m1a2", "t84", "t90", "merkava"};
     private static final int LANE_X = 3000;
     private static final int LANE_PITCH = 40;
     private static final int HALF = 12;

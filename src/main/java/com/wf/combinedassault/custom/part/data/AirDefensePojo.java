@@ -26,4 +26,8 @@ public class AirDefensePojo {
     /** Ticks after a salvo. */
     @SerializedName("cooldown")
     public int cooldown = 40;
+
+    /** Laser: beam ticks per engagement before the next pick (salvo + spacing unused). */
+    @SerializedName("dwell")
+    public int dwell = 40;
 }

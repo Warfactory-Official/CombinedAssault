@@ -14,7 +14,6 @@ import com.wf.combinedassault.vehicle.collision.SectionScan;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import io.netty.buffer.Unpooled;
@@ -65,7 +64,17 @@ import org.joml.Vector3f;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.all.AllConfigs;
 import com.wf.combinedassault.all.AllDamageTypes;
+import com.wf.combinedassault.autonomy.VehicleDrone;
+import com.wf.combinedassault.vehicle.loadout.Loadouts;
+import com.wf.combinedassault.vehicle.pojo.LoadoutInfo;
+import com.wf.wflib.drone.DroneTracker;
+import com.wf.wflib.drone.cam.Datalink;
+import com.wf.wflib.laser.LaserTarget;
+import com.wf.wflib.block.DroneNetBlock;
+import com.wf.combinedassault.ballistics.ArmorFace;
+import com.wf.combinedassault.uav.UavCamera;
 import com.wf.combinedassault.all.AllSounds;
+import com.wf.wflib.api.DetachedAnchors;
 import com.wf.wflib.api.DetachedBodyHost;
 import com.wf.combinedassault.api.entity.ICustomVehicle;
 import com.wf.wflib.api.BeamSource;
@@ -167,12 +176,21 @@ import com.wf.wflib.probe.ProbeJobs;
 public abstract class AbstractVehicle extends ContainerCraft
         implements RemoteTickEntity, OBBEntity, ICustomVehicle, IEntityWithComplexSpawn, DetachedBodyHost,
         com.wf.combinedassault.vehicle.parenting.DeckCarrier, TargetIlluminator, BeamSource,
-        com.wf.wflib.telemetry.TelemetryReporter {
+        com.wf.wflib.telemetry.TelemetryReporter, com.wf.wflib.entity.InterceptTarget, LaserTarget {
 
     public static final EntityDataAccessor<Float> X_ROT = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Float> Y_ROT = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Float> Z_ROT = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Float> ENERGY = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
+    /** kg of fitted parts/payload ({@link PartUnit#mass}, addon armour); synced so prediction agrees. */
+    public static final EntityDataAccessor<Float> PART_MASS = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
+    /** UAV datalink to its remote pilot, 0..1 (wflib {@link Datalink}); 1 with no remote pilot. */
+    public static final EntityDataAccessor<Float> LINK = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
+    private static final float LINK_QUANTUM = 1f / 64f;
+    /** Index into the data's {@code loadouts}; -1 = none chosen yet. */
+    public static final EntityDataAccessor<Integer> LOADOUT = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.INT);
+    /** Weapon loadout's hardware paid for and on. */
+    public static final EntityDataAccessor<Boolean> LOADOUT_FITTED = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Float> POWER = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
     /** Registry id of the fluid in the tank, or empty. Synced so the fuel gauge can name it. */
     public static final EntityDataAccessor<String> FUEL = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.STRING);
@@ -409,8 +427,18 @@ public abstract class AbstractVehicle extends ContainerCraft
     /** Consecutive ticks players have been shoving this hull back onto its wheels. */
     public int rightingHold;
     private final HashMap<LivingEntity, Vec3> dismountLocations;
+    private final DetachedAnchors anchors = new DetachedAnchors(this, DETACHED_ANCHORS);
     protected boolean driverXYRotControl = false;
     public boolean uav = false;
+    /** Set each tick the autopilot wrote {@link #controlUnit}: no-driver reset skipped. */
+    public boolean autopilotControl;
+    /** wflib autonomy body; null = manual only. */
+    @Nullable
+    public VehicleDrone drone;
+    private List<LoadoutInfo> loadouts = List.of();
+    /** Saved drone state read before initData built the body. */
+    @Nullable
+    private CompoundTag droneTag;
     /** {@link #board} -> {@link #onEnterVehicle}; -1 = default pick. */
     private int requestedSeat = -1;
     /** Last player to fly this UAV: its datalink keeps reporting to them while it flies itself. */
@@ -457,6 +485,10 @@ public abstract class AbstractVehicle extends ContainerCraft
         builder.define(Y_ROT, 0f);
         builder.define(Z_ROT, 0f);
         builder.define(ENERGY, 0f);
+        builder.define(PART_MASS, 0f);
+        builder.define(LINK, 1f);
+        builder.define(LOADOUT, -1);
+        builder.define(LOADOUT_FITTED, false);
         builder.define(FUEL, "");
         builder.define(POWER, 0f);
         builder.define(ENGINE_SPEED, 0f);
@@ -480,7 +512,7 @@ public abstract class AbstractVehicle extends ContainerCraft
     @Override
     public void onSyncedDataUpdated(List<SynchedEntityData.DataValue<?>> dataValues) {
         super.onSyncedDataUpdated(dataValues);
-        if (dataValues.stream().anyMatch(value -> value.id() == ENERGY.id())) {
+        if (dataValues.stream().anyMatch(value -> value.id() == ENERGY.id() || value.id() == PART_MASS.id())) {
             refreshMass();
         }
         if (level().isClientSide() && hullComponents != null
@@ -542,6 +574,11 @@ public abstract class AbstractVehicle extends ContainerCraft
         if (uavOperator != null) {
             compound.putUUID("UavOperator", uavOperator);
         }
+        if (drone != null) {
+            compound.put("Drone", drone.save());
+        }
+        compound.putInt("Loadout", loadoutIndex());
+        compound.putBoolean("LoadoutFitted", loadoutFitted());
         if (side != null) {
             compound.putUUID("Side", side);
         }
@@ -585,6 +622,16 @@ public abstract class AbstractVehicle extends ContainerCraft
             setPower(compound.getFloat("Power"));
         }
         uavOperator = compound.hasUUID("UavOperator") ? compound.getUUID("UavOperator") : null;
+        if (compound.contains("Loadout")) {
+            setLoadout(compound.getInt("Loadout"), compound.getBoolean("LoadoutFitted"));
+        }
+        if (compound.contains("Drone")) {
+            if (drone != null) {
+                drone.load(compound.getCompound("Drone"));
+            } else {
+                droneTag = compound.getCompound("Drone");
+            }
+        }
         side = compound.hasUUID("Side") ? compound.getUUID("Side") : null;
         if (compound.contains("Destroyed", Tag.TAG_ANY_NUMERIC)) {
             entityData.set(DESTROYED, compound.getBoolean("Destroyed"));
@@ -747,12 +794,22 @@ public abstract class AbstractVehicle extends ContainerCraft
             if (!dataInitialized) {
                 initData();
             }
+            if (drone != null) {
+                DroneTracker.track(drone);
+            }
+            if (!loadouts.isEmpty() && loadoutIndex() < 0) {
+                Loadouts.select(this, 0, null);
+            }
         }
     }
 
     @Override
     public void onRemovedFromLevel() {
         super.onRemovedFromLevel();
+        if (!level().isClientSide() && drone != null) {
+            DroneTracker.untrack(drone);
+            drone.release();
+        }
         CarrierDecks.unregister(this);
         carrierRegistered = false;
         OversizedVehicles.setRegistered(this, false);
@@ -875,6 +932,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             seats.get(i).passengerId = riders[i];
         }
         this.uav = vehicleData.isUav();
+        this.loadouts = vehicleData.getLoadouts();
         this.canWade = vehicleData.canWade();
         if (vehicleData.withWarningReceiver()) {
             this.warningReceiver = new WarningReceiver(this);
@@ -892,6 +950,15 @@ public abstract class AbstractVehicle extends ContainerCraft
         this.hits = hitModel == null ? null
                 : new VehicleHits(this, hitModel, partUnitsAndSeats.groups(), map, clipTracks);
         vehicleData.inject(this);
+        if (vehicleData.getAutonomy() == null) {
+            this.drone = null;
+        } else if (this.drone == null) {
+            this.drone = new VehicleDrone(this, vehicleData.getAutonomy());
+            if (droneTag != null) {
+                this.drone.load(droneTag);
+                droneTag = null;
+            }
+        }
         // Re-index from scratch; initData runs more than once, on the save and spawn data paths,
         // and parts finish attaching cubes here.
         this.allCubeOBBs = null;
@@ -952,6 +1019,9 @@ public abstract class AbstractVehicle extends ContainerCraft
         if (!level().isClientSide() && controlUnit.consume()) {
             VehiclePrediction.due(this);
         }
+        if (linkLost()) {
+            controlUnit.neutral();
+        }
         VehicleParenting.capture(this);
         long baseAt = TrialProfile.start();
         super.tick();
@@ -970,8 +1040,20 @@ public abstract class AbstractVehicle extends ContainerCraft
             if (isEngineOn() && !VehicleSystems.engineWorks(this)) {
                 toggleEngine(false);
             }
+            tickLink();
+            if (drone != null) {
+                drone.tick();
+            }
             VehicleResupply.tick(this);
-            if (cargoMass.tick(this)) {
+            float partMass = addonArmor.mass();
+            for (PartUnit<?> part : partUnits) {
+                partMass += part.mass();
+            }
+            boolean partsChanged = partMass != entityData.get(PART_MASS);
+            if (partsChanged) {
+                entityData.set(PART_MASS, partMass);
+            }
+            if (cargoMass.tick(this) | partsChanged) {
                 refreshMass();
             }
             VehicleMounts.tickPending(this);
@@ -1055,6 +1137,12 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     private void finishTick(@Nullable PhysicsTrace trace) {
         long rightAt = TrialProfile.start();
+        if (!level().isClientSide() && DroneNetBlock.catchable(this) && DroneNetBlock.caught(level(), this)) {
+            if (DroneNetBlock.caught(level(), getBoundingBox().move(xo - getX(), yo - getY(), zo - getZ()))) {
+                setPos(xo, yo, zo);
+            }
+            setDeltaMovement(Vec3.ZERO);
+        }
         if (!level().isClientSide()) {
             VehicleRighting.tick(this);
             TrialProfile.stop(TrialProfile.Stage.PARTS, rightAt);
@@ -1867,19 +1955,128 @@ public abstract class AbstractVehicle extends ContainerCraft
         }
     }
 
-    /** UAVs only. Side: the vehicle's team, else its operator's WarForge faction. */
+    /** UAVs only. */
     @Override
     @Nullable
     public com.wf.wflib.telemetry.Telemetry datalink() {
-        if (!uav || isDestroyed()) {
+        if (!uav || isDestroyed() || drone != null && drone.orders().isClassified()) {
             return null;
         }
+        return new com.wf.wflib.telemetry.Telemetry(com.wf.wflib.telemetry.TelemetryKind.DRONE,
+                getVehicleId().getPath(), uavSide(), uavOperator);
+    }
+
+    public List<LoadoutInfo> loadouts() {
+        return loadouts;
+    }
+
+    public int loadoutIndex() {
+        return entityData.get(LOADOUT);
+    }
+
+    @Nullable
+    public LoadoutInfo loadout() {
+        int index = loadoutIndex();
+        return index >= 0 && index < loadouts.size() ? loadouts.get(index) : null;
+    }
+
+    public boolean loadoutFitted() {
+        return entityData.get(LOADOUT_FITTED);
+    }
+
+    /** Raw state; {@link Loadouts#select} moves hardware. */
+    public void setLoadout(int index, boolean fitted) {
+        entityData.set(LOADOUT, index);
+        entityData.set(LOADOUT_FITTED, fitted);
+    }
+
+    /** Server: remote pilot's link from their parked body to the camera seat. */
+    private void tickLink() {
+        float link = 1f;
+        Entity driver = getDriver();
+        if (uav && driver != null && !seats.isEmpty()) {
+            UavCamera camera = new UavCamera(this);
+            link = Datalink.quality((ServerLevel) level(), camera.spec(), Datalink.operatorAt(driver), this,
+                    camera.eye());
+        }
+        if (Math.abs(link - entityData.get(LINK)) >= LINK_QUANTUM || link == 1f && entityData.get(LINK) != 1f) {
+            entityData.set(LINK, link);
+        }
+    }
+
+    public float link() {
+        return entityData.get(LINK);
+    }
+
+    /** Remote pilot out of reach: their inputs are dropped; {@link VehicleDrone} holds. */
+    public boolean linkLost() {
+        return uav && !Datalink.usable(entityData.get(LINK));
+    }
+
+    @Override
+    public double laserMassKg() {
+        return physicsEngine.mass;
+    }
+
+    @Override
+    public double laserArmorMm(Vec3 beamDirection) {
+        return armorProfile == null ? 0
+                : armorProfile.nominal(ArmorFace.ofWorld(this, beamDirection.scale(-1).toVector3f()));
+    }
+
+    @Override
+    public double laserResistance() {
+        return defenseStats.laserResistance;
+    }
+
+    /** The vehicle's team, else its operator's WarForge faction. */
+    @Nullable
+    public UUID uavSide() {
         UUID team = com.wf.wflib.recon.ReconOwners.owningEntity(this);
         if (team == null && uavOperator != null) {
             team = com.wf.wflib.compat.WarforgeCompat.factionOfPlayer(uavOperator);
         }
-        return new com.wf.wflib.telemetry.Telemetry(com.wf.wflib.telemetry.TelemetryKind.DRONE,
-                getVehicleId().getPath(), team, uavOperator);
+        return team;
+    }
+
+    /** UAVs only: air defence engages unmanned bodies. */
+    @Override
+    public boolean interceptEngageable() {
+        return uav && !isDestroyed() && !isRemoved();
+    }
+
+    @Override
+    public com.wf.wflib.recon.ContactClass interceptClass() {
+        return uav ? com.wf.wflib.recon.ContactClass.DRONE : com.wf.wflib.recon.ContactClass.VEHICLE;
+    }
+
+    @Override
+    @Nullable
+    public UUID interceptControlId() {
+        return null;
+    }
+
+    @Override
+    @Nullable
+    public UUID interceptTeamId() {
+        return uavSide();
+    }
+
+    /** As a blast at the hull: positioned, no armour-penetration answer. */
+    @Override
+    public void interceptDamage(float amount) {
+        hurt(AllDamageTypes.Sources.explosion(registryAccess(), null, null, position()), amount);
+    }
+
+    @Override
+    public void interceptKill() {
+        if (!isDestroyed()) {
+            interceptDamage(getMaxHealth() + defenseStats.damageThreshold);
+        }
+        if (!isDestroyed() && !isRemoved()) {
+            getPassengers().forEach(Entity::stopRiding);
+            setDestroyed();
+        }
     }
 
     /** Boards {@code seatIndex} (free) instead of the default pick. */
@@ -2083,7 +2280,8 @@ public abstract class AbstractVehicle extends ContainerCraft
         if (uav) {
             // Never boarded by hand; still armed by hand.
             if (!this.level().isClientSide() && pHand == InteractionHand.MAIN_HAND
-                    && MissileHolderUnit.tryLoad(this, pPlayer.getItemInHand(pHand))) {
+                    && (MissileHolderUnit.tryLoad(this, pPlayer.getItemInHand(pHand))
+                    || Loadouts.strap(pPlayer, this, pPlayer.getItemInHand(pHand)))) {
                 return InteractionResult.SUCCESS;
             }
             return InteractionResult.PASS;
@@ -2159,9 +2357,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     @NotNull
     @Override
     public Vec3 getDismountLocationForPassenger(@NotNull LivingEntity pPassenger) {
-        Vec3 anchor = getDetachedBodyAnchor(pPassenger);
+        Vec3 anchor = anchors.release(pPassenger);
         if (anchor != null) {
-            setDetachedBodyAnchor(pPassenger, null);
             return anchor;
         }
         return dismountLocations.getOrDefault(pPassenger, super.getDismountLocationForPassenger(pPassenger));
@@ -2183,60 +2380,30 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     @Override
     public boolean isDetachedBodyActive() {
-        return this.uav && !entityData.get(DETACHED_ANCHORS).isEmpty();
+        return this.uav && !anchors.isEmpty();
     }
 
     @Nullable
     @Override
     public Vec3 getDetachedBodyAnchor(Entity operator) {
-        if (operator == null) {
-            return null;
-        }
-        ListTag anchor = entityData.get(DETACHED_ANCHORS).getList(operator.getStringUUID(), Tag.TAG_DOUBLE);
-        if (anchor.size() != 3) {
-            return null;
-        }
-        return new Vec3(anchor.getDouble(0), anchor.getDouble(1), anchor.getDouble(2));
+        return operator == null ? null : anchors.get(operator);
     }
 
     @Override
     public void setDetachedBodyAnchor(Entity operator, @Nullable Vec3 anchor) {
-        if (operator == null || level().isClientSide()) {
-            return;
+        if (operator != null) {
+            anchors.set(operator, anchor);
         }
-        CompoundTag anchors = entityData.get(DETACHED_ANCHORS).copy();
-        if (anchor == null) {
-            anchors.remove(operator.getStringUUID());
-        } else {
-            ListTag list = new ListTag();
-            list.add(DoubleTag.valueOf(anchor.x));
-            list.add(DoubleTag.valueOf(anchor.y));
-            list.add(DoubleTag.valueOf(anchor.z));
-            anchors.put(operator.getStringUUID(), list);
-        }
-        entityData.set(DETACHED_ANCHORS, anchors);
     }
 
     @Override
     public void clearDetachedBodyAnchors() {
-        if (!level().isClientSide()) {
-            entityData.set(DETACHED_ANCHORS, new CompoundTag());
-        }
+        anchors.clear();
     }
 
     @Override
     public Collection<Entity> getDetachedOperators() {
-        CompoundTag anchors = entityData.get(DETACHED_ANCHORS);
-        if (anchors.isEmpty()) {
-            return List.of();
-        }
-        List<Entity> operators = new ArrayList<>();
-        for (Entity passenger : getPassengers()) {
-            if (anchors.contains(passenger.getStringUUID(), Tag.TAG_LIST)) {
-                operators.add(passenger);
-            }
-        }
-        return operators;
+        return anchors.operators();
     }
 
     @Override
@@ -2531,13 +2698,13 @@ public abstract class AbstractVehicle extends ContainerCraft
         refreshMass();
     }
 
-    /** Without Ultimate Weight, cargo weighs nothing: mass = curb weight + fuel only. */
+    /** Without Ultimate Weight, cargo weighs nothing: mass = curb weight + fuel + fitted parts only. */
     public void refreshMass() {
         // A tank gets lighter as it empties; a battery does not. An electric vehicle therefore carries
         // its pack's full weight whatever its state of charge.
         float stored = isElectric() ? energyInfo.capacityUnits() : getEnergy();
-        physicsEngine.mass = curbWeight + stored + (float) (cargoMass.kilograms() * cargoMassPerKg)
-                + (cargoHold == null ? 0 : cargoHold.mass());
+        physicsEngine.mass = curbWeight + stored + entityData.get(PART_MASS)
+                + (float) (cargoMass.kilograms() * cargoMassPerKg) + (cargoHold == null ? 0 : cargoHold.mass());
     }
 
     @Nullable

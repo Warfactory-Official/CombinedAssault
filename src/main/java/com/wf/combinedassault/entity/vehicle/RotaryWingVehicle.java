@@ -34,6 +34,7 @@ import org.joml.Vector3f;
 import com.wf.combinedassault.all.AllConfigs;
 import com.wf.combinedassault.util.ParticleUtil;
 import com.wf.combinedassault.fpv.FpvFlight;
+import com.wf.combinedassault.multirotor.MultirotorFlight;
 import com.wf.combinedassault.util.PhysicsHelper;
 import com.wf.combinedassault.util.VectorUtil;
 import com.wf.combinedassault.vehicle.solver.AircraftAerodynamics;
@@ -71,14 +72,23 @@ public class RotaryWingVehicle extends AbstractVehicle
     public Vec3 airSpeed = new Vec3(0, 0, 0);
     /** Arcade flight response. Per-vehicle so its control-authority ramp has somewhere to live. */
     protected final AircraftAerodynamics aerodynamics = new AircraftAerodynamics();
+
+    public AircraftAerodynamics aerodynamics() {
+        return aerodynamics;
+    }
     public boolean hoverMode;
     /** Hover hold point; null until slowed below {@link AircraftAerodynamics#hoverCaptureSpeed} or while translating. */
     @Nullable
     private Vec3 hoverAnchor;
     private float hoverRoll;
+    /** Autopilot velocity setpoint for this tick's hover loop (blocks/tick), consumed; null = stick/anchor. */
+    @Nullable
+    public Vec3 autopilotVelocity;
     private double hoverVyO = Double.NaN;
     /** Direct attitude control, or null for the stock rate-limited model. */
     public FpvFlight fpvFlight;
+    /** Multirotor force law, or null for the helicopter model. */
+    public MultirotorFlight multirotor;
     public boolean fastRoping;
     public String fastRopingDoorId;
     public HashMap<UUID, FastRopingContext> fastRopingContexts = new HashMap<>();
@@ -128,6 +138,9 @@ public class RotaryWingVehicle extends AbstractVehicle
     public void addAdditionalSaveData(@NotNull CompoundTag compound) {
         super.addAdditionalSaveData(compound);
         compound.putFloat("CollectivePitch", getCollectivePitch());
+        if (multirotor != null) {
+            multirotor.save(compound);
+        }
     }
 
     @Override
@@ -135,6 +148,9 @@ public class RotaryWingVehicle extends AbstractVehicle
         super.readAdditionalSaveData(compound);
         if (compound.contains("CollectivePitch")) {
             setCollectivePitch(Mth.clamp(compound.getFloat("CollectivePitch"), 0, 100));
+        }
+        if (multirotor != null) {
+            multirotor.load(compound);
         }
         if (landingGear != null) {
             landingGear.setOn(isLandingGearUp());
@@ -215,6 +231,11 @@ public class RotaryWingVehicle extends AbstractVehicle
         airSpeed = getDeltaMovement();
         // Rotor power coefficient: power x collective x blade lift.
         VehicleRotors rotors = VehicleRotors.of(this);
+        if (multirotor != null) {
+            multirotor.tick(this, getPower() / 100.0 * rotors.lift());
+            airSpeed = getDeltaMovement();
+            return Vec3.ZERO;
+        }
         double scale = ((double) getPower() / 100) * ((double) getCollectivePitch() / 100) * rotors.lift();
         // dVV: climb(+)/descend(-) speed along rotor axis; climb cuts the coefficient, descent raises it
         // (vortex-ring/translational-lift effect).
@@ -526,7 +547,11 @@ public class RotaryWingVehicle extends AbstractVehicle
                 landingGear.setOn(!isLandingGearUp());
             }
         }
-        if (message.toggleHoverMode) {
+        if (message.toggleHoverMode && multirotor != null) {
+            multirotor.setFpv(!multirotor.fpv());
+            player.displayClientMessage(Component.translatable(multirotor.fpv()
+                    ? "tips.multirotor_fpv" : "tips.multirotor_stabilized"), true);
+        } else if (message.toggleHoverMode) {
             hoverAnchor = null;
             hoverRoll = 0;
             hoverVyO = Double.NaN;
@@ -643,12 +668,16 @@ public class RotaryWingVehicle extends AbstractVehicle
 
     /** Holds yaw, height and position; flies attitude through the stock pitch/roll paths. */
     private void tickHover() {
-        controlUnit.yRot = getYRot();
+        Vec3 target = autopilotVelocity;
+        autopilotVelocity = null;
+        if (target == null) {
+            controlUnit.yRot = getYRot();
+        }
         Vec3 pos = position();
         boolean translating = controlUnit.forward || controlUnit.backward || controlUnit.left || controlUnit.right
                 || controlUnit.up || controlUnit.down;
         double hSpeed = Math.sqrt(airSpeed.x * airSpeed.x + airSpeed.z * airSpeed.z);
-        if (translating || onGround()) {
+        if (translating || onGround() || target != null) {
             hoverAnchor = null;
         } else if (hoverAnchor == null && hSpeed < aerodynamics.hoverCaptureSpeed) {
             hoverAnchor = pos;
@@ -656,7 +685,11 @@ public class RotaryWingVehicle extends AbstractVehicle
         float w = aerodynamics.hoverBandwidth;
         double ax = -2 * w * airSpeed.x, az = -2 * w * airSpeed.z;
         double vyTarget = 0;
-        if (hoverAnchor != null) {
+        if (target != null) {
+            ax = -2 * w * (airSpeed.x - target.x);
+            az = -2 * w * (airSpeed.z - target.z);
+            vyTarget = Mth.clamp(target.y, -aerodynamics.hoverClimbRate, aerodynamics.hoverClimbRate);
+        } else if (hoverAnchor != null) {
             ax += w * w * (hoverAnchor.x - pos.x);
             az += w * w * (hoverAnchor.z - pos.z);
             vyTarget = Mth.clamp(w * (hoverAnchor.y - pos.y), -aerodynamics.hoverClimbRate, aerodynamics.hoverClimbRate);
@@ -710,10 +743,10 @@ public class RotaryWingVehicle extends AbstractVehicle
         return Mth.clamp((speed - startSpeed) / (fullSpeed - startSpeed), 0, 1);
     }
 
-    /** FPV: attitude owned by {@link FpvFlight}, not in the snapshot. */
+    /** FPV/multirotor: attitude owned outside the snapshot. */
     @Override
     protected boolean predictable() {
-        return fpvFlight == null;
+        return fpvFlight == null && multirotor == null;
     }
 
     @Override

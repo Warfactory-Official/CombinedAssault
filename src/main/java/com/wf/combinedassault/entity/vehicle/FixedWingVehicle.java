@@ -313,7 +313,7 @@ public class FixedWingVehicle extends AbstractVehicle
             zRotInput += (controlUnit.left ? -1 : 1) * zRotInputStep;
             zRotInput = Math.signum(zRotInput) * Math.min(1, Math.abs(zRotInput));
         }
-        if (getDriver() == null) {
+        if (getDriver() == null && !autopilotControl) {
             controlUnit.xRot = 0;
             controlUnit.yRot = getYRot();
         }

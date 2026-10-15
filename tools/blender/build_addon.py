@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Zip the Blender add-on for Edit > Preferences > Add-ons > Install from Disk.
+"""Zip the Blender extension for Edit > Preferences > Get Extensions > Install from Disk.
 
     python3 tools/blender/build_addon.py      (from CombinedAssault/) -> build/combinedassault_tools.zip
 """
@@ -8,9 +8,10 @@ import zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(os.path.dirname(os.path.dirname(HERE)), "build", "combinedassault_tools.zip")
-FILES = {"combinedassault_tools/__init__.py": "combinedassault_tools.py",
-         "combinedassault_tools/ca_validate.py": "ca_validate.py",
-         "combinedassault_tools/ca_reference.py": "ca_reference.py"}
+FILES = {"blender_manifest.toml": "blender_manifest.toml",
+         "__init__.py": "combinedassault_tools.py",
+         "ca_validate.py": "ca_validate.py",
+         "ca_reference.py": "ca_reference.py"}
 
 
 def main():

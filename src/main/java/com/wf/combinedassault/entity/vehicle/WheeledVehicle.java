@@ -105,7 +105,7 @@ public class WheeledVehicle extends AbstractVehicle implements IAnimationEntity<
 
     @Override
     protected Vec3 tickMove() {
-        if (getDriver() == null) {
+        if (getDriver() == null && !autopilotControl) {
             controlUnit.reset();
         }
 

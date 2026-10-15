@@ -7,10 +7,10 @@ import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.indirect.CallForFire;
 import com.wf.combinedassault.uav.UavTablet;
-import com.wf.wflib.drone.cam.CameraChannels;
 import com.wf.wflib.drone.cam.CameraNet;
 import com.wf.wflib.drone.cam.FeedTarget;
-import com.wf.wflib.item.ModDataComponents;
+import com.wf.wflib.pda.drone.DroneStatusPacket;
+import com.wf.wflib.pda.drone.PdaDrones;
 import com.wf.wflib.item.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -33,7 +33,7 @@ import java.util.UUID;
 @PrefixGameTestTemplate(false)
 public class PdaUavGameTest {
     private static final String TEMPLATE = "empty";
-    private static final ResourceLocation DRONE = CombinedAssault.modLocation("fpv_drone");
+    private static final ResourceLocation DRONE = CombinedAssault.modLocation("mavic");
 
     /** Vehicle data (incl. {@code uav}) applies after spawn => checked a few ticks later. */
     @GameTest(template = TEMPLATE, timeoutTicks = 100)
@@ -55,8 +55,9 @@ public class PdaUavGameTest {
                 helper.fail("the UAV is not in the PDA's UAV links: " + UavTablet.channels(pda).targets());
                 return;
             }
-            if (!pda.getOrDefault(ModDataComponents.CHANNELS.get(), CameraChannels.EMPTY).isEmpty()) {
-                helper.fail("UAV links must not land in the camera channel list");
+            DroneStatusPacket.Entry entry = PdaDrones.status(operator).drones().get(0);
+            if (!entry.refusal().isEmpty() || entry.feedId() != drone.getId() || entry.cells().isEmpty()) {
+                helper.fail("Drones app entry for a free UAV: " + entry);
                 return;
             }
             CameraNet.subscribe(operator, drone.getId());

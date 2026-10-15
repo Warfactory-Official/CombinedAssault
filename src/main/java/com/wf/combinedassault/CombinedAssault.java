@@ -55,6 +55,7 @@ public class CombinedAssault {
         AllDataComponents.register(modEventBus);
         initCompat();
         AddonActions.register();
+        com.wf.combinedassault.vehicle.loadout.Loadouts.register();
         com.wf.combinedassault.vehicle.part.AccessActions.register();
         com.wf.combinedassault.vehicle.part.WeaponActions.register();
         com.wf.combinedassault.airdefense.AirDefenseActions.register();

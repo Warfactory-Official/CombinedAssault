@@ -6,7 +6,7 @@
   "combinedassault.z10": "Z-10",
   "combinedassault.motorcycle": "摩托车",
   "combinedassault.hiace": "海狮面包车",
-  "combinedassault.quadcopter": "四旋翼无人机",
+  "combinedassault.mavic": "Mavic无人机",
   "combinedassault.m1a2": "M1A2",
   "combinedassault.cssa5": "CS/SA5",
   "combinedassault.ah64d": "AH-64D",
@@ -26,7 +26,7 @@
   "entity.combinedassault.z10": "Z-10",
   "entity.combinedassault.motorcycle": "摩托车",
   "entity.combinedassault.hiace": "海狮面包车",
-  "entity.combinedassault.quadcopter": "四旋翼无人机",
+  "entity.combinedassault.mavic": "Mavic无人机",
   "entity.combinedassault.m1a2": "M1A2",
   "entity.combinedassault.cssa5": "CS/SA5",
   "entity.combinedassault.ah64d": "AH-64D",
@@ -120,5 +120,11 @@
   "part.combinedassault.launcher": "发射装置",
   "part.combinedassault.pod": "发射箱",
   "part.combinedassault.driver": "驾驶员",
-  "part.combinedassault.commander": "车长"
+  "part.combinedassault.commander": "车长",
+  "combinedassault.laser_trailer": "高能激光拖车",
+  "entity.combinedassault.laser_trailer": "高能激光拖车",
+  "combinedassault.laser_emplacement": "高能激光炮台",
+  "entity.combinedassault.laser_emplacement": "高能激光炮台",
+  "vehicle.weapon.laser": "高能激光",
+  "part.combinedassault.laser": "激光炮塔"
 }

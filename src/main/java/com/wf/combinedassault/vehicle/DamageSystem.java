@@ -34,6 +34,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.ballistics.component.HullComponents;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
+import com.wf.wflib.damage.WFDamageTypes;
 import org.joml.Vector3f;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,9 +81,12 @@ public class DamageSystem {
             }
             caliber = round.threat().caliberMm();
         }
+        boolean laser = damageSource.is(WFDamageTypes.LASER);
         if (damageSource.is(AllDamageTypes.VEHICLE_COLLISION) && damageSource.getDirectEntity() == vehicle
                 || damageSource.is(AllDamageTypes.THERMITE)) {
             hitPos = damageSource.getSourcePosition();
+        } else if (laser && damageSource.getSourcePosition() != null) {
+            hitPos = VehicleBlast.nearestHullPoint(vehicle, damageSource.getSourcePosition());
         }
         if (explosion) {
             // Explosion sourcePos = where blast met hull, not the exploding entity; fallback = entity position.
@@ -97,8 +101,9 @@ public class DamageSystem {
             amount = 0;
         }
         float incoming = amount;
-        // Thermite burns through: no threshold, no armour answer; hull + struck system take it whole.
-        boolean thermal = damageSource.is(AllDamageTypes.THERMITE);
+        // Thermite / laser burn through: no threshold, no armour answer; hull + struck system take it whole.
+        // Laser armour + mass already priced by wflib LaserDamage.
+        boolean thermal = damageSource.is(AllDamageTypes.THERMITE) || laser;
         // null: no armour model answer (no armour, no penetration round, not a shot) => stock threshold/core-line path below.
         BallisticResult ballistic = Ballistics.resolve(vehicle, damageSource, amount, hitPos, hitPartUnit, penetrationScale);
         if (ballistic == null && hitPartUnit != null && hitPartUnit.isDefensive() && !hitPartUnit.isDetached()) {

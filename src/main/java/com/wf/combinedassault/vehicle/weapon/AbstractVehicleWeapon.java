@@ -59,6 +59,8 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
     private final String serializeId;
     private Component displayName;
     protected long lastShootTime = 0;
+    /** Rounds owed below one, carried between bursts of a sub-tick {@code shoot_interval}. */
+    private double burstCarry;
     protected int remainAmmo = 0;
     /**
      * WFLib round the magazine was loaded from; empty = none. One kind per magazine: {@link #reload()} takes the
@@ -90,19 +92,35 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
 
     public abstract boolean shoot(List<AimContext> aimContexts, LivingEntity shooter);
 
-    /** Cooldown, reload, ammo, then the breech round once per aim context. */
+    /**
+     * Cooldown, reload, ammo, then the breech round once per aim context. Shots arrive <= 1/tick =>
+     * {@code shoot_interval < 50} ms fires {@code 50 / shoot_interval} rounds per shot, strung out over the tick.
+     */
     protected boolean shootLoaded(List<AimContext> aimContexts) {
-        if (isCoolingDown() || isReloading() || !consumeAmmo(aimContexts)) {
+        if (isCoolingDown() || isReloading()) {
+            return false;
+        }
+        int rounds = 1;
+        if (getShootInterval() < 50) {
+            burstCarry += 50.0 / getShootInterval();
+            rounds = (int) burstCarry;
+            burstCarry -= rounds;
+        }
+        WeaponUnit root = weaponUnit.getRootParentWeaponUnit();
+        int fired = 0;
+        for (; fired < rounds && consumeAmmo(aimContexts); fired++) {
+            float lead = (float) fired / rounds;
+            for (AimContext aimContext : aimContexts) {
+                if (Munitions.fire(vehicle, weaponUnit, aimContext, loadedRound, data.getInaccuracy(),
+                        root.getLockedEntity(), root.getOwner(), lead)) {
+                    vehicle.queueRecoil(weaponUnit, data.getRecoil());
+                }
+            }
+        }
+        if (fired == 0) {
             return false;
         }
         this.lastShootTime = System.currentTimeMillis();
-        WeaponUnit root = weaponUnit.getRootParentWeaponUnit();
-        for (AimContext aimContext : aimContexts) {
-            if (Munitions.fire(vehicle, weaponUnit, aimContext, loadedRound, data.getInaccuracy(),
-                    root.getLockedEntity(), root.getOwner())) {
-                vehicle.queueRecoil(weaponUnit, data.getRecoil());
-            }
-        }
         return true;
     }
 

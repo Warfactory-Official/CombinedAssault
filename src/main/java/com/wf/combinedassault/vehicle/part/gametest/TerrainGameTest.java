@@ -31,7 +31,7 @@ public class TerrainGameTest {
 
     // TODO m1129 (SSF 1.1 half-track / 1.2 CoM = 0.92) rolls on WEAVE/LOCK and rough lanes, airborne off bumps;
     // pre-audit physics identical. Back in once its data or the bump response is fixed.
-    private static final String[] VEHICLES = {"humvee", "humvee_mk19", "centauro", "m983", "m1a2", "t90"};
+    private static final String[] VEHICLES = {"humvee", "centauro", "m983", "m1a2", "t90"};
     private static final String TEMPLATE = CombinedAssault.MOD_ID + ":empty";
     private static final int LANE_X = 6000;
     private static final int LANE_PITCH = 90;

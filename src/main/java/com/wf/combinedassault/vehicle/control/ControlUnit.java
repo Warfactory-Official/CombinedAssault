@@ -86,6 +86,13 @@ public class ControlUnit {
         yRotKeep = false;
     }
 
+    /** No keys, attitude held. */
+    public void neutral() {
+        reset();
+        xRotKeep = true;
+        yRotKeep = true;
+    }
+
     public void update(ControlUnit controlUnit) {
         forward = controlUnit.forward;
         backward = controlUnit.backward;

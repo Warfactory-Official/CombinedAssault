@@ -1,0 +1,164 @@
+{
+    "type": "combinedassault:rotary_wing_vehicle",
+    "attributes": {
+        "main_rotor_force": 216,
+        "x_rot_speed_acceleration": 4.0,
+        "x_rot_speed_max": 8.0,
+        "y_rot_speed_acceleration": 4.0,
+        "y_rot_speed_max": 8.0,
+        "z_rot_speed_acceleration": 4.0,
+        "z_rot_speed_max": 8.0,
+        "max_air_speed": 2.0,
+        "multirotor": {
+            "thrust": 100,
+            "max_tilt": 35,
+            "tilt_rate": 12,
+            "linear_drag": 0.006,
+            "quadratic_drag": 0.0145,
+            "max_speed": 0.75,
+            "climb_speed": 0.3,
+            "mode": "stabilized",
+            "fpv": {
+                "response": 0.35,
+                "yaw_rate": 8.0,
+                "pitch_bias": 30.0,
+                "bank_per_yaw": 4.0,
+                "max_bank": 55.0,
+                "max_pitch": 80.0
+            }
+        }
+    },
+    "physics_info": {
+        "mass": 2.0,
+        "friction": 16,
+        "can_tumble": true
+    },
+    "defense_stats": {
+        "damage_threshold": 1
+    },
+    "max_health": 20,
+    "view_info": {
+        "third_person_center_offset": [
+            0,
+            3,
+            0
+        ],
+        "third_person_distance": 7
+    },
+    "energy_info": {
+        "energy_capacity": 0.5,
+        "energy_consumption_per_tick": 1.6667e-05
+    },
+    "uav": true,
+    "autonomy": {
+        "tasks": [
+            "moveto",
+            "loiter",
+            "strike",
+            "exfil"
+        ],
+        "cruise_speed": 0.6,
+        "release_speed": 0.6,
+        "cruise_altitude": 20
+    },
+    "parts": [
+        {
+            "id": "sighting_system",
+            "name": "sighting_system",
+            "type": "combinedassault:weapon",
+            "seat_offset": [
+                0,
+                2,
+                0.2
+            ],
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 9,
+                "y_rot_speed": 9,
+                "x_rot_max": 90,
+                "x_rot_min": -13,
+                "y_rot_max": 45,
+                "y_rot_min": -45
+            },
+            "optical_sight_type": "crt",
+            "with_ir": true,
+            "zoom_max": 8,
+            "weapons": []
+        },
+        {
+            "id": "hardpoint",
+            "name": "part.combinedassault.hardpoint",
+            "type": "combinedassault:payload",
+            "is_seat": false,
+            "detachable": false,
+            "attach_offset": [
+                0,
+                -0.2,
+                0.3
+            ]
+        }
+    ],
+    "loadouts": [
+        {
+            "id": "plain",
+            "flight_mode": "stabilized"
+        },
+        {
+            "id": "kamikaze",
+            "part": "hardpoint",
+            "payload": {
+                "type": "combinedassault:warhead",
+                "arming_ticks": 40,
+                "fuze_speed": 0.12,
+                "hit_damage": 30
+            },
+            "flight_mode": "fpv"
+        },
+        {
+            "id": "bomber",
+            "part": "hardpoint",
+            "payload": {
+                "type": "combinedassault:grenade_rack",
+                "slots": 4
+            },
+            "flight_mode": "stabilized"
+        }
+    ],
+    "model": "combinedassault:models/aircraft/mavic/mavic.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/quadcopter.png",
+        "controller": "combinedassault:quadcopter_controller",
+        "engine": {
+            "loops": [
+                {
+                    "sound": {
+                        "event": "combinedassault:quadcopter_engine_run",
+                        "range": 64
+                    },
+                    "input": "power",
+                    "volume": [
+                        [
+                            0.2,
+                            0
+                        ],
+                        [
+                            0.5,
+                            1
+                        ]
+                    ],
+                    "pitch": [
+                        [
+                            0.5,
+                            0.8
+                        ],
+                        [
+                            1,
+                            1
+                        ]
+                    ]
+                }
+            ]
+        },
+        "tab_index": 600
+    }
+}

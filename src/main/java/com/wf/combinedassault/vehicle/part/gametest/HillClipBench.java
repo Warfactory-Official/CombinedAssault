@@ -32,7 +32,7 @@ import java.util.Optional;
 @GameTestHolder(ClimbBench.NAMESPACE)
 public class HillClipBench {
 
-    static final String[] VEHICLES = {"humvee", "humvee_mk19", "m983", "m1129", "centauro", "mim104", "m1a2", "t84", "t90", "merkava"};
+    static final String[] VEHICLES = {"humvee", "m983", "m1129", "centauro", "mim104", "m1a2", "t84", "t90", "merkava"};
     private static final int[] RUNS = {1, 2, 3, 4};
     private static final int LANE_X = 9000;
     private static final int LANE_PITCH = 24;

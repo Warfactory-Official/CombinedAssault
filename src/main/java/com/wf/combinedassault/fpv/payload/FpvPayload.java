@@ -4,8 +4,11 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /** Keeps drone ignorant of ordnance specifics: a new payload kind is one class + one registration. */
 public interface FpvPayload {
@@ -15,13 +18,25 @@ public interface FpvPayload {
     /** Shown on the HUD next to the arming state. */
     Component displayName();
 
-    /**
-     * Uses left of total; warhead is 1 of 1, a future bomb rack 3 of 6. Modelled now because retrofitting
-     * a magazine later would reshape every consumer.
-     */
+    /** Uses left of total: warhead 1 of 1, grenade rack 3 of 4. */
     int remaining();
 
     int capacity();
+
+    /** kg, as carried now. */
+    float mass();
+
+    /** Strapped hardware, as it would come back off. */
+    List<ItemStack> contents();
+
+    /** @return true if one of {@code stack} may be strapped on now */
+    boolean canLoad(ItemStack stack);
+
+    /** Straps one of {@code stack} (copied, count 1); only after {@link #canLoad}. */
+    void load(ItemStack stack);
+
+    /** Everything strapped, removed and returned. */
+    List<ItemStack> unload();
 
     /** Deploying arms nothing; only the operator's explicit choice does, keeping the drone recoverable. */
     boolean isArmed();
@@ -47,8 +62,7 @@ public interface FpvPayload {
 
     /**
      * Called only once armed, fuze elapsed, and {@link #accepts}. Must not remove the drone itself: the
-     * hardpoint already did if {@link #consumesDrone} said to. Any result but {@link FpvPayloadResult#NOTHING}
-     * empties the hardpoint.
+     * hardpoint already did if {@link #consumesDrone} said to.
      *
      * @param operator null if the control link already died
      */

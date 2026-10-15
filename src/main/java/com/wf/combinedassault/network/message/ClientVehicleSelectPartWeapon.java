@@ -47,6 +47,7 @@ public record ClientVehicleSelectPartWeapon(int vehicleEntityId, int partUnitInd
         vehicle.getPartUnit(message.partUnitIndex).ifPresent(partUnit -> {
             if (partUnit instanceof WeaponUnit weaponUnit
                     && weaponUnit.isInteractive()
+                    && !com.wf.combinedassault.vehicle.loadout.Loadouts.manages(vehicle, weaponUnit)
                     && message.weaponIndex >= 0
                     && message.weaponIndex < weaponUnit.weapons.size()) {
                 weaponUnit.selectWeaponIndex(false, message.weaponIndex, true);

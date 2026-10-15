@@ -9,13 +9,16 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.GameTestSequence;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
+import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -75,6 +78,14 @@ public final class TestLanes {
         vehicle.setDisplayId(id);
         helper.assertTrue(helper.getLevel().addFreshEntity(vehicle), id + " could not be added");
         return vehicle;
+    }
+
+    /** Failure text for a foreign lock: entity type + offset from {@code from}, or "itself". */
+    public static String describe(GameTestHelper helper, @Nullable UUID id, Entity from) {
+        Entity e = id == null ? null : helper.getLevel().getEntity(id);
+        return e == from ? "itself" : e == null ? id + " (gone)" : e.getType().toShortString() + " "
+                + e.getStringUUID() + " (from " + from.getStringUUID() + ") at "
+                + e.position().subtract(from.position());
     }
 
     private static void floor(ServerLevel level, BlockPos at, int floorX, int floorZ,

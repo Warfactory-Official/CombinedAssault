@@ -72,6 +72,12 @@ public final class Munitions {
      */
     public static boolean fire(AbstractVehicle vehicle, WeaponUnit unit, AimContext aim, ItemStack round,
                                float inaccuracy, @Nullable Entity locked, @Nullable Entity operator) {
+        return fire(vehicle, unit, aim, round, inaccuracy, locked, operator, 0.0f);
+    }
+
+    /** {@code lead}: tick fraction elapsed at the shot, gun rounds only; see {@link Rounds#launch}. */
+    public static boolean fire(AbstractVehicle vehicle, WeaponUnit unit, AimContext aim, ItemStack round,
+                               float inaccuracy, @Nullable Entity locked, @Nullable Entity operator, float lead) {
         if (!(vehicle.level() instanceof ServerLevel level) || aim.from == null || round.isEmpty()) {
             return false;
         }
@@ -102,7 +108,7 @@ public final class Munitions {
         }
         // Faction = the vehicle's side: the blast honours that side's chunk rules.
         Rounds.launch(level, preset, aim.from, dir.scale(preset.muzzleSpeed()).add(vehicle.getDeltaMovement()),
-                shooter, ReconOwners.owningEntity(vehicle));
+                shooter, ReconOwners.owningEntity(vehicle), 1.0f, 0, Rounds.NO_SEQ, lead);
         return true;
     }
 }

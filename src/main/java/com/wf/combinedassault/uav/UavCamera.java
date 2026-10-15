@@ -3,6 +3,7 @@ package com.wf.combinedassault.uav;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
+import com.wf.wflib.block.DroneNetBlock;
 import com.wf.wflib.drone.cam.CameraFeed;
 import com.wf.wflib.drone.cam.CameraMode;
 import com.wf.wflib.drone.cam.CameraSource;
@@ -10,15 +11,19 @@ import com.wf.wflib.drone.cam.CameraSources;
 import com.wf.wflib.drone.cam.CameraSpec;
 import net.minecraft.world.phys.Vec3;
 
-/** UAV vehicle as a wflib camera feed (tablet preview): lens = first seat's sight, gimbal free. */
+/** UAV vehicle as a wflib camera feed (tablet preview): lens = first seat's sight, gimbal free. Small UAVs: drone-net catchable. */
 public record UavCamera(AbstractVehicle vehicle) implements CameraSource {
 
+    /** Heaviest UAV a wflib drone net holds, kg. */
+    public static final double NET_MAX_KG = 25;
     /** Datalink, blocks. */
     public static final double RANGE = 4000;
     private static final float FOV = 70;
     private static final float SLEW = 9;
 
     public static void register() {
+        DroneNetBlock.catches(entity -> entity instanceof AbstractVehicle vehicle && vehicle.uav
+                && vehicle.physicsEngine.mass <= NET_MAX_KG);
         CameraSources.register(entity -> entity instanceof AbstractVehicle vehicle && vehicle.uav
                 && !vehicle.isDestroyed() && !vehicle.seats.isEmpty() ? new UavCamera(vehicle) : null);
     }

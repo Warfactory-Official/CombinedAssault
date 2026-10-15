@@ -35,6 +35,8 @@ import static com.wf.combinedassault.all.AllKeys.*;
 public class InputHandler {
 
     public static boolean freeCamera;
+    /** UAV: FREE_CAMERA toggles (mouse turns the camera, heading held); other vehicles: held. */
+    public static boolean uavFreeLook;
     public static float playerXRotO;
     public static float playerYRotO;
     public static float controlXRotO;
@@ -160,9 +162,14 @@ public class InputHandler {
         } else if (action == GLFW.GLFW_RELEASE) {
             if (instance.onVehicle()) {
                 if (matchesKey(FREE_CAMERA, key, scanCode)) {
-                    instance.playerLerpXRot = playerXRotO;
-                    instance.playerLerpYRot = playerYRotO;
-                    instance.playerLerpSteps = 8;
+                    if (instance.vehicle.uav) {
+                        uavFreeLook = !uavFreeLook;
+                    }
+                    if (!uavFreeLook) {
+                        instance.playerLerpXRot = playerXRotO;
+                        instance.playerLerpYRot = playerYRotO;
+                        instance.playerLerpSteps = 8;
+                    }
                 }
             }
         }
@@ -197,7 +204,10 @@ public class InputHandler {
             return;
         }
         LocalVehiclePlayer instance = LocalVehiclePlayer.instance;
-        freeCamera = FREE_CAMERA.isDown();
+        if (!(player.getVehicle() instanceof AbstractVehicle ridden && ridden.uav)) {
+            uavFreeLook = false;
+        }
+        freeCamera = FREE_CAMERA.isDown() || uavFreeLook;
         if (player.getVehicle() instanceof AbstractVehicle vehicle) {
             if (LEAVE_VEHICLE.isDown()) {
                 sendLeaveVehicle(vehicle);
@@ -254,6 +264,8 @@ public class InputHandler {
                 if (freeCamera || instance.playerLerpSteps > 0) {
                     controlUnit.xRot = controlXRotO;
                     controlUnit.yRot = controlYRotO;
+                    // Q/E turns hold where they stop, not snap back to the heading free look began on.
+                    controlUnit.yRotKeep = uavFreeLook;
                 } else if (instance.viewType == LocalVehiclePlayer.ViewType.SCOPE && vehicle instanceof RotaryWingVehicle) {
                     controlUnit.xRot = 0;
                     controlUnit.yRotKeep = true;
@@ -335,6 +347,9 @@ public class InputHandler {
     private static int nextSeq;
 
     private static void sendControl(AbstractVehicle vehicle, ControlUnit controlUnit) {
+        if (vehicle.linkLost()) {
+            controlUnit.neutral();
+        }
         controlUnit.seq = nextSeq++;
         vehicle.controlUnit.update(controlUnit);
         vehicle.predictInput(controlUnit);

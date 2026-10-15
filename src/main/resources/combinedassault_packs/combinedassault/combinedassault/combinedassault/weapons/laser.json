@@ -1,0 +1,14 @@
+{
+    "type": "combinedassault:laser",
+    "name": "HEL laser",
+    "recoil": 0,
+    "shoot_interval": 50,
+    "max_capacity": 1,
+    "power": 4,
+    "range": 160,
+    "energy_per_tick": 0.2,
+    "x_rot_min": -85,
+    "x_rot_max": 10,
+    "y_rot_min": -180,
+    "y_rot_max": 180
+}

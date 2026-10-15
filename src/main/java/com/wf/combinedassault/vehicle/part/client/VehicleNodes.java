@@ -24,6 +24,10 @@ import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import com.wf.combinedassault.vehicle.part.WeaponActions;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
+import com.wf.combinedassault.vehicle.loadout.Loadouts;
+import com.wf.combinedassault.vehicle.part.MissileHolderUnit;
+import com.wf.combinedassault.vehicle.loadout.client.LoadoutProbe;
+import com.wf.combinedassault.vehicle.pojo.LoadoutInfo;
 import com.wf.combinedassault.vehicle.pojo.Bolt;
 import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
 import com.wf.wflib.util.OBB;
@@ -93,10 +97,18 @@ public final class VehicleNodes {
             }
             if (AccessActions.isDoor(part)) {
                 door(out, (SwitchableUnit<?>) part, anchor(hits, part).add(drift), part == looked);
-            } else if (tool && part instanceof WeaponUnit unit && unit.isInteractive() && unit.weapons.size() > 1) {
+            } else if (tool && part instanceof WeaponUnit unit && unit.isInteractive() && unit.weapons.size() > 1
+                    && !Loadouts.manages(vehicle, unit)) {
                 out.add(new ProbeNode("weapon:" + part.getIndex(), anchor(hits, part).add(drift),
                         info -> weapon(info, unit)).colour(WEAPON).claimed(part == looked));
             }
+        }
+        LoadoutInfo loadout = vehicle.loadout();
+        PartUnit<?> hardpoint = Loadouts.part(vehicle, loadout);
+        if (hardpoint != null && !hardpoint.isDetached()) {
+            out.add(new ProbeNode("loadout", anchor(hits, hardpoint).add(drift),
+                    info -> LoadoutProbe.fill(info, ctx, vehicle, loadout, hardpoint))
+                    .colour(MOUNT_FITTED).reach(Loadouts.REACH).claimed(hardpoint == looked));
         }
         if (!vehicle.uav) {
             for (AbstractVehicle.Seat seat : vehicle.seats) {
@@ -165,7 +177,10 @@ public final class VehicleNodes {
         }
         out.add(new ProbeNode("hull", vehicle.getBoundingBox().getCenter().add(drift), info -> {
             info.title(vehicle.getDisplayName());
-            if (vehicle.hasContainer()) {
+            ItemStack held = ctx.player().getMainHandItem();
+            // UAV + item it takes: use falls through to the strap / missile load.
+            if (vehicle.hasContainer() && !(vehicle.uav && (Loadouts.strapIndex(vehicle, held) >= 0
+                    || MissileHolderUnit.couldLoad(vehicle, held)))) {
                 info.action(ProbeAction.of(AccessActions.STORAGE, 0, Component.translatable(KEY + "storage")));
             }
             SystemsProbe.grid(info, cells);

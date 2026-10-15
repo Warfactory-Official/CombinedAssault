@@ -30,7 +30,7 @@ public class RoughBench {
 
     // TODO m1129 (SSF 1.1 half-track / 1.2 CoM = 0.92) rolls on WEAVE/LOCK and rough lanes, airborne off bumps;
     // pre-audit physics identical. Back in once its data or the bump response is fixed.
-    private static final String[] VEHICLES = {"humvee", "humvee_mk19", "centauro", "m983", "m1a2", "t90"};
+    private static final String[] VEHICLES = {"humvee", "centauro", "m983", "m1a2", "t90"};
     private static final int SEEDS = 8;
     private static final int LANE_X = -3000;
     private static final int LANE_PITCH = 40;
@@ -68,7 +68,7 @@ public class RoughBench {
     public static List<TestFunction> terrainSweep() {
         List<TestFunction> tests = new ArrayList<>();
         int lane = 100;
-        for (String vehicle : new String[]{"humvee", "humvee_mk19", "m983"}) {
+        for (String vehicle : new String[]{"humvee", "m983"}) {
             for (TerrainGameTest.Course course : new TerrainGameTest.Course[]{TerrainGameTest.Course.ROUGH, TerrainGameTest.Course.WEAVE}) {
                 for (int k = 0; k < 12; k++) {
                     String name = String.format(Locale.ROOT, "terrainsweep_%s_%s_%d", vehicle, course.name().toLowerCase(Locale.ROOT), k);

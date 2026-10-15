@@ -3,7 +3,9 @@ package com.wf.combinedassault.fpv.payload;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import com.google.gson.JsonObject;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -29,10 +31,17 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
     private static final String TAG_PAYLOAD_TYPE = "PayloadType";
     private static final String TAG_PAYLOAD = "Payload";
     private static final String TAG_ARMED_TICKS = "ArmedTicks";
+    /** Slots mirrored to clients (probe rows, rack drawing); larger payloads are refused at equip. */
+    public static final int SYNCED_SLOTS = 4;
+    private static final double RACK_SPACING = 0.12;
+    private static final float ITEM_SCALE = 0.35f;
 
     @Nullable
     private FpvPayload payload;
     private int armedTicks;
+    /** Client mirror of the payload type id ("" none) and strapped items. */
+    private String syncedType = "";
+    private final ItemStack[] syncedSlots = new ItemStack[SYNCED_SLOTS];
 
     /** What was just hit; threaded through here, not {@link FpvPayload#trigger}'s signature, so others skip it. */
     @Nullable
@@ -51,6 +60,57 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
         this.payload = data.createPayload();
         // Fuze countdown synced for ARMING-vs-ARMED HUD state; only bit SwitchableUnit doesn't already carry.
         this.getSyncData().define(SyncDataSerializers.INT, this::setArmedTicks, this::getArmedTicks, 0);
+        java.util.Arrays.fill(this.syncedSlots, ItemStack.EMPTY);
+        this.getSyncData().define(SyncDataSerializers.STRING, id -> this.syncedType = id,
+                () -> this.payload == null ? "" : this.payload.type().id().toString(), "");
+        for (int i = 0; i < SYNCED_SLOTS; i++) {
+            int slot = i;
+            this.getSyncData().define(SyncDataSerializers.ROUND, stack -> this.syncedSlots[slot] = stack, () -> {
+                List<ItemStack> contents = this.payload == null ? List.of() : this.payload.contents();
+                return slot < contents.size() ? contents.get(slot) : ItemStack.EMPTY;
+            }, ItemStack.EMPTY);
+        }
+    }
+
+    /** Payload type on either side; null = none. */
+    @Nullable
+    public FpvPayloadType payloadType() {
+        if (vehicle.level().isClientSide()) {
+            return syncedType.isEmpty() ? null : FpvPayloadTypes.get(ResourceLocation.tryParse(syncedType));
+        }
+        return payload == null ? null : payload.type();
+    }
+
+    /** Strapped items on either side. */
+    public List<ItemStack> contents() {
+        if (!vehicle.level().isClientSide()) {
+            return payload == null ? List.of() : payload.contents();
+        }
+        List<ItemStack> out = new java.util.ArrayList<>(SYNCED_SLOTS);
+        for (ItemStack stack : syncedSlots) {
+            if (!stack.isEmpty()) {
+                out.add(stack);
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Server: swap in a fresh, empty payload of {@code type} (null = none).
+     *
+     * @return what was strapped before, for refund
+     */
+    public List<ItemStack> equip(@Nullable FpvPayloadType type, JsonObject config) {
+        List<ItemStack> refund = payload == null ? List.of() : payload.unload();
+        this.payload = type == null ? null : type.fromJson().create(type, config);
+        if (payload != null && payload.capacity() > SYNCED_SLOTS) {
+            throw new IllegalArgumentException(type.id() + ": " + payload.capacity() + " slots > " + SYNCED_SLOTS);
+        }
+        this.armedTicks = 0;
+        if (payload != null) {
+            payload.setArmed(isOn());
+        }
+        return refund;
     }
 
     /** The first hardpoint on a vehicle, or null if it carries nothing. */
@@ -89,14 +149,19 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
         }
     }
 
-    /** Armed + past fuze delay; until then it's a brick, so arming at the operator's own feet is survivable. */
-    public boolean isLive() {
-        return isArmed() && armedTicks >= payload.armingTicks();
+    @Override
+    public float mass() {
+        return payload == null ? 0 : payload.mass();
     }
 
-    /** True if the hardpoint carries anything. */
+    /** Armed + past fuze delay; until then it's a brick, so arming at the operator's own feet is survivable. */
+    public boolean isLive() {
+        return isArmed() && isLoaded() && armedTicks >= payload.armingTicks();
+    }
+
+    /** True if anything is strapped on. */
     public boolean isLoaded() {
-        return payload != null;
+        return payload != null && payload.remaining() > 0;
     }
 
     /** Ticks still to run before {@link #isLive()}. */
@@ -216,9 +281,6 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
             this.detonating = false;
             return false;
         }
-        if (payload.remaining() <= 0) {
-            this.payload = null;
-        }
         this.struckTarget = null;
         this.detonating = false;
         return true;
@@ -258,6 +320,27 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
         this.armedTicks = nbt.getInt(TAG_ARMED_TICKS);
         // Switch is authority on armed state; payload's own flag follows, or HUD reads safe while fuze still counts.
         this.payload.setArmed(isOn());
+    }
+
+    /** Strapped items under the airframe at {@code attach_offset}: one centred, a rack in a 2-wide grid. */
+    @Override
+    @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
+    public void render(com.mojang.blaze3d.vertex.PoseStack poseStack, net.minecraft.client.renderer.MultiBufferSource
+            bufferSource, int packedLight, float partialTick) {
+        List<ItemStack> items = contents();
+        Vec3 at = data.getAttachOffset();
+        for (int i = 0; i < items.size(); i++) {
+            double dx = items.size() == 1 ? 0 : (i % 2 - 0.5) * RACK_SPACING;
+            double dz = items.size() == 1 ? 0 : (i / 2 - 0.5) * RACK_SPACING;
+            poseStack.pushPose();
+            poseStack.translate(at.x + dx, at.y, at.z + dz);
+            poseStack.scale(ITEM_SCALE, ITEM_SCALE, ITEM_SCALE);
+            net.minecraft.client.Minecraft.getInstance().getItemRenderer().renderStatic(items.get(i),
+                    net.minecraft.world.item.ItemDisplayContext.FIXED, packedLight,
+                    net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, poseStack, bufferSource,
+                    vehicle.level(), 0);
+            poseStack.popPose();
+        }
     }
 
     /** Registered type id for the part-unit registry. */

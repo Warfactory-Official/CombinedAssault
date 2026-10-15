@@ -1,0 +1,45 @@
+{
+    "type": "combinedassault:vehicle_printing",
+    "materials": [
+        {
+            "count": 96,
+            "ingredient": {
+                "tag": "c:ingots/iron"
+            }
+        },
+        {
+            "count": 64,
+            "ingredient": {
+                "tag": "c:ingots/copper"
+            }
+        },
+        {
+            "count": 64,
+            "ingredient": {
+                "item": "minecraft:redstone"
+            }
+        },
+        {
+            "count": 8,
+            "ingredient": {
+                "tag": "c:gems/diamond"
+            }
+        },
+        {
+            "count": 16,
+            "ingredient": {
+                "tag": "c:glass_blocks"
+            }
+        }
+    ],
+    "result": {
+        "id": "combinedassault:vehicle_spawn_item",
+        "count": 1,
+        "components": {
+            "minecraft:custom_data": {
+                "CombinedAssaultId": "combinedassault:laser_trailer"
+            }
+        }
+    },
+    "printingTime": 1600
+}

@@ -5,19 +5,10 @@ glTF `extras` (docs/vehicle-pack-format.md §6); extras the panels do not show s
 Frame: 1 unit = 1 block, world origin = vehicle origin, nose toward -Y, port +X, up +Z. The glTF exporter's
 Y-up conversion `(x, y, z) -> (x, z, -y)` then gives the vehicle frame (+Z forward, +X port, +Y up).
 
-Install: `python3 tools/blender/build_addon.py` -> build/combinedassault_tools.zip; Edit > Preferences > Add-ons >
-Install from Disk. Panels: Object, Material and Scene properties; File > Import > combinedassault pack model.
+Install: `python3 tools/blender/build_addon.py` -> build/combinedassault_tools.zip (extension); Edit > Preferences >
+Get Extensions > Install from Disk. Panels: Object, Material and Scene properties; File > Import > combinedassault pack
+model.
 """
-
-bl_info = {
-    "name": "combinedassault tools",
-    "author": "combinedassault",
-    "version": (4, 0, 0),
-    "blender": (4, 2, 0),
-    "location": "Properties > Object / Material / Scene > combinedassault",
-    "description": "Frames, colliders, hit modules, sockets, armour, part clips and pack export for combinedassault glTF vehicles",
-    "category": "Import-Export",
-}
 
 import json
 import os

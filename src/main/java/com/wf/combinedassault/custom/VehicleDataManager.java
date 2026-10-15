@@ -13,6 +13,7 @@ import org.apache.logging.log4j.MarkerManager;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.all.ModRegistries;
 import com.wf.combinedassault.api.custom.IVehicleDataManager;
+import com.wf.combinedassault.vehicle.loadout.Loadouts;
 import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
 import com.wf.combinedassault.vehicle.hit.ModelData;
 import com.wf.combinedassault.vehicle.hit.ModelMounts;
@@ -106,6 +107,7 @@ public class VehicleDataManager implements IVehicleDataManager {
                 }
             }
         }
+        Loadouts.validate((BaseVehicleData<?>) data);
         MountDefaults.Resolved weapons = MountDefaults.resolve(vehicleId.toString(), obj, mounted.relative(), data);
         MountDefaults.apply(data, weapons.values());
         List<String> repeated = new ArrayList<>(mounted.repeated());

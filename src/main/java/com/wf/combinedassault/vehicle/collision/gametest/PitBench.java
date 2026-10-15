@@ -40,8 +40,8 @@ import java.util.Optional;
 @GameTestHolder(ClimbBench.NAMESPACE)
 public class PitBench {
 
-    private static final String[] VEHICLES = {"humvee", "m1a2", "m983", "humvee_m2", "t90", "m1129", "centauro",
-            "merkava", "m142", "mim104", "humvee_mk19", "m252a1"};
+    private static final String[] VEHICLES = {"humvee", "m1a2", "m983", "t90", "m1129", "centauro",
+            "merkava", "m142", "mim104", "m252a1"};
     private static final int SEEDS = 3;
     private static final int LANE_X = -8000;
     private static final int LANE_PITCH = 200;

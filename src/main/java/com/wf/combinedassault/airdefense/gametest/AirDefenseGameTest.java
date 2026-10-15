@@ -124,10 +124,40 @@ public class AirDefenseGameTest {
             InterceptBattery.State state = launcher.airDefense().state();
             cleanUp(helper, vehicle, threat[0]);
             helper.assertTrue(interceptor != null, "no interceptor fired; state " + state + ", picture " + picture);
-            helper.assertTrue(threat[0].getUUID().equals(lock), "interceptor locked on " + lock + ", not the threat");
+            helper.assertTrue(threat[0].getUUID().equals(lock), "interceptor locked on "
+                    + TestLanes.describe(helper, lock, vehicle) + ", not the threat");
             helper.assertTrue(elevation >= 19.5f && elevation <= 80.5f,
                     String.format(Locale.ROOT, "launched at %.1f deg, outside 20..80", elevation));
             helper.assertTrue(ballisticKept, "the battery fired the ballistic round");
+        }));
+    }
+
+    /** A UAV is an air-defence target: AUTO + own radar locks an interceptor on a hostile quadcopter. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    public static void unmannedItInterceptsAHostileUav(GameTestHelper helper) {
+        AbstractVehicle[] uav = new AbstractVehicle[1];
+        int[] ticks = {0};
+        onLane(helper, 5, (seq, v) -> seq.thenExecute(() -> {
+            WeaponUnit launcher = launcher(helper, v.get());
+            HimarsGameTest.seed(helper, rack(helper, v.get()), INTERCEPTOR);
+            launcher.airDefense().setMode(AirDefense.Mode.AUTO);
+            launcher.airDefense().setSource(AirDefense.Source.ORGANIC);
+            uav[0] = TestLanes.spawn(helper, CombinedAssault.modLocation("mavic"), v.get().position().add(THREAT_FROM));
+        }).thenWaitUntil(() -> {
+            Vec3 hold = v.get().position().add(THREAT_FROM);
+            uav[0].moveTo(hold.x, hold.y, hold.z, 0.0f, 0.0f);
+            uav[0].setDeltaMovement(Vec3.ZERO);
+            helper.assertTrue(fired(helper, v.get()) != null || ++ticks[0] >= DEADLINE, "waiting");
+        }).thenExecute(() -> {
+            WeaponUnit launcher = launcher(helper, v.get());
+            MissileEntity interceptor = fired(helper, v.get());
+            String picture = picture(helper, launcher);
+            UUID lock = interceptor == null ? null : interceptor.interceptor().lockTarget();
+            InterceptBattery.State state = launcher.airDefense().state();
+            cleanUp(helper, v.get(), uav[0]);
+            helper.assertTrue(interceptor != null, "no interceptor fired; state " + state + ", picture " + picture);
+            helper.assertTrue(uav[0].getUUID().equals(lock), "interceptor locked on "
+                    + TestLanes.describe(helper, lock, v.get()) + ", not the UAV");
         }));
     }
 

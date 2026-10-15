@@ -7,6 +7,7 @@ import com.wf.combinedassault.custom.part.data.RopeUnitData;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.entity.vehicle.RotaryWingVehicle;
 import com.wf.combinedassault.fpv.FpvFlight;
+import com.wf.combinedassault.multirotor.MultirotorFlight;
 import com.wf.combinedassault.vehicle.part.LandingGearUnit;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.RopeUnit;
@@ -26,6 +27,7 @@ public class RotaryWingVehicleData extends BaseVehicleData<RotaryWingVehicle> {
     public float zRotSpeedMax = 4;
     public float maxAirSpeed = 1f;
     public JsonObject fpv;
+    public JsonObject multirotor;
     public boolean fastRoping;
     public String fastRopingDoorId;
     public String landingGearPartId;
@@ -71,6 +73,7 @@ public class RotaryWingVehicleData extends BaseVehicleData<RotaryWingVehicle> {
         this.zRotSpeedMax = pojo.attributes.zRotSpeedMax;
         this.maxAirSpeed = pojo.attributes.maxAirSpeed;
         this.fpv = pojo.attributes.fpv;
+        this.multirotor = pojo.attributes.multirotor;
         this.fastRoping = pojo.attributes.fastRoping;
         this.fastRopingDoorId = pojo.attributes.fastRopingDoorId;
         this.landingGearPartId = pojo.landingGearPartId;
@@ -87,6 +90,7 @@ public class RotaryWingVehicleData extends BaseVehicleData<RotaryWingVehicle> {
         vehicle.zRotSpeedMax = this.zRotSpeedMax;
         vehicle.maxAirSpeed = this.maxAirSpeed;
         vehicle.fpvFlight = FpvFlight.of(this.fpv);
+        vehicle.multirotor = MultirotorFlight.of(this.multirotor);
         vehicle.fastRoping = this.fastRoping;
         vehicle.fastRopingDoorId = this.fastRopingDoorId;
         vehicle.landingGearPartId = this.landingGearPartId;

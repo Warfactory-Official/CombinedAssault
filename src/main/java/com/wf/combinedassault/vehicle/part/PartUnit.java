@@ -268,6 +268,11 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
         return health;
     }
 
+    /** kg carried on top of curb weight: fitted hardware, payload. */
+    public float mass() {
+        return 0;
+    }
+
     public void setHealth(float health) {
         this.health = health;
     }

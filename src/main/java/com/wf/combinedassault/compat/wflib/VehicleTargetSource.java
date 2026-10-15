@@ -1,6 +1,5 @@
 package com.wf.combinedassault.compat.wflib;
 
-import com.wf.wflib.recon.ContactClass;
 import com.wf.wflib.recon.CountermeasureRegistry;
 import com.wf.wflib.recon.EmconState;
 import com.wf.wflib.recon.Signature;
@@ -43,7 +42,7 @@ final class VehicleTargetSource implements TargetSource {
         // EMCON = driver decision, not hull property: radar off => reflects same, emits nothing.
         EmconState emcon = VehicleSignature.radiating(vehicle) ? EmconState.ACTIVE : EmconState.SILENT;
         // Last-tick displacement, not getDeltaMovement (physics-solver impulse != distance traveled).
-        return new TargetSnapshot(SourceIds.of(vehicle), ContactClass.VEHICLE,
+        return new TargetSnapshot(SourceIds.of(vehicle), vehicle.interceptClass(),
                 vehicle.getX(), vehicle.getY() + vehicle.getBbHeight() * 0.5, vehicle.getZ(),
                 vehicle.getX() - vehicle.xo, vehicle.getY() - vehicle.yo, vehicle.getZ() - vehicle.zo,
                 SignatureRegistry.of(vehicle), CountermeasureRegistry.of(vehicle), emcon,

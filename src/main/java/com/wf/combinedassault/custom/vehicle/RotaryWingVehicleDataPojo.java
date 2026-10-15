@@ -44,6 +44,10 @@ public class RotaryWingVehicleDataPojo extends BaseVehicleDataPojo {
         @SerializedName("fpv")
         public JsonObject fpv;
 
+        /** Read by com.wf.combinedassault.multirotor.MultirotorFlight; replaces the rotor force law. */
+        @SerializedName("multirotor")
+        public JsonObject multirotor;
+
         @SerializedName("fast_roping")
         public boolean fastRoping;
 

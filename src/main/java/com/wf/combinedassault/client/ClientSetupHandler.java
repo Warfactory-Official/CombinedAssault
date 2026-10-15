@@ -55,7 +55,6 @@ public class ClientSetupHandler {
                 new com.wf.combinedassault.indirect.client.FireMissionMapTool()));
         event.enqueueWork(() -> com.wf.wflib.client.map.WFMaps.addTool(
                 new com.wf.combinedassault.indirect.client.CallForFireMapTool()));
-        event.enqueueWork(com.wf.combinedassault.uav.client.UavPdaApp::register);
         event.enqueueWork(() -> EntityRenderers.register(AllEntities.NONE_VEHICLE.get(), VehicleRender::new));
         event.enqueueWork(() -> EntityRenderers.register(AllEntities.VEHICLE_PART.get(), VehiclePartRender::new));
         event.enqueueWork(() -> EntityRenderers.register(AllEntities.WHEELED_VEHICLE.get(), VehicleRender::new));
@@ -65,7 +64,6 @@ public class ClientSetupHandler {
         event.enqueueWork(() -> EntityRenderers.register(AllEntities.FIXED_WING_VEHICLE.get(), VehicleRender::new));
         event.enqueueWork(() -> EntityRenderers.register(AllEntities.SHIP.get(), VehicleRender::new));
 
-        event.enqueueWork(() -> EntityRenderers.register(AllEntities.QUADCOPTER.get(), VehicleRender::new));
         event.enqueueWork(() -> EntityRenderers.register(AllEntities.M1A2.get(), VehicleRender::new));
         event.enqueueWork(() -> EntityRenderers.register(AllEntities.AH64D.get(), VehicleRender::new));
 

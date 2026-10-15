@@ -6,6 +6,8 @@ import net.minecraft.world.phys.Vec3;
 import com.wf.combinedassault.custom.part.PartUnitEntry;
 import com.wf.combinedassault.ballistics.ArmorProfile;
 import com.wf.combinedassault.ballistics.addon.AddonMountInfo;
+import com.wf.combinedassault.vehicle.pojo.AutonomyInfo;
+import com.wf.combinedassault.vehicle.pojo.LoadoutInfo;
 import com.wf.combinedassault.vehicle.pojo.DefenseStats;
 import com.wf.combinedassault.vehicle.pojo.EnergyInfo;
 import com.wf.combinedassault.vehicle.pojo.PhysicsInfo;
@@ -62,6 +64,12 @@ public class BaseVehicleDataPojo {
 
     @SerializedName("uav")
     public boolean uav = false;
+
+    @SerializedName("autonomy")
+    public AutonomyInfo autonomy;
+
+    @SerializedName("loadouts")
+    public List<LoadoutInfo> loadouts = List.of();
 
     @SerializedName("can_wade")
     public boolean canWade = false;

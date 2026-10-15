@@ -8,10 +8,10 @@ import java.util.Locale;
 
 /** What is installed on a mount point. Ordinal is the save/sync id. */
 public enum AddonFit {
-    NONE(null, null),
-    ERA_LIGHT(AddonKind.ERA, EraSpec.LIGHT),
-    ERA_HEAVY(AddonKind.ERA, EraSpec.HEAVY),
-    SLAT(AddonKind.SLAT, null);
+    NONE(null, null, 0),
+    ERA_LIGHT(AddonKind.ERA, EraSpec.LIGHT, 5.6f),
+    ERA_HEAVY(AddonKind.ERA, EraSpec.HEAVY, 13.0f),
+    SLAT(AddonKind.SLAT, null, 25.0f);
 
     private static final AddonFit[] VALUES = values();
 
@@ -19,10 +19,13 @@ public enum AddonFit {
     public final AddonKind kind;
     @Nullable
     public final EraSpec era;
+    /** kg per installed item: ERA brick, slat panel (1 m²). */
+    public final float kilograms;
 
-    AddonFit(@Nullable AddonKind kind, @Nullable EraSpec era) {
+    AddonFit(@Nullable AddonKind kind, @Nullable EraSpec era, float kilograms) {
         this.kind = kind;
         this.era = era;
+        this.kilograms = kilograms;
     }
 
     public static AddonFit byId(int id) {

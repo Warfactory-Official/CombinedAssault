@@ -11,6 +11,11 @@ public enum ArmorFace {
     TOP,
     BOTTOM;
 
+    /** Face whose outward normal is {@code worldNormal}. */
+    public static ArmorFace ofWorld(com.wf.combinedassault.entity.vehicle.AbstractVehicle vehicle, Vector3f worldNormal) {
+        return of(ArmorResolver.toVehicleFrame(vehicle, worldNormal));
+    }
+
     public static ArmorFace of(Vector3f localNormal) {
         float ax = Math.abs(localNormal.x);
         float ay = Math.abs(localNormal.y);

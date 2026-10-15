@@ -17,4 +17,8 @@ public class DefenseStats {
     @SerializedName("damage_transfer_coefficient")
     public float damageTransferCoefficient = 1f;
 
+    /** Scales the mass/armour term of wflib {@code LaserDamage}; 1 = formula. */
+    @SerializedName("laser_resistance")
+    public float laserResistance = 1f;
+
 }

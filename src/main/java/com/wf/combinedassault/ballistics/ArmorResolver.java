@@ -100,7 +100,7 @@ public class ArmorResolver implements BallisticResolver {
     }
 
     /** World normal -> vehicle-local frame; front/side/rear are frame-relative. */
-    private static Vector3f toVehicleFrame(AbstractVehicle vehicle, Vector3f worldNormal) {
+    static Vector3f toVehicleFrame(AbstractVehicle vehicle, Vector3f worldNormal) {
         Vector3f local = new Vector3f(worldNormal);
         new Quaternionf(vehicle.rotYXZ()).conjugate().transform(local);
         return local;

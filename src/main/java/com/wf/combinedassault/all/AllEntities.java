@@ -96,8 +96,6 @@ public class AllEntities {
                     .clientTrackingRange(32)
                     .build("ship"));
 
-    public static final DeferredHolder<EntityType<?>, EntityType<Quadcopter>> QUADCOPTER = registerVehicle("quadcopter", Quadcopter::new);
-
     public static final DeferredHolder<EntityType<?>, EntityType<M1a2>> M1A2 = registerVehicle("m1a2", M1a2::new);
 
     public static final DeferredHolder<EntityType<?>, EntityType<Ah64d>> AH64D = registerVehicle("ah64d", Ah64d::new);

@@ -31,7 +31,7 @@ import java.util.UUID;
 public class DroneRideGameTest {
 
     private static final String TEMPLATE = "empty";
-    private static final ResourceLocation DRONE = CombinedAssault.modLocation("fpv_drone");
+    private static final ResourceLocation DRONE = CombinedAssault.modLocation("mavic");
 
     @GameTest(template = TEMPLATE, timeoutTicks = 300)
     public static void droneDataLoads(GameTestHelper helper) {
@@ -156,6 +156,7 @@ public class DroneRideGameTest {
         AbstractVehicle drone = data.get().construct(level, new Vec3(at.getX() + 0.5, at.getY(), at.getZ() + 0.5), 0, 0);
         drone.setDisplayId(DRONE);
         level.addFreshEntity(drone);
+        KamikazeKit.strap(drone);
 
         PayloadUnit hardpoint = PayloadUnit.on(drone);
         if (hardpoint == null) {
