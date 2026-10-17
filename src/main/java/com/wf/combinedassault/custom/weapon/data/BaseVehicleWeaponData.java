@@ -1,13 +1,19 @@
 package com.wf.combinedassault.custom.weapon.data;
 
 import com.google.gson.annotations.SerializedName;
+import com.wf.combinedassault.vehicle.weapon.Backblast;
 import com.wf.wflib.audio.SoundSpec;
+import com.wf.wflib.ammo.Ammo;
 import com.wf.wflib.ammo.AmmoItems;
+import com.wf.wflib.ammo.AmmoVariant;
+import com.wf.wflib.magazine.MagFill;
+import com.wf.wflib.magazine.Run;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +43,14 @@ public class BaseVehicleWeaponData {
     @SerializedName("independent")
     public boolean independent;
 
+    @SerializedName("backblast")
+    @Nullable
+    private Backblast backblast;
+
+    /** Seconds from shot to case out of the {@code eject} socket. */
+    @SerializedName("casing_delay")
+    private float casingDelay;
+
     /** {@code fire} (at the pivot), {@code shell} (half an interval later), {@code reload}. */
     @SerializedName("sounds")
     private Map<String, SoundSpec> sounds = Map.of();
@@ -54,6 +68,15 @@ public class BaseVehicleWeaponData {
         @SerializedName("variants")
         @Nullable
         private List<ResourceLocation> variants;
+
+        /** WFLib magazine items it takes (item, {@code #tag}, list); absent = loose rounds only. */
+        @SerializedName("magazines")
+        @Nullable
+        private Ingredient magazines;
+
+        /** With {@code magazines}: loose rounds from the stores too. */
+        @SerializedName("loose")
+        private boolean loose;
 
         public Reload(int time, Ingredient ammo) {
             this.time = time;
@@ -87,6 +110,65 @@ public class BaseVehicleWeaponData {
             return variant != null && variants.contains(variant.id());
         }
 
+        public boolean magazineFed() {
+            return magazines != null;
+        }
+
+        public boolean takesLoose() {
+            return magazines == null || loose;
+        }
+
+        /** A magazine item it takes, every round in it {@link #isAmmo}; empty magazine included. */
+        public boolean isMagazine(ItemStack stack) {
+            if (magazines == null || !MagFill.isMagazine(stack) || !magazines.test(stack)) {
+                return false;
+            }
+            for (Run run : MagFill.contents(stack).runs()) {
+                if (!isAmmo(AmmoItems.stack(run.round(), 1))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /** Creative supply: each magazine item full of each variant it and {@link #isAmmo} accept. */
+        public List<ItemStack> fullMagazines() {
+            List<ItemStack> out = new ArrayList<>();
+            if (magazines == null) {
+                return out;
+            }
+            for (ItemStack mag : magazines.getItems()) {
+                if (!MagFill.isMagazine(mag)) {
+                    continue;
+                }
+                for (AmmoVariant v : Ammo.variantsOf(MagFill.magazine(mag).calibre())) {
+                    if (isAmmo(AmmoItems.stack(v, 1))) {
+                        out.add(MagFill.full(mag, v.id()));
+                    }
+                }
+            }
+            return out;
+        }
+
+        /** Every kind this accepts, one each: a cartridge item expands to its calibre's variants. */
+        public List<ItemStack> rounds() {
+            List<ItemStack> out = new ArrayList<>();
+            for (ItemStack item : ammo.getItems()) {
+                AmmoVariant variant = AmmoItems.variantOf(item);
+                if (variant == null) {
+                    out.add(item.copyWithCount(1));
+                    continue;
+                }
+                for (AmmoVariant v : Ammo.variantsOf(variant.calibre())) {
+                    ItemStack round = AmmoItems.stack(v, 1);
+                    if (isAmmo(round)) {
+                        out.add(round);
+                    }
+                }
+            }
+            return out;
+        }
+
         /** Round a creative magazine loads: first variant, else the ingredient's first item. */
         public ItemStack defaultRound() {
             if (variants != null && !variants.isEmpty()) {
@@ -96,6 +178,15 @@ public class BaseVehicleWeaponData {
             return items.length == 0 ? ItemStack.EMPTY : items[0].copyWithCount(1);
         }
 
+    }
+
+    @Nullable
+    public Backblast getBackblast() {
+        return backblast;
+    }
+
+    public float getCasingDelay() {
+        return casingDelay;
     }
 
     @Nullable

@@ -2,6 +2,7 @@ package com.wf.combinedassault.client.render.animation.context;
 
 import net.minecraft.util.Mth;
 import com.wf.combinedassault.client.model.VehicleModelInstance;
+import com.wf.combinedassault.client.render.entity.vehicle.VehicleRender;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.vehicle.control.ControlUnit;
 import com.wf.combinedassault.vehicle.part.PartUnit;
@@ -85,6 +86,10 @@ public class VehicleContext<E extends AbstractVehicle> extends EntityContext<E> 
         }
     }
 
+    public boolean isOwnLensView() {
+        return VehicleRender.ownLensView(getEntity());
+    }
+
     public void setBoneIlluminated(String boneName, boolean illuminated) {
         VehicleModelInstance vehicleModelInstance = entity.getVehicleModelInstance();
         if (vehicleModelInstance != null) {
@@ -118,6 +123,13 @@ public class VehicleContext<E extends AbstractVehicle> extends EntityContext<E> 
 
     public ControlUnit getControlUnit() {
         return getEntity().controlUnit;
+    }
+
+    /** Hull system pool {@code id} ({@code "rotor FL"}): 0 broken .. 1; no such pool => 1. */
+    public float getSystemEffectiveness(String id) {
+        com.wf.combinedassault.ballistics.component.HullComponents systems = entity.hullComponents();
+        int at = systems.indexOf(id);
+        return at < 0 ? 1 : systems.effectiveness(at);
     }
 
     public float getPower() {

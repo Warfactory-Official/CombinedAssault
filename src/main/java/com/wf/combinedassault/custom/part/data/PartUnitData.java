@@ -29,6 +29,7 @@ public class PartUnitData {
     protected Boolean protectPassenger;
     protected boolean passengerCanUseItem;
     protected Vec3 ownerViewOffset = null;
+    protected String sensor;
     protected List<CrewRole> crewRoles;
     protected Vec3 pivotOffset = Vec3.ZERO;
     protected ResourceLocation displayId;
@@ -58,6 +59,7 @@ public class PartUnitData {
             throw new IllegalArgumentException("part " + pojo.id + ": pose " + pojo.pose + " not in " + SeatPoses.SETS.keySet());
         }
         this.pose = pojo.pose;
+        this.sensor = pojo.sensor;
         this.protectPassenger = pojo.protectPassenger;
         this.passengerCanUseItem = pojo.passengerCanUseItem;
         this.ownerViewOffset = pojo.ownerViewOffset;
@@ -149,6 +151,11 @@ public class PartUnitData {
 
     public Vec3 getDismountOffset() {
         return dismountOffset;
+    }
+
+    @Nullable
+    public String getSensor() {
+        return sensor;
     }
 
     @Nullable

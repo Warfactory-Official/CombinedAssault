@@ -25,7 +25,8 @@
         "mass": 1500
     },
     "storage": {
-        "slots": 18
+        "slots": 18,
+        "max_payload": 250
     },
     "towing": {
         "hitches": [
@@ -92,10 +93,8 @@
             "type": "combinedassault:missile_holder",
             "is_seat": false,
             "detachable": false,
-            "accepts": [
-                "POD"
-            ],
-            "capacity": 6
+            "pods": "#wflib:pod",
+            "default_pod": "wflib:pod_gmlrs"
         },
         {
             "id": "chief",

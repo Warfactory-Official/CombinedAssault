@@ -13,7 +13,7 @@ import java.util.WeakHashMap;
  * Chunk view by height {@code h} over terrain: slant reach of the ground view kept, {@code r = sqrt((16 v)^2 - h^2) / 16},
  * floor {@code altitudeViewFloor}; Boxy LOD draws beyond. Shrinks only by >= 2: altitude wobble => no ring churn.
  * Sending only: player tickets (loading) stay server-wide. Entity tracking shrinks with it: entities past the shrunk view
- * reach the client only through Boxy's entity extension ({@code trackedEntityTypes}).
+ * reach the client only through Boxy's entity extension (tag {@code boxy:distant}, config {@code trackedEntityTypes}).
  */
 public final class AltitudeView {
 

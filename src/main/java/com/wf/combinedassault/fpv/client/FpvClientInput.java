@@ -12,9 +12,11 @@ import org.lwjgl.glfw.GLFW;
 import com.wf.combinedassault.all.AllKeys;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.fpv.net.FpvTriggerMessage;
+import com.wf.combinedassault.fpv.payload.FpvPayloadTypes;
 import com.wf.combinedassault.fpv.payload.PayloadUnit;
 import com.wf.combinedassault.network.message.ClientVehicleAction;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.wflib.radio.client.RadioClient;
 
 /** Arm rides the host's vehicle-action packet (hardpoint is a switchable unit); fire needed one of its own. */
 @EventBusSubscriber(value = Dist.CLIENT)
@@ -43,6 +45,10 @@ public final class FpvClientInput {
             return;
         }
         AbstractVehicle vehicle = LocalVehiclePlayer.instance.vehicle;
+        if (matches(FpvKeys.RADIO_STATION, key, scanCode)) {
+            RadioClient.cycle(vehicle, 1);
+            return;
+        }
         PayloadUnit hardpoint = PayloadUnit.on(vehicle);
         if (hardpoint == null || !hardpoint.isLoaded()) {
             return;
@@ -54,7 +60,10 @@ public final class FpvClientInput {
             arm.partUnitIndex = hardpoint.getIndex();
             PacketDistributor.sendToServer(arm);
         } else if (hardpoint.isArmed() && matches(AllKeys.MAIN_WEAPON_SHOOT, key, scanCode)) {
-            PacketDistributor.sendToServer(new FpvTriggerMessage(vehicle.getId()));
+            PacketDistributor.sendToServer(new FpvTriggerMessage(vehicle.getId(), false));
+        } else if (hardpoint.isArmed() && hardpoint.payloadType() == FpvPayloadTypes.WARHEAD
+                && matches(AllKeys.SECONDARY_WEAPON_SHOOT, key, scanCode)) {
+            PacketDistributor.sendToServer(new FpvTriggerMessage(vehicle.getId(), true));
         }
     }
 

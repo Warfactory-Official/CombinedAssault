@@ -20,6 +20,8 @@ public record HitMesh(String source, List<Node> nodes) {
      * @param frame     {@link ModelRig} frame the node rides
      * @param component {@code combinedassault.system}: a {@code ComponentKind} name, {@code "none"}, or empty (inherit)
      * @param side      {@code combinedassault.side}: {@code left} / {@code right}, or empty (inherit)
+     * @param unit      {@code combinedassault.unit}: own pool within the system kind, or empty (inherit)
+     * @param spin      {@code combinedassault.spin}: {@code cw} / {@code ccw} seen from above, or empty (inherit)
      * @param health    pool override, 0 = share of the vehicle's
      * @param origin    rest pose, model frame; geometry is in this node's frame
      * @param mesh      triangles, null for a node with none
@@ -27,7 +29,7 @@ public record HitMesh(String source, List<Node> nodes) {
      * @param weapon    grafted from a weapon-scoped part mount: live only while that weapon is selected
      */
     public record Node(String name, int parent, boolean module, int frame, String component, String side,
-                       float health, Quaternionf rotation, Vector3f origin,
+                       String unit, String spin, float health, Quaternionf rotation, Vector3f origin,
                        @Nullable TriangleBvh mesh, @Nullable Disc disc, @Nullable String weapon) {
 
         /** 6 floats, node frame; inverted when empty. */

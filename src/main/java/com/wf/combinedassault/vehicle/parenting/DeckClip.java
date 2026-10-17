@@ -139,13 +139,14 @@ public final class DeckClip {
     /**
      * Pushes a box out of any deck geometry it is inside, along the shallowest overlap axis;
      * up wins ties between vertical and horizontal.
+     * @param mayDescend false: downward push replaced by the shallower horizontal one (terrain below)
      * @param out receives the correction as {x, y, z}
      * @return true when a correction was needed
      */
     public static boolean depenetrate(float[] boxes, int count,
                                       double cx, double cy, double cz,
                                       double hx, double hy, double hz,
-                                      int maxPasses, double[] out) {
+                                      boolean mayDescend, int maxPasses, double[] out) {
         out[0] = 0;
         out[1] = 0;
         out[2] = 0;
@@ -169,9 +170,9 @@ public final class DeckClip {
                 if (depth <= SKIN || depth <= worstDepth) continue;
                 worst = i;
                 worstDepth = depth;
-                if (overlapY <= overlapX && overlapY <= overlapZ) {
+                boolean up = cy >= (boxes[o + 1] + boxes[o + 4]) * 0.5;
+                if (overlapY <= overlapX && overlapY <= overlapZ && (up || mayDescend)) {
                     // Up wins ties; push vertical first.
-                    boolean up = cy >= (boxes[o + 1] + boxes[o + 4]) * 0.5;
                     pushX = 0;
                     pushY = up ? overlapY + EPSILON : -(overlapY + EPSILON);
                     pushZ = 0;

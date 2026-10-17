@@ -4,38 +4,28 @@ import com.google.gson.JsonObject;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import com.wf.combinedassault.entity.vehicle.RotaryWingVehicle;
 import com.wf.combinedassault.vehicle.control.ControlUnit;
 
 /**
- * FPV drones: direct attitude control, not the host's rate-cap + sideslip-limited model (treacle-handling on
- * a small frame). Closes a fixed fraction of angular error per tick instead; attitude-only, thrust still the
- * rotor disc. Opt-in via {@code attributes.fpv}; absent block => untouched stock flight.
+ * FPV drones: acro (body-rate) control, no self-levelling, no attitude limits. Schema + controls: pack format §8.2.
  */
 public final class FpvFlight {
 
-    /** Fraction of angular error closed per tick. */
-    private final double response;
-
-    /** deg/tick from yaw keys; rate control, not an aim. */
+    /** deg/tick from keys. */
+    private final double pitchRate;
+    private final double rollRate;
     private final double yawRate;
-
-    /** Extra nose-down while forward held: lets the throttle hand ask for speed too. */
-    private final double pitchBias;
-
-    /** Bank per deg/tick of yaw; cosmetic only, carries most of the feel. */
-    private final double bankPerYaw;
-
-    private final double maxBank;
-    private final double maxPitch;
+    /** Lens uptilt over the body's forward axis, deg. */
+    private final double cameraTilt;
 
     private FpvFlight(JsonObject json) {
-        this.response = Mth.clamp(GsonHelper.getAsDouble(json, "response", 0.35D), 0.01D, 1.0D);
-        this.yawRate = GsonHelper.getAsDouble(json, "yaw_rate", 6.0D);
-        this.pitchBias = GsonHelper.getAsDouble(json, "pitch_bias", 25.0D);
-        this.bankPerYaw = GsonHelper.getAsDouble(json, "bank_per_yaw", 4.0D);
-        this.maxBank = GsonHelper.getAsDouble(json, "max_bank", 45.0D);
-        this.maxPitch = GsonHelper.getAsDouble(json, "max_pitch", 80.0D);
+        this.pitchRate = GsonHelper.getAsDouble(json, "pitch_rate", 12.0D);
+        this.rollRate = GsonHelper.getAsDouble(json, "roll_rate", 15.0D);
+        this.yawRate = GsonHelper.getAsDouble(json, "yaw_rate", 8.0D);
+        this.cameraTilt = GsonHelper.getAsDouble(json, "camera_tilt", 0.0D);
     }
 
     /** @return the model, or null if the airframe has no {@code attributes.fpv} block. */
@@ -45,54 +35,88 @@ public final class FpvFlight {
     }
 
     /**
+     * Reported attitude adopted unchecked: mouse turn is unbounded input, any attitude reachable in one tick. No
+     * new input => last report held, nothing re-stepped.
+     *
      * @param authority rotor output factor (engine speed * collective); 0 => rotors stopped, nothing to steer with.
      * @return true if attitude was set directly (caller skips the rate-limited model).
      */
     public boolean tickAttitude(RotaryWingVehicle vehicle, double authority) {
         if (authority <= 0 || vehicle.isDestroyed()) {
-            // No thrust or destroyed: host physics takes over, not the operator.
             return false;
         }
-        ControlUnit control = vehicle.controlUnit;
-
-        float targetPitch = control.xRotKeep ? vehicle.getXRot() : control.xRot;
-        if (control.forward) {
-            targetPitch += (float) pitchBias;
+        ControlUnit c = vehicle.controlUnit;
+        if (c.reported) {
+            vehicle.setYRot(c.reportedYRot);
+            vehicle.setXRot(c.reportedXRot);
+            vehicle.setZRot(c.reportedZRot);
+        } else if (c.turnX != 0 || c.turnY != 0 || keyed(c)) {
+            setAttitude(vehicle, step(vehicle.rotYXZ(), c, c.turnX, c.turnY, keyTicks(vehicle, 1)));
         }
-        if (control.backward) {
-            targetPitch -= (float) pitchBias;
-        }
-        targetPitch = (float) Mth.clamp(targetPitch, -maxPitch, maxPitch);
-        vehicle.setXRot(vehicle.getXRot() + (float) (Mth.wrapDegrees(targetPitch - vehicle.getXRot()) * response));
-
-        float yawStep;
-        if (control.leftYaw || control.rightYaw) {
-            yawStep = (float) yawRate * ((control.rightYaw ? 1 : 0) - (control.leftYaw ? 1 : 0));
-        } else if (control.yRotKeep) {
-            yawStep = 0;
-        } else {
-            // Direct set, bypassing the host's sideslip limit (tail-rotor geometry a quadcopter lacks).
-            yawStep = (float) (Mth.wrapDegrees(control.yRot - vehicle.getYRot()) * response);
-        }
-        vehicle.setYRot(vehicle.getYRot() + yawStep);
-
-        float targetBank = (float) Mth.clamp(yawStep * bankPerYaw, -maxBank, maxBank);
-        vehicle.setZRot(vehicle.getZRot() + (float) (Mth.wrapDegrees(targetBank - vehicle.getZRot()) * response));
-
-        // Clears host rate state so a later revert to the rate-limited model (e.g. repair) starts clean.
         vehicle.xRotSpeed = 0;
         vehicle.yRotSpeed = 0;
         vehicle.zRotSpeed = 0;
         return true;
     }
 
-    /** Ticks to close {@code fraction} of a step input (for describing the handling elsewhere). */
-    public int ticksToClose(double fraction) {
-        return (int) Math.ceil(Math.log(1 - fraction) / Math.log(1 - response));
+    /**
+     * Operator client at input sample, before the new keys land in {@code vehicle.controlUnit}: one full step of the
+     * keys {@link #lead} extrapolated since the last sample => no jump when they change.
+     */
+    public void clientStep(RotaryWingVehicle vehicle, float turnX, float turnY) {
+        if (vehicle.fpvAuthority() <= 0 || vehicle.isDestroyed()) {
+            return;
+        }
+        ControlUnit c = vehicle.controlUnit;
+        if (turnX != 0 || turnY != 0 || keyed(c)) {
+            setAttitude(vehicle, step(vehicle.rotYXZ(), c, turnX, turnY, keyTicks(vehicle, 1)));
+        }
     }
 
-    public double response() {
-        return response;
+    /** Render attitude: last sample + {@code partialTick} of its keys + mouse turn not yet sampled. */
+    public Quaternionf lead(RotaryWingVehicle vehicle, float turnX, float turnY, float partialTick) {
+        if (vehicle.fpvAuthority() <= 0 || vehicle.isDestroyed()) {
+            return vehicle.rotYXZ();
+        }
+        return step(vehicle.rotYXZ(), vehicle.controlUnit, turnX, turnY, keyTicks(vehicle, partialTick));
+    }
+
+    /** {@code turnY} about world vertical, signed by body up; keys + {@code turnX} body frame. */
+    private Quaternionf step(Quaternionf rot, ControlUnit c, float turnX, float turnY, float keyTicks) {
+        float pitch = turnX + keyTicks * (float) pitchRate * (axis(c.forward) - axis(c.backward));
+        float yaw = keyTicks * (float) yawRate * (axis(c.rightYaw) - axis(c.leftYaw));
+        float roll = keyTicks * (float) rollRate * (axis(c.right) - axis(c.left));
+        float heading = rot.transformUnit(new Vector3f(0, 1, 0)).y < 0 ? -turnY : turnY;
+        return new Quaternionf().rotationY((float) Math.toRadians(-heading)).mul(rot)
+                .rotateY((float) Math.toRadians(-yaw))
+                .rotateX((float) Math.toRadians(pitch))
+                .rotateZ((float) Math.toRadians(roll));
+    }
+
+    /** Key rates / {@link RotaryWingVehicle#load}: cargo inertia. Mouse turn exempt (unbounded input). */
+    private static float keyTicks(RotaryWingVehicle vehicle, float ticks) {
+        return (float) (ticks / vehicle.load());
+    }
+
+    private static boolean keyed(ControlUnit c) {
+        return c.forward || c.backward || c.left || c.right || c.leftYaw || c.rightYaw;
+    }
+
+    /** Inverse of {@code rotYXZ}; yaw kept continuous with the current heading. */
+    public static void setAttitude(RotaryWingVehicle vehicle, Quaternionf rot) {
+        Vector3f euler = rot.getEulerAnglesYXZ(new Vector3f());
+        float yRot = (float) Math.toDegrees(-euler.y);
+        vehicle.setYRot(vehicle.getYRot() + Mth.wrapDegrees(yRot - vehicle.getYRot()));
+        vehicle.setXRot((float) Math.toDegrees(euler.x));
+        vehicle.setZRot((float) Math.toDegrees(euler.z));
+    }
+
+    private static int axis(boolean down) {
+        return down ? 1 : 0;
+    }
+
+    public double cameraTilt() {
+        return cameraTilt;
     }
 
 }

@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -36,10 +37,15 @@ import com.wf.combinedassault.vehicle.part.AutoWeaponUnit;
 import com.wf.combinedassault.vehicle.part.WeaponBayUnit;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
 import com.wf.combinedassault.vehicle.pojo.AimContext;
+import com.wf.wflib.ammo.AmmoItems;
 import com.wf.wflib.client.fx.WFLights;
+import com.wf.wflib.magazine.MagContents;
+import com.wf.wflib.magazine.MagFill;
+import com.wf.wflib.magazine.MagazineItems;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -67,7 +73,23 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
      * first match, then only the same item + components (cartridge variant).
      */
     protected ItemStack loadedRound = ItemStack.EMPTY;
+    /** Kind {@link #reload()} loads; empty = first in the stores. Not in the stores => first, and it becomes the pick. */
+    protected ItemStack selectedRound = ItemStack.EMPTY;
+    /** Seated magazine, {@code remainAmmo} = its rounds; empty = loose feed. Server. */
+    private ItemStack magazine = ItemStack.EMPTY;
+    /** Seated magazine's capacity, 0 = none; synced for the client's {@link #getMaxCapacity}. */
+    private int magazineCapacity;
+    private SyncDataHolder<ItemStack> selectedRoundHolder;
+    /** Server: this weapon's kinds in the stores, refreshed every {@link #STOCK_INTERVAL} ticks. */
+    private List<RoundCount> stock = List.of();
+    private static final int STOCK_INTERVAL = 10;
     protected int reloadTime = 0;
+    /** {@link #reloadTime} at its start; synced => client reload progress. */
+    private int reloadSpan;
+    /** Firings, synced: a change stamps {@link #shotTick} on the client. */
+    private int shots;
+    /** {@code vehicle.tickCount} at the last firing; MIN_VALUE = never. */
+    private int shotTick = Integer.MIN_VALUE;
     protected SyncDataHolder<Integer> remainAmmoHolder;
     protected SyncDataHolder<Integer> reloadTimeHolder;
     protected Vec3 targetLocation;
@@ -88,6 +110,40 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
         this.reloadTimeHolder = syncData.define(SyncDataSerializers.INT, this::setReloadTime, this::getReloadTime, reloadTime);
         // Client lays the gun and picks lock rules off the breech round.
         syncData.define(SyncDataSerializers.ROUND, this::setLoadedRound, () -> loadedRound, loadedRound);
+        this.selectedRoundHolder = syncData.define(SyncDataSerializers.ROUND, round -> this.selectedRound = round,
+                () -> selectedRound, selectedRound);
+        syncData.define(SyncDataSerializers.ROUND_STOCK, stock -> this.stock = stock, () -> stock, stock);
+        syncData.define(SyncDataSerializers.INT, capacity -> this.magazineCapacity = capacity,
+                () -> magazineCapacity, magazineCapacity);
+        syncData.define(SyncDataSerializers.INT, span -> this.reloadSpan = span, () -> reloadSpan, reloadSpan);
+        syncData.define(SyncDataSerializers.INT, this::setShots, () -> shots, shots);
+    }
+
+    private void setShots(int shots) {
+        if (shots != this.shots) {
+            this.shotTick = vehicle.tickCount;
+        }
+        this.shots = shots;
+    }
+
+    /** Server, once per firing: cooldown + {@code .fire} clip. */
+    protected void markShot() {
+        this.lastShootTime = System.currentTimeMillis();
+        this.shots++;
+        this.shotTick = vehicle.tickCount;
+    }
+
+    /** +inf before the first firing. */
+    public float secondsSinceShot(float partialTick) {
+        return shotTick == Integer.MIN_VALUE ? Float.POSITIVE_INFINITY : (vehicle.tickCount - shotTick + partialTick) / 20f;
+    }
+
+    /** [0,1] through the current reload; 0 when not reloading. */
+    public float reloadProgress(float partialTick) {
+        if (reloadTime <= 0 || reloadSpan <= 0) {
+            return 0;
+        }
+        return Mth.clamp(1 - (reloadTime - partialTick) / reloadSpan, 0, 1);
     }
 
     public abstract boolean shoot(List<AimContext> aimContexts, LivingEntity shooter);
@@ -111,17 +167,34 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
         for (; fired < rounds && consumeAmmo(aimContexts); fired++) {
             float lead = (float) fired / rounds;
             for (AimContext aimContext : aimContexts) {
-                if (Munitions.fire(vehicle, weaponUnit, aimContext, loadedRound, data.getInaccuracy(),
+                if (Munitions.fire(vehicle, weaponUnit, aimContext, feed(), data.getInaccuracy(),
                         root.getLockedEntity(), root.getOwner(), lead)) {
                     vehicle.queueRecoil(weaponUnit, data.getRecoil());
+                    if (data.getBackblast() != null && vehicle.level() instanceof ServerLevel level) {
+                        data.getBackblast().fire(level, vehicle, aimContext, weaponUnit.getCurrentBolt().barrelLength,
+                                root.getOwner());
+                    }
                 }
             }
         }
         if (fired == 0) {
             return false;
         }
-        this.lastShootTime = System.currentTimeMillis();
+        markShot();
         return true;
+    }
+
+    /** Round for one shot already counted off {@code remainAmmo}: the magazine's top, else {@link #loadedRound}. */
+    private ItemStack feed() {
+        if (magazine.isEmpty()) {
+            return loadedRound;
+        }
+        MagContents contents = MagFill.contents(magazine);
+        ItemStack round = AmmoItems.stack(contents.top(), 1);
+        contents = contents.pop();
+        magazine.set(MagazineItems.CONTENTS.get(), contents);
+        loadedRound = contents.isEmpty() ? ItemStack.EMPTY : AmmoItems.stack(contents.top(), 1);
+        return round;
     }
 
     public boolean check(List<AimContext> aimContexts, LivingEntity shooter) {
@@ -268,15 +341,19 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
         Level level = vehicle.level();
         WeaponSounds.fire(this);
         List<AimContext> aimContexts;
+        int[] bolts;
         if (weaponUnit.getFiringMode() == WeaponUnitData.FiringMode.RIPPLE) {
             aimContexts = Collections.singletonList(weaponUnit.aimContext());
+            bolts = new int[]{weaponUnit.getCurrentBoltIndex()};
             weaponUnit.countFire(1);
         } else if (weaponUnit.getFiringMode() == WeaponUnitData.FiringMode.SALVO) {
             aimContexts = weaponUnit.aimContexts();
+            bolts = java.util.stream.IntStream.range(0, aimContexts.size()).toArray();
             weaponUnit.countFire(aimContexts.size());
         } else {
             return;
         }
+        com.wf.combinedassault.client.fx.CasingFx.shot(weaponUnit, bolts, solutionRound(), data.getCasingDelay());
         float recoil = data.getRecoil();
         float caliber = Math.max(Munitions.caliber(loadedRound), DEFAULT_FLASH_CALIBER);
         float scaleDivisor = 20f + 30f * caliber / 1000f;
@@ -322,11 +399,171 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
         this.loadedRound = round == null ? ItemStack.EMPTY : round;
     }
 
+    public ItemStack getSelectedRound() {
+        return selectedRound;
+    }
+
+    /** Client: shown until the {@code ClientSelectRound} echo. */
+    public void predictSelectedRound(ItemStack round) {
+        selectedRoundHolder.predict(round);
+    }
+
+    /** Kinds the operator picks from; stores order. */
+    public List<RoundCount> roundOptions() {
+        return stock;
+    }
+
+    /**
+     * Server: operator's pick, a round or a magazine kind. Another kind loaded => back to the stores, then reload
+     * ({@link #tick()}).
+     */
+    public void selectRound(ItemStack round) {
+        if (!isAmmoForWeapon(round) && !isMagazineForWeapon(round)) {
+            return;
+        }
+        selectedRound = round.copyWithCount(1);
+        if (remainAmmo > 0 && !RoundCount.sameKind(magazine.isEmpty() ? loadedRound : magazine, selectedRound)) {
+            unload();
+        }
+    }
+
+    /** Breech / magazine back to the stores, overflow dropped; creative supply => discarded. */
+    private void unload() {
+        if (magazine.isEmpty()) {
+            store(creativeSupply() ? ItemStack.EMPTY : loadedRound.copyWithCount(remainAmmo));
+        }
+        ejectMagazine();
+        remainAmmo = 0;
+        loadedRound = ItemStack.EMPTY;
+    }
+
+    /** Seated magazine, as fired down, back to the stores; creative supply => discarded. */
+    private void ejectMagazine() {
+        if (!magazine.isEmpty() && !creativeSupply()) {
+            store(magazine);
+        }
+        magazine = ItemStack.EMPTY;
+        magazineCapacity = 0;
+    }
+
+    private void store(ItemStack back) {
+        var handler = vehicle.getItemHandler();
+        for (int i = 0; i < handler.getSlots() && !back.isEmpty(); i++) {
+            back = handler.insertItem(i, back, false);
+        }
+        if (!back.isEmpty()) {
+            vehicle.spawnAtLocation(back);
+        }
+    }
+
+    /**
+     * Empty magazine out, a filled one in: creative => the pick's kind full, else the first; stores => the pick's kind
+     * with most rounds, else the fullest. Loose pick on a {@code loose} weapon with loose rounds to load => none.
+     *
+     * @return false: none seated, loose feed next
+     */
+    private boolean seatMagazine() {
+        ejectMagazine();
+        var reload = data.getReload();
+        boolean loosePick = !selectedRound.isEmpty() && !MagFill.isMagazine(selectedRound);
+        if (loosePick && (creativeSupply() || vehicle.getItemStacks().stream().anyMatch(this::isAmmoForWeapon))) {
+            return false;
+        }
+        ItemStack next = ItemStack.EMPTY;
+        if (creativeSupply()) {
+            List<ItemStack> full = reload.fullMagazines();
+            next = full.stream().filter(m -> RoundCount.sameKind(m, selectedRound)).findFirst()
+                    .orElse(full.isEmpty() ? ItemStack.EMPTY : full.getFirst());
+        } else {
+            var handler = vehicle.getItemHandler();
+            int best = -1;
+            boolean bestPicked = false;
+            for (int i = 0; i < handler.getSlots(); i++) {
+                ItemStack stack = handler.getStackInSlot(i);
+                if (!isMagazineForWeapon(stack)) {
+                    continue;
+                }
+                boolean picked = RoundCount.sameKind(stack, selectedRound);
+                if (best < 0 || picked && !bestPicked || picked == bestPicked
+                        && MagFill.contents(stack).total() > MagFill.contents(handler.getStackInSlot(best)).total()) {
+                    best = i;
+                    bestPicked = picked;
+                }
+            }
+            if (best >= 0) {
+                next = handler.extractItem(best, 1, false);
+            }
+        }
+        if (next.isEmpty()) {
+            return false;
+        }
+        magazine = next;
+        MagContents contents = MagFill.contents(magazine);
+        magazineCapacity = contents.capacity(MagFill.magazine(magazine).perLink());
+        remainAmmo = contents.total();
+        loadedRound = AmmoItems.stack(contents.top(), 1);
+        if (!RoundCount.sameKind(magazine, selectedRound)) {
+            selectedRound = magazine.copy();
+        }
+        return true;
+    }
+
+    private boolean creativeSupply() {
+        return vehicle.getItemStacks().stream().anyMatch(stack -> stack.getItem() == AllItems.AMMO_CREATIVE.get());
+    }
+
+    private List<RoundCount> countStock() {
+        if (data.getReload() == null) {
+            return List.of();
+        }
+        List<RoundCount> out = new ArrayList<>();
+        if (creativeSupply()) {
+            for (ItemStack mag : data.getReload().fullMagazines()) {
+                out.add(new RoundCount(mag, RoundCount.UNLIMITED));
+            }
+            if (data.getReload().takesLoose()) {
+                for (ItemStack round : data.getReload().rounds()) {
+                    out.add(new RoundCount(round, RoundCount.UNLIMITED));
+                }
+            }
+        } else {
+            for (ItemStack stack : vehicle.getItemStacks()) {
+                if (isMagazineForWeapon(stack)) {
+                    add(out, stack, 1);
+                } else if (isAmmoForWeapon(stack)) {
+                    add(out, stack, stack.getCount());
+                }
+            }
+        }
+        if (!magazine.isEmpty()) {
+            add(out, magazine, 0);
+        } else if (!loadedRound.isEmpty()) {
+            add(out, loadedRound, 0);
+        }
+        return List.copyOf(out);
+    }
+
+    private static void add(List<RoundCount> out, ItemStack round, int count) {
+        for (int i = 0; i < out.size(); i++) {
+            RoundCount entry = out.get(i);
+            if (RoundCount.sameKind(entry.round(), round)) {
+                if (entry.count() != RoundCount.UNLIMITED) {
+                    out.set(i, new RoundCount(entry.round(), entry.count() + count));
+                }
+                return;
+            }
+        }
+        out.add(new RoundCount(round.copyWithCount(1), count));
+    }
+
     public int getRemainAmmo() {
         return remainAmmo;
     }
 
     public int getMaxCapacity() {
+        if (magazineCapacity > 0) {
+            return magazineCapacity;
+        }
         return weaponUnit.getAmmoCapacity() != -1 ? weaponUnit.getAmmoCapacity() : this.getData().getMaxCapacity();
     }
 
@@ -365,7 +602,9 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
         int total = 0;
         for (int i = 0; i < vehicle.getItemHandler().getSlots(); i++) {
             ItemStack stack = vehicle.getItemHandler().getStackInSlot(i);
-            if (isAmmoForWeapon(stack)) {
+            if (isMagazineForWeapon(stack)) {
+                total += MagFill.contents(stack).total();
+            } else if (isAmmoForWeapon(stack)) {
                 total += stack.getCount();
             }
         }
@@ -381,15 +620,21 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
             if (stack.getItem() == AllItems.AMMO_CREATIVE.get()) {
                 return true;
             }
-            if (isAmmoForWeapon(stack)) {
+            if (isAmmoForWeapon(stack) || isMagazineForWeapon(stack)) {
                 return true;
             }
         }
         return false;
     }
 
+    /** Loose round it loads; a magazine-only weapon takes none. */
     public boolean isAmmoForWeapon(ItemStack stack) {
-        return data.getReload() != null && data.getReload().isAmmo(stack);
+        return data.getReload() != null && data.getReload().takesLoose() && data.getReload().isAmmo(stack);
+    }
+
+    /** Magazine it takes, holding rounds. */
+    public boolean isMagazineForWeapon(ItemStack stack) {
+        return data.getReload() != null && data.getReload().isMagazine(stack) && !MagFill.contents(stack).isEmpty();
     }
 
     public boolean canReload() {
@@ -399,6 +644,7 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
 
     public void startReload() {
         this.reloadTime = CrewRules.reloadTicks(weaponUnit, data.getReload().getTime());
+        this.reloadSpan = reloadTime;
     }
 
     public void tickReload() {
@@ -411,17 +657,28 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
     }
 
     public void reload() {
-        int maxCap = getMaxCapacity();
         if (remainAmmo <= 0) {
             // Breech empty: next load decides round kind.
             this.loadedRound = ItemStack.EMPTY;
         }
-        if (vehicle.getItemStacks().stream().anyMatch(stack -> stack.getItem() == AllItems.AMMO_CREATIVE.get())) {
+        var reload = data.getReload();
+        if (reload != null && reload.magazineFed() && remainAmmo <= 0 && seatMagazine()) {
+            return;
+        }
+        if (reload != null && !reload.takesLoose()) {
+            return;
+        }
+        int maxCap = getMaxCapacity();
+        if (creativeSupply()) {
             remainAmmo = maxCap;
             if (this.loadedRound.isEmpty() && data.getReload() != null) {
-                this.loadedRound = data.getReload().defaultRound();
+                this.loadedRound = selectedRound.isEmpty() ? data.getReload().defaultRound() : selectedRound.copy();
             }
         } else {
+            if (this.loadedRound.isEmpty() && !selectedRound.isEmpty() && vehicle.getItemStacks().stream()
+                    .anyMatch(stack -> ItemStack.isSameItemSameComponents(stack, selectedRound) && isAmmoForWeapon(stack))) {
+                this.loadedRound = selectedRound.copy();
+            }
             for (var item : vehicle.getItemStacks()) {
                 int need = maxCap - remainAmmo;
                 if (need <= 0) {
@@ -436,6 +693,7 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
                 }
                 if (this.loadedRound.isEmpty()) {
                     this.loadedRound = item.copyWithCount(1);
+                    this.selectedRound = this.loadedRound.copy();
                 }
                 int toTake = Math.min(need, item.getCount());
                 item.shrink(toTake);
@@ -451,6 +709,9 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
     public void tick() {
         if (vehicle.level().isClientSide()) {
             return;
+        }
+        if (vehicle.tickCount % STOCK_INTERVAL == 0) {
+            stock = countStock();
         }
         if (remainAmmo == 0) {
             if (isReloading()) {
@@ -500,6 +761,12 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
         if (!loadedRound.isEmpty()) {
             tag.put("LoadedRound", loadedRound.save(provider));
         }
+        if (!selectedRound.isEmpty()) {
+            tag.put("SelectedRound", selectedRound.save(provider));
+        }
+        if (!magazine.isEmpty()) {
+            tag.put("Magazine", magazine.save(provider));
+        }
         return tag;
     }
 
@@ -509,6 +776,14 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
         this.loadedRound = nbt.contains("LoadedRound")
                 ? ItemStack.parse(provider, nbt.get("LoadedRound")).orElse(ItemStack.EMPTY)
                 : ItemStack.EMPTY;
+        this.selectedRound = nbt.contains("SelectedRound")
+                ? ItemStack.parse(provider, nbt.get("SelectedRound")).orElse(ItemStack.EMPTY)
+                : ItemStack.EMPTY;
+        this.magazine = nbt.contains("Magazine")
+                ? ItemStack.parse(provider, nbt.get("Magazine")).orElse(ItemStack.EMPTY)
+                : ItemStack.EMPTY;
+        this.magazineCapacity = magazine.isEmpty() ? 0
+                : MagFill.contents(magazine).capacity(MagFill.magazine(magazine).perLink());
     }
 
     /** Model bones showing loaded rounds, firing order; see {@code RoundStations}. */

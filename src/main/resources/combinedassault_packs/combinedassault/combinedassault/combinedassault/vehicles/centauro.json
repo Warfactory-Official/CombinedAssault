@@ -32,7 +32,8 @@
         "mass": 2400
     },
     "storage": {
-        "slots": 18
+        "slots": 18,
+        "max_payload": 250
     },
     "parts": [
         {

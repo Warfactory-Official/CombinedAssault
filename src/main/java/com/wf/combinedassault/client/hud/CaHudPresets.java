@@ -2,6 +2,7 @@ package com.wf.combinedassault.client.hud;
 
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.client.hud.widget.AimWidgets;
+import com.wf.combinedassault.client.hud.widget.AmmoList;
 import com.wf.combinedassault.client.hud.widget.DebugDump;
 import com.wf.combinedassault.client.hud.widget.HitWidgets;
 import com.wf.combinedassault.client.hud.widget.RadarWidgets;
@@ -29,6 +30,7 @@ public final class CaHudPresets {
     }
 
     static void registerWidgets() {
+        add("ammo_list", p -> new AmmoList());
         add("hit_marker", p -> new HitWidgets.HitMarker());
         add("hit_panel", p -> new HitWidgets.HitPanel());
         add("aim_reticle", p -> new AimWidgets.AimReticle(p.expr("color")));

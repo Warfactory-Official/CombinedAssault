@@ -21,21 +21,26 @@ import java.util.List;
  */
 public final class HullComponents {
 
-    public static final HullComponents NONE = new HullComponents(List.of(), List.of(), new float[0], new boolean[0]);
+    public static final HullComponents NONE = new HullComponents(List.of(), List.of(), List.of(), new float[0],
+            new boolean[0]);
 
     private static final String HEALTH_KEY = "HullComponents";
     public static final float DEFAULT_HEALTH_SHARE = 0.3f;
 
     private final List<String> ids;
     private final List<ComponentKind> kinds;
+    /** Pool's unit within its kind; "" = kind-wide. */
+    private final List<String> units;
     private final float[] maxHealth;
     private final float[] health;
     private final boolean[] implicit;
     private boolean dirty;
 
-    private HullComponents(List<String> ids, List<ComponentKind> kinds, float[] maxHealth, boolean[] implicit) {
+    private HullComponents(List<String> ids, List<ComponentKind> kinds, List<String> units, float[] maxHealth,
+                           boolean[] implicit) {
         this.ids = ids;
         this.kinds = kinds;
+        this.units = units;
         this.maxHealth = maxHealth;
         this.health = maxHealth.clone();
         this.implicit = implicit;
@@ -45,6 +50,7 @@ public final class HullComponents {
     public static HullComponents of(AbstractVehicle vehicle) {
         List<String> ids = new ArrayList<>();
         List<ComponentKind> kinds = new ArrayList<>();
+        List<String> units = new ArrayList<>();
         List<Float> pools = new ArrayList<>();
         float vehicleHealth = vehicle.getMaxHealth();
 
@@ -56,20 +62,20 @@ public final class HullComponents {
                         && (node.part() == null || node.mesh().module())) {
                     float health = node.mesh().health() > 0 ? node.mesh().health()
                             : Math.max(1, vehicleHealth * DEFAULT_HEALTH_SHARE);
-                    pool(node.systemId(), node.kind(), health, ids, kinds, pools);
+                    pool(node.systemId(), node.kind(), node.unit(), health, ids, kinds, units, pools);
                 }
             }
         }
         int declared = ids.size();
         if (!(vehicle instanceof NoneVehicle) && !declares(vehicle, kinds, ComponentKind.ENGINE)) {
-            implied("engine", ComponentKind.ENGINE, vehicleHealth, ids, kinds, pools);
+            implied("engine", ComponentKind.ENGINE, vehicleHealth, ids, kinds, units, pools);
         }
         if (vehicle instanceof TrackedVehicle && !declares(vehicle, kinds, ComponentKind.TRACK)) {
-            implied("left track", ComponentKind.TRACK, vehicleHealth, ids, kinds, pools);
-            implied("right track", ComponentKind.TRACK, vehicleHealth, ids, kinds, pools);
+            implied("left track", ComponentKind.TRACK, vehicleHealth, ids, kinds, units, pools);
+            implied("right track", ComponentKind.TRACK, vehicleHealth, ids, kinds, units, pools);
         }
         if (vehicle instanceof WheeledVehicle && !declares(vehicle, kinds, ComponentKind.WHEEL)) {
-            implied("wheels", ComponentKind.WHEEL, vehicleHealth, ids, kinds, pools);
+            implied("wheels", ComponentKind.WHEEL, vehicleHealth, ids, kinds, units, pools);
         }
         if (ids.isEmpty()) {
             return NONE;
@@ -80,7 +86,7 @@ public final class HullComponents {
             maxHealth[i] = pools.get(i);
             implicit[i] = i >= declared;
         }
-        return new HullComponents(List.copyOf(ids), List.copyOf(kinds), maxHealth, implicit);
+        return new HullComponents(List.copyOf(ids), List.copyOf(kinds), List.copyOf(units), maxHealth, implicit);
     }
 
     private static boolean declares(AbstractVehicle vehicle, List<ComponentKind> kinds, ComponentKind kind) {
@@ -96,14 +102,15 @@ public final class HullComponents {
     }
 
     private static void implied(String id, ComponentKind kind, float vehicleHealth,
-                                List<String> ids, List<ComponentKind> kinds, List<Float> pools) {
+                                List<String> ids, List<ComponentKind> kinds, List<String> units, List<Float> pools) {
         ids.add(id);
         kinds.add(kind);
+        units.add("");
         pools.add(Math.max(1, vehicleHealth * DEFAULT_HEALTH_SHARE));
     }
 
-    private static void pool(String id, ComponentKind kind, float health,
-                             List<String> ids, List<ComponentKind> kinds, List<Float> pools) {
+    private static void pool(String id, ComponentKind kind, String unit, float health,
+                             List<String> ids, List<ComponentKind> kinds, List<String> units, List<Float> pools) {
         int at = ids.indexOf(id);
         if (at >= 0) {
             // Larger pool wins, no sum: an engine split into block + radiator is not twice as tough.
@@ -112,6 +119,7 @@ public final class HullComponents {
         }
         ids.add(id);
         kinds.add(kind);
+        units.add(unit);
         pools.add(health);
     }
 
@@ -129,6 +137,10 @@ public final class HullComponents {
 
     public ComponentKind kind(int index) {
         return kinds.get(index);
+    }
+
+    public String unit(int index) {
+        return units.get(index);
     }
 
     public boolean isImplicit(int index) {

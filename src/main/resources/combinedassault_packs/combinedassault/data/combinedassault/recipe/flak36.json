@@ -1,0 +1,31 @@
+{
+  "type": "combinedassault:vehicle_printing",
+  "materials": [
+    {
+      "count": 40,
+      "ingredient": { "tag": "c:ingots/iron" }
+    },
+    {
+      "count": 8,
+      "ingredient": { "tag": "c:ingots/copper" }
+    },
+    {
+      "count": 8,
+      "ingredient": { "item": "minecraft:redstone" }
+    },
+    {
+      "count": 2,
+      "ingredient": { "item": "minecraft:glass_pane" }
+    }
+  ],
+  "result": {
+    "id": "combinedassault:vehicle_spawn_item",
+    "count": 1,
+    "components": {
+      "minecraft:custom_data": {
+        "CombinedAssaultId": "combinedassault:flak36"
+      }
+    }
+  },
+  "printingTime": 300
+}

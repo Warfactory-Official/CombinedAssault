@@ -54,7 +54,7 @@ public final class RoundStations {
                 }
                 poseStack.pushPose();
                 model.mulGlobalTransform(poseStack, bone);
-                WfLibCompat.renderRoundCentered(weapon.getLoadedRound(), poseStack, buffers, light);
+                WfLibCompat.renderRoundCentered(weapon.getLoadedRound(), Float.POSITIVE_INFINITY, poseStack, buffers, light);
                 poseStack.popPose();
             }
         });

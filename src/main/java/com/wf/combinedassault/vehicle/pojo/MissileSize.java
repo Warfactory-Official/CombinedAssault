@@ -23,7 +23,9 @@ public enum MissileSize {
     LARGE("large"),
     HUGE("huge"),
     /** MLRS pod cell (M142/M270): GMLRS-sized, fits nothing else. */
-    POD("pod");
+    POD("pod"),
+    /** Single-round MLRS pod (ATACMS). */
+    POD_LARGE("pod_large");
 
     public static final MissileSize[] VALUES = values();
 

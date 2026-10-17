@@ -10,7 +10,6 @@ import com.wf.combinedassault.vehicle.crew.CrewRules;
 import com.wf.combinedassault.vehicle.pojo.AimContext;
 import com.wf.combinedassault.vehicle.pojo.Bolt;
 import com.wf.combinedassault.vehicle.weapon.AbstractVehicleWeapon;
-import com.wf.combinedassault.vehicle.weapon.VehicleMultiWeapons;
 import com.wf.wflib.api.ChargeItem;
 import com.wf.wflib.api.ChargeSpec;
 import com.wf.wflib.fire.FireType;
@@ -97,14 +96,11 @@ public final class BarrelCharge {
         return stack.getItem() instanceof ChargeItem c && c.charge(stack).warhead().equals(GrenadeWarheads.THERMITE);
     }
 
-    /** Largest bore over the unit's weapons (multi-weapon members included), mm; rounds in them, else defaults. */
+    /** Largest bore over the unit's weapons, mm; rounds in them, else defaults. */
     public static float bore(WeaponUnit unit) {
         float bore = 0;
         for (AbstractVehicleWeapon<?> weapon : unit.weapons) {
-            for (AbstractVehicleWeapon<?> w : weapon instanceof VehicleMultiWeapons multi ? multi.getSubWeapons()
-                    : List.of(weapon)) {
-                bore = Math.max(bore, Munitions.caliber(w.solutionRound()));
-            }
+            bore = Math.max(bore, Munitions.caliber(weapon.solutionRound()));
         }
         return bore;
     }

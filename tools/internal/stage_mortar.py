@@ -28,6 +28,9 @@ rather than at the zero the part system poses from. So this does four things, in
    Minecraft texture is read as though it were sRGB.
 
 Run from the combinedassault directory:  python3 tools/internal/stage_mortar.py
+Tube mount (M1129 `mortar_tube` part mount): python3 tools/internal/stage_mortar.py tube
+  shipped m252a1.gltf `tube` subtree minus `screw_spindle` (pins to the bipod) -> models/weapon/m252/m252_tube.gltf;
+  origin = tube pivot, +Z = bore; texture shared with m252a1.
 """
 import json
 import math
@@ -35,8 +38,6 @@ import os
 import struct
 
 import numpy as np
-import mqo
-import strip_cubes  # noqa: E402
 
 HOME = os.path.expanduser("~")
 SRC = f"{HOME}/models/warty/m252a1.zip"
@@ -524,6 +525,8 @@ def subtree_extent(doc, node):
 
 
 def main():
+    import mqo
+    import strip_cubes  # TODO: module gone with the pre-role layout; main() needs the port in the header TODO
     os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
     doc, blob = read_glb(SRC, MEMBER)
     if len(doc["buffers"]) != 1:
@@ -569,5 +572,55 @@ def main():
         print(f"   {group['name']:16s} pivot {group['pivot']} cubes {group['cubes']}")
 
 
+def tube_mount():
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+    import convert_pack
+    os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+    pack = "src/main/resources/combinedassault_packs/combinedassault"
+
+    def asset(rl):
+        ns, path = rl.split(":", 1)
+        return os.path.join(pack, "assets", ns, path)
+
+    g = convert_pack.Gltf(asset(f"{NS}:models/emplacement/{ID}/{ID}.gltf"), lambda r: open(asset(r), "rb").read())
+    tube = g.by_name("tube")
+    keep = set()
+
+    def walk(i):
+        if g.nodes[i].get("name") == "screw_spindle":
+            return
+        keep.add(i)
+        for c in g.nodes[i].get("children", []):
+            walk(c)
+
+    walk(tube)
+    g.nodes[tube].pop("rotation", None)
+    g.nodes[tube].pop("translation", None)
+    for i, n in enumerate(g.nodes):
+        n["children"] = [c for c in n.get("children", []) if i in keep and c in keep]
+    g.parent = {c: i for i, n in enumerate(g.nodes) for c in n["children"]}
+    g.doc["scenes"][g.doc.get("scene", 0)]["nodes"] = [tube]
+    g.doc.pop("animations", None)
+    while True:
+        drop = [i for i in range(len(g.nodes)) if i not in keep and not g.nodes[i].get("children")]
+        if not drop:
+            break
+        g.remove_nodes(drop)
+        tube = g.by_name("tube")
+        keep = set()
+        walk(tube)
+    for n in g.nodes:
+        if not n.get("children"):
+            n.pop("children", None)
+    rl = f"{NS}:models/weapon/m252/m252_tube"
+    g.doc["buffers"][0]["extras"]["resourceLocation"] = rl + ".bin"
+    g.doc["asset"]["extras"] = {"staged_by": "tools/internal/stage_mortar.py tube"}
+    os.makedirs(os.path.dirname(asset(rl + ".gltf")), exist_ok=True)
+    g.save(asset(rl + ".gltf"), lambda r, data: open(asset(r), "wb").write(data))
+    print(f"{rl}.gltf: {len(g.nodes)} nodes, {len(g.doc['meshes'])} meshes")
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+    tube_mount() if sys.argv[1:] == ["tube"] else main()

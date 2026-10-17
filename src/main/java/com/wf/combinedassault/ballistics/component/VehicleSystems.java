@@ -63,16 +63,17 @@ public final class VehicleSystems {
         }
     }
 
-    public record Cell(ComponentKind kind, Side side, List<Member> members) {
+    /** @param unit pool unit within the kind ({@code combinedassault.unit}); "" = kind-wide */
+    public record Cell(ComponentKind kind, Side side, String unit, List<Member> members) {
 
         /** Stable across ticks: the probe action's {@code arg}. */
         public int key() {
-            return kind.ordinal() | side.ordinal() << 8;
+            return kind.ordinal() | side.ordinal() << 8 | (unit.hashCode() & 0xFFFFF) << 12;
         }
 
         public String label() {
             String abbrev = kind == ComponentKind.TRACK && side == Side.NONE ? "TRCK" : kind.abbrev;
-            return side.prefix + abbrev;
+            return unit.isEmpty() ? side.prefix + abbrev : side.prefix + abbrev + " " + unit.toUpperCase(Locale.ROOT);
         }
 
         public float ratio() {
@@ -115,21 +116,22 @@ public final class VehicleSystems {
 
     public static List<Cell> cells(AbstractVehicle vehicle) {
         List<Cell> cells = new ArrayList<>();
-        cell(cells, ComponentKind.HULL, Side.NONE).members.add(new HullMember(vehicle));
+        cell(cells, ComponentKind.HULL, Side.NONE, "").members.add(new HullMember(vehicle));
         HullComponents pools = vehicle.hullComponents();
         for (int i = 0; i < pools.size(); i++) {
             ComponentKind kind = pools.kind(i);
             if (kind.isSystem()) {
-                cell(cells, kind, sided(kind, pools.id(i))).members.add(new PoolMember(pools, i));
+                cell(cells, kind, sided(kind, pools.id(i)), pools.unit(i)).members.add(new PoolMember(pools, i));
             }
         }
         for (PartUnit<?> part : vehicle.getPartUnits()) {
             ComponentKind kind = ComponentDamage.kind(part);
             if (kind.isSystem() && part.getMaxHealth() > 0) {
-                cell(cells, kind, sided(kind, part.getId())).members.add(new PartMember(part));
+                cell(cells, kind, sided(kind, part.getId()), "").members.add(new PartMember(part));
             }
         }
-        cells.sort((a, b) -> a.kind == b.kind ? a.side.compareTo(b.side) : order(a.kind) - order(b.kind));
+        cells.sort((a, b) -> a.kind != b.kind ? order(a.kind) - order(b.kind)
+                : a.side != b.side ? a.side.compareTo(b.side) : a.unit.compareTo(b.unit));
         return cells;
     }
 
@@ -197,13 +199,13 @@ public final class VehicleSystems {
         return ORDER.length;
     }
 
-    private static Cell cell(List<Cell> cells, ComponentKind kind, Side side) {
+    private static Cell cell(List<Cell> cells, ComponentKind kind, Side side, String unit) {
         for (Cell cell : cells) {
-            if (cell.kind == kind && cell.side == side) {
+            if (cell.kind == kind && cell.side == side && cell.unit.equals(unit)) {
                 return cell;
             }
         }
-        Cell cell = new Cell(kind, side, new ArrayList<>());
+        Cell cell = new Cell(kind, side, unit, new ArrayList<>());
         cells.add(cell);
         return cell;
     }

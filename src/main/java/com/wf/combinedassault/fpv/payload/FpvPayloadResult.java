@@ -5,7 +5,7 @@ public enum FpvPayloadResult {
 
     NOTHING,
 
-    /** Payload gone, drone flies on; the shape a future mortar drop will take. */
+    /** Payload gone, drone flies on. */
     SPENT,
 
     DETONATED

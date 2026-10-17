@@ -96,12 +96,7 @@
     0,
     2.362499952316284,
     1.3600000143051147
-   ],
-   "extras": {
-    "combinedassault": {
-     "system": "rotor"
-    }
-   }
+   ]
   },
   {
    "mesh": 2,
@@ -1539,7 +1534,12 @@
    "children": [
     97
    ],
-   "name": "propeller"
+   "name": "propeller",
+   "extras": {
+    "combinedassault": {
+     "system": "rotor"
+    }
+   }
   },
   {
    "children": [
@@ -2566,10 +2566,10 @@
     "combinedassaultRole": "part",
     "combinedassaultInterface": "sighting_system",
     "combinedassault": {
-     "x_rot_min": 0,
-     "x_rot_max": 0,
-     "y_rot_min": 0,
-     "y_rot_max": 0
+     "x_rot_min": -15,
+     "x_rot_max": 90,
+     "y_rot_min": -170,
+     "y_rot_max": 170
     }
    }
   },
@@ -2638,7 +2638,13 @@
     159,
     160,
     161,
-    162
+    162,
+    193,
+    194,
+    195,
+    196,
+    197,
+    198
    ]
   },
   {
@@ -3798,6 +3804,180 @@
     "combinedassaultRole": "view",
     "combinedassaultInterface": "sighting_system",
     "gemrenderHidden": true
+   }
+  },
+  {
+   "name": "socket_station_pylons_0",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.9,
+    0.0,
+    1.913,
+    0.97381,
+    0.10919,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "station",
+    "combinedassaultInterface": "pylons",
+    "combinedassault": {
+     "index": 0
+    }
+   }
+  },
+  {
+   "name": "socket_station_pylons_1",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.9,
+    0.0,
+    -1.913,
+    0.97381,
+    0.10919,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "station",
+    "combinedassaultInterface": "pylons",
+    "combinedassault": {
+     "index": 1
+    }
+   }
+  },
+  {
+   "name": "socket_station_pylons_2",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.9,
+    0.0,
+    3.1799999,
+    0.97381,
+    0.10925,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "station",
+    "combinedassaultInterface": "pylons",
+    "combinedassault": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "name": "socket_station_pylons_3",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.9,
+    0.0,
+    -3.1799999,
+    0.97381,
+    0.10925,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "station",
+    "combinedassaultInterface": "pylons",
+    "combinedassault": {
+     "index": 3
+    }
+   }
+  },
+  {
+   "name": "socket_station_pylons_4",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.9,
+    0.0,
+    4.392,
+    0.9848099,
+    0.10925,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "station",
+    "combinedassaultInterface": "pylons",
+    "combinedassault": {
+     "index": 4
+    }
+   }
+  },
+  {
+   "name": "socket_station_pylons_5",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.9,
+    0.0,
+    -4.392,
+    0.9848099,
+    0.10925,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "station",
+    "combinedassaultInterface": "pylons",
+    "combinedassault": {
+     "index": 5
+    }
    }
   }
  ],

@@ -19,6 +19,7 @@ import com.wf.combinedassault.custom.part.data.WeaponUnitData;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.entity.vehicle.FixedWingVehicle;
 import com.wf.combinedassault.entity.vehicle.RotaryWingVehicle;
+import com.wf.combinedassault.fpv.FpvFlight;
 import com.wf.combinedassault.item.ParachutePackItem;
 import com.wf.combinedassault.network.message.*;
 import com.wf.combinedassault.util.VectorUtil;
@@ -78,10 +79,17 @@ public class InputHandler {
             if (instance.onVehicle()) {
                 AbstractVehicle vehicle = instance.vehicle;
                 WeaponUnit weaponUnit = instance.getWeaponUnit();
+                WeaponUnit sight = instance.sightUnit();
                 if (matchesKey(SWITCH_VIEW, key, scanCode)) {
                     instance.switchViewType(null);
                 } else if (matchesKey(SWITCH_SCOPE, key, scanCode)) {
-                    if (weaponUnit != null) {
+                    if (instance.lensUav() && weaponUnit != null) {
+                        if (instance.lensSight()) {
+                            weaponUnit.stepZoom();
+                        } else {
+                            instance.switchViewType(LocalVehiclePlayer.ViewType.OPERATOR);
+                        }
+                    } else if (sight != null) {
                         if (instance.viewType != LocalVehiclePlayer.ViewType.SCOPE) {
                             instance.switchViewType(LocalVehiclePlayer.ViewType.SCOPE);
                         } else {
@@ -137,9 +145,9 @@ public class InputHandler {
                         weaponUnit.toggleSeeker(null);
                     }
                 } else if (matchesKey(CYCLE_SIGHT_MODE, key, scanCode)) {
-                    if (weaponUnit != null && weaponUnit.getOpticalSightType() == WeaponUnitData.OpticalSightType.CRT
-                            && instance.viewType == LocalVehiclePlayer.ViewType.SCOPE) {
-                        instance.sightMode = weaponUnit.nextSightMode(instance.sightMode);
+                    if (sight != null && sight.getOpticalSightType() == WeaponUnitData.OpticalSightType.CRT
+                            && instance.sighted()) {
+                        instance.sightMode = sight.nextSightMode(instance.sightMode);
                     }
                 } else if (matchesKey(TOGGLE_WEAPON_BAY, key, scanCode)) {
                     if (weaponUnit != null) {
@@ -149,10 +157,8 @@ public class InputHandler {
                     if (vehicle instanceof FixedWingVehicle) {
                         sendToggleAerobaticSmoke(vehicle);
                     }
-                } else if (matchesKey(MULTI_WEAPON_SWITCH, key, scanCode)) {
-                    if (weaponUnit != null || CrewRules.has(vehicle, player, CrewRole.LOADER)) {
-                        PacketDistributor.sendToServer(new ClientVehicleSwitchWeapon(vehicle.getId(), ClientVehicleSwitchWeapon.WeaponSwitchType.MULTI, true));
-                    }
+                } else if (matchesKey(SWITCH_AMMO, key, scanCode)) {
+                    AmmoSelect.press();
                 }
             } else {
                 if (matchesKey(OPEN_PARACHUTE, key, scanCode) && ParachutePackItem.canOpen(player)) {
@@ -184,9 +190,12 @@ public class InputHandler {
         LocalVehiclePlayer instance = LocalVehiclePlayer.instance;
         if (instance.onVehicle() && MAGNIFICATION_CHANGE.isDown() && instance.onVehicleTickCount > 5) {
             AbstractVehicle vehicle = instance.vehicle;
-            if (vehicle.getOwnOperatorUnit(player) instanceof WeaponUnit weaponUnit) {
+            if (instance.sightUnit() instanceof WeaponUnit weaponUnit) {
                 if (instance.viewType == LocalVehiclePlayer.ViewType.SCOPE) {
                     weaponUnit.switchZoom();
+                } else if (instance.lensSight()) {
+                    weaponUnit.stepZoom();
+                    return;
                 }
             }
             if (instance.viewType == LocalVehiclePlayer.ViewType.OPERATOR
@@ -209,6 +218,10 @@ public class InputHandler {
         }
         freeCamera = FREE_CAMERA.isDown() || uavFreeLook;
         if (player.getVehicle() instanceof AbstractVehicle vehicle) {
+            // Before vanilla's keybind pass: F5 = SWITCH_VIEW on vehicles.
+            while (mc.options.keyTogglePerspective.consumeClick()) {
+                instance.switchViewType(null);
+            }
             if (LEAVE_VEHICLE.isDown()) {
                 sendLeaveVehicle(vehicle);
                 return;
@@ -261,7 +274,27 @@ public class InputHandler {
                 controlUnit.functionalDown = FUNCTIONAL_DOWN.isDown();
                 controlUnit.functionalLeft = FUNCTIONAL_LEFT.isDown();
                 controlUnit.functionalRight = FUNCTIONAL_RIGHT.isDown();
-                if (freeCamera || instance.playerLerpSteps > 0) {
+                instance.tickCockpitPilot();
+                if (instance.cockpitPilot()) {
+                    if (vehicle instanceof FixedWingVehicle) {
+                        controlUnit.stick = true;
+                        controlUnit.stickX = freeCamera ? 0 : instance.stickX;
+                        controlUnit.stickY = freeCamera ? 0 : instance.stickY;
+                    } else {
+                        // Keyed pitch / yaw: command follows the airframe, held where the keys release it.
+                        if (controlUnit.forward || controlUnit.backward) {
+                            instance.heliPitch = vehicle.getXRot();
+                        }
+                        if (controlUnit.leftYaw || controlUnit.rightYaw) {
+                            instance.heliHeading = vehicle.getYRot();
+                        }
+                        controlUnit.xRot = instance.heliPitch;
+                        controlUnit.yRot = instance.heliHeading;
+                    }
+                    // Scope / third person take over steering from the course flown here.
+                    controlXRotO = vehicle.getXRot();
+                    controlYRotO = vehicle.getYRot();
+                } else if (freeCamera || instance.playerLerpSteps > 0) {
                     controlUnit.xRot = controlXRotO;
                     controlUnit.yRot = controlYRotO;
                     // Q/E turns hold where they stop, not snap back to the heading free look began on.
@@ -284,6 +317,17 @@ public class InputHandler {
                     controlXRotO = controlUnit.xRot;
                     controlYRotO = controlUnit.yRot;
                 }
+                FpvFlight fpv = instance.fpvFlight();
+                if (fpv != null && !vehicle.linkLost()) {
+                    // Before update(): steps the keys the frames since the last sample were led by.
+                    fpv.clientStep((RotaryWingVehicle) vehicle, instance.fpvTurnX, instance.fpvTurnY);
+                }
+                instance.fpvTurnX = 0;
+                instance.fpvTurnY = 0;
+                controlUnit.reported = fpv != null;
+                controlUnit.reportedXRot = vehicle.getXRot();
+                controlUnit.reportedYRot = vehicle.getYRot();
+                controlUnit.reportedZRot = vehicle.getZRot();
                 sendControl(vehicle, controlUnit);
             }
             if (!freeCamera) {
@@ -299,6 +343,10 @@ public class InputHandler {
         var mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null || player.isSpectator() || mc.gameMode == null) {
+            return;
+        }
+        if (AmmoSelect.scroll(event.getScrollDeltaY())) {
+            event.setCanceled(true);
             return;
         }
         if (LocalVehiclePlayer.instance.onVehicle()) {
@@ -372,6 +420,13 @@ public class InputHandler {
         control.xRotKeep = controlUnit.xRotKeep;
         control.yRot = controlUnit.yRot;
         control.yRotKeep = controlUnit.yRotKeep;
+        control.stick = controlUnit.stick;
+        control.stickX = controlUnit.stickX;
+        control.stickY = controlUnit.stickY;
+        control.reported = controlUnit.reported;
+        control.reportedXRot = controlUnit.reportedXRot;
+        control.reportedYRot = controlUnit.reportedYRot;
+        control.reportedZRot = controlUnit.reportedZRot;
         PacketDistributor.sendToServer(control);
     }
 

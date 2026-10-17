@@ -58,6 +58,7 @@ public class CombinedAssault {
         com.wf.combinedassault.vehicle.loadout.Loadouts.register();
         com.wf.combinedassault.vehicle.part.AccessActions.register();
         com.wf.combinedassault.vehicle.part.WeaponActions.register();
+        com.wf.combinedassault.vehicle.part.StationActions.register();
         com.wf.combinedassault.airdefense.AirDefenseActions.register();
         com.wf.combinedassault.vehicle.pose.SeatPoses.register();
         com.wf.combinedassault.ballistics.component.SystemRepair.register();
@@ -71,6 +72,7 @@ public class CombinedAssault {
         CreateCompat.init();
         WfLibCompat.init();
         UltimateWeightCompat.init();
+        com.wf.combinedassault.storage.ItemMass.init();
         GregTechCompat.init();
         com.wf.combinedassault.compat.rail.RailCompat.init();
     }

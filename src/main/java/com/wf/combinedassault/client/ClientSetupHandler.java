@@ -40,6 +40,11 @@ public class ClientSetupHandler {
         event.register(AllMenus.VEHICLE_STORAGE.get(), VehicleStorageScreen::new);
     }
 
+    @SubscribeEvent
+    public static void onResourceReload(dev.engine_room.flywheel.api.event.EndClientResourceReloadEvent event) {
+        com.wf.combinedassault.client.fx.HitFx.onReload(event);
+    }
+
     @SuppressWarnings("removal")
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {

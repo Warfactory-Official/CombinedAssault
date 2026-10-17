@@ -1,7 +1,6 @@
 package com.wf.combinedassault.handler;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -34,11 +33,11 @@ public class LocalVehiclePlayerEvent {
             return;
         }
         Entity entity = event.getCamera().getEntity();
-        if (entity instanceof LivingEntity livingEntity && entity.equals(LocalVehiclePlayer.instance.getPlayer())) {
+        if (entity.equals(LocalVehiclePlayer.instance.getPlayer())) {
             if (entity.getVehicle() instanceof AbstractVehicle vehicle
-                    && vehicle.getOwnOperatorUnit(livingEntity) instanceof WeaponUnit weaponUnit) {
+                    && LocalVehiclePlayer.instance.sightUnit() instanceof WeaponUnit weaponUnit) {
                 float fov;
-                if (LocalVehiclePlayer.instance.viewType == LocalVehiclePlayer.ViewType.SCOPE) {
+                if (LocalVehiclePlayer.instance.sighted()) {
                     float targetFov = (float) magnificationToFov(1 + (weaponUnit.getZoom() - 1), event.getFOV());
                     fov = WORLD_FOV_DYNAMICS.update(targetFov);
                 } else if (vehicle.isViewZoomed()) {

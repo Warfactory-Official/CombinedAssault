@@ -152,7 +152,8 @@ public class DroneRideGameTest {
             helper.fail("the fpv drone is not in the vehicle roster");
             return;
         }
-        BlockPos at = helper.absolutePos(new BlockPos(1, 20, 1));
+        // Floor level: an unpowered fall wrecks it, and a wrecked live drone fires.
+        BlockPos at = helper.absolutePos(new BlockPos(1, 2, 1));
         AbstractVehicle drone = data.get().construct(level, new Vec3(at.getX() + 0.5, at.getY(), at.getZ() + 0.5), 0, 0);
         drone.setDisplayId(DRONE);
         level.addFreshEntity(drone);

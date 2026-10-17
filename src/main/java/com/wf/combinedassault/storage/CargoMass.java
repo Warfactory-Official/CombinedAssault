@@ -1,10 +1,9 @@
 package com.wf.combinedassault.storage;
 
 import net.minecraft.world.item.ItemStack;
-import com.wf.combinedassault.compat.ultimateweight.UltimateWeightCompat;
 import com.wf.combinedassault.entity.ContainerCraft;
 
-/** Hold mass, recounted on dirty + {@link #RECOUNT_INTERVAL} throttle; no Ultimate Weight => always 0. */
+/** Hold mass ({@link ItemMass}), recounted on dirty + {@link #RECOUNT_INTERVAL} throttle. */
 public final class CargoMass {
 
     /** Ticks. */
@@ -26,14 +25,6 @@ public final class CargoMass {
 
     /** @return changed; caller rebuilds mass only then */
     public boolean tick(ContainerCraft craft) {
-        if (!UltimateWeightCompat.isAvailable()) {
-            // No Ultimate Weight: settle at 0, then skip.
-            if (kilograms == 0) {
-                return false;
-            }
-            kilograms = 0;
-            return true;
-        }
         if (!dirty) {
             return false;
         }
@@ -46,7 +37,7 @@ public final class CargoMass {
         double total = 0;
         for (ItemStack stack : craft.getItemStacks()) {
             if (!stack.isEmpty()) {
-                total += UltimateWeightCompat.kilograms(stack);
+                total += ItemMass.kilograms(stack);
             }
         }
         if (total == kilograms) {

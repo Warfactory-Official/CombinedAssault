@@ -58,6 +58,10 @@ public class PartUnitPojo {
     @SerializedName("owner_view_offset")
     public Vec3 ownerViewOffset = null;
 
+    /** Seat: weapon part whose sight this seat may look through and slew (spotter / WSO); fires nothing. */
+    @SerializedName("sensor")
+    public String sensor = null;
+
     @SerializedName("crew_roles")
     public List<CrewRole> crewRoles = null;
 

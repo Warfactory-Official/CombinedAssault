@@ -2,6 +2,7 @@ package com.wf.combinedassault.custom.sync;
 
 import com.wf.combinedassault.api.custom.sync.SyncDataSerializer;
 
+import java.util.ArrayDeque;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -15,6 +16,8 @@ public class SyncDataHolder<T> {
     private int version = 0;
 
     private T value;
+    /** Client: {@link #predict}ed values in flight, oldest first. */
+    private final ArrayDeque<T> predicted = new ArrayDeque<>();
 
     protected SyncDataHolder(
             int index,
@@ -37,7 +40,20 @@ public class SyncDataHolder<T> {
         }
         this.version = entry.version();
         this.value = (T) entry.value();
+        // Match acks it + older; newer still in flight => echo ack-old, keep shown. No match => server diverged.
+        while (!predicted.isEmpty()) {
+            if (serializer.compare(predicted.poll(), this.value) && !predicted.isEmpty()) {
+                return;
+            }
+        }
         this.setter.accept(this.value);
+    }
+
+    /** Client: show {@code value} ahead of the server; caller sends the request. */
+    // TODO: request refused without a value change never echoes => prediction shown until the next server change.
+    public void predict(T value) {
+        predicted.add(value);
+        setter.accept(value);
     }
 
     public void refresh() {

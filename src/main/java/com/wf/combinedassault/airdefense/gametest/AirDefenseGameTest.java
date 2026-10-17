@@ -7,9 +7,9 @@ import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.gametest.TestLanes;
 import com.wf.combinedassault.indirect.gametest.HimarsGameTest;
 import com.wf.combinedassault.vehicle.part.MissileHolderUnit;
+import com.wf.combinedassault.vehicle.part.StationActions;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
 import com.wf.combinedassault.vehicle.pojo.AimContext;
-import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
 import com.wf.combinedassault.vehicle.weapon.VehicleMissile;
 import com.wf.wflib.MissileEntity;
 import com.wf.wflib.intercept.InterceptBattery;
@@ -22,6 +22,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -39,7 +40,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-/** MIM-104: large rounds in four canisters; unmanned interception through the WFLib battery; manual lock; probe. */
+/** MIM-104: large rounds in four canisters; unmanned interception through the WFLib battery; manual lock; probe; station load. */
 @GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class AirDefenseGameTest {
@@ -82,7 +83,7 @@ public class AirDefenseGameTest {
             Vec3 bore = launcher(helper, vehicle).worldVec();
             List<String> stations = new ArrayList<>();
             for (int i = 0; i < rack.getCapacity(); i++) {
-                VehicleCubeOBB station = rack.station(i);
+                MissileHolderUnit.StationPose station = rack.station(i);
                 if (station == null) {
                     stations.add(i + ": none");
                 } else if (new Vec3(forward(station)).dot(bore) < 0.999) {
@@ -195,7 +196,7 @@ public class AirDefenseGameTest {
             MissileHolderUnit rack = rack(helper, vehicle);
             Vector3f canister = forward(rack.station(1));
             VehicleMissile missile = (VehicleMissile) launcher.getIndexedWeapons().get(0);
-            missile.setSelectedRound(INTERCEPTOR);
+            missile.selectRound(INTERCEPTOR.getDefaultInstance());
             missile.tick();
             launcher.setLockedEntity(threat[0]);
             AimContext aim = new AimContext();
@@ -246,6 +247,35 @@ public class AirDefenseGameTest {
         }));
     }
 
+    /** Probe on foot: carried round -> that canister only; unload hands it back; a pod round does not fit. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    public static void theProbeLoadsAndEmptiesOneCanister(GameTestHelper helper) {
+        onLane(helper, 6, (seq, v) -> seq.thenExecute(() -> {
+            AbstractVehicle vehicle = v.get();
+            MissileHolderUnit rack = rack(helper, vehicle);
+            ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+            player.setGameMode(GameType.SURVIVAL);
+            player.getInventory().clearContent();
+            player.moveTo(vehicle.position().add(2, 0, 0));
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(GMLRS));
+            ProbeActions.performEntity(player, vehicle, StationActions.LOAD, StationActions.holder(rack.getIndex(), 2));
+            boolean pod = !rack.round(2).isEmpty();
+            player.getInventory().add(new ItemStack(INTERCEPTOR, 2));
+            ProbeActions.performEntity(player, vehicle, StationActions.LOAD, StationActions.holder(rack.getIndex(), 2));
+            boolean[] loaded = {!rack.round(0).isEmpty(), !rack.round(1).isEmpty(), rack.round(2).is(INTERCEPTOR),
+                    !rack.round(3).isEmpty()};
+            int carried = player.getInventory().countItem(INTERCEPTOR);
+            ProbeActions.performEntity(player, vehicle, StationActions.UNLOAD, StationActions.holder(rack.getIndex(), 2));
+            boolean emptied = rack.round(2).isEmpty();
+            int back = player.getInventory().countItem(INTERCEPTOR);
+            player.getInventory().clearContent();
+            helper.assertFalse(pod, "canister 2 took a GMLRS pod round");
+            helper.assertTrue(!loaded[0] && !loaded[1] && loaded[2] && !loaded[3] && carried == 1,
+                    "load: canisters " + java.util.Arrays.toString(loaded) + ", carried " + carried);
+            helper.assertTrue(emptied && back == 2, "unload: emptied " + emptied + ", carried " + back);
+        }));
+    }
+
     private static MissileEntity threat(GameTestHelper helper, AbstractVehicle vehicle) {
         Vec3 from = vehicle.position().add(THREAT_FROM);
         MissileEntity threat = MissilePresetRegistry.get(MissilePresetRegistry.rl("cruise"))
@@ -274,8 +304,8 @@ public class AirDefenseGameTest {
         threat.discard();
     }
 
-    private static Vector3f forward(VehicleCubeOBB station) {
-        return station.rotation.transform(new Vector3f(0, 0, 1));
+    private static Vector3f forward(MissileHolderUnit.StationPose station) {
+        return station.forward();
     }
 
     private static MissileHolderUnit rack(GameTestHelper helper, AbstractVehicle vehicle) {

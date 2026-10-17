@@ -2,6 +2,7 @@ package com.wf.combinedassault.fpv.payload;
 
 import com.google.gson.JsonObject;
 import com.wf.combinedassault.all.AllDamageTypes;
+import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.wflib.api.StrappedExplosive;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -14,7 +15,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-/** Kamikaze: one strapped {@code #c:ammo/rockets/explosive}, its own wflib warhead along the flight path. */
+/** Kamikaze: one strapped {@code #wflib:drone_explosive}, its own wflib warhead along the flight path, or dropped. */
 public class WarheadPayload extends StrappedPayload {
 
     /** On top of the blast, to whatever the drone struck. */
@@ -49,7 +50,7 @@ public class WarheadPayload extends StrappedPayload {
         return !this.items.isEmpty() && switch (trigger) {
             case IMPACT -> closingSpeed >= this.fuzeSpeed;
             // Cook-off on carrier death: makes a drone unsafe to shoot down rather than a free kill.
-            case OPERATOR, DRONE_DESTROYED -> true;
+            case OPERATOR, RELEASE, DRONE_DESTROYED -> true;
             // Losing signal strands the drone rather than bombing whatever happens to be under it.
             case LINK_LOST -> false;
         };
@@ -57,13 +58,20 @@ public class WarheadPayload extends StrappedPayload {
 
     @Override
     public boolean consumesDrone(FpvTrigger trigger) {
-        return true;
+        return trigger != FpvTrigger.RELEASE;
     }
 
     @Override
     public FpvPayloadResult trigger(PayloadUnit hardpoint, FpvTrigger trigger, Vec3 at, @Nullable LivingEntity operator) {
         if (!(hardpoint.getVehicle().level() instanceof ServerLevel level)) {
             return FpvPayloadResult.NOTHING;
+        }
+        AbstractVehicle drone = hardpoint.getVehicle();
+        if (trigger == FpvTrigger.RELEASE) {
+            // Operator rides the drone => same root vehicle => round never strikes its own carrier.
+            StrappedExplosive.of(this.items.removeFirst()).release(level, at, drone.getDeltaMovement(),
+                    operator != null ? operator : drone, drone.uavSide());
+            return FpvPayloadResult.SPENT;
         }
         // Drone already discarded: not the direct entity, not caught in its own blast.
         Entity struck = hardpoint.takeStruckTarget();
@@ -72,10 +80,8 @@ public class WarheadPayload extends StrappedPayload {
             // Same-tick blast; vanilla invulnerability frames would otherwise swallow it.
             struck.invulnerableTime = 0;
         }
-        Vec3 heading = hardpoint.getVehicle().getDeltaMovement();
-        Vec3 axis = heading.lengthSqr() > 1.0E-6 ? heading.normalize() : hardpoint.getVehicle().getLookAngle();
-        StrappedExplosive.of(this.items.removeFirst()).detonate(level, at, axis, operator,
-                hardpoint.getVehicle().uavSide());
+        StrappedExplosive.of(this.items.removeFirst()).detonate(level, at, drone.getLookAngle(), operator,
+                drone.uavSide());
         return FpvPayloadResult.DETONATED;
     }
 

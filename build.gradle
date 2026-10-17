@@ -371,3 +371,10 @@ tasks.withType(JavaCompile).configureEach {
 test {
     useJUnitPlatform()
 }
+
+idea {
+    module {
+        // Worlds/logs ~24 GB => IDE heap exhaustion while indexing.
+        excludeDirs += projectDir.listFiles().findAll { it.directory && it.name.startsWith('run') }
+    }
+}

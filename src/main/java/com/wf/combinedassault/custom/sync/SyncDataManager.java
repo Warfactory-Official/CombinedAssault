@@ -150,6 +150,7 @@ public class SyncDataManager {
             manager.registerSerializer(SyncDataSerializers.VEC3);
             manager.registerSerializer(SyncDataSerializers.ITEM);
             manager.registerSerializer(SyncDataSerializers.ROUND);
+            manager.registerSerializer(SyncDataSerializers.ROUND_STOCK);
         }
     }
 

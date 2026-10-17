@@ -39,7 +39,8 @@
     },
     "with_warning_receiver": true,
     "storage": {
-        "slots": 54
+        "slots": 54,
+        "max_payload": 129000
     },
     "cargo": {
         "door": "cargo_doors",

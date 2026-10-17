@@ -3,7 +3,6 @@ package com.wf.combinedassault.client.hud;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.util.VectorUtil;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
@@ -40,11 +39,11 @@ public final class AimPoint {
     @SubscribeEvent
     static void onClientTick(ClientTickEvent.Pre event) {
         Player player = Minecraft.getInstance().player;
-        if (player == null || !player.isAlive() || !(player.getVehicle() instanceof AbstractVehicle vehicle)
-                || !(vehicle.getOwnOperatorUnit(player) instanceof WeaponUnit)) {
+        LocalVehiclePlayer local = LocalVehiclePlayer.instance;
+        if (player == null || !player.isAlive() || !(player.getVehicle() instanceof AbstractVehicle)
+                || local.sightUnit() == null) {
             return;
         }
-        LocalVehiclePlayer local = LocalVehiclePlayer.instance;
         Vec3 screen = VectorUtil.worldToScreen(local.viewType == LocalVehiclePlayer.ViewType.SCOPE
                 ? local.scopeAimPos() : local.freeAimPos());
         if (screen.z >= 0) {

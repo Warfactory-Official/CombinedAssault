@@ -144,8 +144,7 @@
             "detachable": false,
             "accepts": [
                 "LARGE"
-            ],
-            "capacity": 4
+            ]
         }
     ],
     "model": "combinedassault:models/ground/mim104/mim104.gltf",

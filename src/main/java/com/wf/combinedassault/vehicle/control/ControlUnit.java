@@ -1,5 +1,6 @@
 package com.wf.combinedassault.vehicle.control;
 
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
@@ -30,6 +31,18 @@ public class ControlUnit {
     public boolean xRotKeep;
     public float yRot;
     public boolean yRotKeep;
+    /** Fixed-wing cockpit mouse stick: replaces the {@link #xRot}/{@link #yRot} aim; -1..1, x = roll (+ right), y = pitch (+ nose down). */
+    public boolean stick;
+    public float stickX;
+    public float stickY;
+    /** FPV turn this tick, body frame, deg: pitch (+ nose down), yaw (+ right). Server-side drivers only. */
+    public float turnX;
+    public float turnY;
+    /** FPV: operator client's attitude, stepped through the previous input; server adopts it. */
+    public boolean reported;
+    public float reportedXRot;
+    public float reportedYRot;
+    public float reportedZRot;
     /** Server: seq of the input in effect (ack); client: seq of this input. -1 none. */
     public int seq = -1;
     /** Server: arrived, not yet consumed; one per tick. Cap: past it the oldest is dropped (client reconciles). */
@@ -84,6 +97,12 @@ public class ControlUnit {
         xRotKeep = false;
         yRot = 0;
         yRotKeep = false;
+        stick = false;
+        stickX = 0;
+        stickY = 0;
+        turnX = 0;
+        turnY = 0;
+        reported = false;
     }
 
     /** No keys, attitude held. */
@@ -110,6 +129,13 @@ public class ControlUnit {
         xRotKeep = controlUnit.xRotKeep;
         yRot = controlUnit.yRot;
         yRotKeep = controlUnit.yRotKeep;
+        stick = controlUnit.stick;
+        stickX = controlUnit.stickX;
+        stickY = controlUnit.stickY;
+        reported = controlUnit.reported;
+        reportedXRot = controlUnit.reportedXRot;
+        reportedYRot = controlUnit.reportedYRot;
+        reportedZRot = controlUnit.reportedZRot;
         seq = controlUnit.seq;
     }
 
@@ -135,6 +161,13 @@ public class ControlUnit {
         xRotKeep = message.xRotKeep;
         yRot = message.yRot;
         yRotKeep = message.yRotKeep;
+        stick = message.stick;
+        stickX = Mth.clamp(message.stickX, -1, 1);
+        stickY = Mth.clamp(message.stickY, -1, 1);
+        reported = message.reported;
+        reportedXRot = message.reportedXRot;
+        reportedYRot = message.reportedYRot;
+        reportedZRot = message.reportedZRot;
         seq = message.seq;
         return true;
     }

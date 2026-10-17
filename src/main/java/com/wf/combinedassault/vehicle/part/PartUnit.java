@@ -19,6 +19,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.common.util.INBTSerializable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -176,6 +177,23 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
     public Vec3 worldSeatPosition() {
         float eyeHeight = getOwner() == null ? 2 : owner.getEyeHeight();
         return worldPositionWithSelfRot(new Vec3(seatOffset.x, seatOffset.y  - eyeHeight, seatOffset.z));
+    }
+
+    /** {@code sensor}: weapon part this seat looks through (spotter); null => none. */
+    @Nullable
+    public WeaponUnit sensorUnit() {
+        String sensor = data.getSensor();
+        return sensor == null ? null : (WeaponUnit) vehicle.getPartUnit(sensor).orElseThrow();
+    }
+
+    /** Another occupant spots through this sight: their slew owns it. */
+    public boolean spottedBy(@Nullable LivingEntity except) {
+        for (PartUnit<?> part : vehicle.getPartUnits()) {
+            if (part != this && part.getOwner() != null && part.getOwner() != except && part.sensorUnit() == this) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public Vec3 worldDismountPosition() {
@@ -424,9 +442,11 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
     }
 
     public void onClientMessageReceived(ClientVehicleAction message, Player player) {
-        // Aim and fire name any part by index: crew on => only that part's own gunner.
-        if (CrewRules.enabled() && (vehicle.getPartUnits().get(message.partUnitIndex).getOwner() != player
-                || !CrewRules.has(vehicle, player, CrewRole.GUNNER))) {
+        // Aim and fire name any part by index: crew on => only that part's own gunner, or aim from its spotter seat.
+        PartUnit<?> target = vehicle.getPartUnits().get(message.partUnitIndex);
+        PartUnit<?> own = vehicle.getOwnOperatorUnit(player);
+        boolean spotting = !message.shoot && own != null && own.sensorUnit() == target;
+        if (CrewRules.enabled() && !spotting && (target.getOwner() != player || !CrewRules.has(vehicle, player, CrewRole.GUNNER))) {
             return;
         }
         if (message.shoot) {

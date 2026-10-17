@@ -1,16 +1,13 @@
 {
     "type": "combinedassault:cannon",
-    "name": "125mm APFSDS",
+    "name": "120mm Cannon",
     "recoil": 1,
     "inaccuracy": 0.05,
     "shoot_interval": 400,
     "max_capacity": 1,
     "reload": {
         "time": 100,
-        "ammo": "wflib:cartridge_125mm",
-        "variants": [
-            "wflib:125mm/apfsds"
-        ]
+        "ammo": "wflib:cartridge_120mm"
     },
     "sounds": {
         "fire": {"event": "combinedassault:cannon_125mm_shot", "range": 1000, "pitch_random": 0.1},

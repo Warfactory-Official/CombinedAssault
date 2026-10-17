@@ -25,7 +25,6 @@ import com.wf.combinedassault.vehicle.part.MissileHolderUnit;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
 import com.wf.combinedassault.vehicle.pojo.AimContext;
 import com.wf.combinedassault.vehicle.pojo.MissileSize;
-import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
 import com.wf.combinedassault.vehicle.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.vehicle.weapon.VehicleMissile;
 
@@ -68,16 +67,15 @@ public class PylonGameTest {
             }
             double[] xs = new double[6];
             for (int i = 0; i < 6; i++) {
-                VehicleCubeOBB station = holder.station(i);
+                var station = holder.stationInModel(i, 1);
                 if (station == null) {
                     helper.fail("slot " + i + " has no station");
                     return;
                 }
-                xs[i] = station.localCenter().x;
-                double below = station.y + station.height;
-                if (below > 1.2 || station.y < 0.5) {
-                    helper.fail(String.format(Locale.ROOT, "station %d spans y %.2f..%.2f, not under a rail", i,
-                            station.y, below));
+                xs[i] = station.offset().x;
+                if (station.offset().y > 1.2 || station.offset().y < 0.5) {
+                    helper.fail(String.format(Locale.ROOT, "station %d centred at y %.2f, not under a rail", i,
+                            station.offset().y));
                     return;
                 }
             }
@@ -198,7 +196,8 @@ public class PylonGameTest {
             aim.position = vehicle.position().add(0, 0, 60);
             boolean fired = launcher != null && launcher.shoot(new ArrayList<>(List.of(aim)), null);
             List<Entity> projectiles = helper.getLevel().getEntities((Entity) null,
-                    vehicle.getBoundingBox().inflate(40), e -> e != vehicle && !(e instanceof AbstractVehicle));
+                    vehicle.getBoundingBox().inflate(40), e -> e != vehicle && !(e instanceof AbstractVehicle)
+                            && !(e instanceof net.minecraft.world.entity.LivingEntity));
             vehicle.discard();
             if (launcher == null) {
                 helper.fail("the MQ-9 has no launcher");

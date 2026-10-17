@@ -9,7 +9,7 @@ import com.wf.combinedassault.vehicle.part.WeaponUnit;
 import com.wf.combinedassault.vehicle.pojo.WarnType;
 import com.wf.combinedassault.vehicle.passenger.WarningReceiver;
 import com.wf.combinedassault.vehicle.weapon.AbstractVehicleWeapon;
-import com.wf.combinedassault.vehicle.weapon.VehicleMultiWeapons;
+import com.wf.combinedassault.vehicle.weapon.VehicleMissile;
 import com.wf.combinedassault.custom.part.data.WeaponUnitData;
 import com.wf.wflib.ui.Signals;
 import com.wf.wflib.ui.Subject;
@@ -77,7 +77,13 @@ public final class HudSignals {
             return capacity > 0 ? v.getEnergy() / capacity * 100 : 0;
         });
         Signals.num(VEHICLE, "power", AbstractVehicle::getPower);
+        Signals.bool(VEHICLE, "radio", v -> v.radioVoice() != null);
+        Signals.text(VEHICLE, "radio_station", 48, v -> com.wf.wflib.radio.client.RadioCatalog.name(v.radioStation())
+                .getString().toUpperCase(java.util.Locale.ROOT));
+        Signals.text(VEHICLE, "radio_key", 16, v -> HudCache.keyName(com.wf.combinedassault.fpv.client.FpvKeys.RADIO_STATION));
         Signals.text(VEHICLE, "fuel_label", 24, HudCache::fuelLabel);
+        Signals.bool(VEHICLE, "overloaded", v -> v.overload() > 1);
+        Signals.num(VEHICLE, "payload_pct", v -> v.overload() * 100);
         Signals.num(VEHICLE, "fuel_seconds", v -> v.burnPerTick() <= 0 ? Double.NaN : v.getEnergy() / v.burnPerTick() / 20);
         Signals.num(VEHICLE, "pitch", v -> v.getViewXRot(partialTick()));
         Signals.num(VEHICLE, "roll", v -> v.getViewZRot(partialTick()));
@@ -108,7 +114,7 @@ public final class HudSignals {
     private static void local() {
         Signals.bool(LOCAL, "third_person", l -> l.viewType == LocalVehiclePlayer.ViewType.THIRD_PERSON);
         Signals.bool(LOCAL, "operator", l -> l.viewType == LocalVehiclePlayer.ViewType.OPERATOR);
-        Signals.bool(LOCAL, "scope", l -> l.viewType == LocalVehiclePlayer.ViewType.SCOPE);
+        Signals.bool(LOCAL, "scope", LocalVehiclePlayer::sighted);
         Signals.bool(LOCAL, "driver", l -> l.vehicle != null && l.getPlayer() != null
                 && l.getPlayer().equals(l.vehicle.getDriver()));
         Signals.num(LOCAL, "g", l -> l.currentG);
@@ -151,9 +157,8 @@ public final class HudSignals {
         Signals.num(subject, "reload", AbstractVehicleWeapon::getReloadTime);
         Signals.num(subject, "reload_max", w -> w.getData().getReload() == null ? 0 : w.getData().getReload().getTime());
         Signals.bool(subject, "reloading", w -> w.getReloadTime() > 0);
-        Signals.num(subject, "multi", w -> w instanceof VehicleMultiWeapons multi ? multi.getSubWeapons().size() : 0);
-        Signals.items(subject, "multi_dots", w -> w instanceof VehicleMultiWeapons multi ? multi.getSubWeapons() : null, WEAPON);
-        Signals.num(subject, "multi_selected", w -> w instanceof VehicleMultiWeapons multi ? multi.getSelectedIndex() : -1);
+        Signals.text(subject, "round", 24, w -> HudCache.roundLabel(w instanceof VehicleMissile missile
+                ? missile.currentRound() : w.getLoadedRound().isEmpty() ? w.getSelectedRound() : w.getLoadedRound()));
     }
 
     private static void flight() {
@@ -228,12 +233,17 @@ public final class HudSignals {
 
     private static void payload() {
         Signals.bool(PAYLOAD, "loaded", p -> p.isLoaded());
-        Signals.bool(PAYLOAD, "single", p -> p.isLoaded() && p.getPayload().capacity() <= 1);
-        Signals.text(PAYLOAD, "name", 48, p -> p.isLoaded() ? HudCache.payloadName(p.getPayload()) : "");
-        Signals.num(PAYLOAD, "remaining", p -> p.isLoaded() ? p.getPayload().remaining() : 0);
-        Signals.num(PAYLOAD, "capacity", p -> p.isLoaded() ? p.getPayload().capacity() : 0);
+        Signals.bool(PAYLOAD, "single", p -> p.isLoaded() && p.capacity() <= 1);
+        Signals.text(PAYLOAD, "name", 48, p -> p.isLoaded() ? HudCache.payloadName(p.firstSynced()) : "");
+        Signals.num(PAYLOAD, "remaining", p -> p.remaining());
+        Signals.num(PAYLOAD, "capacity", p -> p.isLoaded() ? p.capacity() : 0);
         Signals.bool(PAYLOAD, "armed", p -> p.isArmed());
         Signals.bool(PAYLOAD, "live", p -> p.isLive());
         Signals.num(PAYLOAD, "arming", p -> p.armingRemaining() / 20.0);
+        Signals.text(PAYLOAD, "arm_key", 16, p -> HudCache.keyName(com.wf.combinedassault.fpv.client.FpvKeys.ARM_PAYLOAD));
+        Signals.text(PAYLOAD, "fire_key", 16, p -> HudCache.keyName(com.wf.combinedassault.all.AllKeys.MAIN_WEAPON_SHOOT));
+        Signals.bool(PAYLOAD, "armable", p -> p.payloadType() != com.wf.combinedassault.fpv.payload.FpvPayloadTypes.SPEAKER);
+        Signals.bool(PAYLOAD, "releasable", p -> p.payloadType() == com.wf.combinedassault.fpv.payload.FpvPayloadTypes.WARHEAD);
+        Signals.text(PAYLOAD, "release_key", 16, p -> HudCache.keyName(com.wf.combinedassault.all.AllKeys.SECONDARY_WEAPON_SHOOT));
     }
 }

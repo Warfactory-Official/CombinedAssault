@@ -246,7 +246,7 @@ public class ShipVehicle extends AbstractVehicle
         controls.starboard = controlUnit.right;
         controls.dive = controlUnit.down;
         controls.rise = controlUnit.up;
-        controls.power = hasPower() ? getPower() / 100.0 : 0.0;
+        controls.power = hasPower() ? getPower() / 100.0 * strain() : 0.0;
         controls.speedScale = mobility.speedScale();
         controls.turnScale = mobility.turnScale();
         if (!hasPower()) {

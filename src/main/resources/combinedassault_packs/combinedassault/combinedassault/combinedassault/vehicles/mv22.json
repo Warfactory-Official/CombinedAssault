@@ -1,0 +1,152 @@
+{
+    "type": "combinedassault:fixed_wing_vehicle",
+    "attributes": {
+        "thrust": 280000,
+        "thrust_k": 1.0,
+        "ceiling": 400,
+        "x_rot_input_step": 0.15,
+        "y_rot_input_step": 0.4,
+        "z_rot_input_step": 0.15,
+        "air_drag_k_min": 20,
+        "air_drag_k_max": 80,
+        "lift_to_drag_k": 4,
+        "x_rot_input_drag_k": 1.0,
+        "y_rot_input_drag_k": 0.25,
+        "z_rot_input_drag_k": 0.125,
+        "turn_rate_by_speed": 0.4,
+        "x_turn_rate": 1.2,
+        "y_turn_rate": 1.6,
+        "z_turn_rate": 3.0,
+        "vtol_turn_rate": 0.8
+    },
+    "physics_info": {
+        "mass": 16000,
+        "friction": 32000
+    },
+    "landing_gear_part_id": "landing_gear",
+    "thrust_part_id": "thrust",
+    "max_health": 1400,
+    "storage": {
+        "max_payload": 9072
+    },
+    "view_info": {
+        "third_person_distance": 24,
+        "third_person_distance_zoomed": 0
+    },
+    "energy_info": {
+        "energy_capacity": 3000,
+        "energy_consumption_per_tick": 0.05
+    },
+    "defense_stats": {
+        "damage_threshold": 10,
+        "impact_multiplier": 2
+    },
+    "with_warning_receiver": true,
+    "towing": {
+        "hitches": [
+            {
+                "id": "cargo_hook",
+                "name": "hitch.combinedassault.cargo_hook",
+                "modes": [
+                    "sling"
+                ],
+                "max_mass": 4536,
+                "cable_length": 8
+            }
+        ]
+    },
+    "parts": [
+        {
+            "id": "pilot",
+            "crew_roles": [
+                "driver"
+            ],
+            "name": "pilot",
+            "type": "combinedassault:weapon",
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            },
+            "optical_sight_type": "operator",
+            "crosshair_style": "none",
+            "weapons": [
+                {
+                    "id": "combinedassault:decoy_flare",
+                    "part_unit_id": "decoy_flare"
+                }
+            ]
+        },
+        {
+            "id": "decoy_flare",
+            "name": "decoy_flare",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "crosshair_style": "none",
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            },
+            "firing_mode": "salvo"
+        },
+        {
+            "id": "copilot",
+            "crew_roles": [
+                "commander"
+            ],
+            "name": "copilot",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "thrust",
+            "name": "thrust",
+            "type": "combinedassault:thrust",
+            "is_seat": false,
+            "rot_info": {
+                "x_rot_speed": 0.75,
+                "y_rot_speed": 0,
+                "need_power": true
+            }
+        },
+        {
+            "id": "landing_gear",
+            "name": "landing_gear",
+            "type": "combinedassault:landing_gear",
+            "is_seat": false,
+            "drag_k": 0.5
+        },
+        {
+            "id": "cargo_doors",
+            "name": "cargo_doors",
+            "type": "combinedassault:door",
+            "is_seat": false
+        },
+        {"id": "troop_0", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true},
+        {"id": "troop_1", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true},
+        {"id": "troop_2", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true},
+        {"id": "troop_3", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true},
+        {"id": "troop_4", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true},
+        {"id": "troop_5", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true},
+        {"id": "troop_6", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true},
+        {"id": "troop_7", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true},
+        {"id": "troop_8", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true},
+        {"id": "troop_9", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true},
+        {"id": "troop_10", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true},
+        {"id": "troop_11", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true}
+    ],
+    "model": "combinedassault:models/aircraft/mv22/mv22.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/mv22.png",
+        "controller": "combinedassault:mv22_controller",
+        "engine": {
+            "start": {"event": "combinedassault:z10_engine_start", "range": 360},
+            "stop": {"event": "combinedassault:z10_engine_stop", "range": 360},
+            "loops": [
+                {"sound": {"event": "combinedassault:z10_engine_run", "range": 600}, "input": "power", "volume": [[0.2, 0], [0.5, 1]], "pitch": [[0.5, 0.8], [1, 1]]}
+            ]
+        },
+        "cabin_muffle": 0.5,
+        "tab_index": 408
+    }
+}

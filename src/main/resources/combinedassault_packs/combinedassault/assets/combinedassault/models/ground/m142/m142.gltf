@@ -107,7 +107,13 @@
     35,
     36,
     37,
-    38
+    38,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51
    ]
   },
   {
@@ -690,6 +696,180 @@
      "hit": true
     },
     "combinedassaultRole": "hit_surface"
+   }
+  },
+  {
+   "name": "socket_station_pod_0",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    4.28,
+    0.0,
+    0.30056,
+    0.4480001,
+    1.78,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "station",
+    "combinedassaultInterface": "pod",
+    "combinedassault": {
+     "index": 0
+    }
+   }
+  },
+  {
+   "name": "socket_station_pod_1",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    4.28,
+    0.0,
+    -0.0163574,
+    0.4480001,
+    1.78,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "station",
+    "combinedassaultInterface": "pod",
+    "combinedassault": {
+     "index": 1
+    }
+   }
+  },
+  {
+   "name": "socket_station_pod_2",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    4.28,
+    0.0,
+    -0.3332748,
+    0.4480001,
+    1.78,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "station",
+    "combinedassaultInterface": "pod",
+    "combinedassault": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "name": "socket_station_pod_3",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    4.28,
+    0.0,
+    0.30056,
+    0.7659001,
+    1.78,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "station",
+    "combinedassaultInterface": "pod",
+    "combinedassault": {
+     "index": 3
+    }
+   }
+  },
+  {
+   "name": "socket_station_pod_4",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    4.28,
+    0.0,
+    -0.0163574,
+    0.7659001,
+    1.78,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "station",
+    "combinedassaultInterface": "pod",
+    "combinedassault": {
+     "index": 4
+    }
+   }
+  },
+  {
+   "name": "socket_station_pod_5",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    4.28,
+    0.0,
+    -0.3332748,
+    0.7659001,
+    1.78,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "station",
+    "combinedassaultInterface": "pod",
+    "combinedassault": {
+     "index": 5
+    }
    }
   }
  ],

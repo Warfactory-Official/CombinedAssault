@@ -28,9 +28,7 @@ final class PartClips {
     static PartClips bind(GemRenderGltfModel gltf, PartClipTracks tracks) {
         List<Bound> bound = new ArrayList<>();
         for (GltfAnimation clip : gltf.animations().values()) {
-            String name = clip.name();
-            int dot = name.indexOf('.');
-            PartClipTracks.Track track = tracks.track(dot < 0 ? name : name.substring(0, dot));
+            PartClipTracks.Track track = tracks.track(clip.name());
             if (track != null) {
                 bound.add(new Bound(clip, track, bound.stream().noneMatch(b -> b.track == track)));
             }

@@ -7,6 +7,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import com.wf.combinedassault.vehicle.pojo.Bolt;
+import com.wf.combinedassault.vehicle.pojo.Eject;
 import com.wf.combinedassault.vehicle.pojo.WeaponInfo;
 import com.wf.combinedassault.vehicle.structure.VehicleCubeGroup;
 import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
@@ -18,6 +19,8 @@ public class WeaponUnitData extends RotatableUnitData {
     private List<Bolt> bolts;
     /** Weapon-scoped mount bolts; a weapon absent here fires from {@link #bolts}. */
     private Map<ResourceLocation, List<Bolt>> weaponBolts = Map.of();
+    /** By bolt index; shorter than the bolts => the rest eject nothing. */
+    private List<Eject> ejects = List.of();
     private int ammoCapacity;
     private FiringMode firingMode;
     private int coldLaunchTimeTick;
@@ -54,6 +57,7 @@ public class WeaponUnitData extends RotatableUnitData {
             throw new IllegalArgumentException("weapon part " + pojo.id + ": owner_view_offset unused on a weapon, use operator_view_offset");
         }
         this.bolts = pojo.bolts;
+        this.ejects = pojo.ejects;
         this.ammoCapacity = pojo.ammoCapacity;
         this.firingMode = pojo.firingMode;
         this.coldLaunchTimeTick = pojo.coldLaunchTimeTick;
@@ -92,6 +96,14 @@ public class WeaponUnitData extends RotatableUnitData {
         if (sockets != null) {
             this.bolts = new ArrayList<>(sockets);
         }
+    }
+
+    public void applyEjects(List<Eject> ejects) {
+        this.ejects = List.copyOf(ejects);
+    }
+
+    public List<Eject> getEjects() {
+        return ejects;
     }
 
     public void applyWeaponBolts(Map<ResourceLocation, List<Bolt>> byWeapon) {

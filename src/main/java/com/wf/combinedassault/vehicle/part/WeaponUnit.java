@@ -54,6 +54,7 @@ import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.loadout.Loadouts;
 import com.wf.combinedassault.vehicle.pojo.AimContext;
 import com.wf.combinedassault.vehicle.pojo.Bolt;
+import com.wf.combinedassault.vehicle.pojo.Eject;
 import com.wf.combinedassault.vehicle.pojo.WarnType;
 import com.wf.combinedassault.vehicle.structure.VehicleCubeGroup;
 import com.wf.combinedassault.vehicle.weapon.*;
@@ -212,18 +213,6 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         }
     }
 
-    public void cycleMultiWeapon(boolean next) {
-        this.getCurrentWeapon().ifPresent(weapon -> {
-            if (weapon instanceof VehicleMultiWeapons multiWeapons) {
-                multiWeapons.cycleSubWeapon(next);
-                VehicleSounds.at(vehicle, worldPivotPosition(), VehicleSounds.SELECT_WEAPON, AudioCategory.WEAPONS);
-                if (getOwner() instanceof Player player) {
-                    player.displayClientMessage(Component.translatable("tips.use_weapon", multiWeapons.getDisplayName()), true);
-                }
-            }
-        });
-    }
-
     public void initWeapon(int index) {
         if (index < 0 || index >= weapons.size() || index == currentWeaponIndex) {
             return;
@@ -237,51 +226,7 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         int index = 0;
         WeaponUnit parentWeaponUnit = this;
         for (var weaponInfo : data.getWeapons()) {
-            if (weaponInfo.ids != null && !weaponInfo.ids.isEmpty()) {
-                WeaponUnit subWeaponUnit = null;
-                if (weaponInfo.partUnitId != null && partUnitsView.get(weaponInfo.partUnitId) instanceof WeaponUnit weaponUnit) {
-                    subWeaponUnit = weaponUnit;
-                }
-                List<AbstractVehicleWeapon<?>> multiWeapons = new ArrayList<>();
-                for (ResourceLocation id : weaponInfo.ids) {
-                    VehicleWeaponIndex<?, ?> subIndex = CommonAssetsManager.vehicleWeaponManager().getIndex(id).orElse(null);
-                    if (subIndex != null) {
-                        String subSaveId = weaponInfo.saveId + "_" + id.toString().replace(':', '_');
-                        WeaponUnit weaponUnit = (subWeaponUnit != null && subWeaponUnit != parentWeaponUnit) ? subWeaponUnit : parentWeaponUnit;
-                        AbstractVehicleWeapon<?> sub = subIndex.create(vehicle, weaponUnit, multiWeapons.size(), subSaveId);
-                        sub.defineSyncData(this.getSyncData());
-                        multiWeapons.add(sub);
-                    }
-                }
-                if (!multiWeapons.isEmpty()) {
-                    VehicleMultiWeapons multiWeapon;
-                    if (subWeaponUnit != null && subWeaponUnit != parentWeaponUnit) {
-                        if (subWeaponUnit.getParentWeaponUnit() == null) {
-                            subWeaponUnit.setParentWeaponUnit(parentWeaponUnit);
-                        }
-                        parentWeaponUnit.addSubWeaponUnit(subWeaponUnit);
-                        multiWeapon = new VehicleMultiWeapons(vehicle, subWeaponUnit, index, multiWeapons, weaponInfo.saveId);
-                    } else {
-                        multiWeapon = new VehicleMultiWeapons(vehicle, parentWeaponUnit, index, multiWeapons, weaponInfo.saveId);
-                    }
-                    multiWeapon.defineSyncData(this.getSyncData());
-                    if (weaponInfo.secondary) {
-                        secondaryWeapons.add(multiWeapon);
-                    } else {
-                        weapons.add(multiWeapon);
-                    }
-                    if (weaponInfo.fullSalvo) {
-                        fullSalvoWeapons.add(multiWeapon);
-                    }
-                    indexedWeapons.add(multiWeapon);
-                    if (weaponInfo.weaponBayUnitId != null
-                            && partUnitsView.get(weaponInfo.weaponBayUnitId) instanceof WeaponBayUnit weaponBayUnit) {
-                        weaponBayUnits.put(multiWeapon, weaponBayUnit);
-                    }
-                    index += 1;
-                }
-            }
-            else if (weaponInfo.id == null && weaponInfo.partUnitId != null) {
+            if (weaponInfo.id == null && weaponInfo.partUnitId != null) {
                 if (partUnitsView.get(weaponInfo.partUnitId) instanceof WeaponUnit agentWeaponUnit && agentWeaponUnit != parentWeaponUnit) {
                     if (agentWeaponUnit.getParentWeaponUnit() == null) {
                         agentWeaponUnit.setParentWeaponUnit(parentWeaponUnit);
@@ -424,11 +369,18 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         } else {
             ignoreRemoteRotTick = 0;
         }
-        if (getOwner() != LocalVehiclePlayer.instance.getPlayer() || !rotByAim) {
+        if (!aimedLocally() || !rotByAim) {
             xAimRot = xRemoteAimRot;
             yAimRot = yRemoteAimRot;
             updateWorldAimVec();
         }
+    }
+
+    /** Owner unless spotted; spotter through {@code sensor}. */
+    private boolean aimedLocally() {
+        LocalVehiclePlayer local = LocalVehiclePlayer.instance;
+        Player me = local.getPlayer();
+        return getOwner() == me ? !spottedBy(me) : local.sightUnit() == this;
     }
 
     public void afterVehicleRot(float dXRot, float dYRot, float dZRot) {
@@ -508,9 +460,6 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         if (weaponOptional.isPresent()) {
             AbstractVehicleWeapon<?> weapon = weaponOptional.get();
             if (weapon instanceof VehicleMissile vehicleMissile) {
-                missileWeapon = vehicleMissile;
-            } else if (weapon instanceof VehicleMultiWeapons vehicleMultiWeapons
-                    && vehicleMultiWeapons.getSelectedWeapon() instanceof VehicleMissile vehicleMissile) {
                 missileWeapon = vehicleMissile;
             }
         }
@@ -864,9 +813,6 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
             }
             Vec3 aimHitPosition = null;
             if (getFireControlSensorType() == WeaponUnitData.FireControlSensorType.CCIP) {
-                if (vehicleWeapon instanceof VehicleMultiWeapons vehicleMultiWeapons) {
-                    vehicleWeapon = vehicleMultiWeapons.getSelectedWeapon();
-                }
                 List<Vec3> releasePositions = currentWeaponUnit.aimContexts().stream()
                         .map(context -> context.from)
                         .toList();
@@ -961,8 +907,29 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     }
 
     public Vec3 worldBoltPosition(Bolt bolt, VehicleCubeGroup.GlobalTransform globalTransform) {
+        return worldPitchPosition(bolt.offset, globalTransform);
+    }
+
+    /** {@code [port, throw velocity blocks/s]} in the world, current pose; null => this bolt ejects nothing. */
+    @Nullable
+    public Vec3[] worldEject(int bolt) {
+        List<Eject> ejects = data.getEjects();
+        if (xTurnGroup == null || bolt >= ejects.size()) {
+            return null;
+        }
+        Eject eject = ejects.get(bolt);
+        VehicleCubeGroup.GlobalTransform globalTransform = xTurnGroup.globalTransform();
+        Vector3f dir = vehicle.rotYXZ().mul(globalTransform.rotation()).transform(eject.direction.toVector3f());
+        return new Vec3[]{worldPitchPosition(eject.offset, globalTransform), new Vec3(dir.mul(eject.speed))};
+    }
+
+    public int getCurrentBoltIndex() {
+        return currentBoltIndex % getBolts().size();
+    }
+
+    private Vec3 worldPitchPosition(Vec3 offset, VehicleCubeGroup.GlobalTransform globalTransform) {
         Quaternionf rotation = globalTransform.rotation();
-        Vector3f boltOffset = new Vector3f((float) bolt.offset.x, (float) bolt.offset.y, (float) bolt.offset.z);
+        Vector3f boltOffset = new Vector3f((float) offset.x, (float) offset.y, (float) offset.z);
         rotation.transform(boltOffset);
         Vec3 pivot = globalTransform.offset();
         Vector3f rotatedBoltOffset = vehicle.rotYXZ().transform(pivot
@@ -1151,6 +1118,11 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
 
     public float getZoom() {
         return zoom;
+    }
+
+    /** Doubling steps up to zoom_max, then back to zoom_min. */
+    public void stepZoom() {
+        zoom = zoom >= zoomMax ? zoomMin : Math.min(zoom * 2, zoomMax);
     }
 
     public void switchZoom() {

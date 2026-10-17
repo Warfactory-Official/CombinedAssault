@@ -31,6 +31,13 @@ public class ClientVehicleMoveControl implements CustomPacketPayload {
     public boolean xRotKeep;
     public float yRot;
     public boolean yRotKeep;
+    public boolean stick;
+    public float stickX;
+    public float stickY;
+    public boolean reported;
+    public float reportedXRot;
+    public float reportedYRot;
+    public float reportedZRot;
 
     public ClientVehicleMoveControl() {}
 
@@ -54,6 +61,17 @@ public class ClientVehicleMoveControl implements CustomPacketPayload {
         control.xRotKeep = buf.readBoolean();
         control.yRot = buf.readFloat();
         control.yRotKeep = buf.readBoolean();
+        control.stick = buf.readBoolean();
+        if (control.stick) {
+            control.stickX = buf.readFloat();
+            control.stickY = buf.readFloat();
+        }
+        control.reported = buf.readBoolean();
+        if (control.reported) {
+            control.reportedXRot = buf.readFloat();
+            control.reportedYRot = buf.readFloat();
+            control.reportedZRot = buf.readFloat();
+        }
         return control;
     }
 
@@ -76,6 +94,17 @@ public class ClientVehicleMoveControl implements CustomPacketPayload {
         buf.writeBoolean(xRotKeep);
         buf.writeFloat(yRot);
         buf.writeBoolean(yRotKeep);
+        buf.writeBoolean(stick);
+        if (stick) {
+            buf.writeFloat(stickX);
+            buf.writeFloat(stickY);
+        }
+        buf.writeBoolean(reported);
+        if (reported) {
+            buf.writeFloat(reportedXRot);
+            buf.writeFloat(reportedYRot);
+            buf.writeFloat(reportedZRot);
+        }
     }
 
     public static void handle(ClientVehicleMoveControl message, IPayloadContext ctx) {

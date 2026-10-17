@@ -5,6 +5,8 @@
     "max_capacity": 48,
     "reload": {
         "time": 180,
-        "ammo": "wflib:cartridge_40x53"
+        "ammo": "wflib:cartridge_40x53",
+        "magazines": "wflib:ammo_can_40x53",
+        "loose": true
     }
 }

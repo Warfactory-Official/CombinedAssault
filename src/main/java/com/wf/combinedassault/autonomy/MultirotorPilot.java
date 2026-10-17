@@ -16,7 +16,7 @@ final class MultirotorPilot implements VehiclePilot {
 
     @Override
     public Airframe envelope(AbstractVehicle vehicle) {
-        return ((RotaryWingVehicle) vehicle).multirotor.airframe(vehicle.curbWeight, 1.0);
+        return ((RotaryWingVehicle) vehicle).multirotor.airframe(vehicle, 1.0, false);
     }
 
     @Override

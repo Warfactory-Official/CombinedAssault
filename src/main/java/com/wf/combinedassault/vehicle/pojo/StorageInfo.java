@@ -20,9 +20,13 @@ public class StorageInfo {
     @SerializedName("slots")
     public int slots = DEFAULT_SLOTS;
 
-    /** Physics kg per Ultimate Weight kg of cargo. Zero: hold without load-dependent handling. */
+    /** Physics kg per cargo kg ({@link com.wf.combinedassault.storage.ItemMass}). Zero: hold without load-dependent handling. */
     @SerializedName("cargo_mass_per_kg")
     public float cargoMassPerKg = 1f;
+
+    /** Cargo kg before the engine strains; 0 = no limit. */
+    @SerializedName("max_payload")
+    public float maxPayload = 0f;
 
     public int resolvedSlots() {
         return Math.max(0, Math.min(slots, MAX_SLOTS));

@@ -11,7 +11,7 @@ wflib JSON layouts (wflib guide Part XXVI §96): `assets/combinedassault/wf_ui/`
 
 - Selection by hull class (`CaHudSource.preset`).
 - Instances rebuilt per boarded hull (`smooth()` lag never sweeps from the previous hull) and after a resource reload.
-- Relative scaling (reference 270): 1080p auto GUI scale = old pixel sizes; other resolutions / GUI scales keep the screen proportion. Projected marks (aim, impact, locks, hit marker, scope sight) convert GUI px via `ev.fromHost`.
+- Relative scaling (reference 270): 1080p auto GUI scale = old pixel sizes; other resolutions keep the screen proportion; GUI scale below auto shrinks by scale / auto. Projected marks (aim, impact, locks, hit marker, scope sight) convert GUI px via `ev.fromHost`.
 - Layout units, 16:9 = 480x270: compass half-width `clamp(w/2 - 160, 40, 120)` clears top-left panels (board 146, helm 126); RWR right edge (`w - 40`), clear of rotary tape/vspeed; operator pitch ladder `w/2 + 95` (left side hit systems panel + crew list). Gap: 4:3 (w 360) still overlaps.
 - Indirect board = component `hud/indirect_board` + Java `range_scale` (labels dropped on overlap need measured text) + wflib `dial`. Legend fade, shot clock, solver caches = `IndirectView` signals (stateful => Java).
 - Divergences from the replaced overlays:

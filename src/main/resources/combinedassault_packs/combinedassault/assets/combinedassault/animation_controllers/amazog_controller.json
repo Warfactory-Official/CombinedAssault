@@ -1,0 +1,9 @@
+{
+    "name": "amazog_controller",
+    "script": "combinedassault:amazog",
+    "parameters": {},
+    "graph": {
+        "type": "script",
+        "function": "updateBones"
+    }
+}

@@ -1,6 +1,7 @@
 package com.wf.combinedassault.compat.wflib;
 
 import com.wf.wflib.MissileEntity;
+import com.wf.wflib.flight.AscentStage;
 import com.wf.wflib.item.MissileItem;
 import com.wf.wflib.item.MissilePreset;
 import com.wf.wflib.item.MissilePresetRegistry;
@@ -11,6 +12,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.entity.vehicle.FixedWingVehicle;
+import com.wf.combinedassault.entity.vehicle.RotaryWingVehicle;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
 import com.wf.combinedassault.vehicle.pojo.AimContext;
 
@@ -112,11 +115,15 @@ final class BallisticsMissiles {
         missile.moveTo(aimContext.from.x, aimContext.from.y, aimContext.from.z,
                 aimContext.direction.y, aimContext.direction.x);
         // Leaves at the launcher's speed; an air_launch round drops on it. Interceptor: boosts along the rail.
-        // Cold launch: ejected along the hull axes first.
+        // Ground launcher, ascent round: leaves along the tube, climb starts at its angle. Cold launch: ejected along
+        // the hull axes.
         Vec3 launch = vehicle.getDeltaMovement();
+        Vec3 tube = Vec3.directionFromRotation(aimContext.direction.x, aimContext.direction.y);
         if (interceptor) {
-            launch = launch.add(Vec3.directionFromRotation(aimContext.direction.x, aimContext.direction.y)
-                    .scale(INTERCEPTOR_EXIT));
+            launch = launch.add(tube.scale(INTERCEPTOR_EXIT));
+        } else if (missile.flight().ascentStage() == AscentStage.INSTANCE && launcher.getColdLaunchTimeTick() <= 0
+                && !(vehicle instanceof FixedWingVehicle) && !(vehicle instanceof RotaryWingVehicle)) {
+            launch = launch.add(tube.scale(missile.flight().getAscentSpeed()));
         } else if (launcher.getColdLaunchTimeTick() > 0 && vehicle.getMainCubeOBB() != null) {
             org.joml.Vector3f[] axes = vehicle.getMainCubeOBB().obb().getAxes();
             Vec3 eject = launcher.getColdLaunchVelocity();

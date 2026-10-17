@@ -22,12 +22,21 @@ public final class FpvKeys {
             GLFW.GLFW_KEY_5,
             "key.category.combinedassault");
 
+    public static final KeyMapping RADIO_STATION = new KeyMapping(
+            "key.combinedassault.radio_station.desc",
+            KeyConflictContext.IN_GAME,
+            KeyModifier.NONE,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_K,
+            "key.category.combinedassault");
+
     private FpvKeys() {
     }
 
     @SubscribeEvent
     public static void onRegisterKeys(RegisterKeyMappingsEvent event) {
         event.register(ARM_PAYLOAD);
+        event.register(RADIO_STATION);
     }
 
 }

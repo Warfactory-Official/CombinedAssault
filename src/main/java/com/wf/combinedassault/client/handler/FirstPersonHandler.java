@@ -11,6 +11,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
+import org.joml.Vector3f;
 import com.wf.combinedassault.all.AllConfigs;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
@@ -61,9 +62,11 @@ public class FirstPersonHandler {
                 || localVehiclePlayer.viewType == LocalVehiclePlayer.ViewType.OPERATOR
                 || localVehiclePlayer.playerLerpSteps > 0) {
             float partialTick = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true);
-            event.setPitch(Mth.lerp(partialTick, localVehiclePlayer.cameraAimRotXO, localVehiclePlayer.cameraAimRotX));
-            event.setYaw(Mth.lerp(partialTick, localVehiclePlayer.cameraAimRotYO, localVehiclePlayer.cameraAimRotY));
-            event.setRoll(Mth.lerp(partialTick, localVehiclePlayer.cameraAimRotZO, localVehiclePlayer.cameraAimRotZ));
+            // Quaternion: per-angle lerp tears through pitch +-90 (FPV loops).
+            Vector3f euler = localVehiclePlayer.frameCameraRotation(partialTick).getEulerAnglesYXZ(new Vector3f());
+            event.setPitch((float) Math.toDegrees(euler.x));
+            event.setYaw((float) Math.toDegrees(-euler.y));
+            event.setRoll((float) Math.toDegrees(euler.z));
         }
         shake(event);
     }

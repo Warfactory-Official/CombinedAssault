@@ -286,7 +286,9 @@
     "spin_direction": "CW",
     "module_name": "13_ROTOR_FL",
     "combinedassault": {
-     "system": "rotor"
+     "system": "rotor",
+     "unit": "FL",
+     "spin": "cw"
     }
    },
    "name": "13_ROTOR_FL",
@@ -441,7 +443,9 @@
     "spin_direction": "CCW",
     "module_name": "13_ROTOR_FR",
     "combinedassault": {
-     "system": "rotor"
+     "system": "rotor",
+     "unit": "FR",
+     "spin": "ccw"
     }
    },
    "name": "13_ROTOR_FR",
@@ -596,7 +600,9 @@
     "spin_direction": "CCW",
     "module_name": "13_ROTOR_RL",
     "combinedassault": {
-     "system": "rotor"
+     "system": "rotor",
+     "unit": "RL",
+     "spin": "ccw"
     }
    },
    "name": "13_ROTOR_RL",
@@ -751,7 +757,9 @@
     "spin_direction": "CW",
     "module_name": "13_ROTOR_RR",
     "combinedassault": {
-     "system": "rotor"
+     "system": "rotor",
+     "unit": "RR",
+     "spin": "cw"
     }
    },
    "name": "13_ROTOR_RR",

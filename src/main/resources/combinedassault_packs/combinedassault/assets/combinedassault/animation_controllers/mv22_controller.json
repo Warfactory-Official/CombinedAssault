@@ -1,0 +1,9 @@
+{
+    "name": "mv22_controller",
+    "script": "combinedassault:mv22",
+    "parameters": {},
+    "graph": {
+        "type": "script",
+        "function": "updateBones"
+    }
+}

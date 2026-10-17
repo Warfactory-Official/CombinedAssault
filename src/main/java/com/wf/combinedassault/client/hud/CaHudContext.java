@@ -52,6 +52,9 @@ final class CaHudContext implements UiContext {
                 secondary = root.currentSecondaryWeapon();
                 independent = root.independentWeapons.isEmpty() ? null : root.independentWeapons.get(0);
             }
+        } else {
+            // Spotter seat: the sight it looks through, no weapons.
+            station = local.sightUnit();
         }
         PayloadUnit hardpoint = PayloadUnit.on(vehicle);
         payload = hardpoint != null && hardpoint.isLoaded() ? hardpoint : null;

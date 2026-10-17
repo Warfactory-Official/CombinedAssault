@@ -8,6 +8,9 @@ import com.wf.combinedassault.fpv.payload.PayloadUnit;
 import com.wf.combinedassault.gametest.TestLanes;
 import com.wf.combinedassault.vehicle.loadout.Loadouts;
 import com.wf.wflib.ammo.AmmoItems;
+import com.wf.wflib.round.Rounds;
+import net.minecraft.resources.ResourceLocation;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,6 +21,8 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import java.util.UUID;
 
 @GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
@@ -38,8 +43,11 @@ public class LoadoutGameTest {
         throw new IllegalArgumentException(id);
     }
 
+    /** One fake player per drone: a shared one is moved off by tests later in the same tick => out of reach. */
     private static ServerPlayer player(GameTestHelper helper, AbstractVehicle vehicle) {
-        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        String name = "ca_" + vehicle.getUUID().toString().substring(0, 8);
+        ServerPlayer player = FakePlayerFactory.get(helper.getLevel(),
+                new GameProfile(UUID.nameUUIDFromBytes(name.getBytes()), name));
         player.setGameMode(GameType.SURVIVAL);
         player.getInventory().clearContent();
         Vec3 at = vehicle.position().add(1.5, 0, 0);
@@ -121,6 +129,50 @@ public class LoadoutGameTest {
             helper.runAfterDelay(hardpoint.armingTicks() + 2, () -> {
                 boolean fired = hardpoint.fire(FpvTrigger.OPERATOR, null, 0);
                 helper.assertTrue(fired && drone.isRemoved(), "fired " + fired + ", drone removed " + drone.isRemoved());
+                helper.succeed();
+            });
+        });
+    }
+
+    /** Non-shaped straps: each straps by hand onto a plain Mavic. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    public static void mortarAndGrenadeChargesStrap(GameTestHelper helper) {
+        AbstractVehicle drone = mavic(helper);
+        helper.runAfterDelay(2, () -> {
+            ServerPlayer player = player(helper, drone);
+            StringBuilder refused = new StringBuilder();
+            for (String variant : new String[]{"rpg7/frag", "rpg7/thermobaric", "60mm/he", "81mm/he", "vog25/he",
+                    "30x29/he"}) {
+                Loadouts.remove(player, drone);
+                ItemStack stack = AmmoItems.stack(ResourceLocation.fromNamespaceAndPath("wflib", variant), 1);
+                if (!Loadouts.strap(player, drone, stack) || !PayloadUnit.on(drone).isLoaded()) {
+                    refused.append(' ').append(variant);
+                }
+            }
+            player.getInventory().clearContent();
+            drone.discard();
+            helper.assertTrue(refused.isEmpty(), "refused:" + refused);
+            helper.succeed();
+        });
+    }
+
+    /** Release: charge leaves as a wflib round, drone stays, hardpoint empty. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    public static void releasingAChargeDropsItAndKeepsTheDrone(GameTestHelper helper) {
+        AbstractVehicle drone = mavic(helper);
+        helper.runAfterDelay(2, () -> {
+            PayloadUnit hardpoint = KamikazeKit.strap(drone,
+                    ResourceLocation.fromNamespaceAndPath("wflib", "81mm/he"));
+            hardpoint.setOn(true);
+            helper.runAfterDelay(hardpoint.armingTicks() + 2, () -> {
+                int before = Rounds.count(helper.getLevel());
+                boolean fired = hardpoint.fire(FpvTrigger.RELEASE, null, 0);
+                int after = Rounds.count(helper.getLevel());
+                boolean loaded = hardpoint.isLoaded();
+                boolean removed = drone.isRemoved();
+                drone.discard();
+                helper.assertTrue(fired && !removed && !loaded && after == before + 1, "fired " + fired
+                        + ", drone removed " + removed + ", loaded " + loaded + ", rounds " + before + " -> " + after);
                 helper.succeed();
             });
         });

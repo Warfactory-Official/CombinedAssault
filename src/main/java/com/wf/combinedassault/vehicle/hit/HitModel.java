@@ -24,11 +24,13 @@ public final class HitModel {
      * @param part      owning part id (hit => that part), or null
      * @param kind      hull system when no part owns it, or null
      * @param systemId  {@code HullComponents} pool id for {@code kind}
+     * @param unit      pool within {@code kind} ({@link HitMesh.Node#unit}, inherited); empty = kind-wide
+     * @param spin      +1 cw / -1 ccw seen from above, inherited; 0 = undeclared
      * @param toGroup   node frame -> group frame rotation; {@code offset} its translation
      * @param bounds    node frame
      */
     public record Node(HitMesh.Node mesh, int group, @Nullable String part, @Nullable ComponentKind kind,
-                       String systemId, Quaternionf toGroup, Vector3f offset, float[] bounds) {
+                       String systemId, String unit, int spin, Quaternionf toGroup, Vector3f offset, float[] bounds) {
     }
 
     private final HitMesh mesh;
@@ -128,13 +130,26 @@ public final class HitModel {
             Quaternionf toGroup = inverse.mul(node.rotation(), new Quaternionf());
             Vector3f offset = new Quaternionf(rest.rotation()).conjugate().transform(new Vector3f(node.origin()).sub(
                     (float) rest.offset().x, (float) rest.offset().y, (float) rest.offset().z));
-            String systemId = kind == null ? "" : systemId(kind, side);
-            nodes.add(new Node(node, slot, part, kind, systemId, toGroup, offset, node.bounds()));
+            String unit = "";
+            String spin = "";
+            for (int at = i; at >= 0 && (unit.isEmpty() || spin.isEmpty()); at = mesh.nodes().get(at).parent()) {
+                HitMesh.Node up = mesh.nodes().get(at);
+                unit = unit.isEmpty() ? up.unit() : unit;
+                spin = spin.isEmpty() ? up.spin() : spin;
+            }
+            String systemId = kind == null ? "" : systemId(kind, side, unit);
+            nodes.add(new Node(node, slot, part, kind, systemId, unit, spin.isEmpty() ? 0 : spin.equals("cw") ? 1 : -1,
+                    toGroup, offset, node.bounds()));
         }
         return new HitModel(mesh, List.copyOf(groups), List.copyOf(nodes));
     }
 
-    /** Pool id: tracks and wheels by side, as the implicit defaults name them; else the code, spaced. */
+    /** Pool id: tracks and wheels by side, as the implicit defaults name them; else the code, spaced; + unit. */
+    public static String systemId(ComponentKind kind, VehicleSystems.Side side, String unit) {
+        String base = systemId(kind, side);
+        return unit.isEmpty() ? base : base + " " + unit;
+    }
+
     public static String systemId(ComponentKind kind, VehicleSystems.Side side) {
         String prefix = switch (side) {
             case LEFT -> "left ";

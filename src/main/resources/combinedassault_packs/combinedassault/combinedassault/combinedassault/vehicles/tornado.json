@@ -169,6 +169,7 @@
             "id": "wso",
             "name": "wso",
             "type": "combinedassault:generic",
+            "sensor": "sighting_system",
             "is_seat": true,
             "crew_roles": [
                 "gunner"

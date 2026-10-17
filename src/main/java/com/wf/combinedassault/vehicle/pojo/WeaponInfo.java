@@ -13,10 +13,6 @@ public class WeaponInfo {
     public ResourceLocation id;
 
     @Nullable
-    @SerializedName("ids")
-    public List<ResourceLocation> ids;
-
-    @Nullable
     @SerializedName("part_unit_id")
     public String partUnitId;
 
@@ -37,11 +33,9 @@ public class WeaponInfo {
     @SerializedName("round_bones")
     public List<String> roundBones = List.of();
 
-    public WeaponInfo(@Nullable ResourceLocation id, @Nullable List<ResourceLocation> ids,
-                      @Nullable String partUnitId, @Nullable String weaponBayUnitId,
+    public WeaponInfo(@Nullable ResourceLocation id, @Nullable String partUnitId, @Nullable String weaponBayUnitId,
                       boolean secondary, boolean fullSalvo, String saveId) {
         this.id = id;
-        this.ids = ids;
         this.partUnitId = partUnitId;
         this.weaponBayUnitId = weaponBayUnitId;
         this.secondary = secondary;

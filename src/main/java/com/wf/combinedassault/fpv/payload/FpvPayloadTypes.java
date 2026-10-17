@@ -29,6 +29,12 @@ public final class FpvPayloadTypes {
             type -> new GrenadeRackPayload(type, new com.google.gson.JsonObject())
     ));
 
+    public static final FpvPayloadType SPEAKER = register(new FpvPayloadType(
+            CombinedAssault.modLocation("speaker"),
+            SpeakerPayload::new,
+            type -> new SpeakerPayload(type, new com.google.gson.JsonObject())
+    ));
+
     private FpvPayloadTypes() {
     }
 

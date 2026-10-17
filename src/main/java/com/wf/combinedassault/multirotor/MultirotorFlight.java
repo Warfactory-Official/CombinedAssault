@@ -1,6 +1,7 @@
 package com.wf.combinedassault.multirotor;
 
 import com.google.gson.JsonObject;
+import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.entity.vehicle.RotaryWingVehicle;
 import com.wf.combinedassault.fpv.FpvFlight;
 import com.wf.combinedassault.util.PhysicsHelper;
@@ -14,6 +15,8 @@ import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 /**
  * Multirotor flight on wflib {@link Multirotor}: thrust only along the tilted disc, drag from the airframe, real
@@ -22,6 +25,9 @@ import org.jetbrains.annotations.Nullable;
  * collective = throttle.
  */
 public final class MultirotorFlight {
+
+    private static final float TUMBLE_MAX = 1.0F;
+    private static final float TUMBLE_DAMPING = 0.9F;
 
     /** N, all rotors at full output. */
     private final double thrust;
@@ -41,6 +47,8 @@ public final class MultirotorFlight {
     private final boolean defaultFpv;
     private final FpvFlight fpvAttitude;
 
+    /** Crippled tumble, body frame, rad/tick. */
+    private final Vector3f spin = new Vector3f();
     private FlightAttitude attitude = FlightAttitude.STOPPED;
     private boolean fpv;
     /** Autopilot setpoint for this tick, consumed by {@link #tick}; null = stick. */
@@ -81,6 +89,10 @@ public final class MultirotorFlight {
         this.fpv = fpv;
     }
 
+    public FpvFlight fpvAttitude() {
+        return this.fpvAttitude;
+    }
+
     public FlightAttitude attitude() {
         return this.attitude;
     }
@@ -94,35 +106,42 @@ public final class MultirotorFlight {
 
     /**
      * @param authority rotor output 0..1 (engine power x rotor lift); 0 => no descent limit (no rotor wash)
+     * @param acro FPV: no vertical limits, drag alone (inverted full throttle dives faster than freefall)
      */
-    public Airframe airframe(double curbWeight, double authority) {
-        return new Airframe(PhysicsEngine.G, this.thrust * authority / (curbWeight * PhysicsHelper.GRAVITY),
-                this.maxTilt, this.tiltRate, this.linearDrag, this.quadraticDrag, this.velocityGain,
-                this.verticalGain, this.maxClimb, authority > 0 ? this.maxDescent : Double.MAX_VALUE, 0.0);
+    public Airframe airframe(AbstractVehicle vehicle, double authority, boolean acro) {
+        return new Airframe(PhysicsEngine.G, this.thrust * authority / (vehicle.curbWeight * PhysicsHelper.GRAVITY),
+                this.maxTilt, this.tiltRate / vehicle.load(), this.linearDrag, this.quadraticDrag, this.velocityGain,
+                this.verticalGain, acro ? Double.MAX_VALUE : this.maxClimb,
+                acro || authority <= 0 ? Double.MAX_VALUE : this.maxDescent, 0.0);
     }
 
     /**
-     * @param authority engine power x rotor lift, 0..1; 0 or destroyed => falls under drag
+     * @param authority engine power x balanced rotor share, 0..1; 0 or destroyed => falls under drag
+     * @param crippled  rotors left that cannot balance (power on): each holds the last collective => tumble; else null
      */
-    public void tick(RotaryWingVehicle vehicle, double authority) {
+    public void tick(RotaryWingVehicle vehicle, double authority, @Nullable RotorLayout crippled, double power) {
         Vec3 desired = this.commanded;
         this.commanded = null;
-        double curb = vehicle.curbWeight;
         boolean dead = authority <= 0 || vehicle.isDestroyed();
-        Airframe frame = this.airframe(curb, dead ? 0.0 : authority);
-        double massFactor = vehicle.physicsEngine.mass / curb;
+        Airframe frame = this.airframe(vehicle, dead ? 0.0 : authority, !dead && desired == null && this.fpv);
+        double massFactor = vehicle.physicsEngine.mass / vehicle.curbWeight;
         Vec3 velocity = vehicle.getDeltaMovement();
         Vec3 next;
-        if (dead) {
+        if (dead && crippled != null && !vehicle.isDestroyed()) {
+            next = this.tumble(vehicle, crippled, power, velocity, massFactor);
+        } else if (dead) {
+            this.spin.zero();
             this.attitude = FlightAttitude.STOPPED;
             next = Multirotor.integrate(velocity, Vec3.ZERO, 0.0, frame);
         } else if (desired == null && this.fpv) {
+            this.spin.zero();
             this.fpvAttitude.tickAttitude(vehicle, authority);
             Vec3 axis = vehicle.relativeRotDirection(new Vec3(0, 1, 0), false);
             double specific = vehicle.getCollectivePitch() / 100.0 * frame.maxSpecificThrust(massFactor);
             next = Multirotor.integrate(velocity, axis, specific, frame);
             this.attitude = attitudeOf(axis, specific / frame.gravity());
         } else {
+            this.spin.zero();
             Vec3 feedForward = Vec3.ZERO;
             if (desired != null) {
                 feedForward = this.commandedFeedForward;
@@ -144,6 +163,30 @@ public final class MultirotorFlight {
         vehicle.xRotSpeed = 0;
         vehicle.yRotSpeed = 0;
         vehicle.zRotSpeed = 0;
+    }
+
+    /**
+     * Unbalanced rotors at the last collective: body spun by their torque, thrust along the tilted disc.
+     * Angular velocity capped at {@link #TUMBLE_MAX} rad/tick, air-damped {@link #TUMBLE_DAMPING}/tick.
+     */
+    private Vec3 tumble(RotaryWingVehicle vehicle, RotorLayout rotors, double power, Vec3 velocity, double massFactor) {
+        double throttle = power * vehicle.getCollectivePitch() / 100.0;
+        Vector3f alpha = rotors.torque(throttle, this.thrust, vehicle.physicsEngine.mass);
+        double dt2 = 1.0 / 400.0;
+        this.spin.mul(TUMBLE_DAMPING).add((float) (alpha.x * dt2), (float) (alpha.y * dt2), (float) (alpha.z * dt2));
+        if (this.spin.length() > TUMBLE_MAX) {
+            this.spin.normalize(TUMBLE_MAX);
+        }
+        Quaternionf rot = vehicle.rotYXZ();
+        if (this.spin.lengthSquared() > 0) {
+            rot.rotateAxis(this.spin.length(), new Vector3f(this.spin).normalize());
+        }
+        FpvFlight.setAttitude(vehicle, rot);
+        Airframe frame = this.airframe(vehicle, 1.0, true);
+        Vec3 axis = vehicle.relativeRotDirection(new Vec3(0, 1, 0), false);
+        double specific = rotors.meanOutput(throttle) * frame.maxSpecificThrust(massFactor);
+        this.attitude = attitudeOf(axis, specific / frame.gravity());
+        return Multirotor.integrate(velocity, axis, specific, frame);
     }
 
     /** Keys -> velocity setpoint in the heading frame; mouse yaw -> heading. */

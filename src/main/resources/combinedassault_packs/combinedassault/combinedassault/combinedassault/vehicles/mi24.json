@@ -16,6 +16,9 @@
         "friction": 17000
     },
     "max_health": 1400,
+    "storage": {
+        "max_payload": 2400
+    },
     "view_info": {
         "third_person_distance": 14,
         "third_person_distance_zoomed": 0

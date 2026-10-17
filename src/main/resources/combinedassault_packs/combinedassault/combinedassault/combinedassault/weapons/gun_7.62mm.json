@@ -5,7 +5,9 @@
     "max_capacity": 120,
     "reload": {
         "time": 100,
-        "ammo": "wflib:cartridge_7_62x51"
+        "ammo": "wflib:cartridge_7_62x51",
+        "magazines": "wflib:ammo_can_7_62x51",
+        "loose": true
     },
     "sounds": {
         "fire": {"event": "combinedassault:gun_7.62mm_shot", "range": 300, "pitch_random": 0.1},

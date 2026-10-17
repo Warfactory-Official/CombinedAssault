@@ -126,39 +126,45 @@ public class TrackedVehicle extends AbstractVehicle
 
         // No vehicle declares a mobility part today => always FULL.
         VehicleMobility mobility = VehicleMobility.of(this);
+        // Pack accelerations are unladen: cargo divides them, overload strains the engine.
+        float load = (float) load();
+        float strain = (float) strain();
+        float brake = brakeAcceleration / load;
+        float turn = turnAcceleration / load;
 
         if (controlUnit.forward || controlUnit.backward) {
             if (controlUnit.forward) {
                 if (vf < 0) {
-                    vf += brakeAcceleration;
+                    vf += brake;
                 } else {
-                    vf += forwardAcceleration;
+                    vf += forwardAcceleration * strain / load;
                 }
             } else {
                 if (vf > 0) {
-                    vf -= brakeAcceleration;
+                    vf -= brake;
                 } else {
-                    vf -= backwardAcceleration;
+                    vf -= backwardAcceleration * strain / load;
                 }
             }
         }
         if (controlUnit.left || controlUnit.right) {
             if (vf < 0 && !controlUnit.backward) {
-                vf += brakeAcceleration;
+                vf += brake;
             }
         }
-        vf = Mth.clamp(vf, -maxSpeedBackward * mobility.speedScale(), maxSpeedForward * mobility.speedScale());
+        vf = Mth.clamp(vf, -maxSpeedBackward * mobility.speedScale() * strain,
+                maxSpeedForward * mobility.speedScale() * strain);
         entityData.set(FORWARD_SPEED, vf);
 
         if (controlUnit.left || controlUnit.right) {
-            vt += controlUnit.right ? turnAcceleration : -turnAcceleration;
+            vt += controlUnit.right ? turn : -turn;
             vt = Mth.clamp(vt, -maxTurn * mobility.turnScale(), maxTurn * mobility.turnScale());
         } else {
             if (vt < 0) {
-                vt += turnAcceleration;
+                vt += turn;
                 vt = Math.min(vt, 0);
             } else if (vt > 0) {
-                vt -= turnAcceleration;
+                vt -= turn;
                 vt = Math.max(vt, 0);
             }
         }

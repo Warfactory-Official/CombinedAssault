@@ -17,6 +17,7 @@ public enum NodeRole {
     VIEW(Kind.SOCKET),
     SIGHT(Kind.SOCKET),
     BOLT(Kind.SOCKET),
+    EJECT(Kind.SOCKET),
     ERA(Kind.SOCKET),
     SLAT(Kind.SOCKET),
     MOUNT_POINT(Kind.SOCKET),
@@ -34,7 +35,8 @@ public enum NodeRole {
     CENTER_OF_MASS(Kind.SOCKET),
     PIVOT(Kind.SOCKET),
     TRACK(Kind.SOCKET),
-    PROPELLER(Kind.SOCKET);
+    PROPELLER(Kind.SOCKET),
+    STATION(Kind.SOCKET);
 
     public enum Kind {
         FRAME, SHAPE, SOCKET

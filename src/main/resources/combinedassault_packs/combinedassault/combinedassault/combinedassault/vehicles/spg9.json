@@ -1,0 +1,34 @@
+{
+  "type": "combinedassault:generic",
+  "attributes": {},
+  "max_health": 50,
+  "view_info": {"third_person_distance": 3, "third_person_distance_zoomed": 0},
+  "energy_info": {"energy_capacity": 1000, "energy_consumption_per_tick": 0.01},
+  "storage": {"slots": 9},
+  "parts": [
+    {
+      "id": "gun",
+      "name": "part.combinedassault.spg9",
+      "type": "combinedassault:weapon",
+      "max_health": 25,
+      "component": "barrel",
+      "detachable": false,
+      "operator_on_weapon_unit": true,
+      "optical_sight_type": "optical_scope",
+      "crosshair_style": "cross",
+      "zoom_max": 4,
+      "rot_info": {"x_rot_speed": 3, "y_rot_speed": 4, "need_power": false},
+      "weapons": ["combinedassault:spg9"],
+      "pose": "sit",
+      "protect_passenger": false
+    }
+  ],
+  "mountable": {"enabled": true, "tags": ["emplacement"]},
+  "towing": {"towable": {"enabled": true, "tags": [], "modes": ["sling"]}},
+  "model": "combinedassault:models/emplacement/spg9/spg9.gltf",
+  "display": {
+    "icon": "combinedassault:textures/slot/spg9.png",
+    "tab_index": 605,
+    "description": ""
+  }
+}

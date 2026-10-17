@@ -65,6 +65,7 @@ public class BaseVehicleData<T extends AbstractVehicle> {
     protected ArmorProfile armor;
     protected List<AddonMount> addonMounts = List.of();
     protected boolean uav;
+    protected boolean pickup;
     @Nullable
     protected AutonomyInfo autonomy;
     protected List<LoadoutInfo> loadouts = List.of();
@@ -147,6 +148,7 @@ public class BaseVehicleData<T extends AbstractVehicle> {
         this.cargo = pojo.cargo == null ? CargoInfo.NONE : pojo.cargo;
         this.armor = pojo.armor;
         this.uav = pojo.uav;
+        this.pickup = pojo.pickup;
         this.autonomy = pojo.uav ? pojo.autonomy : null;
         this.loadouts = pojo.loadouts == null ? List.of() : List.copyOf(pojo.loadouts);
         this.canWade = pojo.canWade;
@@ -486,6 +488,10 @@ public class BaseVehicleData<T extends AbstractVehicle> {
 
     public boolean isUav() {
         return uav;
+    }
+
+    public boolean canPickUp() {
+        return pickup;
     }
 
     @Nullable

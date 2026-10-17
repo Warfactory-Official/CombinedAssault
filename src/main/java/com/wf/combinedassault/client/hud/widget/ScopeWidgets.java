@@ -60,12 +60,22 @@ public final class ScopeWidgets {
                 public void draw(UiEval ev, float x, float y, float w, float h) {
                     WeaponUnit unit = station.get(ev);
                     LocalVehiclePlayer local = localRef.get(ev);
-                    if (unit == null || local == null || !ScreenProjection.project(unit.weaponHitPos, at)
-                            || !ScreenProjection.project(unit.weaponHitPosO, atO)) {
+                    if (unit == null || local == null) {
                         return;
                     }
-                    float px = ev.fromHost(Mth.lerp(ev.partialTick, atO[0], at[0]));
-                    float py = ev.fromHost(Mth.lerp(ev.partialTick, atO[1], at[1]));
+                    float px;
+                    float py;
+                    if (local.lensSight() || local.spotting()) {
+                        // Lens = gimbal, spotter = sight line: boresight is the screen centre; the station may have no turn groups.
+                        px = ev.width / 2;
+                        py = ev.height / 2;
+                    } else if (ScreenProjection.project(unit.weaponHitPos, at)
+                            && ScreenProjection.project(unit.weaponHitPosO, atO)) {
+                        px = ev.fromHost(Mth.lerp(ev.partialTick, atO[0], at[0]));
+                        py = ev.fromHost(Mth.lerp(ev.partialTick, atO[1], at[1]));
+                    } else {
+                        return;
+                    }
                     int argb = colour.get(ev);
                     Canvas canvas = ev.canvas;
                     WeaponUnitData.OpticalSightType sight = unit.getOpticalSightType();

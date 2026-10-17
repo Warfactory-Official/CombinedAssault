@@ -23,7 +23,12 @@ import com.wf.combinedassault.vehicle.part.BarrelCharge;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import com.wf.combinedassault.vehicle.part.WeaponActions;
+import com.wf.combinedassault.vehicle.part.StationActions;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
+import com.wf.combinedassault.vehicle.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.vehicle.structure.VehicleCubeGroup;
+import com.wf.combinedassault.client.model.VehicleModelInstance;
+import com.wf.combinedassault.client.render.entity.vehicle.VehicleRender;
 import com.wf.combinedassault.vehicle.loadout.Loadouts;
 import com.wf.combinedassault.vehicle.part.MissileHolderUnit;
 import com.wf.combinedassault.vehicle.loadout.client.LoadoutProbe;
@@ -53,7 +58,7 @@ import java.util.List;
 /**
  * Probe nodes on a vehicle, on foot: doors, free seats, hull (storage, systems grid, air defence, repairs without a place),
  * damaged systems at their nearest member, worn armour faces, ERA/slat mounts (kit carried), weapon mounts (modding tool
- * carried), large-bore muzzles (thermite charge carried).
+ * carried), large-bore muzzles (thermite charge carried), exposed ordnance stations (fitting round carried or empty hand).
  */
 public final class VehicleNodes {
 
@@ -123,6 +128,7 @@ public final class VehicleNodes {
                 }).colour(SEAT));
             }
         }
+        stations(out, ctx, vehicle);
         systems(out, ctx, vehicle, drift);
         armor(out, ctx, vehicle, drift);
         if (ProbeInventory.has(player, BarrelCharge::thermite)) {
@@ -155,6 +161,90 @@ public final class VehicleNodes {
                 .claimed(looked));
     }
 
+    /** Holder stations, weapon {@code round_bones} stations ({@link StationActions}). */
+    private static void stations(List<ProbeNode> out, ProbeContext ctx, AbstractVehicle vehicle) {
+        Player player = ctx.player();
+        float partialTick = ctx.partialTick();
+        boolean emptyHand = player.getMainHandItem().isEmpty();
+        VehicleModelInstance model = null;
+        for (PartUnit<?> part : vehicle.getPartUnits()) {
+            if (part.isDetached()) {
+                continue;
+            }
+            if (part instanceof MissileHolderUnit holder) {
+                for (int i = 0; i < holder.getCapacity(); i++) {
+                    int slot = i;
+                    VehicleCubeGroup.GlobalTransform at = holder.stationInModel(i, partialTick);
+                    ItemStack round = holder.round(i);
+                    ItemStack carried = ProbeInventory.find(player, s -> holder.canLoad(slot, s));
+                    if (at == null || round.isEmpty() && carried.isEmpty() || !round.isEmpty() && !emptyHand && carried.isEmpty()) {
+                        continue;
+                    }
+                    int arg = StationActions.holder(part.getIndex(), i);
+                    out.add(new ProbeNode("station:" + arg, toWorld(vehicle, at.offset().toVector3f(), partialTick),
+                            info -> station(info, PartNames.name(holder), slot + 1, round, carried, arg))
+                            .colour(round.isEmpty() ? MOUNT_EMPTY : MOUNT_FITTED));
+                }
+            } else if (part instanceof WeaponUnit unit) {
+                for (int w = 0; w < unit.getIndexedWeapons().size(); w++) {
+                    AbstractVehicleWeapon<?> weapon = StationActions.stationed(part, w);
+                    if (weapon == null) {
+                        continue;
+                    }
+                    if (model == null) {
+                        model = VehicleRender.activeModelInstance(vehicle);
+                        if (model == null || !model.posed()) {
+                            return;
+                        }
+                    }
+                    List<String> bones = weapon.getRoundBones();
+                    int fired = bones.size() - weapon.getRemainAmmo();
+                    ItemStack carried = ProbeInventory.find(player, s -> StationActions.fits(weapon, s));
+                    int arg = StationActions.weapon(part.getIndex(), w);
+                    for (int b = 0; b < bones.size(); b++) {
+                        boolean loaded = b >= fired;
+                        // Next to fill / next to empty: the only bones a load / unload changes.
+                        boolean next = loaded ? b == fired && (emptyHand || !carried.isEmpty()) : b == fired - 1 && !carried.isEmpty();
+                        int bone = model.boneIndex(bones.get(b));
+                        if (!next || bone < 0) {
+                            continue;
+                        }
+                        ItemStack round = loaded ? weapon.getLoadedRound() : ItemStack.EMPTY;
+                        Vector3f at = model.globalTransform(bone).getTranslation(new Vector3f());
+                        int number = b + 1;
+                        out.add(new ProbeNode("station:" + arg + ":" + b, toWorld(vehicle, at, partialTick),
+                                info -> station(info, weapon.getDisplayName(), number, round, carried, arg))
+                                .colour(loaded ? MOUNT_FITTED : MOUNT_EMPTY));
+                    }
+                }
+            }
+        }
+    }
+
+    private static void station(ProbeInfo info, Component name, int number, ItemStack round, ItemStack carried, int arg) {
+        info.title(Component.translatable(PROBE + "station", name, number));
+        info.entry(Component.translatable(PROBE + "station_round"), round.isEmpty()
+                ? Component.translatable(PROBE + "station_empty") : round.getHoverName());
+        if (round.isEmpty()) {
+            info.action(ProbeAction.of(StationActions.LOAD, arg, Component.translatable(PROBE + "station_load",
+                    carried.getHoverName())).withIcon(new ProbeElement.Icon(carried, 10, false)));
+        } else {
+            info.action(ProbeAction.of(StationActions.UNLOAD, arg, Component.translatable(PROBE + "station_unload",
+                    round.getHoverName())).withIcon(new ProbeElement.Icon(round, 10, false)));
+            if (!carried.isEmpty()) {
+                info.action(ProbeAction.of(StationActions.LOAD, arg, Component.translatable(PROBE + "station_load",
+                        carried.getHoverName())).withIcon(new ProbeElement.Icon(carried, 10, false)));
+            }
+        }
+    }
+
+    /** Vehicle model frame -> world, as {@link VehicleRender#applyVehicleRotation} draws it. */
+    private static Vec3 toWorld(AbstractVehicle vehicle, Vector3f model, float partialTick) {
+        Vec3 c = vehicle.centerOffset;
+        Vector3f arm = vehicle.rotYXZ(partialTick).transform(model.sub((float) c.x, (float) c.y, (float) c.z));
+        return vehicle.position(partialTick).add(c).add(arm.x, arm.y, arm.z);
+    }
+
     /** Hull node: grid + rows of damaged systems without geometry; each placed damaged system its own node. */
     private static void systems(List<ProbeNode> out, ProbeContext ctx, AbstractVehicle vehicle, Vec3 drift) {
         List<VehicleSystems.Cell> cells = VehicleSystems.cells(vehicle);
@@ -182,6 +272,11 @@ public final class VehicleNodes {
             if (vehicle.hasContainer() && !(vehicle.uav && (Loadouts.strapIndex(vehicle, held) >= 0
                     || MissileHolderUnit.couldLoad(vehicle, held)))) {
                 info.action(ProbeAction.of(AccessActions.STORAGE, 0, Component.translatable(KEY + "storage")));
+            }
+            if (vehicle.pickup && !vehicle.isDestroyed()) {
+                ProbeAction pickUp = ProbeAction.of(AccessActions.PICK_UP, 0, Component.translatable(KEY + "pick_up"));
+                info.action(vehicle.isVehicle() || vehicle.isPassenger()
+                        ? pickUp.unavailable(Component.translatable(KEY + "pick_up.occupied")) : pickUp);
             }
             SystemsProbe.grid(info, cells);
             AirDefenseProbe.append(info, ctx, vehicle);

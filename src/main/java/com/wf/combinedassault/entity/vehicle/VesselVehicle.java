@@ -101,7 +101,7 @@ public class VesselVehicle extends AbstractVehicle implements IAnimationEntity<V
         setTurnAngle(rudder);
 
         if (isInWater()) {
-            double powerScale = getPower() / 100;
+            double powerScale = getPower() / 100 * strain();
             if (controlUnit.forward && forwardSpeed < maxSpeedForward) {
                 velocity = velocity.add(direction.scale(PhysicsHelper.accelerationPerTick(forwardForce * powerScale, physicsEngine.mass)));
             } else if (controlUnit.backward && forwardSpeed > -maxSpeedBackward) {

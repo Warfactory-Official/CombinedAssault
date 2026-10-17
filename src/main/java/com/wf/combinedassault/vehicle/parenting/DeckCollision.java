@@ -188,9 +188,11 @@ public final class DeckCollision {
         }
 
         double[] correction = attachment.scratchOut;
+        // Hull overhanging a rider on terrain (dismount beside the hull): down would bury it.
+        boolean mayDescend = entity.level().noCollision(entity, bounds.move(0, -DeckClip.SKIN * 2, 0));
         if (!DeckClip.depenetrate(near, nearCount,
                 centre.x, centre.y, centre.z, hx, hy, hz,
-                maxPasses, correction)) {
+                mayDescend, maxPasses, correction)) {
             return false;
         }
         rotation.transform(attachment.scratchWorld.set(correction[0], correction[1], correction[2]));

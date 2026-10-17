@@ -1,11 +1,19 @@
 package com.wf.combinedassault.api.custom.sync;
 
+import com.wf.wflib.ammo.AmmoCodecs;
+import com.wf.wflib.magazine.MagContents;
+import com.wf.wflib.magazine.MagazineItems;
+import com.wf.wflib.magazine.Run;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
+import com.wf.combinedassault.vehicle.weapon.RoundCount;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SyncDataSerializers {
 
@@ -52,7 +60,7 @@ public class SyncDataSerializers {
             Item::equals
     );
 
-    /** One round: item + WFLib ammo variant; count/other components dropped. */
+    /** One round: item + WFLib ammo variant + magazine contents; count/other components dropped. */
     public static final SyncDataSerializer<ItemStack> ROUND = SyncDataSerializer.create(
             (buf, stack) -> {
                 buf.writeVarInt(BuiltInRegistries.ITEM.getId(stack.getItem()));
@@ -60,6 +68,16 @@ public class SyncDataSerializers {
                 buf.writeBoolean(variant != null);
                 if (variant != null) {
                     buf.writeResourceLocation(variant);
+                }
+                MagContents contents = stack.get(MagazineItems.CONTENTS.get());
+                buf.writeBoolean(contents != null);
+                if (contents != null) {
+                    buf.writeVarInt(contents.runs().size());
+                    for (Run run : contents.runs()) {
+                        AmmoCodecs.VARIANT_STREAM.encode(buf, run.round());
+                        buf.writeVarInt(run.count());
+                    }
+                    buf.writeVarInt(contents.links());
                 }
             },
             buf -> {
@@ -71,9 +89,37 @@ public class SyncDataSerializers {
                         stack.set(com.wf.wflib.ammo.AmmoItems.VARIANT.get(), variant);
                     }
                 }
+                if (buf.readBoolean()) {
+                    int size = buf.readVarInt();
+                    List<Run> runs = new ArrayList<>(size);
+                    for (int i = 0; i < size; i++) {
+                        runs.add(new Run(AmmoCodecs.VARIANT_STREAM.decode(buf), buf.readVarInt()));
+                    }
+                    stack.set(MagazineItems.CONTENTS.get(), MagContents.of(runs, buf.readVarInt()));
+                }
                 return stack;
             },
             ItemStack::isSameItemSameComponents
+    );
+
+    /** {@link #ROUND} + count per kind. */
+    public static final SyncDataSerializer<List<RoundCount>> ROUND_STOCK = SyncDataSerializer.create(
+            (buf, stock) -> {
+                buf.writeVarInt(stock.size());
+                for (RoundCount entry : stock) {
+                    ROUND.write(buf, entry.round());
+                    buf.writeVarInt(entry.count() + 1);
+                }
+            },
+            buf -> {
+                int size = buf.readVarInt();
+                List<RoundCount> stock = new ArrayList<>(size);
+                for (int i = 0; i < size; i++) {
+                    stock.add(new RoundCount(ROUND.read(buf), buf.readVarInt() - 1));
+                }
+                return List.copyOf(stock);
+            },
+            RoundCount::same
     );
 
     private SyncDataSerializers() {}

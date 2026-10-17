@@ -13,6 +13,7 @@ import com.wf.combinedassault.vehicle.weapon.VehicleMissile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
@@ -70,7 +71,7 @@ public final class FireMissions {
                 finish(unit, "tips.fire_mission.out");
                 return;
             }
-            if (((VehicleMissile) weapon).getSelectedRound() != mission.round()) {
+            if (weapon.getSelectedRound().getItem() != mission.round()) {
                 return;
             }
         }
@@ -93,12 +94,12 @@ public final class FireMissions {
         }
     }
 
-    /** Predicted locally; the server echo confirms through sync. */
     private static void select(WeaponUnit unit, AbstractVehicleWeapon<?> weapon, Item round) {
-        if (weapon instanceof VehicleMissile missile && missile.getSelectedRound() != round) {
-            missile.setSelectedRound(round);
+        if (rack(weapon) != null && weapon.getSelectedRound().getItem() != round) {
+            ItemStack pick = round == Items.AIR ? ItemStack.EMPTY : round.getDefaultInstance();
+            weapon.predictSelectedRound(pick);
             PacketDistributor.sendToServer(new ClientSelectRound(unit.getVehicle().getId(), unit.getIndex(),
-                    weapon.getIndex(), round));
+                    weapon.getIndex(), pick));
         }
     }
 
@@ -120,28 +121,5 @@ public final class FireMissions {
     @Nullable
     private static MissileHolderUnit rack(AbstractVehicleWeapon<?> weapon) {
         return weapon instanceof VehicleMissile missile ? missile.missileHolder() : null;
-    }
-
-    /** Next round kind in the rack after the selected one, for the cycle key. */
-    public static void cycleRound(WeaponUnit unit) {
-        AbstractVehicleWeapon<?> weapon = unit.getCurrentWeapon().orElse(null);
-        MissileHolderUnit rack = weapon == null ? null : rack(weapon);
-        if (rack == null) {
-            return;
-        }
-        java.util.List<Item> kinds = rack.kinds();
-        if (kinds.isEmpty()) {
-            return;
-        }
-        Item current = ((VehicleMissile) weapon).getSelectedRound();
-        int at = kinds.indexOf(current);
-        Item next = at + 1 >= kinds.size() ? Items.AIR : kinds.get(at + 1);
-        select(unit, weapon, next);
-        var player = Minecraft.getInstance().player;
-        if (player != null) {
-            player.displayClientMessage(next == Items.AIR
-                    ? Component.translatable("tips.fire_mission.round_any")
-                    : Component.translatable("tips.fire_mission.round", next.getDescription()), true);
-        }
     }
 }

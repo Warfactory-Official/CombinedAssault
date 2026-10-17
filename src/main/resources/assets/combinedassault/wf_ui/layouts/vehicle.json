@@ -1,10 +1,14 @@
 {
   "root": {"type": "stack", "children": [
     {"type": "combinedassault:hud/crew"},
+    {"type": "when", "if": "vehicle.radio", "then": {"type": "combinedassault:hud/radio"}},
     {"type": "when", "if": "!local.third_person", "then": {"type": "combinedassault:hud/compass"}},
     {"type": "when", "if": "!vehicle.none", "then": {"type": "combinedassault:hud/systems"}},
     {"type": "combinedassault:hud/alerts"},
     {"type": "when", "if": "station.present", "then": {"type": "combinedassault:hud/station"}},
+    {"type": "place", "x": "ui.width - 4", "y": "ui.height - 9 - (station.present && station.weapon_count > 0 ? 44 : 0)",
+      "pivot": "bottom_right", "child": {"type": "transform", "scale": 0.75, "pivot": "bottom_right",
+        "child": {"type": "combinedassault:ammo_list"}}},
     {"type": "when", "if": "payload.loaded", "then": {"type": "combinedassault:hud/payload"}},
     {"type": "place", "x": "ui.width - floor(ui.width / 8)", "y": "ui.height / 2 + floor(ui.height / 5)",
       "child": {"type": "combinedassault:hit_panel"}},

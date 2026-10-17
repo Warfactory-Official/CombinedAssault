@@ -16,6 +16,10 @@
       "child": {"type": "when", "if": "vehicle.missile_incoming",
         "then": {"type": "text", "text": "{tr:ui.missile_incoming}", "color": "$red", "shadow": true},
         "else": {"type": "when", "if": "vehicle.being_locked",
-          "then": {"type": "text", "text": "{tr:ui.being_locked}", "color": "$red", "shadow": true}}}}
+          "then": {"type": "text", "text": "{tr:ui.being_locked}", "color": "$red", "shadow": true}}}},
+    {"type": "place", "x": "floor(ui.width / 2)", "y": "floor(ui.height / 2) - 65", "pivot": "top",
+      "child": {"type": "when", "if": "vehicle.overloaded",
+        "then": {"type": "text", "text": "{tr:ui.vehicle_overloaded(vehicle.payload_pct|.0)}", "color": "$red",
+          "shadow": true}}}
   ]}
 }

@@ -32,7 +32,8 @@
         "mass": 2000
     },
     "storage": {
-        "slots": 18
+        "slots": 18,
+        "max_payload": 400
     },
     "parts": [
         {
@@ -45,6 +46,12 @@
             "max_health": 200,
             "component": "barrel",
             "render_bone": "mortar",
+            "mounts": [
+                {
+                    "model": "combinedassault:models/weapon/m252/m252_tube.gltf",
+                    "node": "mortar_m252"
+                }
+            ],
             "operator_on_weapon_unit": false,
             "indirect_fire": {
                 "map": true
@@ -69,6 +76,13 @@
             "id": "hatches",
             "name": "hatches",
             "type": "combinedassault:weapon_bay",
+            "is_seat": false,
+            "need_power": false
+        },
+        {
+            "id": "ramp",
+            "name": "ramp",
+            "type": "combinedassault:door",
             "is_seat": false
         },
         {

@@ -18,6 +18,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import com.wf.combinedassault.CombinedAssault;
@@ -27,11 +28,14 @@ import com.wf.combinedassault.api.entity.RemoteTickEntity;
 import com.wf.combinedassault.client.screen.CoordinateInputScreen;
 import com.wf.combinedassault.client.shader.OverloadHandler;
 import com.wf.combinedassault.custom.part.data.WeaponUnitData;
+import com.wf.combinedassault.fpv.FpvFlight;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.entity.vehicle.FixedWingVehicle;
 import com.wf.combinedassault.entity.vehicle.RotaryWingVehicle;
 import com.wf.wflib.MissileEntity;
 import com.wf.combinedassault.network.message.ClientVehicleAction;
 import com.wf.combinedassault.util.VectorUtil;
+import com.wf.combinedassault.vehicle.control.ControlUnit;
 import com.wf.combinedassault.vehicle.control.InputHandler;
 import com.wf.combinedassault.vehicle.light.IrSightMessage;
 import com.wf.combinedassault.vehicle.part.PartUnit;
@@ -45,6 +49,12 @@ public class LocalVehiclePlayer {
 
     public static LocalVehiclePlayer instance;
     public static final float CAMERA_UPWARD_ANGLE = 10;
+    /** Stick deflection per mouse turn unit (vanilla turn delta; x0.15 = deg). */
+    private static final float STICK_GAIN = 0.01F;
+    private static final float STICK_RECENTRE = 0.8F;
+    private static final float HEAD_RECENTRE = 0.6F;
+    private static final float HELI_PITCH = 30;
+    private static final float HELI_HEADING_LEAD = 60;
     public float cameraAimRotX;
     public float cameraAimRotY;
     public float cameraAimRotZ;
@@ -56,6 +66,16 @@ public class LocalVehiclePlayer {
     public float playerLerpYRot;
     public float playerLocalXRot;
     public float playerLocalYRot;
+    /** FPV mouse turn since the last input sample, body frame, deg ({@link ControlUnit#turnX} axes). */
+    public float fpvTurnX;
+    public float fpvTurnY;
+    /** Fixed-wing cockpit stick ({@link ControlUnit#stickX}/{@link ControlUnit#stickY}); recentres per tick. */
+    public float stickX;
+    public float stickY;
+    /** Helicopter cockpit: commanded pitch / heading ({@link ControlUnit#xRot}/{@link ControlUnit#yRot}) the mouse moves. */
+    public float heliPitch;
+    public float heliHeading;
+    private boolean wasCockpitPilot;
     public float currentG = 1;
     public float stamina = 100;
     public boolean lostControl;
@@ -67,8 +87,11 @@ public class LocalVehiclePlayer {
     public CameraMode sightMode = CameraMode.OPTICAL;
     private int irSightVehicle = -1;
     private boolean irSight;
-    /** False right after scope entry: camera keeps the pre-scope aim direction until mouse clears the {@code 0.5} deg deadzone. */
+    /** False right after scope entry: camera keeps the pre-scope aim direction until mouse travel clears the {@code 0.5} deg deadzone. */
     public boolean mouseTurnedAfterScope;
+    /** Mouse travel since scope entry; per-event deltas at high fps / low sensitivity never reach the deadzone alone. */
+    private double scopeTurnX;
+    private double scopeTurnY;
     public AbstractVehicle.Seat seat;
     public boolean toLeave;
     public AbstractVehicle vehicle;
@@ -243,24 +266,43 @@ public class LocalVehiclePlayer {
         cameraAimRotXO = cameraAimRotX;
         cameraAimRotYO = cameraAimRotY;
         cameraAimRotZO = cameraAimRotZ;
-        if (viewType == ViewType.THIRD_PERSON || viewType == ViewType.OPERATOR) {
+        FpvFlight fpv = fpvFlight();
+        if (fpv != null && viewType != ViewType.SCOPE) {
+            try {
+                fpvCamera(fpv, partUnit);
+            } finally {
+                fixLerp();
+            }
+        } else if (viewType == ViewType.THIRD_PERSON || viewType == ViewType.OPERATOR) {
             try {
                 if (partUnit instanceof WeaponUnit weaponUnit) {
-                    if (!(InputHandler.freeCamera || playerLerpSteps > 0) || vehicle instanceof RotaryWingVehicle || vehicle.uav) {
+                    if ((!(InputHandler.freeCamera || playerLerpSteps > 0) || vehicle instanceof RotaryWingVehicle || vehicle.uav)
+                            && !weaponUnit.spottedBy(player)) {
                         weaponUnit.aim(freeAimPos());
                     }
+                    if (lensSight()) {
+                        rangeFinding(freeAimPos());
+                    }
                 }
-                if (viewType == ViewType.OPERATOR) {
+                if (cockpitLook()) {
                     Quaternionf vehicleRot = vehicle.rotYXZ();
-                    Quaternionf playerWorldRot = new Quaternionf();
-                    playerWorldRot.rotateY((float) Math.toRadians(-player.getYRot()));
-                    playerWorldRot.rotateX((float) Math.toRadians(player.getXRot()));
-                    Quaternionf invVehicleRot = new Quaternionf(vehicleRot).invert();
-                    Quaternionf localRot = invVehicleRot.mul(playerWorldRot);
-                    Vector3f localEuler = new Vector3f();
-                    localRot.getEulerAnglesYXZ(localEuler);
-                    playerLocalXRot = (float) Math.toDegrees(localEuler.x);
-                    playerLocalYRot = (float) Math.toDegrees(-localEuler.y);
+                    if (aircraftCockpit()) {
+                        // Head fixed in the airframe; free look released => recentres on the nose.
+                        if (!InputHandler.freeCamera) {
+                            playerLocalXRot *= HEAD_RECENTRE;
+                            playerLocalYRot *= HEAD_RECENTRE;
+                        }
+                    } else {
+                        Quaternionf playerWorldRot = new Quaternionf();
+                        playerWorldRot.rotateY((float) Math.toRadians(-player.getYRot()));
+                        playerWorldRot.rotateX((float) Math.toRadians(player.getXRot()));
+                        Quaternionf invVehicleRot = new Quaternionf(vehicleRot).invert();
+                        Quaternionf localRot = invVehicleRot.mul(playerWorldRot);
+                        Vector3f localEuler = new Vector3f();
+                        localRot.getEulerAnglesYXZ(localEuler);
+                        playerLocalXRot = (float) Math.toDegrees(localEuler.x);
+                        playerLocalYRot = (float) Math.toDegrees(-localEuler.y);
+                    }
                     vehicleRot.rotateY((float) Math.toRadians(-playerLocalYRot));
                     vehicleRot.rotateX((float) Math.toRadians(playerLocalXRot));
                     Vector3f rot = new Vector3f();
@@ -268,6 +310,10 @@ public class LocalVehiclePlayer {
                     cameraAimRotX = (float) Math.toDegrees(rot.x);
                     cameraAimRotY = (float) Math.toDegrees(-rot.y);
                     cameraAimRotZ = (float) Math.toDegrees(rot.z);
+                    if (aircraftCockpit()) {
+                        player.setXRot(cameraAimRotX);
+                        player.setYRot(cameraAimRotY);
+                    }
                 } else {
                     cameraAimRotX = player.getXRot();
                     cameraAimRotY = player.getYRot();
@@ -279,12 +325,15 @@ public class LocalVehiclePlayer {
                 fixLerp();
             }
         } else if (viewType == ViewType.SCOPE) {
-            if (partUnit instanceof WeaponUnit weaponUnit
+            if (sightUnit() instanceof WeaponUnit weaponUnit
                     && weaponUnit.getOpticalSightType() != WeaponUnitData.OpticalSightType.NONE) {
                 try {
                     cameraAimWith(weaponUnit);
                     Vec3 hitPosition = weaponUnit.aimHitPosition();
                     rangeFinding(hitPosition);
+                    if (weaponUnit.spottedBy(player)) {
+                        return;
+                    }
                     ClientVehicleAction control = new ClientVehicleAction();
                     control.vehicleEntityId = vehicle.getId();
                     control.partUnitIndex = weaponUnit.getIndex();
@@ -322,7 +371,12 @@ public class LocalVehiclePlayer {
         }
         try {
             AbstractVehicle vehicle = this.vehicle;
-            PartUnit<?> partUnit = this.vehicle.getOwnOperatorUnit(getPlayer());
+            PartUnit<?> own = this.vehicle.getOwnOperatorUnit(getPlayer());
+            PartUnit<?> partUnit = sightUnit() != null ? sightUnit() : own;
+            if (lensUav() && (toViewType == null || toViewType == ViewType.SCOPE)) {
+                // Lens = scope: SWITCH_SCOPE steps its zoom (InputHandler).
+                toViewType = toViewType == null && viewType == ViewType.OPERATOR ? ViewType.THIRD_PERSON : ViewType.OPERATOR;
+            }
             if (partUnit instanceof WeaponUnit weaponUnit) {
                 if (toViewType == null) {
                     if (viewType == ViewType.THIRD_PERSON) {
@@ -351,6 +405,8 @@ public class LocalVehiclePlayer {
                     scopeAimWeaponHit(weaponUnit);
                     cameraAimRotZ = weaponUnit.worldZRot();
                     mouseTurnedAfterScope = false;
+                    scopeTurnX = 0;
+                    scopeTurnY = 0;
                 }
                 cameraAimRotXO = cameraAimRotX;
                 cameraAimRotYO = cameraAimRotY;
@@ -366,6 +422,10 @@ public class LocalVehiclePlayer {
                 if (toViewType == ViewType.THIRD_PERSON && !ThirdPersonRules.allows(vehicle)) {
                     toViewType = ViewType.OPERATOR;
                 }
+            }
+            if (toViewType == ViewType.OPERATOR && viewType != ViewType.OPERATOR) {
+                playerLocalXRot = 0;
+                playerLocalYRot = 0;
             }
             viewType = toViewType;
         } catch (Exception exception) {
@@ -415,6 +475,85 @@ public class LocalVehiclePlayer {
         }
     }
 
+    /** Acro model when this player flies an FPV-mode drone; null otherwise. */
+    @Nullable
+    public FpvFlight fpvFlight() {
+        return onVehicle() && vehicle instanceof RotaryWingVehicle rotary && vehicle.controlUnit.getOperator() == getPlayer()
+                ? rotary.fpvAttitude() : null;
+    }
+
+    /** OPERATOR: lens fixed to the body (+ uptilt). THIRD_PERSON: chase on the body's heading. */
+    private void fpvCamera(FpvFlight fpv, PartUnit<?> partUnit) {
+        Quaternionf body = vehicle.rotYXZ();
+        if (viewType == ViewType.OPERATOR) {
+            Vector3f euler = new Quaternionf(body).rotateX((float) Math.toRadians(-fpv.cameraTilt()))
+                    .getEulerAnglesYXZ(new Vector3f());
+            cameraAimRotX = (float) Math.toDegrees(euler.x);
+            cameraAimRotY = cameraAimRotY + Mth.wrapDegrees((float) Math.toDegrees(-euler.y) - cameraAimRotY);
+            cameraAimRotZ = (float) Math.toDegrees(euler.z);
+        } else {
+            Vector3f forward = body.transform(new Vector3f(0, 0, 1));
+            if (forward.x * forward.x + forward.z * forward.z > 0.04f) {
+                float heading = VectorUtil.vecToRot(new Vec3(forward.x, 0, forward.z)).y;
+                cameraAimRotY = cameraAimRotY + Mth.wrapDegrees(heading - cameraAimRotY);
+            }
+            cameraAimRotX = CAMERA_UPWARD_ANGLE;
+            cameraAimRotZ = 0;
+        }
+        Player player = getPlayer();
+        player.setXRot(cameraAimRotX);
+        player.setYRot(cameraAimRotY);
+        if (partUnit instanceof WeaponUnit weaponUnit) {
+            weaponUnit.aim(cameraAimHit(viewType == ViewType.OPERATOR ? 0 : CAMERA_UPWARD_ANGLE));
+        }
+    }
+
+    /** UAV whose OPERATOR view is its camera lens (multirotors); fixed-wing UAVs get a nose cockpit + SCOPE pod. */
+    public boolean lensUav() {
+        return vehicle != null && vehicle.uav && !(vehicle instanceof FixedWingVehicle);
+    }
+
+    /** {@link #lensUav} OPERATOR through a sight: world-stabilised gimbal lens with the scope's zoom, modes, reticle, range. */
+    public boolean lensSight() {
+        return viewType == ViewType.OPERATOR && lensUav() && getWeaponUnit() instanceof WeaponUnit unit
+                && unit.getOpticalSightType() != WeaponUnitData.OpticalSightType.NONE;
+    }
+
+    /** Looking through a sight: SCOPE, or {@link #lensSight}. */
+    public boolean sighted() {
+        return viewType == ViewType.SCOPE || lensSight();
+    }
+
+    /** OPERATOR look relative to the hull; {@link #lensUav} OPERATOR = lens camera, world-frame look like third person. */
+    public boolean cockpitLook() {
+        return viewType == ViewType.OPERATOR && !lensUav();
+    }
+
+    /** Aircraft OPERATOR: head fixed in the airframe, mouse turns it only in free look. */
+    public boolean aircraftCockpit() {
+        return cockpitLook() && (vehicle instanceof FixedWingVehicle || vehicle instanceof RotaryWingVehicle && !vehicle.uav)
+                && fpvFlight() == null;
+    }
+
+    /** {@link #aircraftCockpit} as the pilot: mouse = stick (fixed wing) or attitude command (helicopter) outside free look. */
+    public boolean cockpitPilot() {
+        return aircraftCockpit() && vehicle.controlUnit.getOperator() == getPlayer();
+    }
+
+    /** Client tick: seeds the commands from the airframe on taking the cockpit; stick recentres. */
+    public void tickCockpitPilot() {
+        boolean pilot = cockpitPilot();
+        if (pilot && !wasCockpitPilot) {
+            stickX = 0;
+            stickY = 0;
+            heliPitch = vehicle.getXRot();
+            heliHeading = vehicle.getYRot();
+        }
+        wasCockpitPilot = pilot;
+        stickX *= STICK_RECENTRE;
+        stickY *= STICK_RECENTRE;
+    }
+
     public boolean handlePlayerTurn(double pYRot, double pXRot) {
         if (pYRot == 0 && pXRot == 0) {
             return false;
@@ -426,7 +565,23 @@ public class LocalVehiclePlayer {
         if (pYRot > 0.05 || pXRot > 0.05) {
             playerLerpSteps = 0;
         }
-        if (viewType == ViewType.THIRD_PERSON) {
+        if (viewType != ViewType.SCOPE && fpvFlight() != null) {
+            fpvTurnX += (float) (pXRot * 0.15F);
+            fpvTurnY += (float) (pYRot * 0.15F);
+            return true;
+        }
+        if (cockpitPilot() && !InputHandler.freeCamera) {
+            if (vehicle instanceof FixedWingVehicle) {
+                stickX = Mth.clamp(stickX + (float) pYRot * STICK_GAIN, -1, 1);
+                stickY = Mth.clamp(stickY + (float) pXRot * STICK_GAIN, -1, 1);
+            } else {
+                heliPitch = Mth.clamp(heliPitch + (float) pXRot * 0.15F, -HELI_PITCH, HELI_PITCH);
+                heliHeading = vehicle.getYRot() + Mth.clamp(Mth.wrapDegrees(heliHeading + (float) pYRot * 0.15F - vehicle.getYRot()),
+                        -HELI_HEADING_LEAD, HELI_HEADING_LEAD);
+            }
+            return true;
+        }
+        if (viewType == ViewType.THIRD_PERSON || viewType == ViewType.OPERATOR && !cockpitLook()) {
             if ((player.getXRot() > 85 && pXRot > 0) || (player.getXRot() < -85 && pXRot < 0)) {
                 pYRot += Math.abs(pXRot) * (pYRot > 0 ? 1 : -1);
                 pXRot = 0;
@@ -439,9 +594,16 @@ public class LocalVehiclePlayer {
             }
         }
         AbstractVehicle vehicle = this.vehicle;
-        if (vehicle.getOwnOperatorUnit(getPlayer()) instanceof WeaponUnit weaponUnit) {
+        if (sightUnit() instanceof WeaponUnit weaponUnit) {
             if (viewType == LocalVehiclePlayer.ViewType.SCOPE) {
-                if (!mouseTurnedAfterScope && (Math.abs(pXRot) >= 0.5 || Math.abs(pYRot) >= 0.5)) {
+                if (weaponUnit.spottedBy(player)) {
+                    return true;
+                }
+                if (!mouseTurnedAfterScope) {
+                    scopeTurnX += pXRot;
+                    scopeTurnY += pYRot;
+                }
+                if (!mouseTurnedAfterScope && (Math.abs(scopeTurnX) >= 0.5 || Math.abs(scopeTurnY) >= 0.5)) {
                     weaponUnit.setXAimRot(weaponUnit.getXRot());
                     weaponUnit.setYAimRot(weaponUnit.getYRot());
                     mouseTurnedAfterScope = true;
@@ -485,10 +647,11 @@ public class LocalVehiclePlayer {
                 return true;
             }
         }
-        float fX = (float) (pXRot * 0.15F);
-        float fY = (float) (pYRot * 0.15F);
+        float zoom = lensSight() ? getWeaponUnit().getZoom() : 1;
+        float fX = (float) (pXRot * 0.15F / zoom);
+        float fY = (float) (pYRot * 0.15F / zoom);
         Quaternionf rot;
-        if (viewType == ViewType.OPERATOR) {
+        if (cockpitLook()) {
             playerLocalYRot = Mth.wrapDegrees(playerLocalYRot + fY);
             playerLocalXRot = Mth.wrapDegrees(playerLocalXRot + fX);
             rot = vehicle.rotYXZ();
@@ -582,6 +745,15 @@ public class LocalVehiclePlayer {
                 .rotateZ((float) Math.toRadians(cameraAimRotZ));
     }
 
+    /** Render camera; FPV lens per frame from the led attitude, else the ticked aim slerped. */
+    public Quaternionf frameCameraRotation(float partialTick) {
+        FpvFlight fpv = fpvFlight();
+        if (fpv != null && viewType == ViewType.OPERATOR) {
+            return vehicle.rotYXZ(partialTick).rotateX((float) Math.toRadians(-fpv.cameraTilt()));
+        }
+        return cameraRotationO().slerp(cameraRotation(), partialTick);
+    }
+
     public Quaternionf cameraRotationO() {
         return new Quaternionf()
                 .rotateY((float) Math.toRadians(-cameraAimRotYO))
@@ -591,9 +763,13 @@ public class LocalVehiclePlayer {
 
     public Vec3 cameraPosition(PartUnit<?> operatorUnit, float partialTick) {
         Vec3 position;
-        if (viewType == LocalVehiclePlayer.ViewType.SCOPE && operatorUnit instanceof WeaponUnit weaponUnit) {
+        if (viewType == LocalVehiclePlayer.ViewType.SCOPE && sightUnit() instanceof WeaponUnit weaponUnit) {
             position = weaponUnit.getOpticalSightType() != WeaponUnitData.OpticalSightType.OPERATOR ?
                     weaponUnit.worldOpticalSightPosition(partialTick) : weaponUnit.worldOwnerViewPosition(partialTick);
+        } else if (viewType == LocalVehiclePlayer.ViewType.OPERATOR && lensUav()
+                && operatorUnit instanceof WeaponUnit weaponUnit
+                && weaponUnit.getOpticalSightType() != WeaponUnitData.OpticalSightType.NONE) {
+            position = weaponUnit.worldOpticalSightPosition(partialTick);
         } else if (viewType == LocalVehiclePlayer.ViewType.OPERATOR) {
             position = operatorUnit.worldOwnerViewPosition(partialTick);
         } else if (viewType == LocalVehiclePlayer.ViewType.THIRD_PERSON) {
@@ -619,14 +795,13 @@ public class LocalVehiclePlayer {
     public void checkState() {
         if (onVehicle()) {
             onVehicleTickCount += 1;
-            if (!ThirdPersonRules.allows(vehicle)) {
-                if (viewType == ViewType.THIRD_PERSON) {
-                    switchViewType(ViewType.OPERATOR);
-                }
-                Options options = Minecraft.getInstance().options;
-                if (!options.getCameraType().isFirstPerson()) {
-                    options.setCameraType(CameraType.FIRST_PERSON);
-                }
+            if (!ThirdPersonRules.allows(vehicle) && viewType == ViewType.THIRD_PERSON) {
+                switchViewType(ViewType.OPERATOR);
+            }
+            // Views are viewType's; F5 cycles them (InputHandler).
+            Options options = Minecraft.getInstance().options;
+            if (!options.getCameraType().isFirstPerson()) {
+                options.setCameraType(CameraType.FIRST_PERSON);
             }
         } else {
             viewType = ViewType.THIRD_PERSON;
@@ -634,16 +809,13 @@ public class LocalVehiclePlayer {
         }
         Player player = getPlayer();
         AbstractVehicle vehicle = this.vehicle;
-        WeaponUnit weaponUnit = null;
-        if (vehicle != null && vehicle.getOwnOperatorUnit(player) instanceof WeaponUnit ownWeaponUnit) {
-            weaponUnit = ownWeaponUnit;
-        }
+        WeaponUnit weaponUnit = vehicle != null ? sightUnit() : null;
         boolean ir = false;
         float link = vehicle != null && vehicle.uav ? vehicle.link() : 1.0f;
         if (vehicle != null && vehicle.uav) {
             DroneCamHud.pilot(link, AllKeys.LEAVE_VEHICLE, InputHandler.uavFreeLook);
         }
-        if (viewType == ViewType.SCOPE && weaponUnit != null
+        if (sighted() && weaponUnit != null
                 && weaponUnit.getOpticalSightType() == WeaponUnitData.OpticalSightType.CRT) {
             ir = sightMode == CameraMode.IR && weaponUnit.fitted(sightMode);
             ScreenSensor.set(weaponUnit.fitted(sightMode) ? sightMode : CameraMode.OPTICAL, link);
@@ -702,6 +874,19 @@ public class LocalVehiclePlayer {
             return vehicle.position();
         }
         return getPlayer().position();
+    }
+
+    /** Own weapon, else the sight the own seat spots through ({@code sensor}). */
+    @Nullable
+    public WeaponUnit sightUnit() {
+        PartUnit<?> own = vehicle == null ? null : vehicle.getOwnOperatorUnit(getPlayer());
+        return own instanceof WeaponUnit unit ? unit : own == null ? null : own.sensorUnit();
+    }
+
+    /** Seat looks through another station's {@code sensor}; fires nothing. */
+    public boolean spotting() {
+        PartUnit<?> own = vehicle == null ? null : vehicle.getOwnOperatorUnit(getPlayer());
+        return own != null && !(own instanceof WeaponUnit) && own.sensorUnit() != null;
     }
 
     public WeaponUnit getWeaponUnit() {

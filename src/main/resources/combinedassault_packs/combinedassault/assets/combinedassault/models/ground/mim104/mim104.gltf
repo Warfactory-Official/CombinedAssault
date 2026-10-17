@@ -1859,7 +1859,11 @@
     95,
     96,
     97,
-    98
+    98,
+    113,
+    114,
+    115,
+    116
    ]
   },
   {
@@ -2117,6 +2121,122 @@
     "combinedassault": {
      "name": "landing_leg_r",
      "solid": false
+    }
+   }
+  },
+  {
+   "name": "socket_station_canisters_0",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    6.46,
+    0.0,
+    -0.49,
+    0.5,
+    1.74,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "station",
+    "combinedassaultInterface": "canisters",
+    "combinedassault": {
+     "index": 0
+    }
+   }
+  },
+  {
+   "name": "socket_station_canisters_1",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    6.46,
+    0.0,
+    0.49,
+    0.5,
+    1.74,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "station",
+    "combinedassaultInterface": "canisters",
+    "combinedassault": {
+     "index": 1
+    }
+   }
+  },
+  {
+   "name": "socket_station_canisters_2",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    6.46,
+    0.0,
+    -0.49,
+    1.46,
+    1.74,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "station",
+    "combinedassaultInterface": "canisters",
+    "combinedassault": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "name": "socket_station_canisters_3",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    6.46,
+    0.0,
+    0.49,
+    1.46,
+    1.74,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "station",
+    "combinedassaultInterface": "canisters",
+    "combinedassault": {
+     "index": 3
     }
    }
   }

@@ -19,12 +19,10 @@
             "climb_speed": 0.3,
             "mode": "stabilized",
             "fpv": {
-                "response": 0.35,
+                "pitch_rate": 12.0,
+                "roll_rate": 15.0,
                 "yaw_rate": 8.0,
-                "pitch_bias": 30.0,
-                "bank_per_yaw": 4.0,
-                "max_bank": 55.0,
-                "max_pitch": 80.0
+                "camera_tilt": 20.0
             }
         }
     },
@@ -34,9 +32,14 @@
         "can_tumble": true
     },
     "defense_stats": {
-        "damage_threshold": 1
+        "damage_threshold": 1,
+        "impact_speed_threshold": 6,
+        "impact_multiplier": 50
     },
     "max_health": 20,
+    "storage": {
+        "max_payload": 0.5
+    },
     "view_info": {
         "third_person_center_offset": [
             0,
@@ -50,6 +53,7 @@
         "energy_consumption_per_tick": 1.6667e-05
     },
     "uav": true,
+    "pickup": true,
     "autonomy": {
         "tasks": [
             "moveto",
@@ -76,7 +80,7 @@
                 "x_rot_speed": 9,
                 "y_rot_speed": 9,
                 "x_rot_max": 90,
-                "x_rot_min": -13,
+                "x_rot_min": -35,
                 "y_rot_max": 45,
                 "y_rot_min": -45
             },
@@ -93,8 +97,8 @@
             "detachable": false,
             "attach_offset": [
                 0,
-                -0.2,
-                0.3
+                0.1,
+                0.15
             ]
         }
     ],
@@ -120,6 +124,14 @@
             "payload": {
                 "type": "combinedassault:grenade_rack",
                 "slots": 4
+            },
+            "flight_mode": "stabilized"
+        },
+        {
+            "id": "speaker",
+            "part": "hardpoint",
+            "payload": {
+                "type": "combinedassault:speaker"
             },
             "flight_mode": "stabilized"
         }

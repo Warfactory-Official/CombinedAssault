@@ -28,7 +28,8 @@ import java.util.regex.Pattern;
  */
 public final class ModelDataManager {
 
-    private static final Set<String> HIT_KEYS = Set.of("system", "side", "health", "swept", "skip", "index");
+    private static final Set<String> HIT_KEYS = Set.of("system", "side", "unit", "spin", "health", "swept", "skip",
+            "index");
     /** Frame-only: fill the part's {@code rot_info} ({@link MountDefaults}). */
     private static final Set<String> FRAME_KEYS = Set.of("x_rot_min", "x_rot_max", "y_rot_min", "y_rot_max");
     /** A rotor disc thinner than this is padded to it: a shot must be able to find it. */
@@ -39,7 +40,7 @@ public final class ModelDataManager {
     /** Material token: drawn only, never hit (gen_hulls.py: never collides). */
     private static final Pattern DECOR = Pattern.compile("(?i)(?:^|[_ .])decor(?:$|[_ .])");
     private static final Set<NodeRole> PART_TARGET = EnumSet.of(NodeRole.SEAT, NodeRole.DISMOUNT, NodeRole.VIEW,
-            NodeRole.SIGHT, NodeRole.BOLT);
+            NodeRole.SIGHT, NodeRole.BOLT, NodeRole.EJECT);
 
     private ModelDataManager() {
     }
@@ -204,6 +205,11 @@ public final class ModelDataManager {
             boolean skip = !surface[n] && (marker[n] ? !module : replaced[n])
                     || meta.has("skip") && meta.get("skip").getAsBoolean();
             float health = meta.has("health") ? meta.get("health").getAsFloat() : 0;
+            String spin = meta.has("spin") ? meta.get("spin").getAsString().toLowerCase(java.util.Locale.ROOT) : "";
+            if (!spin.isEmpty() && !spin.equals("cw") && !spin.equals("ccw")) {
+                throw new IllegalArgumentException(source + ": node " + node.name() + ": spin " + spin
+                        + "; expected cw or ccw");
+            }
             Quaternionf rotation = node.rotation();
             Vector3f origin = node.origin();
             // Node frame = rigid part of the world matrix; scale goes into the vertices.
@@ -244,7 +250,8 @@ public final class ModelDataManager {
                 mesh = new TriangleBvh(tris, faceArmour, faceSurface);
             }
             nodes.add(new HitMesh.Node(node.name(), node.parent(), module, rig.nodeFrame()[n], component,
-                    meta.has("side") ? meta.get("side").getAsString() : "", health, rotation, origin, mesh, disc,
+                    meta.has("side") ? meta.get("side").getAsString() : "",
+                    meta.has("unit") ? meta.get("unit").getAsString() : "", spin, health, rotation, origin, mesh, disc,
                     weaponOf.get(n)));
         }
         return new HitMesh(source, List.copyOf(nodes));

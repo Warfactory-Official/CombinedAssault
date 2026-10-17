@@ -25,7 +25,8 @@
         "mass": 1600
     },
     "storage": {
-        "slots": 27
+        "slots": 27,
+        "max_payload": 1000
     },
     "towing": {
         "hitches": [

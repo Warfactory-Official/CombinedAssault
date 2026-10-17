@@ -237,36 +237,6 @@ public class VehicleStorageGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 300)
-    public static void cargoIsWeightlessWithoutUltimateWeight(GameTestHelper helper) {
-        AbstractVehicle vehicle = spawn(helper, 2);
-        if (vehicle == null) {
-            return;
-        }
-        vehicle.setContainerSize(100);
-        for (int slot = 0; slot < 100; slot++) {
-            vehicle.setItem(slot, new ItemStack(Items.ANVIL, 64));
-        }
-        vehicle.curbWeight = 100f;
-        vehicle.refreshMass();
-        float loaded = vehicle.physicsEngine.mass;
-
-        helper.runAfterDelay(5, () -> {
-            if (vehicle.cargoKilograms() != 0) {
-                helper.fail("cargo should weigh nothing without Ultimate Weight, weighs "
-                        + vehicle.cargoKilograms());
-                return;
-            }
-            if (vehicle.physicsEngine.mass != loaded) {
-                helper.fail("mass drifted from " + loaded + " to " + vehicle.physicsEngine.mass
-                        + " with no weight source loaded");
-                return;
-            }
-            vehicle.discard();
-            helper.succeed();
-        });
-    }
-
     private static VehicleStorageMenu menu(GameTestHelper helper, AbstractVehicle vehicle) {
         return new VehicleStorageMenu(1, player(helper).getInventory(), vehicle);
     }

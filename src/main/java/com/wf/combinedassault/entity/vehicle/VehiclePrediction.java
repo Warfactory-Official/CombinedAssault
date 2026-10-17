@@ -70,10 +70,7 @@ public final class VehiclePrediction {
             return ++idle <= IDLE;
         }
         idle = 0;
-        // Synced data (drive state, rotations) written since the last step is the server's, ack-old.
-        if (latest >= 0 && seqs[latest & (HISTORY - 1)] == latest) {
-            vehicle.restoreSnapshot(states[latest & (HISTORY - 1)]);
-        }
+        resync(vehicle);
         reconcile(vehicle);
         vehicle.controlUnit.update(inputs[pending & (HISTORY - 1)]);
         vehicle.predictStep();
@@ -81,6 +78,16 @@ public final class VehiclePrediction {
         latest = pending;
         pending = -1;
         return true;
+    }
+
+    /**
+     * Synced data (drive state, collective, rotations) written since the last step is the server's, ack-old: back to
+     * the latest prediction. Also on arrival: packets apply per frame => HUD read the stale value between ticks.
+     */
+    void resync(AbstractVehicle vehicle) {
+        if (latest >= 0 && seqs[latest & (HISTORY - 1)] == latest) {
+            vehicle.restoreSnapshot(states[latest & (HISTORY - 1)]);
+        }
     }
 
     private void reconcile(AbstractVehicle vehicle) {

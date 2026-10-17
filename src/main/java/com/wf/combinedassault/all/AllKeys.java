@@ -37,7 +37,7 @@ public class AllKeys {
     public static final KeyMapping MAIN_WEAPON_SHOOT = key("main_weapon_shoot", InputConstants.Type.MOUSE, GLFW.GLFW_MOUSE_BUTTON_LEFT);
     public static final KeyMapping SECONDARY_WEAPON_SHOOT = key("secondary_weapon_shoot", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_1);
     public static final KeyMapping SECONDARY_WEAPON_SWITCH = key("secondary_weapon_switch", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_2);
-    public static final KeyMapping MULTI_WEAPON_SWITCH = key("multi_weapon_switch", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F);
+    public static final KeyMapping SWITCH_AMMO = key("switch_ammo", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F);
     public static final KeyMapping MAGNIFICATION_CHANGE = key("magnification_change", InputConstants.Type.MOUSE, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
     public static final KeyMapping FIRE_CONTROL_LOCK = key("fire_control_lock", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R);
     public static final KeyMapping PRESET_COORDINATE_INPUT = key("preset_coordinate_input", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_N);
@@ -62,7 +62,7 @@ public class AllKeys {
     private static final KeyMapping[] ALL_KEYS = {
             FORWARD, BACKWARD, LEFT, RIGHT, UP, DOWN, LEFT_YAW, RIGHT_YAW, FUNCTIONAL_UP, FUNCTIONAL_DOWN, FUNCTIONAL_LEFT, FUNCTIONAL_RIGHT,
             TOGGLE_ENGINE, TOGGLE_LANDING_GEAR, TOGGLE_AIRBRAKE, FLAPS_DOWN, FLAPS_UP, TOGGLE_HOVER_MODE, TOGGLE_RADAR, CYCLE_SIGHT_MODE,
-            MAIN_WEAPON_SHOOT, SECONDARY_WEAPON_SHOOT, SECONDARY_WEAPON_SWITCH, MULTI_WEAPON_SWITCH,
+            MAIN_WEAPON_SHOOT, SECONDARY_WEAPON_SHOOT, SECONDARY_WEAPON_SWITCH, SWITCH_AMMO,
             MAGNIFICATION_CHANGE, FIRE_CONTROL_LOCK, PRESET_COORDINATE_INPUT, DECOY_FLARE_LAUNCH, SMOKE_GRENADE_LAUNCH, TOGGLE_SEEKER, TOGGLE_WEAPON_BAY,
             SWITCH_VIEW, SWITCH_SCOPE, FREE_CAMERA, OPEN_INVENTORY, LEAVE_VEHICLE, INSPECT_VEHICLE, OPEN_PARACHUTE,
             CHANGE_SEAT, TOGGLE_AEROBATIC_SMOKE,

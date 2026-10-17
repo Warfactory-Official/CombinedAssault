@@ -11,6 +11,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.component.HullComponents;
 import com.wf.combinedassault.custom.CommonAssetsManager;
 import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
@@ -23,7 +24,7 @@ import com.wf.combinedassault.vehicle.part.VariableSweepUnit;
 import java.util.Locale;
 import java.util.Optional;
 
-/** Harrier VTOL, Tornado sweep, C-5 ramp: the parts that turn a structure bone from vehicle state. */
+/** Harrier VTOL, Osprey tiltrotor, Tornado sweep, C-5 ramp: the parts that turn a structure bone from vehicle state. */
 @GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class AircraftPartsGameTest {
@@ -55,6 +56,59 @@ public class AircraftPartsGameTest {
             release(helper, 0, down);
             release(helper, 1, aft);
             if (held < -1 || fell > -3) {
+                helper.fail(report);
+            }
+        }).thenSucceed();
+    }
+
+    /** Nacelles up at full power: holds height. Nacelles forward, same power, from rest: falls. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    public static void anOspreyHoversOnItsProprotors(GameTestHelper helper) {
+        FixedWingVehicle up = plane(helper, "mv22", 4);
+        FixedWingVehicle forward = up == null ? null : plane(helper, "mv22", 5);
+        if (forward == null) {
+            return;
+        }
+        up.thrustUnit.setXAimRot(-90);
+        up.thrustUnit.setXRot(-90);
+        double[] start = {up.getY(), forward.getY()};
+        helper.startSequence().thenExecuteFor(80, () -> {
+            up.setThrottleLevel(100);
+            forward.setThrottleLevel(100);
+        }).thenExecute(() -> {
+            double held = up.getY() - start[0], fell = forward.getY() - start[1];
+            String report = String.format(Locale.ROOT, "[tiltrotor] nacelles up dy %.2f, forward dy %.2f", held, fell);
+            CombinedAssault.LOGGER.info(report);
+            release(helper, 4, up);
+            release(helper, 5, forward);
+            if (held < -1 || fell > -3) {
+                helper.fail(report);
+            }
+        }).thenSucceed();
+    }
+
+    /** Proprotor carries the thrust: one broken => no hover at full power. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    public static void aBrokenProprotorDropsTheOsprey(GameTestHelper helper) {
+        FixedWingVehicle osprey = plane(helper, "mv22", 6);
+        if (osprey == null) {
+            return;
+        }
+        HullComponents systems = osprey.hullComponents();
+        int left = systems.indexOf("rotor L");
+        boolean right = systems.indexOf("rotor R") >= 0;
+        if (left >= 0) {
+            systems.setHealth(left, 0);
+        }
+        osprey.thrustUnit.setXAimRot(-90);
+        osprey.thrustUnit.setXRot(-90);
+        double start = osprey.getY();
+        helper.startSequence().thenExecuteFor(80, () -> osprey.setThrottleLevel(100)).thenExecute(() -> {
+            double fell = osprey.getY() - start;
+            String report = String.format(Locale.ROOT, "[tiltrotor] rotor L %d, R %s, dy %.2f", left, right, fell);
+            CombinedAssault.LOGGER.info(report);
+            release(helper, 6, osprey);
+            if (left < 0 || !right || fell > -3) {
                 helper.fail(report);
             }
         }).thenSucceed();

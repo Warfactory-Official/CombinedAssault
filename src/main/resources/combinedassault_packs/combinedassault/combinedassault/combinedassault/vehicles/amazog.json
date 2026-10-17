@@ -1,0 +1,178 @@
+{
+    "type": "combinedassault:rotary_wing_vehicle",
+    "attributes": {
+        "main_rotor_force": 216,
+        "x_rot_speed_acceleration": 2.0,
+        "x_rot_speed_max": 4.0,
+        "y_rot_speed_acceleration": 2.0,
+        "y_rot_speed_max": 4.0,
+        "z_rot_speed_acceleration": 2.0,
+        "z_rot_speed_max": 4.0,
+        "max_air_speed": 1.2,
+        "multirotor": {
+            "thrust": 450,
+            "max_tilt": 22,
+            "tilt_rate": 5,
+            "linear_drag": 0.012,
+            "quadratic_drag": 0.03,
+            "max_speed": 0.45,
+            "climb_speed": 0.18,
+            "mode": "stabilized",
+            "fpv": {
+                "pitch_rate": 6.0,
+                "roll_rate": 7.0,
+                "yaw_rate": 4.0,
+                "camera_tilt": 10.0
+            },
+            "yaw_rate": 4.0,
+            "yaw_response": 0.2
+        }
+    },
+    "physics_info": {
+        "mass": 12.0,
+        "friction": 16,
+        "can_tumble": true
+    },
+    "defense_stats": {
+        "damage_threshold": 1,
+        "impact_speed_threshold": 6,
+        "impact_multiplier": 50
+    },
+    "max_health": 40,
+    "storage": {
+        "max_payload": 25.0
+    },
+    "view_info": {
+        "third_person_center_offset": [
+            0,
+            3,
+            0
+        ],
+        "third_person_distance": 10
+    },
+    "energy_info": {
+        "energy_capacity": 2.0,
+        "energy_consumption_per_tick": 6.6667e-05
+    },
+    "uav": true,
+    "pickup": true,
+    "autonomy": {
+        "tasks": [
+            "moveto",
+            "loiter",
+            "strike",
+            "exfil"
+        ],
+        "cruise_speed": 0.4,
+        "release_speed": 0.4,
+        "cruise_altitude": 20
+    },
+    "parts": [
+        {
+            "id": "sighting_system",
+            "name": "sighting_system",
+            "type": "combinedassault:weapon",
+            "seat_offset": [
+                0,
+                2.5,
+                0.8
+            ],
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 9,
+                "y_rot_speed": 9,
+                "x_rot_max": 90,
+                "x_rot_min": -35,
+                "y_rot_max": 45,
+                "y_rot_min": -45
+            },
+            "optical_sight_type": "crt",
+            "with_ir": true,
+            "zoom_max": 8,
+            "weapons": []
+        },
+        {
+            "id": "hardpoint",
+            "name": "part.combinedassault.hardpoint",
+            "type": "combinedassault:payload",
+            "is_seat": false,
+            "detachable": false,
+            "attach_offset": [
+                0,
+                0.15,
+                0
+            ]
+        }
+    ],
+    "loadouts": [
+        {
+            "id": "plain",
+            "flight_mode": "stabilized"
+        },
+        {
+            "id": "kamikaze",
+            "part": "hardpoint",
+            "payload": {
+                "type": "combinedassault:warhead",
+                "arming_ticks": 40,
+                "fuze_speed": 0.12,
+                "hit_damage": 30
+            },
+            "flight_mode": "fpv"
+        },
+        {
+            "id": "bomber",
+            "part": "hardpoint",
+            "payload": {
+                "type": "combinedassault:grenade_rack",
+                "slots": 4
+            },
+            "flight_mode": "stabilized"
+        },
+        {
+            "id": "speaker",
+            "part": "hardpoint",
+            "payload": {
+                "type": "combinedassault:speaker"
+            },
+            "flight_mode": "stabilized"
+        }
+    ],
+    "model": "combinedassault:models/aircraft/amazog/amazog.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/quadcopter.png",
+        "controller": "combinedassault:amazog_controller",
+        "engine": {
+            "loops": [
+                {
+                    "sound": {
+                        "event": "combinedassault:quadcopter_engine_run",
+                        "range": 64
+                    },
+                    "input": "power",
+                    "volume": [
+                        [
+                            0.2,
+                            0
+                        ],
+                        [
+                            0.5,
+                            1
+                        ]
+                    ],
+                    "pitch": [
+                        [
+                            0.5,
+                            0.8
+                        ],
+                        [
+                            1,
+                            1
+                        ]
+                    ]
+                }
+            ]
+        },
+        "tab_index": 601
+    }
+}

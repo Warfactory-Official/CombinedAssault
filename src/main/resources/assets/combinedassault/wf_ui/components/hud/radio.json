@@ -1,0 +1,6 @@
+{
+  "use": ["combinedassault:hud"],
+  "root": {"type": "place", "x": "floor(ui.width / 2) - 160", "y": "floor(ui.height / 2) + floor(ui.height / 5) - 12",
+    "child": {"type": "text", "text": "{tr:ui.vehicle_radio(vehicle.radio_station, vehicle.radio_key)}",
+      "color": "$green", "shadow": true}}
+}

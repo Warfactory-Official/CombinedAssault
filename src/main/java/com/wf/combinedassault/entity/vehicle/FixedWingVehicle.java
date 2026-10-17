@@ -5,6 +5,7 @@ import com.wf.wflib.audio.AudioCategory;
 import com.wf.wflib.audio.EngineSound;
 import com.wf.combinedassault.audio.VehicleSounds;
 import com.wf.combinedassault.audio.HullLoop;
+import com.wf.combinedassault.ballistics.component.VehicleRotors;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -228,7 +229,7 @@ public class FixedWingVehicle extends AbstractVehicle
     @Override
     protected void tickEnergy() {
         float energy = getEnergy();
-        energy = org.joml.Math.max(0, energy - energyInfo.energyConsumptionPerTick * getPower() / 100 * getThrottleLevel() / 100);
+        energy = org.joml.Math.max(0, energy - burnPerTick() * getPower() / 100 * getThrottleLevel() / 100);
         setEnergy(energy);
     }
 
@@ -317,32 +318,45 @@ public class FixedWingVehicle extends AbstractVehicle
             controlUnit.xRot = 0;
             controlUnit.yRot = getYRot();
         }
-        Vec3 aimVec = VectorUtil.rotToVec(controlUnit.xRotKeep ? getXRot() : controlUnit.xRot, controlUnit.yRotKeep ? getYRot() : controlUnit.yRot);
-        if (!(controlUnit.up || controlUnit.down)) {
-            double xDiff = aimVec.dot(upDirection);
-            xRotInput = (float) (Math.signum(-xDiff) * Math.min(1, Math.abs(xDiff) * xRotInputStep * 40));
-        }
-        if (!(controlUnit.leftYaw || controlUnit.rightYaw)) {
-            double yDiff = aimVec.dot(leftDirection);
-            yRotInput = (float) (Math.signum(yDiff) * Math.min(1, Math.abs(yDiff) * yRotInputStep * 40));
-        }
-        if (!(controlUnit.left || controlUnit.right)) {
-            float yRotDiff = VectorUtil.vecToRot(forwardDirection).y - controlUnit.yRot;
-            double yDiff = aimVec.dot(leftDirection);
-            float zRot = getZRot();
-            if (Math.abs(yRotDiff) > 5) {
-                if (Math.abs(yDiff) <= 0.05) {
-                    zRotInput = zRotInput / 4;
+        if (controlUnit.stick) {
+            // Cockpit stick: pitch/roll straight from the mouse; yaw keys only, else weathercock.
+            if (!(controlUnit.up || controlUnit.down)) {
+                xRotInput = controlUnit.stickY;
+            }
+            if (!(controlUnit.left || controlUnit.right)) {
+                zRotInput = controlUnit.stickX;
+            }
+            if (!(controlUnit.leftYaw || controlUnit.rightYaw)) {
+                yRotInput = 0;
+            }
+        } else {
+            Vec3 aimVec = VectorUtil.rotToVec(controlUnit.xRotKeep ? getXRot() : controlUnit.xRot, controlUnit.yRotKeep ? getYRot() : controlUnit.yRot);
+            if (!(controlUnit.up || controlUnit.down)) {
+                double xDiff = aimVec.dot(upDirection);
+                xRotInput = (float) (Math.signum(-xDiff) * Math.min(1, Math.abs(xDiff) * xRotInputStep * 40));
+            }
+            if (!(controlUnit.leftYaw || controlUnit.rightYaw)) {
+                double yDiff = aimVec.dot(leftDirection);
+                yRotInput = (float) (Math.signum(yDiff) * Math.min(1, Math.abs(yDiff) * yRotInputStep * 40));
+            }
+            if (!(controlUnit.left || controlUnit.right)) {
+                float yRotDiff = VectorUtil.vecToRot(forwardDirection).y - controlUnit.yRot;
+                double yDiff = aimVec.dot(leftDirection);
+                float zRot = getZRot();
+                if (Math.abs(yRotDiff) > 5) {
+                    if (Math.abs(yDiff) <= 0.05) {
+                        zRotInput = zRotInput / 4;
+                    } else {
+                        zRotInput = (float) (Math.signum(-yDiff) * Math.min(1, Math.abs(yDiff) * zRotInputStep * 4));
+                    }
                 } else {
-                    zRotInput = (float) (Math.signum(-yDiff) * Math.min(1, Math.abs(yDiff) * zRotInputStep * 4));
-                }
-            } else {
-                float toZRotInput = -Math.signum(zRot) * Math.min(1, Math.abs(zRot) / 128);
-                float zRotInputDiff = toZRotInput - zRotInput;
-                if (Math.abs(zRotInputDiff) < zRotInputStep) {
-                    zRotInput = toZRotInput;
-                } else {
-                    zRotInput += Math.signum(zRotInputDiff) * zRotInputStep;
+                    float toZRotInput = -Math.signum(zRot) * Math.min(1, Math.abs(zRot) / 128);
+                    float zRotInputDiff = toZRotInput - zRotInput;
+                    if (Math.abs(zRotInputDiff) < zRotInputStep) {
+                        zRotInput = toZRotInput;
+                    } else {
+                        zRotInput += Math.signum(zRotInputDiff) * zRotInputStep;
+                    }
                 }
             }
         }
@@ -363,8 +377,9 @@ public class FixedWingVehicle extends AbstractVehicle
                 airSpeed = airSpeed.normalize().scale(Math.max(0, al - 0.0001));
             }
         }
-        float power = throttleLevel / 100 * getPower() / 100;
-        float thrust = this.thrust * power;
+        float power = (float) (throttleLevel / 100 * getPower() / 100 * strain());
+        // Props / proprotors (rotor systems) carry the thrust.
+        float thrust = this.thrust * power * VehicleRotors.of(this).lift();
         double a = PhysicsHelper.accelerationPerTick(thrust, mass);
         Vec3 thrustDirection = onGround ? new Vec3(forwardDirection.x, 0, forwardDirection.z).normalize() : forwardDirection;
         if (thrustUnit != null) {
@@ -415,13 +430,15 @@ public class FixedWingVehicle extends AbstractVehicle
         double ke = scaleAir * al * turnRateBySpeed;
         double rcs = thrustUnit == null ? 0
                 : vtolTurnRate * power * Math.abs(Math.sin(Math.toRadians(thrustUnit.getXRot())));
+        // Commanded rates are unladen: cargo inertia divides them.
+        double inertia = 1 / load();
         if (zRotInput != 0) {
             double d = Math.max(Math.min(zTurnRate, ke * zTurnRate), rcs * zTurnRate);
-            q.rotateZ((float) Math.toRadians(zRotInput * d));
+            q.rotateZ((float) Math.toRadians(zRotInput * d * inertia));
         }
         if (xRotInput != 0) {
             double d = Math.max(Math.min(xTurnRate, ke * xTurnRate), rcs * xTurnRate);
-            q.rotateX((float) Math.toRadians(xRotInput * d));
+            q.rotateX((float) Math.toRadians(xRotInput * d * inertia));
         }
         if (yRotInput != 0) {
             double d0 = Math.min(yTurnRate, ke * yTurnRate);
@@ -432,7 +449,7 @@ public class FixedWingVehicle extends AbstractVehicle
             if (thrustUnit != null) {
                 r1 += yRotInput * yTurnRate / 2f * power * Math.abs(thrustUnit.worldRot().x - getXRot()) / 90;
             }
-            q.rotateY((float) Math.toRadians(r1));
+            q.rotateY((float) Math.toRadians(r1 * inertia));
         } else {
             // No yaw input: weathercocks back toward the airspeed heading.
             double d = VectorUtil.angleBetween(airSpeed, leftDirection) - Math.PI / 2;

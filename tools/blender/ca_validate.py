@@ -18,7 +18,7 @@ import sys
 SYSTEMS = ["hull", "engine", "track", "wheel", "turret", "barrel", "fuel", "ammo", "optics", "rotor",
            "tail_rotor", "wing"]
 # NodeRole SOCKET kind.
-SOCKET_FIELDS = ["seat", "dismount", "view", "sight", "bolt", "era", "slat", "mount_point", "hitch", "towable",
+SOCKET_FIELDS = ["seat", "dismount", "view", "sight", "bolt", "eject", "era", "slat", "mount_point", "hitch", "towable",
                  "axle", "exhaust", "vortex", "smoke", "afterburner", "camera", "camera_zoomed", "light", "cargo_bay",
                  "center_of_mass", "pivot", "track", "propeller"]
 # Socket fields with no interface (MountDefaults `none`).

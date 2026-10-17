@@ -5,13 +5,21 @@ import com.wf.combinedassault.custom.CommonAssetsManager;
 import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.indirect.IndirectFireSpec;
+import com.wf.combinedassault.vehicle.part.AccessActions;
 import com.wf.combinedassault.vehicle.part.MissileHolderUnit;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.part.WeaponBayUnit;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
 import com.wf.combinedassault.vehicle.pojo.AimContext;
 import com.wf.combinedassault.vehicle.pojo.MissileSize;
-import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
 import com.wf.combinedassault.vehicle.weapon.VehicleMissile;
+import com.wf.combinedassault.vehicle.pojo.Station;
 import com.wf.wflib.MissileEntity;
+import com.wf.wflib.magazine.MagazineItems;
+import com.wf.wflib.magazine.PodItem;
+import com.wf.wflib.magazine.PodTubes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.GameType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
@@ -22,7 +30,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -31,11 +38,12 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
-/** M142: six GMLRS cells on the elevating pod, mixed-pod round selection, indirect fire on artillery only. */
+/** M142: six GMLRS cells on the elevating pod, mixed-pod round selection, indirect fire on artillery only; M1129 hatches. */
 @GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class HimarsGameTest {
@@ -45,6 +53,7 @@ public class HimarsGameTest {
     private static final Item GMLRS = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("wflib", "missile_gmlrs"));
     private static final Item GMLRS_AW =
             BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("wflib", "missile_gmlrs_aw"));
+    private static final Item ATACMS = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("wflib", "missile_atacms"));
     private static final Item CRUISE = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("wflib", "missile_cruise"));
 
     @GameTest(template = TEMPLATE, timeoutTicks = 40)
@@ -62,7 +71,7 @@ public class HimarsGameTest {
             }
             List<String> stations = new ArrayList<>();
             for (int i = 0; i < pod.getCapacity(); i++) {
-                VehicleCubeOBB station = pod.station(i);
+                MissileHolderUnit.StationPose station = pod.station(i);
                 if (station == null) {
                     stations.add(i + ": none");
                 } else if (forward(station).z < 0.99) {
@@ -84,6 +93,48 @@ public class HimarsGameTest {
         });
     }
 
+    /** GMLRS pod tubes = the model's six stations; a dry pod swaps for a stored ATACMS pod, one tube at their centre. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 40)
+    public static void aDryPodSwapsForAStoredAtacmsPodAndAPodSeatsByHand(GameTestHelper helper) {
+        AbstractVehicle vehicle = spawn(helper, M142);
+        MissileHolderUnit pod = vehicle == null ? null : pod(helper, vehicle);
+        WeaponUnit launcher = vehicle == null ? null : launcher(helper, vehicle);
+        if (pod == null || launcher == null) {
+            return;
+        }
+        helper.startSequence().thenIdle(2).thenExecute(() -> {
+            List<Station> stations = pod.getData().getStations();
+            Vec3 centre = Vec3.ZERO;
+            for (int i = 0; i < 6; i++) {
+                Vec3 tube = pod.stationInModel(i, 1).offset();
+                centre = centre.add(tube.scale(1 / 6.0));
+                for (int j = 0; j < i; j++) {
+                    double want = stations.get(i).offset.distanceTo(stations.get(j).offset);
+                    double got = tube.distanceTo(pod.stationInModel(j, 1).offset());
+                    helper.assertTrue(Math.abs(want - got) < 1e-3, "tubes " + i + "," + j + " " + got + " apart, stations "
+                            + want);
+                }
+            }
+            ItemStack atacms = new ItemStack(MagazineItems.POD_ATACMS.get());
+            atacms.set(MagazineItems.POD_TUBES.get(), new PodTubes(List.of(new ItemStack(ATACMS))));
+            vehicle.getItemStacks().set(0, atacms);
+            ((VehicleMissile) launcher.currentWeapon()).reload();
+            helper.assertTrue(pod.getCapacity() == 1 && pod.round(0).is(ATACMS), "ATACMS pod seated");
+            helper.assertTrue(pod.stationInModel(0, 1).offset().distanceTo(centre) < 1e-3, "one tube, centred");
+            helper.assertTrue(vehicle.getItemStacks().get(0).is(MagazineItems.POD_GMLRS.get()), "empty GMLRS pod stored");
+            helper.assertFalse(MissileHolderUnit.tryLoad(vehicle, new ItemStack(GMLRS)), "GMLRS in an ATACMS tube");
+
+            Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+            ItemStack gmlrs = new ItemStack(MagazineItems.POD_GMLRS.get());
+            gmlrs.set(MagazineItems.POD_TUBES.get(), new PodTubes(Collections.nCopies(6, new ItemStack(GMLRS_AW))));
+            helper.assertTrue(MissileHolderUnit.trySeatPod(vehicle, player, gmlrs) && gmlrs.isEmpty(), "seated by hand");
+            helper.assertTrue(pod.getCapacity() == 6 && pod.count(GMLRS_AW) == 6, "six AW racked");
+            helper.assertTrue(player.getInventory().items.stream().anyMatch(s -> s.is(MagazineItems.POD_ATACMS.get())
+                    && PodItem.contents(s).loaded() == 1), "ATACMS pod handed back loaded");
+            vehicle.discard();
+        }).thenSucceed();
+    }
+
     /** The pod frame rides the launcher's pitch frame: elevating the launcher tilts every station. */
     @GameTest(template = TEMPLATE, timeoutTicks = 200)
     public static void thePodElevatesWithTheLauncher(GameTestHelper helper) {
@@ -97,7 +148,7 @@ public class HimarsGameTest {
         // Wait on the lay, not a tick count: a busy suite starts the entity ticking late.
         helper.startSequence().thenWaitUntil(() -> helper.assertTrue(Math.abs(-launcher.getXRot() - 50) <= 0.5,
                 "the launcher laid to " + -launcher.getXRot() + " degrees, not 50")).thenExecute(() -> {
-            VehicleCubeOBB station = pod.station(0);
+            MissileHolderUnit.StationPose station = pod.station(0);
             Vector3f nose = station == null ? new Vector3f() : forward(station);
             // World elevation: the 3x3 arena tips the hull, the pod must tip with it.
             float world = -launcher.worldRot().x;
@@ -108,6 +159,63 @@ public class HimarsGameTest {
                 helper.succeed();
             }
         });
+    }
+
+    /** A round leaves along its tube: level pod => flat flight, laid pod => climbs at the lay, not vertical. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 300)
+    public static void aRocketLeavesAlongItsTube(GameTestHelper helper) {
+        AbstractVehicle vehicle = spawn(helper, M142);
+        MissileHolderUnit pod = vehicle == null ? null : pod(helper, vehicle);
+        WeaponUnit launcher = vehicle == null ? null : launcher(helper, vehicle);
+        if (pod == null || launcher == null) {
+            return;
+        }
+        List<String> wrong = new ArrayList<>();
+        var sequence = helper.startSequence();
+        for (float lay : new float[] {0, 30}) {
+            MissileEntity[] flying = new MissileEntity[1];
+            List<Long> path = new ArrayList<>();
+            float[] tube = new float[1];
+            sequence.thenExecute(() -> launcher.setXAimRot(-lay))
+                    .thenWaitUntil(() -> helper.assertTrue(Math.abs(-launcher.getXRot() - lay) <= 0.5,
+                            "laid to " + -launcher.getXRot()))
+                    .thenExecute(() -> {
+                        seed(helper, pod, GMLRS);
+                        VehicleMissile missile = missile(launcher);
+                        missile.endCooldown();
+                        missile.tick();
+                        Vector3f nose = pod.station(0).forward();
+                        tube[0] = (float) Math.toDegrees(Math.asin(nose.y));
+                        AimContext aim = new AimContext();
+                        aim.position = vehicle.position().add(new Vec3(nose.x, 0, nose.z).normalize().scale(300));
+                        List<MissileEntity> before = flying(helper, vehicle);
+                        missile.shoot(new ArrayList<>(List.of(aim)), null);
+                        flying[0] = flying(helper, vehicle).stream().filter(m -> !before.contains(m)).findFirst()
+                                .orElseThrow(() -> new IllegalStateException("laid " + lay + " fired nothing"));
+                    })
+                    .thenExecuteFor(4, () -> {
+                        Vec3 v = flying[0].getDeltaMovement();
+                        path.add(Math.round(Math.toDegrees(Math.atan2(v.y, v.horizontalDistance()))));
+                    })
+                    .thenExecute(() -> {
+                        flying[0].discard();
+                        if (path.stream().anyMatch(e -> Math.abs(e - tube[0]) > 15)) {
+                            wrong.add(String.format(Locale.ROOT, "tube at %.0f deg flew %s", tube[0], path));
+                        }
+                    });
+        }
+        sequence.thenExecute(() -> {
+            vehicle.discard();
+            if (wrong.isEmpty()) {
+                helper.succeed();
+            } else {
+                helper.fail(String.join("; ", wrong));
+            }
+        });
+    }
+
+    private static List<MissileEntity> flying(GameTestHelper helper, AbstractVehicle vehicle) {
+        return helper.getLevel().getEntitiesOfClass(MissileEntity.class, vehicle.getBoundingBox().inflate(32));
     }
 
     /** Mixed pod: the selected kind leaves, the others stay; a kind no longer loaded fires nothing. */
@@ -124,13 +232,13 @@ public class HimarsGameTest {
         String[] second = new String[1];
         helper.startSequence().thenIdle(2).thenExecute(() -> {
             VehicleMissile missile = missile(launcher);
-            missile.setSelectedRound(GMLRS_AW);
+            missile.selectRound(GMLRS_AW.getDefaultInstance());
             missile.tick();
             seen[0] = fire(helper, vehicle, missile) == 1 && pod.round(2).isEmpty() && pod.count(GMLRS) == 2;
         }).thenIdle(40).thenExecute(() -> {
             VehicleMissile missile = missile(launcher);
             missile.endCooldown();
-            missile.setSelectedRound(Items.AIR);
+            missile.selectRound(ItemStack.EMPTY);
             missile.tick();
             int fired = fire(helper, vehicle, missile);
             seen[1] = fired == 1 && pod.round(0).isEmpty() && !pod.round(1).isEmpty();
@@ -138,7 +246,7 @@ public class HimarsGameTest {
         }).thenIdle(40).thenExecute(() -> {
             VehicleMissile missile = missile(launcher);
             missile.endCooldown();
-            missile.setSelectedRound(GMLRS_AW);
+            missile.selectRound(GMLRS_AW.getDefaultInstance());
             missile.tick();
             seen[2] = fire(helper, vehicle, missile) == 0 && pod.count(GMLRS) == 1;
             vehicle.discard();
@@ -181,6 +289,28 @@ public class HimarsGameTest {
         }
     }
 
+    @GameTest(template = TEMPLATE, timeoutTicks = 40)
+    public static void theMortarHatchesOpenWithTheEngineOff(GameTestHelper helper) {
+        AbstractVehicle vehicle = spawn(helper, CombinedAssault.modLocation("m1129"));
+        if (vehicle == null) {
+            return;
+        }
+        helper.startSequence().thenIdle(2).thenExecute(() -> {
+            WeaponUnit mortar = (WeaponUnit) part(vehicle, "mortar");
+            WeaponBayUnit hatches = (WeaponBayUnit) part(vehicle, "hatches");
+            helper.assertFalse(vehicle.hasPower(), "spawned with power");
+            mortar.shoot(0, aim(vehicle), null);
+            helper.assertTrue(hatches.isOn(), "first shot left the hatches shut");
+            helper.assertTrue(AccessActions.isDoor(part(vehicle, "ramp")), "ramp is not a door");
+            helper.assertTrue(AccessActions.isDoor(hatches), "hatches have no access node");
+            vehicle.discard();
+        }).thenSucceed();
+    }
+
+    private static PartUnit<?> part(AbstractVehicle vehicle, String id) {
+        return vehicle.getPartUnits().stream().filter(p -> p.getId().equals(id)).findFirst().orElseThrow();
+    }
+
     private static void expect(GameTestHelper helper, List<String> wrong, String id, @Nullable String station,
                                boolean indirect, boolean map) {
         AbstractVehicle vehicle = spawn(helper, CombinedAssault.modLocation(id));
@@ -201,8 +331,8 @@ public class HimarsGameTest {
         vehicle.discard();
     }
 
-    private static Vector3f forward(VehicleCubeOBB station) {
-        return station.rotation.transform(new Vector3f(0, 0, 1));
+    private static Vector3f forward(MissileHolderUnit.StationPose station) {
+        return station.forward();
     }
 
     private static List<AimContext> aim(AbstractVehicle vehicle) {

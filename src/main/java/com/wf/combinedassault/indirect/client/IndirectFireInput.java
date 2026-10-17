@@ -45,10 +45,6 @@ public final class IndirectFireInput {
         int key = event.getKey();
         int scan = event.getScanCode();
 
-        if (action == GLFW.GLFW_PRESS && matches(IndirectFireKeys.CYCLE_ROUND, key, scan)) {
-            FireMissions.cycleRound(unit);
-            return;
-        }
         if (action == GLFW.GLFW_PRESS && matches(IndirectFireKeys.TOGGLE_INDIRECT, key, scan)) {
             cycleMode(player, unit, laying);
             return;

@@ -4,6 +4,9 @@
     python3 tools/def_sockets.py move [vehicle ...]     sockets written; defs untouched
     (load the game: VehicleDataManager logs "def repeats its glTF sockets, delete: [...]")
     python3 tools/def_sockets.py prune <log>            deletes exactly those keys (byte-preserving)
+    python3 tools/def_sockets.py stations [vehicle ...] holder cubes (collider i of the holder frame) -> station sockets:
+                                                        origin = box centre, Z scale = box depth; def capacity dropped.
+                                                        Box = cell mouth, not round envelope (m142, mim104) => move by hand
 
 Model shared by several defs: a value moves only if every def has it equal. A socket the model already has for that
 field + target + index: left alone (def value is an override).
@@ -240,6 +243,57 @@ def cmd_move(args):
         print("%s (%s): %d sockets; %s" % (rl, ", ".join(v for v, _ in users), model.added, ", ".join(log) or "-"))
 
 
+def positions(gltf, mesh):
+    out = []
+    for prim in gltf.doc["meshes"][mesh]["primitives"]:
+        acc = gltf.doc["accessors"][prim["attributes"]["POSITION"]]
+        view = gltf.doc["bufferViews"][acc["bufferView"]]
+        start = view.get("byteOffset", 0) + acc.get("byteOffset", 0)
+        stride = view.get("byteStride", 12)
+        buf = gltf.buffers[view["buffer"]]
+        for k in range(acc["count"]):
+            out.append(np.frombuffer(bytes(buf[start + k * stride:start + k * stride + 12]), dtype="<f4"))
+    return np.array(out, dtype=float)
+
+
+def cmd_stations(args):
+    for vid, path in defs().items():
+        if args.vehicles and vid.split(":")[1] not in args.vehicles:
+            continue
+        text = open(path).read()
+        d = json.loads(text)
+        model = None
+        for part in d.get("parts", []):
+            if part.get("type") != "combinedassault:missile_holder":
+                continue
+            model = model or Model(d["model"])
+            pid = part["id"]
+            frame = model.frames.get(("part", pid))
+            if frame is None or model.has("station", pid, 0):
+                print("%s %s: %s" % (vid, pid, "no frame" if frame is None else "has stations"))
+                continue
+            at = rigid(model.gltf.world(frame))
+            to_frame = np.linalg.inv(at)
+            boxes = []
+            for c in model.gltf.nodes[frame].get("children", []):
+                n = model.gltf.nodes[c]
+                if n.get("extras", {}).get(convert_pack.ROLE) != "collider" or "mesh" not in n:
+                    continue
+                p = positions(model.gltf, n["mesh"])
+                local = (to_frame @ model.gltf.world(c) @ np.c_[p, np.ones(len(p))].T)[:3].T
+                boxes.append((local.min(0), local.max(0)))
+            capacity = part.get("capacity", len(boxes))
+            for k, (lo, hi) in enumerate(boxes[:capacity]):
+                model.socket("station", pid, at @ translation((lo + hi) / 2) @ scale(1, 1, hi[2] - lo[2]), frame, index=k)
+            if capacity == min(capacity, len(boxes)) and "capacity" in part:
+                text = jsonedit.remove(text, ["parts", {"id": pid}, "capacity"])
+            print("%s %s: %d stations" % (vid, pid, min(capacity, len(boxes))))
+        if model is not None and model.added:
+            model.gltf.save(model.path, lambda r, data: open(asset(r), "wb").write(data))
+            json.loads(text)
+            open(path, "w").write(text)
+
+
 def json_path(d, label):
     """Loader label (MountDefaults put/flushLists/resolve) -> jsonedit path."""
     head, _, rest = label.partition(".")
@@ -290,8 +344,10 @@ def main():
     m.add_argument("vehicles", nargs="*")
     p = sub.add_parser("prune")
     p.add_argument("log")
+    st = sub.add_parser("stations")
+    st.add_argument("vehicles", nargs="*")
     args = ap.parse_args()
-    {"move": cmd_move, "prune": cmd_prune}[args.cmd](args)
+    {"move": cmd_move, "prune": cmd_prune, "stations": cmd_stations}[args.cmd](args)
 
 
 if __name__ == "__main__":

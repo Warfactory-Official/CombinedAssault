@@ -4,11 +4,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -24,6 +24,7 @@ import com.wf.combinedassault.client.render.item.VehicleSpawnItemRenderer;
 import com.wf.combinedassault.custom.CommonAssetsManager;
 import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
 import com.wf.combinedassault.custom.vehicle.ShipVehicleData;
+import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.naval.ShipPlacement;
 
 import java.util.Locale;
@@ -33,6 +34,8 @@ import java.util.function.Consumer;
 import static com.wf.combinedassault.api.entity.ICustomVehicle.TAG_VEHICLE_ID;
 
 public class VehicleSpawnItem extends Item {
+    /** Picked-up vehicle's save data ({@code AbstractVehicle#addAdditionalSaveData}); applied on placement. */
+    public static final String TAG_STATE = "VehicleState";
 
     public VehicleSpawnItem(Properties pProperties) {
         super(pProperties);
@@ -119,8 +122,12 @@ public class VehicleSpawnItem extends Item {
         return true;
     }
 
-    private static boolean place(Level level, BaseVehicleData<?> vehicleData, Vec3 position, float yaw, ItemStack itemStack) {
-        Entity vehicle = vehicleData.construct(level, position, 0, yaw);
+    public static boolean place(Level level, BaseVehicleData<?> vehicleData, Vec3 position, float yaw, ItemStack itemStack) {
+        AbstractVehicle vehicle = vehicleData.construct(level, position, 0, yaw);
+        CompoundTag tag = itemStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        if (tag.contains(TAG_STATE, Tag.TAG_COMPOUND)) {
+            vehicle.readAdditionalSaveData(tag.getCompound(TAG_STATE));
+        }
         if (!level.addFreshEntity(vehicle)) {
             return false;
         }

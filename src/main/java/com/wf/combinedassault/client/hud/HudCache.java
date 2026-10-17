@@ -1,5 +1,11 @@
 package com.wf.combinedassault.client.hud;
 
+import com.wf.wflib.ammo.AmmoItems;
+import com.wf.combinedassault.vehicle.weapon.RoundCount;
+import com.wf.wflib.magazine.MagFill;
+import com.wf.wflib.ammo.Ammo;
+import com.wf.wflib.ammo.AmmoVariant;
+
 import com.wf.combinedassault.ballistics.component.ComponentState;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
@@ -9,7 +15,9 @@ import com.wf.combinedassault.vehicle.weapon.VehicleWeaponAgent;
 import com.wf.wflib.ui.UiHud;
 import net.minecraft.client.Minecraft;
 import net.minecraft.locale.Language;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.scores.Team;
 import net.minecraft.world.level.material.Fluids;
@@ -124,13 +132,53 @@ public final class HudCache {
         return name;
     }
 
+    /** Key: variant id, else item; bounded by registered kinds. */
+    private static final Map<Object, String> ROUND_LABELS = new java.util.HashMap<>();
+
+    /** Variant only ({@code APFSDS}); not a cartridge => full name. */
+    public static String roundLabel(ItemStack round) {
+        if (round.isEmpty()) {
+            return "";
+        }
+        return ROUND_LABELS.computeIfAbsent(roundKey(round), key -> {
+            if (MagFill.isMagazine(round)) {
+                return String.join(" / ", RoundCount.variants(round).stream().map(v -> Ammo.variant(v).name()).toList());
+            }
+            AmmoVariant variant = AmmoItems.variantOf(round);
+            return variant != null ? variant.name() : round.getHoverName().getString();
+        });
+    }
+
+    /** Magazine: item + its variants (any fill). */
+    private static Object roundKey(ItemStack round) {
+        if (MagFill.isMagazine(round)) {
+            return List.of(round.getItem(), RoundCount.variants(round));
+        }
+        ResourceLocation variant = round.get(AmmoItems.VARIANT.get());
+        return variant != null ? variant : round.getItem();
+    }
+
     private static final Map<Object, String> PAYLOAD_NAMES = new WeakHashMap<>();
 
-    public static String payloadName(com.wf.combinedassault.fpv.payload.FpvPayload payload) {
-        String name = PAYLOAD_NAMES.get(payload);
+    private static final Map<net.minecraft.client.KeyMapping, com.mojang.blaze3d.platform.InputConstants.Key> BOUND =
+            new java.util.IdentityHashMap<>();
+    private static final Map<net.minecraft.client.KeyMapping, String> KEY_NAMES = new java.util.IdentityHashMap<>();
+
+    /** Bound key's display name; re-read on rebind. */
+    public static String keyName(net.minecraft.client.KeyMapping mapping) {
+        if (BOUND.get(mapping) != mapping.getKey()) {
+            BOUND.put(mapping, mapping.getKey());
+            KEY_NAMES.put(mapping, mapping.getTranslatedKeyMessage().getString());
+        }
+        return KEY_NAMES.get(mapping);
+    }
+
+    /** Keyed by stack identity: a sync replaces the stack. */
+    public static String payloadName(net.minecraft.world.item.ItemStack stack) {
+        String name = PAYLOAD_NAMES.get(stack);
         if (name == null) {
-            name = payload.displayName().getString();
-            PAYLOAD_NAMES.put(payload, name);
+            name = stack.getHoverName().getString();
+            PAYLOAD_NAMES.put(stack, name);
         }
         return name;
     }

@@ -2,6 +2,7 @@ package com.wf.combinedassault.client.fx;
 
 import com.wf.gemrender.particle.ParticleEmitter;
 import com.wf.gemrender.particle.ParticlePool;
+import dev.engine_room.flywheel.api.event.EndClientResourceReloadEvent;
 import dev.engine_room.flywheel.api.visual.Effect;
 import dev.engine_room.flywheel.api.visual.EffectVisual;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
@@ -31,19 +32,57 @@ final class HitFxWorld implements Effect {
     @Nullable
     private static HitFxWorld current;
     private static final List<HitFxWorld> RETIRING = new ArrayList<>();
+    /** Re-added next tick: a case model loaded after the visual was built without it. */
+    @Nullable
+    private static HitFxWorld readd;
 
     private final ClientLevel level;
     private final Vec3i origin;
     private final ParticleEmitter[] emitters = new ParticleEmitter[KINDS.length];
+    /** Resolved on the client thread for the visual (built on Flywheel's executor); null = not loaded. */
     private final dev.engine_room.flywheel.api.model.Model[] models = new dev.engine_room.flywheel.api.model.Model[KINDS.length];
+    private boolean partial;
 
     private HitFxWorld(ClientLevel level, Vec3 at) {
         this.level = level;
         for (HitFxKind k : KINDS) {
             emitters[k.ordinal()] = ParticleEmitter.create(k.style(), k.ring, at.x, at.y, at.z);
-            models[k.ordinal()] = k.model();
         }
         origin = emitters[0].origin();
+    }
+
+    /** @return a model still missing */
+    private boolean resolveModels() {
+        boolean missing = false;
+        for (HitFxKind k : KINDS) {
+            if (models[k.ordinal()] == null) {
+                models[k.ordinal()] = k.model();
+                missing |= models[k.ordinal()] == null;
+            }
+        }
+        return missing;
+    }
+
+    @Nullable
+    static ClientLevel currentLevel() {
+        return current == null ? null : current.level;
+    }
+
+    /** Reloaded models are new keys; stale case meshes never reach a rebuilt visual. */
+    static void onReload(EndClientResourceReloadEvent e) {
+        if (current != null) {
+            current.dropRigid();
+            current.partial = true;
+        }
+        RETIRING.forEach(HitFxWorld::dropRigid);
+    }
+
+    private void dropRigid() {
+        for (HitFxKind k : KINDS) {
+            if (k.rigid()) {
+                models[k.ordinal()] = null;
+            }
+        }
     }
 
     /** Null => no FX (no level, no Flywheel, out of reach). */
@@ -60,6 +99,12 @@ final class HitFxWorld implements Effect {
     static void onTick(ClientTickEvent.Post e) {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
+        if (readd != null) {
+            if (readd == current) {
+                VisualizationManager.get(readd.level).effects().queueAdd(readd);
+            }
+            readd = null;
+        }
         if (current != null && (current.level != level || level == null)) {
             retire(true);
         }
@@ -75,7 +120,12 @@ final class HitFxWorld implements Effect {
         }
         if (current == null) {
             current = new HitFxWorld(level, mc.player != null ? mc.player.position() : cam);
+            current.partial = current.resolveModels();
             VisualizationManager.get(level).effects().queueAdd(current);
+        } else if (current.partial && !current.resolveModels()) {
+            current.partial = false;
+            VisualizationManager.get(level).effects().queueRemove(current);
+            readd = current;
         }
     }
 
@@ -125,7 +175,10 @@ final class HitFxWorld implements Effect {
         Visual(VisualizationContext ctx, HitFxWorld w, float partialTick) {
             super(ctx, (Level) w.level, partialTick);
             for (HitFxKind k : KINDS) {
-                pools.add(new ParticlePool(ctx, w.emitters[k.ordinal()], k.type, w.models[k.ordinal()]));
+                dev.engine_room.flywheel.api.model.Model m = w.models[k.ordinal()];
+                if (m != null) {
+                    pools.add(new ParticlePool(ctx, w.emitters[k.ordinal()], k.type, m));
+                }
             }
         }
 

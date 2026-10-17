@@ -80,6 +80,8 @@ import com.wf.combinedassault.api.entity.ICustomVehicle;
 import com.wf.wflib.api.BeamSource;
 import com.wf.wflib.api.TargetIlluminator;
 import com.wf.wflib.entity.OBBEntity;
+import com.wf.wflib.radio.RadioCarrier;
+import com.wf.wflib.radio.RadioVoice;
 import com.wf.combinedassault.compat.wflib.GuidedRounds;
 import com.wf.combinedassault.util.VectorUtil;
 import com.wf.combinedassault.api.entity.RemoteTickEntity;
@@ -176,7 +178,8 @@ import com.wf.wflib.probe.ProbeJobs;
 public abstract class AbstractVehicle extends ContainerCraft
         implements RemoteTickEntity, OBBEntity, ICustomVehicle, IEntityWithComplexSpawn, DetachedBodyHost,
         com.wf.combinedassault.vehicle.parenting.DeckCarrier, TargetIlluminator, BeamSource,
-        com.wf.wflib.telemetry.TelemetryReporter, com.wf.wflib.entity.InterceptTarget, LaserTarget {
+        com.wf.wflib.telemetry.TelemetryReporter, com.wf.wflib.entity.InterceptTarget, LaserTarget,
+        RadioCarrier {
 
     public static final EntityDataAccessor<Float> X_ROT = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Float> Y_ROT = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
@@ -184,6 +187,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     public static final EntityDataAccessor<Float> ENERGY = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
     /** kg of fitted parts/payload ({@link PartUnit#mass}, addon armour); synced so prediction agrees. */
     public static final EntityDataAccessor<Float> PART_MASS = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
+    /** Physics kg of hold items + stowed vehicles; synced so prediction agrees. */
+    public static final EntityDataAccessor<Float> CARGO_MASS = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
     /** UAV datalink to its remote pilot, 0..1 (wflib {@link Datalink}); 1 with no remote pilot. */
     public static final EntityDataAccessor<Float> LINK = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
     private static final float LINK_QUANTUM = 1f / 64f;
@@ -192,6 +197,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     /** Weapon loadout's hardware paid for and on. */
     public static final EntityDataAccessor<Boolean> LOADOUT_FITTED = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Float> POWER = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
+    /** wflib radio station; "" = off. */
+    public static final EntityDataAccessor<String> RADIO = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.STRING);
     /** Registry id of the fluid in the tank, or empty. Synced so the fuel gauge can name it. */
     public static final EntityDataAccessor<String> FUEL = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.STRING);
     public static final EntityDataAccessor<Float> ENGINE_SPEED = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
@@ -258,13 +265,15 @@ public abstract class AbstractVehicle extends ContainerCraft
     public float curbWeight;
     /** Chassis mass added per kilogram of cargo; see StorageInfo#cargoMassPerKg. */
     public float cargoMassPerKg;
+    /** Cargo kg past which the engine strains; 0 = none. StorageInfo#maxPayload. */
+    public float maxPayload;
     private final VehicleFuelTank fuelTank = new VehicleFuelTank(this);
     private final VehicleEnergyBuffer energyBuffer = new VehicleEnergyBuffer(this);
     @Nullable
     private FuelSpec fuelSpec;
     private String cachedFuelId = "";
     private float cachedFuelEfficiency = 1f;
-    /** What the hold weighs, recounted lazily. Zero without Ultimate Weight. */
+    /** What the hold weighs, recounted lazily. */
     private final CargoMass cargoMass = new CargoMass();
     /** Declared places other vehicles can be bolted to. Empty for everything that declares none. */
     public List<MountPointInfo> mountPoints = List.of();
@@ -430,6 +439,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     private final DetachedAnchors anchors = new DetachedAnchors(this, DETACHED_ANCHORS);
     protected boolean driverXYRotControl = false;
     public boolean uav = false;
+    /** Probe pick up -> spawn item carrying {@link com.wf.combinedassault.item.VehicleSpawnItem#TAG_STATE}. */
+    public boolean pickup = false;
     /** Set each tick the autopilot wrote {@link #controlUnit}: no-driver reset skipped. */
     public boolean autopilotControl;
     /** wflib autonomy body; null = manual only. */
@@ -486,10 +497,12 @@ public abstract class AbstractVehicle extends ContainerCraft
         builder.define(Z_ROT, 0f);
         builder.define(ENERGY, 0f);
         builder.define(PART_MASS, 0f);
+        builder.define(CARGO_MASS, 0f);
         builder.define(LINK, 1f);
         builder.define(LOADOUT, -1);
         builder.define(LOADOUT_FITTED, false);
         builder.define(FUEL, "");
+        builder.define(RADIO, "");
         builder.define(POWER, 0f);
         builder.define(ENGINE_SPEED, 0f);
         builder.define(ENGINE_ON, false);
@@ -512,7 +525,11 @@ public abstract class AbstractVehicle extends ContainerCraft
     @Override
     public void onSyncedDataUpdated(List<SynchedEntityData.DataValue<?>> dataValues) {
         super.onSyncedDataUpdated(dataValues);
-        if (dataValues.stream().anyMatch(value -> value.id() == ENERGY.id() || value.id() == PART_MASS.id())) {
+        if (prediction != null) {
+            prediction.resync(this);
+        }
+        if (dataValues.stream().anyMatch(value -> value.id() == ENERGY.id() || value.id() == PART_MASS.id()
+                || value.id() == CARGO_MASS.id())) {
             refreshMass();
         }
         if (level().isClientSide() && hullComponents != null
@@ -542,6 +559,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         compound.putByte("Lights", entityData.get(LIGHTS));
         compound.putFloat("Energy", getEnergy());
         compound.putString("Fuel", fuelId());
+        compound.putString("Radio", radioStation());
         compound.putFloat("Power", getPower());
         compound.putBoolean("Destroyed", isDestroyed());
         compound.putInt("DestroyedTick", destroyedTick);
@@ -610,6 +628,8 @@ public abstract class AbstractVehicle extends ContainerCraft
             entityData.set(ENGINE_ON, compound.getBoolean("Engine"));
         }
         entityData.set(LIGHTS, compound.getByte("Lights"));
+        String radio = compound.getString("Radio");
+        entityData.set(RADIO, RadioCarrier.validStation(radio) ? radio : "");
         if (compound.contains("Energy")) {
             setEnergy(compound.getFloat("Energy"));
         }
@@ -879,6 +899,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         // refuel/mass read (ctor default is a throwaway 1).
         this.curbWeight = vehicleData.getPhysicsInfo().mass;
         this.cargoMassPerKg = vehicleData.getStorage().cargoMassPerKg;
+        this.maxPayload = vehicleData.getStorage().maxPayload;
         this.mountPoints = vehicleData.getMountPoints();
         this.mountable = vehicleData.getMountable();
         this.towing = vehicleData.getTowing();
@@ -932,6 +953,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             seats.get(i).passengerId = riders[i];
         }
         this.uav = vehicleData.isUav();
+        this.pickup = vehicleData.canPickUp();
         this.loadouts = vehicleData.getLoadouts();
         this.canWade = vehicleData.canWade();
         if (vehicleData.withWarningReceiver()) {
@@ -1464,6 +1486,11 @@ public abstract class AbstractVehicle extends ContainerCraft
         return false;
     }
 
+    /** Client: attitude predicted locally, synced rotation ignored. */
+    protected boolean clientOwnsAttitude() {
+        return false;
+    }
+
     protected void tickPosAndRot() {
         this.xRotO = this.xRot;
         this.yRotO = this.yRot;
@@ -1489,7 +1516,7 @@ public abstract class AbstractVehicle extends ContainerCraft
                 this.lerpSteps -= 1;
                 this.setPos(dX, dY, dZ);
             }
-            if (this.lerpRotSteps > 0) {
+            if (this.lerpRotSteps > 0 && !clientOwnsAttitude()) {
                 float dXRot = Mth.wrapDegrees(lerpXRot - this.getXRot());
                 float dYRot = Mth.wrapDegrees(lerpYRot - this.getYRot());
                 float dZRot = Mth.wrapDegrees(lerpZRot - this.getZRot());
@@ -2274,7 +2301,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     public InteractionResult interact(Player pPlayer, InteractionHand pHand) {
         // Client PASS => the held item's own use runs too (a creative WFLib missile launches at the vehicle).
         if (this.level().isClientSide() && pHand == InteractionHand.MAIN_HAND
-                && MissileHolderUnit.couldLoad(this, pPlayer.getItemInHand(pHand))) {
+                && (MissileHolderUnit.couldLoad(this, pPlayer.getItemInHand(pHand))
+                || MissileHolderUnit.podHolder(this, pPlayer.getItemInHand(pHand)) != null)) {
             return InteractionResult.SUCCESS;
         }
         if (uav) {
@@ -2319,7 +2347,7 @@ public abstract class AbstractVehicle extends ContainerCraft
                 if (VehicleRefuelInteraction.handle(this, pPlayer, pHand, itemStack)) {
                     return InteractionResult.SUCCESS;
                 }
-                if (MissileHolderUnit.tryLoad(this, itemStack)) {
+                if (MissileHolderUnit.trySeatPod(this, pPlayer, itemStack) || MissileHolderUnit.tryLoad(this, itemStack)) {
                     return InteractionResult.SUCCESS;
                 }
                 if (pPlayer.startRiding(this)) {
@@ -2361,7 +2389,15 @@ public abstract class AbstractVehicle extends ContainerCraft
         if (anchor != null) {
             return anchor;
         }
-        return dismountLocations.getOrDefault(pPassenger, super.getDismountLocationForPassenger(pPassenger));
+        Vec3 at = dismountLocations.getOrDefault(pPassenger, super.getDismountLocationForPassenger(pPassenger));
+        // Low door pivot - eye/2, slope => feet in terrain: lift <= 3 m to first block-free stance.
+        AABB box = pPassenger.getDimensions(Pose.STANDING).makeBoundingBox(at);
+        for (int i = 0; i <= 12; i++) {
+            if (level().noBlockCollision(pPassenger, box.move(0, i * 0.25, 0))) {
+                return at.add(0, i * 0.25, 0);
+            }
+        }
+        return at;
     }
 
     /** Remote operator (ride-inventory key from a UAV) => refused; storage is reached on foot (hull node). */
@@ -2698,13 +2734,40 @@ public abstract class AbstractVehicle extends ContainerCraft
         refreshMass();
     }
 
-    /** Without Ultimate Weight, cargo weighs nothing: mass = curb weight + fuel + fitted parts only. */
     public void refreshMass() {
-        // A tank gets lighter as it empties; a battery does not. An electric vehicle therefore carries
-        // its pack's full weight whatever its state of charge.
+        if (!level().isClientSide()) {
+            entityData.set(CARGO_MASS, (float) (cargoMass.kilograms() * cargoMassPerKg)
+                    + (cargoHold == null ? 0 : cargoHold.mass()));
+        }
+        physicsEngine.mass = unladenMass() + entityData.get(CARGO_MASS);
+    }
+
+    /** Curb + fuel (electric: full battery) + fitted parts. */
+    public float unladenMass() {
         float stored = isElectric() ? energyInfo.capacityUnits() : getEnergy();
-        physicsEngine.mass = curbWeight + stored + entityData.get(PART_MASS)
-                + (float) (cargoMass.kilograms() * cargoMassPerKg) + (cargoHold == null ? 0 : cargoHold.mass());
+        return curbWeight + stored + entityData.get(PART_MASS);
+    }
+
+    /** Physics kg carried: hold items + stowed vehicles. */
+    public float cargoMass() {
+        return entityData.get(CARGO_MASS);
+    }
+
+    /** mass / unladen, >= 1: divides kinematic accelerations and turn rates declared unladen. */
+    public double load() {
+        return 1 + cargoMass() / Math.max(1.0E-3, unladenMass());
+    }
+
+    /** Cargo / {@link #maxPayload}; 0 without a limit. */
+    public double overload() {
+        return maxPayload > 0 ? cargoMass() / maxPayload : 0;
+    }
+
+    /** Engine output share: 1 up to {@link #maxPayload}, then 1 / overload^2. Sites keep their own power rounding x this:
+     * terrain_humvee_hill flips on a 1-ULP power change. */
+    public double strain() {
+        double over = overload();
+        return over > 1 ? 1 / (over * over) : 1;
     }
 
     @Nullable
@@ -2790,10 +2853,11 @@ public abstract class AbstractVehicle extends ContainerCraft
         return cachedFuelEfficiency;
     }
 
-    /** Energy units burnt per tick at full power, with the fuel on board taken into account. */
+    /** Energy units burnt per tick at full power: fuel efficiency, x {@link #load}. */
     public float burnPerTick() {
         float efficiency = isElectric() ? 1f : fuelEfficiency();
-        return efficiency <= 0 ? energyInfo.energyConsumptionPerTick : energyInfo.energyConsumptionPerTick / efficiency;
+        float burn = efficiency <= 0 ? energyInfo.energyConsumptionPerTick : energyInfo.energyConsumptionPerTick / efficiency;
+        return (float) (burn * load());
     }
 
     public VehicleFuelTank fuelTank() {
@@ -2891,6 +2955,31 @@ public abstract class AbstractVehicle extends ContainerCraft
             }
         }
         entityData.set(IR_SIGHTS, mask);
+    }
+
+    /** Strapped loudspeaker => SPEAKER; crewed non-UAV hull => CABIN; else none. */
+    @Override
+    @Nullable
+    public RadioVoice radioVoice() {
+        com.wf.combinedassault.fpv.payload.PayloadUnit hardpoint = com.wf.combinedassault.fpv.payload.PayloadUnit.on(this);
+        if (hardpoint != null && hardpoint.payloadType() == com.wf.combinedassault.fpv.payload.FpvPayloadTypes.SPEAKER
+                && hardpoint.isLoaded()) {
+            return RadioVoice.SPEAKER;
+        }
+        return uav || seats.isEmpty() || isDestroyed() ? null : RadioVoice.CABIN;
+    }
+
+    @Override
+    public String radioStation() {
+        return entityData.get(RADIO);
+    }
+
+    @Override
+    public void tuneRadio(String station) {
+        if (!RadioCarrier.validStation(station)) {
+            throw new IllegalArgumentException("radio station " + station);
+        }
+        entityData.set(RADIO, station);
     }
 
     public boolean isDestroyed() {

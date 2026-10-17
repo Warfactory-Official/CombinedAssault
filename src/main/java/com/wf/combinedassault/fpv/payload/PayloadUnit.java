@@ -39,9 +39,11 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
     @Nullable
     private FpvPayload payload;
     private int armedTicks;
-    /** Client mirror of the payload type id ("" none) and strapped items. */
+    /** Client mirror of the payload type id ("" none), strapped items, capacity and fuze ticks. */
     private String syncedType = "";
     private final ItemStack[] syncedSlots = new ItemStack[SYNCED_SLOTS];
+    private int syncedCapacity;
+    private int syncedArmingTicks;
 
     /** What was just hit; threaded through here, not {@link FpvPayload#trigger}'s signature, so others skip it. */
     @Nullable
@@ -70,6 +72,10 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
                 return slot < contents.size() ? contents.get(slot) : ItemStack.EMPTY;
             }, ItemStack.EMPTY);
         }
+        this.getSyncData().define(SyncDataSerializers.INT, n -> this.syncedCapacity = n,
+                () -> this.payload == null ? 0 : this.payload.capacity(), 0);
+        this.getSyncData().define(SyncDataSerializers.INT, n -> this.syncedArmingTicks = n,
+                () -> this.payload == null ? 0 : this.payload.armingTicks(), 0);
     }
 
     /** Payload type on either side; null = none. */
@@ -128,13 +134,36 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
         return null;
     }
 
+    /** Server only; clients read the synced accessors. */
     @Nullable
     public FpvPayload getPayload() {
         return payload;
     }
 
     public boolean isArmed() {
-        return payload != null && isOn();
+        return payloadType() != null && isOn();
+    }
+
+    /** Strapped count, either side. */
+    public int remaining() {
+        if (!vehicle.level().isClientSide()) {
+            return payload == null ? 0 : payload.remaining();
+        }
+        int n = 0;
+        while (n < SYNCED_SLOTS && !syncedSlots[n].isEmpty()) {
+            n++;
+        }
+        return n;
+    }
+
+    /** First strapped item, client; EMPTY when none. */
+    public ItemStack firstSynced() {
+        return syncedSlots[0];
+    }
+
+    /** Slots, either side. */
+    public int capacity() {
+        return vehicle.level().isClientSide() ? syncedCapacity : payload == null ? 0 : payload.capacity();
     }
 
     /** Flipping resets the fuze delay; toggling can't be used to skip the wait. */
@@ -156,17 +185,17 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
 
     /** Armed + past fuze delay; until then it's a brick, so arming at the operator's own feet is survivable. */
     public boolean isLive() {
-        return isArmed() && isLoaded() && armedTicks >= payload.armingTicks();
+        return isArmed() && isLoaded() && armedTicks >= armingTicks();
     }
 
-    /** True if anything is strapped on. */
+    /** True if anything is strapped on, either side. */
     public boolean isLoaded() {
-        return payload != null && payload.remaining() > 0;
+        return vehicle.level().isClientSide() ? !syncedSlots[0].isEmpty() : payload != null && payload.remaining() > 0;
     }
 
     /** Ticks still to run before {@link #isLive()}. */
     public int armingRemaining() {
-        return payload == null ? 0 : Math.max(0, payload.armingTicks() - armedTicks);
+        return Math.max(0, armingTicks() - armedTicks);
     }
 
     public int getArmedTicks() {
@@ -177,9 +206,9 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
         this.armedTicks = armedTicks;
     }
 
-    /** Fuze ticks configured on the payload, or zero when the hardpoint is empty. */
+    /** Fuze ticks configured on the payload, or zero when the hardpoint is empty; either side. */
     public int armingTicks() {
-        return payload == null ? 0 : payload.armingTicks();
+        return vehicle.level().isClientSide() ? syncedArmingTicks : payload == null ? 0 : payload.armingTicks();
     }
 
     /**
@@ -190,7 +219,7 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
     @Override
     public void tick() {
         super.tick();
-        if (isArmed() && armedTicks < payload.armingTicks()) {
+        if (isArmed() && armedTicks < armingTicks()) {
             armedTicks++;
         }
         if (vehicle.level().isClientSide() || payload == null) {
@@ -322,21 +351,29 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
         this.payload.setArmed(isOn());
     }
 
-    /** Strapped items under the airframe at {@code attach_offset}: one centred, a rack in a 2-wide grid. */
+    /**
+     * Strapped items under the airframe at {@code attach_offset}: one centred, a rack in a 2-wide grid. Strappable
+     * cartridges true size along the hull axis (wflib ammo NONE context); others item-sized.
+     */
     @Override
     @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
     public void render(com.mojang.blaze3d.vertex.PoseStack poseStack, net.minecraft.client.renderer.MultiBufferSource
             bufferSource, int packedLight, float partialTick) {
-        List<ItemStack> items = contents();
         Vec3 at = data.getAttachOffset();
-        for (int i = 0; i < items.size(); i++) {
-            double dx = items.size() == 1 ? 0 : (i % 2 - 0.5) * RACK_SPACING;
-            double dz = items.size() == 1 ? 0 : (i / 2 - 0.5) * RACK_SPACING;
+        int n = remaining();
+        for (int i = 0; i < n; i++) {
+            ItemStack item = syncedSlots[i];
+            double dx = n == 1 ? 0 : (i % 2 - 0.5) * RACK_SPACING;
+            double dz = n == 1 ? 0 : (i / 2 - 0.5) * RACK_SPACING;
+            boolean cartridge = item.is(com.wf.wflib.api.StrappedExplosive.TAG);
             poseStack.pushPose();
             poseStack.translate(at.x + dx, at.y, at.z + dz);
-            poseStack.scale(ITEM_SCALE, ITEM_SCALE, ITEM_SCALE);
-            net.minecraft.client.Minecraft.getInstance().getItemRenderer().renderStatic(items.get(i),
-                    net.minecraft.world.item.ItemDisplayContext.FIXED, packedLight,
+            if (!cartridge) {
+                poseStack.scale(ITEM_SCALE, ITEM_SCALE, ITEM_SCALE);
+            }
+            net.minecraft.client.Minecraft.getInstance().getItemRenderer().renderStatic(item, cartridge
+                            ? net.minecraft.world.item.ItemDisplayContext.NONE
+                            : net.minecraft.world.item.ItemDisplayContext.FIXED, packedLight,
                     net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, poseStack, bufferSource,
                     vehicle.level(), 0);
             poseStack.popPose();

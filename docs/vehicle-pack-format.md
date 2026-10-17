@@ -91,6 +91,7 @@ Every field the mod reads from a pack: unit, default. Defaults from the deserial
 | `parts` | array | `[]` | see [§4](#4-parts) |
 | `uav` | bool | `false` | operated remotely (wflib PDA, UAVs app); the operator's body stays behind, standing; no storage over the link |
 | `autonomy` | object | absent | `uav` only; wflib autopilot body — [§19](#19-autonomy) |
+| `pickup` | bool | `false` | probe hull `Pick up` -> spawn item with save data (`VehicleState`; autonomy dropped, engine off); crewed / operated / carried / wrecked => refused |
 | `loadouts` | array | `[]` | configurations picked with the modding tool — [§20](#20-loadouts) |
 | `can_wade` | bool | `false` | |
 | `with_warning_receiver` | bool | `false` | carries an RWR |
@@ -109,7 +110,7 @@ Every field the mod reads from a pack: unit, default. Defaults from the deserial
 | `attributes` | object | — | per-type and required for all but `generic`, which has none — [§3.10](#310-attributes-per-type) |
 
 - Link: synced `LINK` = wflib `Datalink` from the operator's parked body to seat 0 sight (`UavCamera.RANGE` 4000). Picture `Degrade`, `DroneCamHud` meter. Lost => inputs neutral (both sides), operator fire refused, `autonomy` body flies its program or holds. Leaving a remote UAV with the PDA in hand => its feed full screen; attack there re-CONNECTs. EMP / portable jammer => link 0 (wflib `Datalink`). wflib `drone_net` pins UAVs <= 25 kg (`UavCamera.NET_MAX_KG`).
-- UAV controls: leave = `leave_vehicle` (sneak = DOWN). `free_camera` toggles on UAVs (held elsewhere): mouse turns the seat 0 sight only, heading held, Q/E still yaw. Feed lens = seat 0 `sight` socket (Mavic: gimbal camera face).
+- UAV controls: leave = `leave_vehicle` (sneak = DOWN); payload arm / safe = `arm_payload`, trigger = vehicle shoot. `free_camera` toggles on UAVs (held elsewhere): mouse turns the seat 0 sight only, heading held, Q/E still yaw. Feed lens = seat 0 `sight` socket (Mavic: gimbal camera face).
 - UAVs = wflib PDA Drones app via `RemoteBody` (`uav/UavTablet`; `uav_links` component and CA app removed, no migration). Sneak + use PDA on a UAV => wflib `CHANNELS` (cap = wflib camera channel config). Feed: wflib `CameraSources`, kind `MOUNTED`, lens = seat 0 sight, else view. Entry: systems cells, ammo, fuel/charge, link; CONNECT = remote ride (side's allies, a free seat). `autonomy` => DISPATCH to it directly.
 
 ### 3.3 `view_info`
@@ -123,7 +124,9 @@ Every field the mod reads from a pack: unit, default. Defaults from the deserial
 | `passenger_view_rot.rot_by_vehicle_in_third_person` | bool | `false` |
 | `passenger_view_rot.rot_by_vehicle_in_operator` | bool | `true` |
 
-- Boarding => first person (operator view = seat part's `view` socket); `V` cycles third person / scope. First-person eye must sit outside opaque geometry: no cockpit interior => above the skin.
+- Boarding => first person (operator view = seat part's `view` socket); `V` / F5 cycle third person / scope; vanilla perspective pinned first person while riding. First-person eye must sit outside opaque geometry: no cockpit interior => above the skin.
+- Aircraft operator view (fixed wing incl. UAVs, manned rotary): eye fixed in the airframe. Pilot mouse: fixed wing = stick (x roll, y pitch; recentres), rotary = commanded pitch / heading. `free_camera` (held; UAV toggles) turns the head, stick neutral; release recentres. Third person keeps mouse-aim.
+- Rotary UAV: `V` / F5 = lens at seat 0 `sight` socket (world-frame look, horizon level, steers as third person) <-> third person; no SCOPE view. Sighted lens = scope: `switch_scope` / `magnification_change` zoom ×2 steps to `zoom_max` then back (mouse / zoom), `cycle_sight_mode`, reticle at screen centre (station may lack turn groups), range; FPV flight mode => §8.2 cameras.
 
 ### 3.4 `energy_info`
 
@@ -194,6 +197,7 @@ Nominal plate in millimetres of RHA, one number per face (front/side/rear/top/bo
 | --- | --- | --- | --- |
 | `slots` | int | `54` | **any count from 0 to 9999.** `0` means no hold at all |
 | `cargo_mass_per_kg` | float | `1` | physics kg per kg carried; `0` opts out of load-dependent handling |
+| `max_payload` | float | `0` | cargo kg; past it engine output × `1/overload²`, HUD `OVERLOADED n%`; `0` = no limit |
 
 - Open: hull probe node "Open storage" (on foot); sneak + empty-hand click (not UAVs); wreck: any click. Ride-inventory key over a UAV link: refused.
 - Screen sized to the hold (5 slots = one row of 5, 54 = six rows); deeper => widens in steps of 9 columns, then scrolls (wheel, shift = window, bar drag). Shift-click fills the whole hold.
@@ -237,33 +241,17 @@ A mounted vehicle keeps ticking its fuel and power even though its physics are o
 weapon can spin up its traverse and fire. What it does not do is solve movement — its pose is the
 carrier's.
 
-#### Worked example: a TOW launcher on an ATV's rear deck
+#### Worked example: SPG-9 on a carrier deck
 
-No shipped vehicle declares either side of this, so both halves are pack edits. `bgm_71_tow` is
-already a `generic` vehicle that is nothing but a weapon on a baseplate, which is what an emplacement
-is; opt it in:
-
-```json
-"mountable": { "enabled": true, "tags": ["atgm"] }
-```
-
-Then give `atv_mrzr4` a bracket on its rear deck. The numbers come from the ATV's own geometry: the
-raised box behind the rear seats runs from z −2.39 to −1.03 with its top face at y 1.78, and the
-TOW's origin is the bottom of its baseplate, so the baseplate lands flush on the deck.
+`spg9` ships `"mountable": {"enabled": true, "tags": ["emplacement"]}`; no shipped land carrier has a point. Carrier side:
 
 ```json
 "mount_points": [
-  {
-    "id": "rear_deck",
-    "offset": [0, 1.78, -1.7],
-    "accepts": ["#atgm"],
-    "max_mass": 200
-  }
+  { "id": "rear_deck", "offset": [0, 1.78, -1.7], "accepts": ["#emplacement"], "max_mass": 200 }
 ]
 ```
 
-Hold the TOW's spawn item, look at the rear deck, right-click. Sneak and right-click the launcher
-with an empty hand to take it off again.
+`offset` y = deck top (SPG-9 origin = tripod feet).
 
 ### 3.10 `attributes`, per type
 
@@ -299,7 +287,7 @@ Both ground types also take a top-level `landing_gear_part_id` where applicable.
 | `max_air_speed` | float | — | blocks/tick; arcade drag reaches it at 20° nose-down |
 | `fast_roping` | bool | `false` | |
 | `fast_roping_door_id` | string | — | |
-| `fpv` | object | absent | direct attitude control; absent means the stock helicopter model — [§8](#8-multirotor-and-fpv-flight) |
+| `fpv` | object | absent | acro control; absent means the stock helicopter model — [§8](#8-multirotor-and-fpv-flight) |
 | `multirotor` | object | absent | multirotor force law replaces `main_rotor_force`/arcade aero — [§8](#8-multirotor-and-fpv-flight) |
 
 **`fixed_wing_vehicle`** — plus top-level `landing_gear_part_id`, `airbrake_part_id`, `thrust_part_id`
@@ -328,6 +316,8 @@ Both ground types also take a top-level `landing_gear_part_id` where applicable.
 | `vortex_offsets` | Vec3[] | `[]` |
 | `afterburner_offsets` | array | `[]` | each `{"offset": Vec3, "scale": float}` |
 | `aerobatic_smoke_offsets` | Vec3[] | `[]` |
+
+- `rotor` systems (props, proprotors): `thrust` × Π effectiveness. Drawn under a part frame => part hit, no pool: tilting rotors = body nodes posed by script (`mv22`).
 
 Takeoff, gear down, full fuel (m = mass + fuel, v in m/s, k(θ) = k_min + (k_max − k_min)·sin θ):
 - ground cap `v² = (thrust − friction) / (k_min·(1 + gear drag_k))`; liftoff at 10° `v² = 9.8·m / (k(10°)·(lift_to_drag_k + 0.8))`. Liftoff ≥ cap => never leaves the ground.
@@ -383,6 +373,7 @@ that type adds — there is no nested `data` object.
 | `protect_passenger` | bool | vehicle `protect_passenger` | seat override; `false` on exposed stations (shipped `stand` seats) => AHF rig hits land |
 | `passenger_can_use_item` | bool | `false` | |
 | `owner_view_offset` | Vec3 | none | camera position when operating this part; weapon => load error (`operator_view_offset`) |
+| `sensor` | string | none | seat: weapon part id whose sight it looks through and slews (SCOPE; WSO); fires nothing; reticle = boresight. Spotter seated => owner's SCOPE view-only, other views stop aiming it |
 | `crew_roles` | enum[] | derived | `driver`, `gunner`, `commander`, `loader`; gate stations under server config `crew.required`; driver seat always. Absent => seat 0 `driver` (+ `gunner` if a weapon station), other weapon seat `gunner`, else `commander`. Driver = first occupied `driver` seat (`crew.required` off: none occupied => seat 0 drives too); boarding takes an empty `driver` seat first; free seat probe node boards that seat |
 | `display_id` | id | — | |
 | `display_offset` | Vec3 | — | |
@@ -432,17 +423,13 @@ that type adds — there is no nested `data` object.
 
 ### 4.5 The `weapons` list
 
-Each entry takes one of three shapes:
+Entry: string (one weapon id) or object. Array form REMOVED: ammo kinds = one weapon's `reload.ammo` (§5.3).
 
-- **a string** — one weapon id, fired from this station.
-- **an array of strings** — one selectable position holding several weapon ids, switched between
-  (an APFSDS / HEAT pair on one gun).
-- **an object**:
+- **object**:
 
   | field | type | notes |
   | --- | --- | --- |
   | `id` | id | one weapon |
-  | `ids` | id[] | several, as the array form |
   | `part_unit_id` | string | the part the weapon is actually mounted on |
   | `weapon_bay_unit_id` | string | a bay that must open first |
   | `secondary` | bool | fired by the secondary trigger |
@@ -456,8 +443,11 @@ Each entry takes one of three shapes:
 | --- | --- | --- | --- |
 | `door` | `door_for_seat_id` | string | — | exit: door's `dismount_offset` (feet) else pivot − eye/2; nearest door serves seats without their own |
 | `landing_gear`, `airbrake` | `drag_k` | float | `0.5` |
-| `missile_holder` | `accepts` | enum[] | any of `SMALL`, `MEDIUM`, `LARGE`, `HUGE`, `POD` (MLRS cell) — upper case; item tags `wflib:missile/<size>` |
-| | `capacity` | int | `1` | slots; slot i = the part frame's i-th collider (station): drawn there nose to +Z, hung flush from its top, launched from its tail. No collider => no station |
+| `missile_holder` | `accepts` | enum[] | all | any of `SMALL`, `MEDIUM`, `LARGE`, `HUGE`, `POD` (MLRS cell), `POD_LARGE` (ATACMS) — upper case; item tags `wflib:missile/<size>`; `[]` = loads nothing (shared model's sockets on a vehicle without rounds: `laser_trailer`) |
+| | `capacity` | int | station count | slots; slot i = `station` socket i ([§6.7](#67-sockets)); slots past the last station: internal (no draw, launch from the shot). < station count => load error |
+| | `pods` | ingredient | — | WFLib pod items it seats; set => `accepts` unused, slots = seated pod's tubes ([§15](#15-pylon-missiles)) |
+| | `default_pod` | item id | — | pod seated, empty, at spawn; not a pod => load error |
+| | `pod_swap_time` | int | `600` | ticks, crew-scaled |
 | `rope` | `max_length` | float | `20` |
 | `variable_sweep` | `sweep_angle` | float | `0` | part yaw at full sweep (`rot_info` sign) |
 | | `sweep_start` / `sweep_end` | float | `1.5` / `3` | airspeed b/t: forward at or below start, full sweep at or above end |
@@ -467,6 +457,7 @@ Each entry takes one of three shapes:
 | | `stall_shift` | float | `3` | stall AoA lowered by this at full deflection, degrees |
 | | `max_speed` | float | `2.0` | b/t; faster => retracts to 0 |
 |  |  |  |  | every `flaps` part of a fixed-wing vehicle is used (terms = mean); keys `]` down / `[` up (driver) |
+| `weapon_bay` | `need_power` | bool | `true` | `false`: hand-worked; no power needed, probe access node toggles (M1129 roof hatches) |
 | `linked_hinge` | `link` | string | — | switchable part id (door, weapon_bay, landing_gear); required |
 | | `open_x_rot` / `open_y_rot` | float | `0` | part pitch/yaw while the link is on |
 | `suspension`, `track` | `spring_stiffness` | float | `200000` | N per block |
@@ -518,8 +509,12 @@ Rounds have no recipes in CA or WFLib; crafting = pack (GregTech).
 | `reload.time` | int | — | ticks |
 | `reload.ammo` | ingredient | *required* (except `holder_only`) | item, `#tag`, or a list of either; list order = creative default first |
 | `reload.variants` | id[] | any | WFLib ammo variants a cartridge must carry |
+| `reload.magazines` | ingredient | — | WFLib magazine items it takes; set => magazine-fed |
+| `reload.loose` | bool | `false` | with `magazines`: loose rounds too |
 | `independent` | bool | — | |
 | `sounds` | key -> [sound](#610-audio) | — | `fire` (pivot; server sends it past tracking range), `shell` (half a cycle later; single-round reload: half the reload, <= 1 s), `reload` |
+| `casing_delay` | float | `0` | s from shot to spent case out of the bolt's `eject` socket; case = round's wflib calibre `casing` (`none` => nothing; `cannon` drawn at case length / 571 mm) |
+| `backblast` | object | — | cone out of the bolt origin, opposite the bore: `length` (`8`), `half_angle` (`30`), `damage` (`12`), `knockback` (`0.8`, blocks/tick); x (1 - d/length)(1 - angle/half_angle); needs line of sight; own vehicle + riders spared |
 
 Muzzle light peak `clamp(6 caliber, 30, 900)`, `1.5 + caliber/40` ticks; caliber = loaded round's, floor 20.
 
@@ -534,9 +529,13 @@ Muzzle light peak `clamp(6 caliber, 30, 900)`, `1.5 + caliber/40` ticks; caliber
 
 - Same calibre, any variant: `"ammo": "wflib:cartridge_20x102"` takes HEI, API and every pack-registered 20x102 load.
 - Size/calibre tags = mount compatibility: `#wflib:missile/<small|medium|large|huge|pod>`, `#wflib:bomb/<small|medium|large>`, `#wflib:rocket/<70mm|80mm>`, `#wflib:artillery_shells`. Third-party round tagged => loadable.
-- One kind per magazine: reload takes the first accepted stack, then only same item + components (variant). Fire dry to switch.
-- `ammo_creative` in the hold: magazine full of the loaded round, else `reload.ammo`'s first item / first `variants` entry.
-- Sync: item + variant only.
+- Loose: one kind per load: reload takes the picked kind, else the first accepted stack (=> new pick); then only same item + components (variant).
+- Magazine-fed: reload seats a stores magazine holding rounds: pick's kind (item + variants, any fill) with most rounds, else the fullest (=> new pick); loose pick + `loose` => loose. Empty / unloaded magazine => stores. Shot = top round (mixed belt fires in order). Capacity = magazine's; none seated => `max_capacity`.
+- WFLib magazine item: use = fill from the inventory (first calibre match), sneak-use = unload. Shipped: `wflib:ammo_can_7_62x51` (200), `ammo_can_12_7x99` (100), `ammo_can_40x53` (48), `drum_20x102` (1550) on `gun_7.62mm`, `gun_12.7mm`, `mk19`, `m61a1`, all `loose`.
+- Pick: `F` (tap = next kind; held + wheel = scroll; release commits). Different kind in the breech => back to the stores (variant kept, overflow dropped), reload. Loader aboard on a `manual` / `autoloader` station => loader picks.
+- List above the weapon card: stores' kinds + counts (synced every 10 ticks), ≤ 5 rows, cursor name scrolls sideways; fades 3 s after the last change. Magazine row: its variants, count = magazines. Rack: "Any loaded" + each racked kind; no unload.
+- `ammo_creative` in the hold: full load of the pick, else the first magazine / `reload.ammo`'s first item / first `variants` entry; list = each magazine full of each accepted variant + every accepted variant if loose, ∞.
+- Sync: item + variant (+ magazine contents) only.
 
 ### 5.4 `missile`
 
@@ -634,8 +633,11 @@ glTF animations, scrubbed by part progress p ∈ [0,1], never played on a clock:
 | switchable (`door`, hatch, `landing_gear`, `weapon_bay`, `airbrake`, …) | → on ? 1 : 0 at 1/span per s, per tick, both sides; span = the part's longest clip |
 | `flaps` | deflection / deepest notch |
 | `linked_hinge` | rotation / open rotation (server hinge speed; collision and picture agree) |
+| `weapon`, clip `<part id>.fire` | time since current weapon's last shot / clip length; never fired => 1 (end key = rest) |
+| `weapon`, clip `<part id>.reload` | current weapon's reload progress; idle => 0 |
 
-- Name `<part id>` or `<part id>.<suffix>`; no json. Other names: warned once at bind, never played.
+- Name `<part id>` or `<part id>.<suffix>`; no json. Weapon parts: suffix `fire` / `reload` only. Other names: warned once at bind, never played.
+- Weapon clips: key nodes under the pitch frame, never the frames (frames = aim); `.fire` and `.reload` key disjoint nodes.
 - Start key = default state (p 0); end = other state, or full deflection.
 - After the controller graph: clip wins on the channels it keys. Toggle sound: trapdoor.
 - Hit mesh follows clips (server + client). Colliders: rest pose; moving collision = `linked_hinge`.
@@ -682,6 +684,8 @@ Node frame => its part: a node under a part's `part`/`pitch` frame is that part'
 | --- | --- |
 | `system` | system kind (table) or `none`; inherited by the subtree; required on `hit` |
 | `side` | `left` / `right` pool split |
+| `unit` | pool split by name (`FL`); inherited; HUD `ROTR FL` |
+| `spin` | `cw` / `ccw`, rotor `unit` only; required there |
 | `health` | pool size; `0` = 30% of `max_health`; larger of shared nodes wins |
 | `swept` | force / forbid the rotor disc |
 | `skip` | node has no hit geometry |
@@ -751,6 +755,7 @@ Role nodes read at load (rest pose, vehicle frame). Each fills a vehicle def key
 | `view` | part | weapon: `operator_view_offset`; else `owner_view_offset` | origin |
 | `sight` | part | `optical_sight_offset` (weapon only) | origin |
 | `bolt` | part | part `bolts` (by `index`) | origin = breech, +Z = bore, Z scale = `barrel_length` |
+| `eject` | part | part `ejects` (by its bolt's `index`; 0..n-1) | origin = case port, +Z = throw, Z scale = speed (blocks/s); pitch frame, rest pose (recoil clips ignored) |
 | `era`, `slat` | entry id | `addon_armor` entry: `kind`, `bone`, `center`, `normal`, `up`, `width`, `height` | quad mesh: normal = winding; `up` = edge nearest +Y (flat: nearest +Z); size/centre = extents. `surface` present => fills it instead |
 | `mount_point` | entry id | `mount_points` entry: `offset`, `yaw`, `pitch`, `roll` | origin, rotation |
 | `hitch` | entry id | `towing.hitches` entry `offset` | origin |
@@ -761,6 +766,7 @@ Role nodes read at load (rest pose, vehicle frame). Each fills a vehicle def key
 | `camera`, `camera_zoomed` | — | `view_info.third_person_center_offset[_zoomed]` | origin |
 | `light` | — | none: GemRender spot | posed frame; beam +Z, cookie up +Y |
 | `propeller` | — | `attributes.propellers` (ship) | origin = hub; mean scale = radius |
+| `station` | part (`missile_holder`) | holder station (by `index`) | origin = round centre, +Z = nose, Z scale = length (launch = origin − length/2 along +Z); rides the holder's `part` frame |
 | `cargo_bay` | — | `cargo.bay_center`, `cargo.bay_size` | origin; scale = full size |
 | `center_of_mass` | — | `physics_info.center` | origin |
 | `pivot` | — | `center_offset` | origin |
@@ -768,7 +774,7 @@ Role nodes read at load (rest pose, vehicle frame). Each fills a vehicle def key
 | frame keys | — | part `rot_info` `x_rot_min/max` (`pitch` frame, none: `part`), `y_rot_min/max` (`part` frame); `suspension` part `render_bone` = its `part` frame name | `combinedassault.*` on the frame node |
 
 - `combinedassault.index`: position in a list field; absent => file order.
-- Weapon view / sight: relative to the part frame; bolt: in its `pitch` frame (none: `part`).
+- Weapon view / sight: relative to the part frame; bolt, eject: in its `pitch` frame (none: `part`).
 - Addon `bone` = the socket's frame name.
 - `light` keys (`combinedassault.*`): `kind` `head` (default) \| `search`, `color` `#rrggbb`, `range`, `intensity` (E ~1 at `sqrt(intensity)` blocks), `inner`/`outer` half-angle deg (`0 < inner <= outer < 89`), `shadow`, `cookie`. Defaults per kind: `VehicleLight.Kind`. Toggle key (default `\`): driver -> `head`, other crew -> `search`; vehicle with one kind => that kind. Destroyed => off.
 - Part `mounts` model: its part-target sockets with no interface => the carrying part. Weapon-scoped mount bolts replace the part's `bolts` while that weapon is selected. Station sockets (gunner seat, view) belong in a mount, not the shared hull model: an unarmed sibling then loads.
@@ -842,8 +848,15 @@ mass = physics_info.mass          (curb weight)
 
 - Battery mass constant from full to flat; tank lightens as it burns.
 - Mass divides thrust in every drivetrain; no separate handling stat.
-- Cargo kg only with Ultimate Weight (`wfweight`, reflective, fails closed). Hold recounted <= 1/s, only on change.
-- Parts recomputed per server tick, synced (`PART_MASS`) => client prediction agrees.
+- `load = mass / (curb + fuel + parts)` divides pack kinematics declared unladen: tracked accel / brake / turn
+  accel, helicopter rotation accel, fixed-wing pitch / roll / yaw rate, multirotor `tilt_rate`, FPV key rates
+  (mouse exempt). Fuel burn × load.
+- Cargo kg per item: Ultimate Weight (`wfweight`) value if > 0, else built in: block item = 1 L of material
+  (tags: `c:storage_blocks/<metal>` by density, wool 0.1, leaves / hoe 0.3, axe 0.6, shovel 1.6, pickaxe 2.6,
+  else 1 kg/L); `c:ingots|gems` 0.114 L, `c:raw_materials` 1.5×, `c:nuggets` /9, `c:dusts` /2; wflib
+  cartridge / charge = own mass; filled bucket 0.3 kg + 1 L fluid; container / bundle contents counted
+  (depth 4); else 0.25 kg. Hold recounted <= 1/s, only on change.
+- Parts + cargo synced (`PART_MASS`, `CARGO_MASS`) => client prediction agrees.
 
 ---
 
@@ -862,30 +875,32 @@ Skips `main_rotor_force`, arcade aero, `max_air_speed`.
 | `tilt_rate` | `10` | deg/tick |
 | `linear_drag` / `quadratic_drag` | `0.04` / `0.02` | per tick, × v / × v² (blocks/tick) |
 | `velocity_gain` / `vertical_gain` | `0.8` / `0.28` | STABILIZED velocity loop |
-| `max_climb` / `max_descent` | `0.6` / `0.45` | blocks/tick; unpowered => no descent limit |
+| `max_climb` / `max_descent` | `0.6` / `0.45` | blocks/tick; unpowered or FPV => none (drag only) |
 | `max_speed` / `climb_speed` | `0.9` / `0.3` | STABILIZED stick authority, blocks/tick |
 | `yaw_rate` / `yaw_response` | `8` / `0.35` | deg/tick cap; fraction of mouse-yaw error per tick |
 | `mode` | `stabilized` | `stabilized` \| `fpv`; hover key toggles |
-| `fpv` | `{}` | FPV attitude, keys as §8.2 |
+| `fpv` | `{}` | FPV acro, §8.2 |
 
 - STABILIZED: WASD/space/ctrl = velocity setpoint in heading frame, mouse = heading. Same controller as autopilot.
-- FPV: §8.2 attitude; collective = throttle.
-- Not client-predicted.
+- FPV: §8.2.
+- Not client-predicted; FPV attitude excepted (§8.2).
+- ≥2 rotor `unit` pools => per-rotor thrust: max thrust share holdable at zero roll/pitch/yaw torque, each rotor ≤ its effectiveness (LP). Quad: any dead rotor => 0 => uncontrolled; rotors at power × last collective × effectiveness tumble it toward the dead one (yaw from spin), FPV attitude server-owned. Hexa/octa: hover on reduced share. <2 units => lumped `rotor` pool.
 
 ### 8.2 `attributes.fpv`
 
-Direct mouse attitude, no sideslip limit/weathervaning. Thrust untouched: nose down + collective = dive.
+Acro: body rates, no self-levelling, no attitude limit. Mouse = body pitch, heading about world vertical (sign by
+body up => screen-right inverted too; tilt turns with it); W/S pitch, A/D roll, Q/E body yaw;
+collective = throttle along the disc. Camera: OPERATOR = seat 0 `sight` socket fixed to the body; THIRD_PERSON = chase on
+body heading.
 
 | field | default | notes |
 | --- | --- | --- |
-| `response` | `0.35` | fraction of remaining angle closed per tick; 0.01–1 |
-| `yaw_rate` | `6.0` | deg/tick |
-| `pitch_bias` | `25.0` | deg forward pitch at full stick |
-| `bank_per_yaw` | `4.0` | deg roll per deg/tick yaw |
-| `max_bank` | `45.0` | |
-| `max_pitch` | `80.0` | |
+| `pitch_rate` / `roll_rate` / `yaw_rate` | `12` / `15` / `8` | deg/tick, keys |
+| `camera_tilt` | `0` | deg lens uptilt |
 
-Absent => stock model.
+- Body yaw alone leaves thrust axis => no change of course.
+- Attitude: operator client steps at input sample (previous keys, the ones render led by); server adopts every report, no own step. Gap: server-side tumble overwritten by next report.
+- Absent => stock model.
 
 ---
 
@@ -927,7 +942,7 @@ Top left, `MANUAL`/`AUTO` only: quadrant (stops, barrel, laid mark), ELEV vs GUN
 - Target height: rack rounds from an `indirect_fire` station take the surface server-side once the target chunk loads (map heights over unexplored ground read 64).
 - Default key clashes, rebind one of each: JourneyMap fullscreen `J` = leave-vehicle `J`; Xaero map `M` = tow-couple `M` (and wflib TV view); Xaero minimap settings `Y` = indirect mode `Y`.
 - Xaero minimap default top left = indirect panel: move one.
-- Mixed rack: `6` cycles the next round (any -> each loaded kind); the server fires only the selected kind ([§15](#15-pylon-missiles)).
+- Mixed rack: `F` picks the next round (§5.3); the server fires only the selected kind ([§15](#15-pylon-missiles)).
 
 ---
 
@@ -1226,18 +1241,23 @@ Unmanned launcher: [§18](#18-air-defence).
 
 ## 15. Pylon missiles
 
-- Rack = `missile_holder`, one cube per station ([§4.6](#46-other-part-types)), fed to a `missile` weapon with
+- Rack = `missile_holder`, one `station` socket per station ([§4.6](#46-other-part-types)), fed to a `missile` weapon with
   `missile_holder` + `holder_only` ([§5.4](#54-missile)). Right-click with a tagged round => first free slot of
   the first holder that accepts its size.
+- Probe node per station, on foot: fitting round carried => load that station; loaded + empty hand / round carried => unload. Same for weapon `round_bones` stations when `ammo_capacity` == bone count (jet pylons): load fills the next bone, unload empties the lowest loaded.
 - WFLib round: its own preset flies to the aim point, or homes on the lock; leaves the station tail on the
-  vehicle's velocity. Preset ascent `air_launch` => 8 ticks motor cold, then attack.
+  vehicle's velocity. Preset ascent `air_launch` => 8 ticks motor cold, then attack. Ground vehicle, ascent `ascent`,
+  no cold launch => + ascent speed along the station: climbs at the tube angle; level tube => attack at once.
 - `missile/small` = station-sized (≤ 1.9 long, ≤ 0.36 across): wfcore's `missile_atgm`, `missile_atgm_frag`,
   `missile_guided_rocket`, tagged from wfcore's data. No WFLib airframe outside `atgm`/`guided_rocket` fits.
 - Slot fires any WFLib round (§5.3); fit = `wflib:missile/<size>` tag alone.
 - Drawn: WFLib airframe at true size; any other round, its item sprite.
-- Selected round (`6`, map fire mission): lowest slot of that kind; none loaded => nothing fires.
-- `POD` = MLRS cell: `wflib:missile_gmlrs`, `missile_gmlrs_aw`.
-- Shipped: `mq9` (UAV, six stations); `m142` (six cells on the elevating pod: holder frame under the launcher's `pitch` frame).
+- Selected round (`F`, map fire mission): lowest slot of that kind; none loaded => nothing fires.
+- `POD` = MLRS cell: `wflib:missile_gmlrs`, `missile_gmlrs_aw`. `POD_LARGE`: `wflib:missile_atacms`.
+- `pods` holder: slot i = seated pod's tube i; pose = pod tube offset (x, y) from the `station` sockets' centroid, station 0 rotation; length = pod's. No pod => no slots. Pods: `wflib:pod_gmlrs` (6 x `missile/pod`, tubes = `m142` stations), `wflib:pod_atacms` (1 x `missile/pod_large`, centred).
+- Right-click with a pod => seated; previous pod, as loaded, to the player. Pod item use = fill empty tubes from the inventory; sneak-use = unload.
+- Seated pod dry + stores hold a loaded pod + crewed => `pod_swap_time` => swap; empty pod to the stores.
+- Shipped: `mq9` (UAV, six stations); `m142` (pod on the elevating launcher: holder frame under the launcher's `pitch` frame; `default_pod` `wflib:pod_gmlrs`).
 
 ## 16. ERA and slat
 
@@ -1404,9 +1424,11 @@ Pilot by class: `multirotor` => `Multirotor.step` setpoint; rotary => hover loop
 
 | payload type | holds | trigger | config |
 | --- | --- | --- | --- |
-| `warhead` | 1 `#c:ammo/rockets/explosive` (wflib `StrappedExplosive`) | impact >= `fuze_speed`, operator, shot down; consumes drone | `arming_ticks` 40, `fuze_speed` 0.12, `hit_damage` 30, `slots` 1 |
+| `warhead` | 1 `#wflib:drone_explosive` (wflib `StrappedExplosive`) | impact >= `fuze_speed`, operator (LMB), shot down => consumes drone; release (secondary shoot) => unpowered wflib round, drone velocity, impact fuze | `arming_ticks` 40, `fuze_speed` 0.12, `hit_damage` 30, `slots` 1 |
 | `grenade_rack` | `#mineassault:drone_droppable` `ChargeItem`s | operator only; one dropped per trigger, drone velocity, full fuse | `slots` 4 (<= 4 synced) |
+| `speaker` | 1 `wflib:loudspeaker` (0.6 kg) | none; carrier radio voice = SPEAKER | - |
 
 - Autopilot STRIKE ([§19](#19-autonomy)): offered only while loaded; rack drops one per release tick (stick); `warhead` => terminal dive on the aim point.
-- Shipped: `mavic` (plain / kamikaze / bomber), `humvee` (unarmed / m2 / mk19).
+- Shipped: `mavic`, `amazog` (plain / kamikaze / bomber / speaker), `humvee` (unarmed / m2 / mk19).
+- Radio (wflib `RadioCarrier`): synced `RADIO` station, NBT `Radio`; voice = SPEAKER if `speaker` loaded, else CABIN for non-UAV hulls with seats and not destroyed. Key K (`radio_station`) cycles while riding; PDA Radio app for linked bodies. HUD `hud/radio`.
 

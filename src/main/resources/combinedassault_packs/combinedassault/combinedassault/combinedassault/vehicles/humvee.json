@@ -41,7 +41,8 @@
         }
     },
     "storage": {
-        "slots": 18
+        "slots": 18,
+        "max_payload": 800
     },
     "parts": [
         {

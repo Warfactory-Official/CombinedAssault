@@ -27,12 +27,12 @@ public class MultirotorGameTest {
     private static final ResourceLocation QUAD = CombinedAssault.modLocation("mavic");
 
     @Nullable
-    private static RotaryWingVehicle spawn(GameTestHelper helper, ResourceLocation id, int x, int height) {
+    static RotaryWingVehicle spawn(GameTestHelper helper, ResourceLocation id, int x, int height) {
         return spawnAt(helper, id, helper.absolutePos(new BlockPos(x, height, 1)));
     }
 
     @Nullable
-    private static RotaryWingVehicle spawnAt(GameTestHelper helper, ResourceLocation id, BlockPos at) {
+    static RotaryWingVehicle spawnAt(GameTestHelper helper, ResourceLocation id, BlockPos at) {
         Optional<BaseVehicleData> data = CommonAssetsManager.vehicleDataManager().getVehicleData(id);
         if (data.isEmpty()) {
             helper.fail(id + " not in the vehicle roster");

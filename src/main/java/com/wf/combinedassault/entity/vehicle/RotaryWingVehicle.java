@@ -23,6 +23,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.api.animation.IAnimationEntity;
 import com.wf.combinedassault.api.animation.IAnimationInstance;
 import com.wf.combinedassault.client.render.animation.context.RotaryWingVehicleContext;
@@ -30,11 +31,13 @@ import com.wf.combinedassault.client.resource.vehicle.RotaryWingVehicleDisplay;
 import com.wf.combinedassault.client.resource.vehicle.VehicleDisplay;
 import com.wf.combinedassault.network.message.ClientVehicleAction;
 import com.wf.combinedassault.util.EntityUtil;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import com.wf.combinedassault.all.AllConfigs;
 import com.wf.combinedassault.util.ParticleUtil;
 import com.wf.combinedassault.fpv.FpvFlight;
 import com.wf.combinedassault.multirotor.MultirotorFlight;
+import com.wf.combinedassault.multirotor.RotorLayout;
 import com.wf.combinedassault.util.PhysicsHelper;
 import com.wf.combinedassault.util.VectorUtil;
 import com.wf.combinedassault.vehicle.solver.AircraftAerodynamics;
@@ -55,8 +58,11 @@ public class RotaryWingVehicle extends AbstractVehicle
     public static final EntityDataAccessor<Float> COLLECTIVE_PITCH = SynchedEntityData.defineId(RotaryWingVehicle.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Float> PITCH_INPUT = SynchedEntityData.defineId(RotaryWingVehicle.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Float> ROLL_INPUT = SynchedEntityData.defineId(RotaryWingVehicle.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Boolean> MULTIROTOR_FPV = SynchedEntityData.defineId(RotaryWingVehicle.class, EntityDataSerializers.BOOLEAN);
     /** Deg/tick of torque yaw at full power and collective with no anti-torque; nose right (US rotor sense). */
     private static final float TORQUE_YAW = 8;
+    /** Deg/tick^2 every rotation rate loses per tick. */
+    public static final float ROT_FRICTION = 0.1f;
     public float mainRotorForce = 1.4f * PhysicsHelper.GRAVITY * physicsEngine.mass;
     public float ceiling = 256;
     public float xRotSpeedAcceleration = 1f;
@@ -89,6 +95,9 @@ public class RotaryWingVehicle extends AbstractVehicle
     public FpvFlight fpvFlight;
     /** Multirotor force law, or null for the helicopter model. */
     public MultirotorFlight multirotor;
+    @Nullable
+    private RotorLayout rotorLayout;
+    private boolean rotorLayoutBound;
     public boolean fastRoping;
     public String fastRopingDoorId;
     public HashMap<UUID, FastRopingContext> fastRopingContexts = new HashMap<>();
@@ -132,6 +141,7 @@ public class RotaryWingVehicle extends AbstractVehicle
         builder.define(COLLECTIVE_PITCH, 0f);
         builder.define(PITCH_INPUT, 0f);
         builder.define(ROLL_INPUT, 0f);
+        builder.define(MULTIROTOR_FPV, false);
     }
 
     @Override
@@ -179,8 +189,60 @@ public class RotaryWingVehicle extends AbstractVehicle
                 tickFastRoping();
             }
             tickCargo();
+            if (multirotor != null) {
+                entityData.set(MULTIROTOR_FPV, multirotor.fpv());
+            }
         }
         tickInput();
+    }
+
+    /** Acro model in effect, either side; null => stock or STABILIZED. */
+    @Nullable
+    public FpvFlight fpvAttitude() {
+        if (multirotor != null) {
+            return entityData.get(MULTIROTOR_FPV) ? multirotor.fpvAttitude() : null;
+        }
+        return fpvFlight;
+    }
+
+    /** Operator's own FPV drone: stepped at input sample ({@link FpvFlight#clientStep}); server adopts the report. */
+    @Override
+    protected boolean clientOwnsAttitude() {
+        return level().isClientSide() && LocalVehiclePlayer.instance.vehicle == this
+                && LocalVehiclePlayer.instance.fpvFlight() != null && fpvAuthority() > 0;
+    }
+
+    /** Rotor output factor for FPV steering; 0 => nothing to steer with. */
+    public double fpvAuthority() {
+        return getPower() / 100.0 * strain() * rotorShare();
+    }
+
+    /** Multirotor with rotor units; null before hits load or for a lumped / single rotor. */
+    @Nullable
+    public RotorLayout rotorLayout() {
+        if (!rotorLayoutBound && multirotor != null && hits() != null) {
+            rotorLayout = RotorLayout.of(this);
+            rotorLayoutBound = true;
+        }
+        if (rotorLayout != null) {
+            rotorLayout.update(hullComponents());
+        }
+        return rotorLayout;
+    }
+
+    /** Rotor output holdable level, 0..1: balanced share over rotor units, else lumped {@link VehicleRotors#lift}. */
+    public double rotorShare() {
+        RotorLayout layout = rotorLayout();
+        return layout != null ? layout.balanced() : VehicleRotors.of(this).lift();
+    }
+
+    /** Own FPV drone: extrapolated by the input not yet ticked, so lens and hull answer the mouse per frame. */
+    @Override
+    public Quaternionf rotYXZ(float partialTick) {
+        if (!clientOwnsAttitude()) {
+            return super.rotYXZ(partialTick);
+        }
+        return fpvAttitude().lead(this, LocalVehiclePlayer.instance.fpvTurnX, LocalVehiclePlayer.instance.fpvTurnY, partialTick);
     }
 
     private void tickInput() {
@@ -232,11 +294,15 @@ public class RotaryWingVehicle extends AbstractVehicle
         // Rotor power coefficient: power x collective x blade lift.
         VehicleRotors rotors = VehicleRotors.of(this);
         if (multirotor != null) {
-            multirotor.tick(this, getPower() / 100.0 * rotors.lift());
+            RotorLayout layout = rotorLayout();
+            double power = getPower() / 100.0 * strain();
+            double share = layout != null ? layout.balanced() : rotors.lift();
+            multirotor.tick(this, power * share,
+                    layout != null && share <= 0 && power > 0 && layout.meanOutput(1) > 0 ? layout : null, power);
             airSpeed = getDeltaMovement();
             return Vec3.ZERO;
         }
-        double scale = ((double) getPower() / 100) * ((double) getCollectivePitch() / 100) * rotors.lift();
+        double scale = ((double) getPower() / 100) * strain() * ((double) getCollectivePitch() / 100) * rotors.lift();
         // dVV: climb(+)/descend(-) speed along rotor axis; climb cuts the coefficient, descent raises it
         // (vortex-ring/translational-lift effect).
         Vec3 vP = relativeRotDirection(new Vec3(0, 1, 0), false);
@@ -262,7 +328,7 @@ public class RotaryWingVehicle extends AbstractVehicle
         if (arcade) {
             Vector3f v = airSpeed.toVector3f();
             aerodynamics.applyToVelocity(v, maxAirSpeed, physicsEngine.G,
-                    getPower() / 100f * (float) rotors.lift());
+                    (float) (getPower() / 100f * strain()) * (float) rotors.lift());
             airSpeed = new Vec3(v);
         } else {
             double al = airSpeed.length();
@@ -289,9 +355,10 @@ public class RotaryWingVehicle extends AbstractVehicle
             return force;
         }
 
-        float xRotSpeedAcceleration = (float) (this.xRotSpeedAcceleration * scale);
-        float yRotSpeedAcceleration = (float) (this.yRotSpeedAcceleration * scale);
-        float zRotSpeedAcceleration = (float) (this.zRotSpeedAcceleration * scale);
+        double inertia = scale / load();
+        float xRotSpeedAcceleration = (float) (this.xRotSpeedAcceleration * inertia);
+        float yRotSpeedAcceleration = (float) (this.yRotSpeedAcceleration * inertia);
+        float zRotSpeedAcceleration = (float) (this.zRotSpeedAcceleration * inertia);
         boolean yawAimControl = !(controlUnit.leftYaw || controlUnit.rightYaw) && !controlUnit.yRotKeep && scale > 0;
         applyYawStability();
         float yDiff = yawAimControl ? Mth.wrapDegrees(controlUnit.yRot - this.getYRot()) : 0;
@@ -398,9 +465,9 @@ public class RotaryWingVehicle extends AbstractVehicle
                 this.setZRot(this.getZRot() + zRotSpeed);
             }
         }
-        yRotSpeed = Math.signum(yRotSpeed) * (Math.max(0, Math.abs(yRotSpeed) - 0.1f));
-        xRotSpeed = Math.signum(xRotSpeed) * (Math.max(0, Math.abs(xRotSpeed) - 0.1f));
-        zRotSpeed = Math.signum(zRotSpeed) * (Math.max(0, Math.abs(zRotSpeed) - 0.1f));
+        yRotSpeed = Math.signum(yRotSpeed) * (Math.max(0, Math.abs(yRotSpeed) - ROT_FRICTION));
+        xRotSpeed = Math.signum(xRotSpeed) * (Math.max(0, Math.abs(xRotSpeed) - ROT_FRICTION));
+        zRotSpeed = Math.signum(zRotSpeed) * (Math.max(0, Math.abs(zRotSpeed) - ROT_FRICTION));
 
         if (isDestroyed() && !onGround()) {
             this.setYRot(this.getYRot() + 10);

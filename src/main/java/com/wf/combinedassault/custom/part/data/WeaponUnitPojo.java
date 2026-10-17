@@ -4,6 +4,7 @@ import com.wf.combinedassault.vehicle.crew.WeaponLoading;
 import com.google.gson.annotations.SerializedName;
 import net.minecraft.world.phys.Vec3;
 import com.wf.combinedassault.vehicle.pojo.Bolt;
+import com.wf.combinedassault.vehicle.pojo.Eject;
 import com.wf.combinedassault.vehicle.pojo.WeaponInfo;
 
 import java.util.List;
@@ -12,6 +13,9 @@ public class WeaponUnitPojo extends RotatableUnitPojo {
 
     @SerializedName("bolts")
     public List<Bolt> bolts = null;
+
+    @SerializedName("ejects")
+    public List<Eject> ejects = List.of();
 
     @SerializedName("ammo_capacity")
     public int ammoCapacity = -1;

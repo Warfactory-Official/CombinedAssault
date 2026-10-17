@@ -11,11 +11,14 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import com.wf.combinedassault.custom.CommonAssetsManager;
 import com.wf.combinedassault.custom.part.PartUnitEntry;
+import com.wf.combinedassault.custom.part.data.MissileHolderUnitData;
 import com.wf.combinedassault.custom.part.data.WeaponUnitData;
 import com.wf.combinedassault.custom.serialize.GsonUtil;
 import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
 import com.wf.combinedassault.vehicle.parenting.DeckFrame;
 import com.wf.combinedassault.vehicle.pojo.Bolt;
+import com.wf.combinedassault.vehicle.pojo.Eject;
+import com.wf.combinedassault.vehicle.pojo.Station;
 import com.wf.combinedassault.vehicle.structure.VehicleCubeGroup;
 
 import java.util.ArrayList;
@@ -41,6 +44,7 @@ public final class MountDefaults {
     private static final String WEAPON = "combinedassault:weapon";
     private static final String TRACK = "combinedassault:track";
     private static final String SUSPENSION = "combinedassault:suspension";
+    private static final String MISSILE_HOLDER = "combinedassault:missile_holder";
     /** Track outline vertex weld, blocks. */
     private static final float WELD = 1.0e-4f;
 
@@ -110,6 +114,8 @@ public final class MountDefaults {
                 relative.add(new Relative(target, "sight", 0, mount));
             }
             case "bolt" -> bolt(mount, target);
+            case "eject" -> eject(mount, target);
+            case "station" -> station(mount, target);
             case "era", "slat" -> addon(mount, field, target);
             case "mount_point" -> {
                 JsonObject point = entry(vehicle, "mount_points", target);
@@ -285,9 +291,39 @@ public final class MountDefaults {
         relative.add(new Relative(part, "bolt", index, mount));
     }
 
+    /** Origin = case port; +Z = throw; Z scale = speed (blocks/s). Index = its bolt's. Frame: as the bolt. */
+    private void eject(ModelMounts.Mount mount, String part) {
+        int index = Math.max(mount.index(), 0);
+        if (!parts.containsKey(part) || !weapon(parts.get(part))) {
+            throw fail(mount, "eject on " + part + ", which is no weapon part");
+        }
+        for (Relative other : relative) {
+            if (other.field.equals("eject") && other.part.equals(part) && other.index == index) {
+                throw fail(mount, "repeats eject " + index + " of part " + part);
+            }
+        }
+        relative.add(new Relative(part, "eject", index, mount));
+    }
+
+    /** Holder station: origin = round centre, +Z = nose, Z scale = length. Frame: the holder's part node. */
+    private void station(ModelMounts.Mount mount, String part) {
+        JsonObject json = part(mount, part);
+        if (!json.has("type") || !json.get("type").getAsString().equals(MISSILE_HOLDER)) {
+            throw fail(mount, "station on part " + part + ", which is not a missile_holder");
+        }
+        int index = Math.max(mount.index(), 0);
+        for (Relative other : relative) {
+            if (other.field.equals("station") && other.part.equals(part) && other.index == index) {
+                throw fail(mount, "repeats station " + index + " of part " + part);
+            }
+        }
+        relative.add(new Relative(part, "station", index, mount));
+    }
+
     /**
-     * Weapon view / sight / bolt, frames only the parsed structure has: view, sight = origin - part pivot (yaw bone);
-     * bolt = in the pitch bone's rest frame (origin = breech, +Z = bore, Z scale = {@code barrel_length}).
+     * Weapon view / sight / bolt / eject, holder station: frames only the parsed structure has: view, sight = origin - part pivot (yaw bone);
+     * bolt, eject = in the pitch bone's rest frame (bolt: origin = breech, +Z = bore, Z scale = {@code barrel_length}).
+     * station = in the holder part bone's rest frame.
      */
     public record Relative(String part, String field, int index, ModelMounts.Mount mount) {
     }
@@ -307,17 +343,55 @@ public final class MountDefaults {
             given.put(part.getAsJsonObject().get("id").getAsString(), part.getAsJsonObject());
         }
         Map<String, WeaponUnitData> weapons = new LinkedHashMap<>();
+        Map<String, MissileHolderUnitData> holders = new LinkedHashMap<>();
         for (PartUnitEntry<?, ?> entry : data.getParts()) {
             if (entry.data() instanceof WeaponUnitData weapon) {
                 weapons.put(weapon.getId(), weapon);
+            } else if (entry.data() instanceof MissileHolderUnitData holder) {
+                holders.put(holder.getId(), holder);
             }
         }
+        Map<String, TreeMap<Integer, JsonElement>> stations = new LinkedHashMap<>();
         Map<String, JsonObject> values = new LinkedHashMap<>();
         Map<String, TreeMap<Integer, JsonElement>> bolts = new LinkedHashMap<>();
         Map<String, Map<String, TreeMap<Integer, JsonElement>>> weaponBolts = new LinkedHashMap<>();
+        Map<String, TreeMap<Integer, JsonElement>> ejects = new LinkedHashMap<>();
         for (Relative r : relative) {
             WeaponUnitData weapon = weapons.get(r.part);
             String where = vehicleId + ": glTF node " + r.mount.name() + " ";
+            if (r.field.equals("station")) {
+                VehicleCubeGroup group = holders.get(r.part).getRawStructureGroup();
+                if (group == null) {
+                    throw new IllegalArgumentException(where + "part " + r.part + " has no part frame");
+                }
+                VehicleCubeGroup.GlobalTransform rest = group.globalTransform();
+                Quaternionf inverse = new Quaternionf(rest.rotation()).conjugate();
+                Vector3f offset = inverse.transform(new Vector3f(r.mount.origin()).sub(rest.offset().toVector3f()));
+                Vector3f angles = inverse.mul(r.mount.rotation(), new Quaternionf()).getEulerAnglesYXZ(new Vector3f());
+                JsonObject station = new JsonObject();
+                station.add("offset", vec(offset));
+                station.add("length", number(r.mount.scale().z));
+                station.add("x_rot", angle((float) Math.toDegrees(angles.x)));
+                station.add("y_rot", angle((float) Math.toDegrees(-angles.y)));
+                station.add("z_rot", angle((float) Math.toDegrees(angles.z)));
+                stations.computeIfAbsent(r.part, k -> new TreeMap<>()).put(r.index, station);
+                continue;
+            }
+            if (r.field.equals("eject")) {
+                VehicleCubeGroup group = weapon.getRawXTurnGroup();
+                if (group == null) {
+                    throw new IllegalArgumentException(where + "part " + r.part + " has no structure bone to eject from");
+                }
+                VehicleCubeGroup.GlobalTransform rest = group.globalTransform();
+                Quaternionf inverse = new Quaternionf(rest.rotation()).conjugate();
+                JsonObject eject = new JsonObject();
+                eject.add("offset", vec(inverse.transform(new Vector3f(r.mount.origin()).sub(rest.offset().toVector3f()))));
+                eject.add("direction", vec(inverse.mul(r.mount.rotation(), new Quaternionf())
+                        .transform(new Vector3f(0, 0, 1))));
+                eject.add("speed", number(r.mount.scale().z));
+                ejects.computeIfAbsent(r.part, k -> new TreeMap<>()).put(r.index, eject);
+                continue;
+            }
             if (r.field.equals("bolt")) {
                 VehicleCubeGroup group = weapon.getRawXTurnGroup();
                 if (group == null) {
@@ -341,6 +415,20 @@ public final class MountDefaults {
                         ? "operator_view_offset" : "optical_sight_offset", vec(new Vector3f(r.mount.origin()).sub(pivot)));
             }
         }
+        stations.forEach((part, byIndex) -> {
+            JsonArray list = new JsonArray();
+            byIndex.values().forEach(list::add);
+            values.computeIfAbsent(part, k -> new JsonObject()).add("stations", list);
+        });
+        ejects.forEach((part, byIndex) -> {
+            if (byIndex.lastKey() != byIndex.size() - 1) {
+                throw new IllegalArgumentException(vehicleId + ": part " + part + " ejects " + byIndex.keySet()
+                        + "; indices run 0.." + (byIndex.size() - 1));
+            }
+            JsonArray list = new JsonArray();
+            byIndex.values().forEach(list::add);
+            values.computeIfAbsent(part, k -> new JsonObject()).add("ejects", list);
+        });
         bolts.forEach((part, byIndex) -> {
             JsonArray list = new JsonArray();
             byIndex.values().forEach(list::add);
@@ -369,15 +457,21 @@ public final class MountDefaults {
         return new Resolved(values, repeated, overridden);
     }
 
-    /** Resolved values into {@code data}'s weapon parts. */
+    /** Resolved values into {@code data}'s weapon / holder parts. */
     public static void apply(BaseVehicleData<?> data, Map<String, JsonObject> values) {
         for (PartUnitEntry<?, ?> entry : data.getParts()) {
             JsonObject keys = values.get(entry.data().getId());
+            if (keys != null && keys.has("stations") && entry.data() instanceof MissileHolderUnitData holder) {
+                holder.applyStations(List.of(GsonUtil.GSON.fromJson(keys.get("stations"), Station[].class)));
+            }
             if (keys != null && entry.data() instanceof WeaponUnitData weapon) {
                 weapon.applySockets(
                         keys.has("optical_sight_offset") ? GsonUtil.GSON.fromJson(keys.get("optical_sight_offset"), Vec3.class) : null,
                         keys.has("operator_view_offset") ? GsonUtil.GSON.fromJson(keys.get("operator_view_offset"), Vec3.class) : null,
                         keys.has("bolts") ? List.of(GsonUtil.GSON.fromJson(keys.get("bolts"), Bolt[].class)) : null);
+                if (keys.has("ejects")) {
+                    weapon.applyEjects(List.of(GsonUtil.GSON.fromJson(keys.get("ejects"), Eject[].class)));
+                }
                 if (keys.has("weapon_bolts")) {
                     Map<ResourceLocation, List<Bolt>> byWeapon = new LinkedHashMap<>();
                     keys.getAsJsonObject("weapon_bolts").entrySet().forEach(e -> byWeapon.put(

@@ -69,7 +69,7 @@ public class VehicleLaser extends AbstractVehicleWeapon<VehicleLaserWeaponData> 
         } else {
             LaserDamage.draw(level, from, end);
         }
-        this.lastShootTime = System.currentTimeMillis();
+        markShot();
         return true;
     }
 

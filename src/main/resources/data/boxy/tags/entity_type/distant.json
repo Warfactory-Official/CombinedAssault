@@ -1,0 +1,15 @@
+{
+  "values": [
+    "combinedassault:none_vehicle",
+    "combinedassault:wheeled_vehicle",
+    "combinedassault:tracked_vehicle",
+    "combinedassault:vessel_vehicle",
+    "combinedassault:rotary_wing_vehicle",
+    "combinedassault:fixed_wing_vehicle",
+    "combinedassault:ship",
+    "combinedassault:m1a2",
+    "combinedassault:ah64d",
+    "combinedassault:vehicle_part",
+    "combinedassault:paraglider_canopy"
+  ]
+}

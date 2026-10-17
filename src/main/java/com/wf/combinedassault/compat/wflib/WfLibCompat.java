@@ -43,25 +43,16 @@ public final class WfLibCompat {
         return round.getItem() instanceof com.wf.wflib.item.MissileItem missile && missile.preset().isInterceptor();
     }
 
-    /**
-     * Draws racked round as its airframe along pose +Z, flush from {@code top} (pose Y). Client only.
-     * @return false: not a WFLib missile with a baked airframe.
-     */
-    public static boolean renderRound(ItemStack round, double top, com.mojang.blaze3d.vertex.PoseStack poseStack,
-                                      net.minecraft.client.renderer.MultiBufferSource bufferSource, int packedLight) {
-        return RackedMissiles.render(round, top, poseStack, bufferSource, packedLight);
-    }
-
     /** Client: round has a baked WFLib airframe. */
     public static boolean canRenderRound(ItemStack round) {
         return !round.isEmpty() && RackedMissiles.baked(round) != null;
     }
 
-    /** Client: airframe centred on the pose origin, nose +Z. */
-    public static void renderRoundCentered(ItemStack round, com.mojang.blaze3d.vertex.PoseStack poseStack,
+    /** Client: airframe centred on the pose origin, nose +Z; longer than {@code length} => scaled down to it. */
+    public static void renderRoundCentered(ItemStack round, float length, com.mojang.blaze3d.vertex.PoseStack poseStack,
                                            net.minecraft.client.renderer.MultiBufferSource bufferSource,
                                            int packedLight) {
-        RackedMissiles.renderCentered(round, poseStack, bufferSource, packedLight);
+        RackedMissiles.renderCentered(round, length, poseStack, bufferSource, packedLight);
     }
 
 }

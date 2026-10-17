@@ -65,6 +65,9 @@ public class BaseVehicleDataPojo {
     @SerializedName("uav")
     public boolean uav = false;
 
+    @SerializedName("pickup")
+    public boolean pickup = false;
+
     @SerializedName("autonomy")
     public AutonomyInfo autonomy;
 

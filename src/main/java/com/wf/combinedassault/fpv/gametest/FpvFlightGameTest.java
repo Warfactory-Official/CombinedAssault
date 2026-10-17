@@ -4,18 +4,15 @@ import com.google.gson.JsonObject;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import com.wf.combinedassault.vehicle.control.ControlUnit;
+import org.joml.Vector3f;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.all.AllEntities;
 import com.wf.combinedassault.entity.vehicle.RotaryWingVehicle;
 import com.wf.combinedassault.fpv.FpvFlight;
 
-/**
- * Diverges from stock rotary-wing yaw: host clamps to a sideslip limit (15 deg at speed) and weathervanes
- * into the airflow; a drone must hold full yaw authority regardless of airspeed.
- */
 @GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class FpvFlightGameTest {
@@ -25,12 +22,10 @@ public class FpvFlightGameTest {
     /** Mirrors the shipped drone's json, so the test measures what's actually flown. */
     private static FpvFlight shipped() {
         JsonObject json = new JsonObject();
-        json.addProperty("response", 0.35);
+        json.addProperty("pitch_rate", 12.0);
+        json.addProperty("roll_rate", 15.0);
         json.addProperty("yaw_rate", 8.0);
-        json.addProperty("pitch_bias", 30.0);
-        json.addProperty("bank_per_yaw", 4.0);
-        json.addProperty("max_bank", 55.0);
-        json.addProperty("max_pitch", 80.0);
+        json.addProperty("camera_tilt", 20.0);
         return FpvFlight.of(json);
     }
 
@@ -42,92 +37,69 @@ public class FpvFlightGameTest {
         return vehicle;
     }
 
+    private static Vector3f up(RotaryWingVehicle drone) {
+        return drone.rotYXZ().transform(new Vector3f(0, 1, 0));
+    }
+
+    /** Held roll key: full barrel roll, upside down halfway, level again after 360 deg. */
     @GameTest(template = TEMPLATE, timeoutTicks = 200)
-    public static void aimArrivesWithinHalfASecond(GameTestHelper helper) {
+    public static void rollKeyFlipsThroughInverted(GameTestHelper helper) {
         FpvFlight flight = shipped();
         RotaryWingVehicle drone = airframe(helper);
-        drone.controlUnit.yRot = 90;
-        drone.controlUnit.xRot = 40;
-
-        int ticks = 0;
-        while (ticks < 40) {
+        drone.controlUnit.right = true;
+        for (int tick = 0; tick < 12; tick++) {
             flight.tickAttitude(drone, 1.0);
-            ticks++;
-            if (Math.abs(Mth.wrapDegrees(90 - drone.getYRot())) < 1
-                    && Math.abs(Mth.wrapDegrees(40 - drone.getXRot())) < 1) {
-                break;
-            }
         }
-        if (ticks > 12) {
-            helper.fail("a ninety degree turn took " + ticks + " ticks; that is not a responsive drone");
+        if (up(drone).y > -0.99f) {
+            helper.fail("12 ticks x 15 deg should be inverted, body up " + up(drone));
             return;
         }
-        // ticksToClose self-checks against the measured response; lets a pack author tune by reading it.
-        if (flight.ticksToClose(0.99) > 12) {
-            helper.fail("ticksToClose disagrees with the measured " + ticks);
+        for (int tick = 0; tick < 12; tick++) {
+            flight.tickAttitude(drone, 1.0);
+        }
+        if (up(drone).y < 0.99f || Math.abs(Mth.wrapDegrees(drone.getYRot())) > 1) {
+            helper.fail("full roll should end level on the same heading, up " + up(drone) + " yaw " + drone.getYRot());
             return;
         }
         helper.succeed();
     }
 
-    /** The core divergence: a helicopter at speed won't point off its direction of travel; a drone must. */
+    /** Mouse pitch is a body-frame turn with no limit: a loop passes straight up, inverted, straight down. */
     @GameTest(template = TEMPLATE, timeoutTicks = 200)
-    public static void aimArrivesEvenAtSpeed(GameTestHelper helper) {
+    public static void mousePitchLoops(GameTestHelper helper) {
         FpvFlight flight = shipped();
         RotaryWingVehicle drone = airframe(helper);
-        drone.setDeltaMovement(new Vec3(0, 0, 2.4));
-        drone.airSpeed = drone.getDeltaMovement();
-        drone.controlUnit.yRot = 90;
-
-        for (int tick = 0; tick < 40; tick++) {
+        drone.controlUnit.turnX = -30;
+        Vector3f[] ups = new Vector3f[12];
+        for (int tick = 0; tick < 12; tick++) {
             flight.tickAttitude(drone, 1.0);
+            ups[tick] = up(drone);
         }
-        double error = Math.abs(Mth.wrapDegrees(90 - drone.getYRot()));
-        if (error > 1) {
-            helper.fail("at speed the drone stopped " + error + " degrees short of the commanded heading");
+        if (ups[5].y > -0.99f || ups[11].y < 0.99f) {
+            helper.fail("loop: up after 180 deg " + ups[5] + ", after 360 deg " + ups[11]);
             return;
         }
         helper.succeed();
     }
 
+    /** Acro: no self-levelling. Sticks released => attitude held, even banked. */
     @GameTest(template = TEMPLATE, timeoutTicks = 200)
-    public static void pitchStillFollowsAimWhileAccelerating(GameTestHelper helper) {
+    public static void releasedSticksHoldAttitude(GameTestHelper helper) {
         FpvFlight flight = shipped();
         RotaryWingVehicle drone = airframe(helper);
-        drone.controlUnit.xRot = 10;
-        drone.controlUnit.forward = true;
-
+        drone.controlUnit.turnY = 20;
+        drone.controlUnit.left = true;
+        for (int tick = 0; tick < 3; tick++) {
+            flight.tickAttitude(drone, 1.0);
+        }
+        drone.controlUnit.reset();
+        Vector3f held = up(drone);
+        float yaw = drone.getYRot();
         for (int tick = 0; tick < 40; tick++) {
             flight.tickAttitude(drone, 1.0);
         }
-        // expected = aim + pitch_bias: forward throttle reads as pitch, like a real quadcopter.
-        double expected = 10 + 30;
-        if (Math.abs(drone.getXRot() - expected) > 1) {
-            helper.fail("pitch settled at " + drone.getXRot() + ", expected " + expected);
-            return;
-        }
-        helper.succeed();
-    }
-
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
-    public static void bankFollowsTheTurnAndLevelsOff(GameTestHelper helper) {
-        FpvFlight flight = shipped();
-        RotaryWingVehicle drone = airframe(helper);
-        drone.controlUnit.rightYaw = true;
-        for (int tick = 0; tick < 30; tick++) {
-            flight.tickAttitude(drone, 1.0);
-        }
-        if (drone.getZRot() <= 5) {
-            helper.fail("a sustained right turn should bank the airframe, roll was " + drone.getZRot());
-            return;
-        }
-        drone.controlUnit.rightYaw = false;
-        drone.controlUnit.yRot = drone.getYRot();
-        for (int tick = 0; tick < 40; tick++) {
-            flight.tickAttitude(drone, 1.0);
-        }
-        if (Math.abs(drone.getZRot()) > 1) {
-            helper.fail("the airframe should level off when the turn stops, roll was " + drone.getZRot());
+        if (up(drone).distance(held) > 1e-4f || drone.getYRot() != yaw) {
+            helper.fail("attitude drifted with sticks released: " + held + " -> " + up(drone));
             return;
         }
         helper.succeed();
@@ -138,7 +110,7 @@ public class FpvFlightGameTest {
     public static void noRotorAuthorityHandsControlBack(GameTestHelper helper) {
         FpvFlight flight = shipped();
         RotaryWingVehicle drone = airframe(helper);
-        drone.controlUnit.yRot = 90;
+        drone.controlUnit.turnY = 90;
         if (flight.tickAttitude(drone, 0)) {
             helper.fail("an unpowered drone claimed attitude control");
             return;
@@ -146,6 +118,52 @@ public class FpvFlightGameTest {
         if (drone.getYRot() != 0) {
             helper.fail("an unpowered drone turned anyway, to " + drone.getYRot());
             return;
+        }
+        helper.succeed();
+    }
+
+    /** Mouse heading turns the tilt with it (course changes); mouse right = view right, upright and inverted. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    public static void mouseHeadingTurnsTheThrust(GameTestHelper helper) {
+        FpvFlight flight = shipped();
+        for (float roll : new float[]{0, 180}) {
+            RotaryWingVehicle drone = airframe(helper);
+            drone.setXRot(30);
+            drone.setZRot(roll);
+            Vector3f before = up(drone);
+            Vector3f rightBefore = drone.rotYXZ().transform(new Vector3f(-1, 0, 0));
+            drone.controlUnit.turnY = 30;
+            flight.tickAttitude(drone, 1.0);
+            Vector3f expected = new Vector3f(before).rotateY((float) Math.toRadians(roll == 0 ? -30 : 30));
+            if (up(drone).distance(expected) > 1e-3f) {
+                helper.fail("roll " + roll + ": thrust " + before + " -> " + up(drone) + ", expected " + expected);
+                return;
+            }
+            if (drone.rotYXZ().transform(new Vector3f(0, 0, 1)).dot(rightBefore) <= 0) {
+                helper.fail("roll " + roll + ": mouse right swung the view left");
+                return;
+            }
+        }
+        helper.succeed();
+    }
+
+    /** Server adopts every report, however far; no new input => held, not re-stepped. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    public static void reportedAttitudeAdoptedAndHeld(GameTestHelper helper) {
+        FpvFlight flight = shipped();
+        RotaryWingVehicle drone = airframe(helper);
+        ControlUnit c = drone.controlUnit;
+        c.reported = true;
+        c.reportedXRot = 120;
+        c.reportedYRot = 45;
+        c.reportedZRot = -60;
+        c.right = true;
+        for (int tick = 0; tick < 3; tick++) {
+            flight.tickAttitude(drone, 1.0);
+            if (drone.getXRot() != 120 || drone.getYRot() != 45 || drone.getZRot() != -60) {
+                helper.fail("tick " + tick + ": " + drone.getXRot() + "/" + drone.getYRot() + "/" + drone.getZRot());
+                return;
+            }
         }
         helper.succeed();
     }

@@ -1,10 +1,6 @@
 package com.wf.combinedassault.network.message;
 
-import net.minecraft.network.chat.Component;
-import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.vehicle.crew.CrewRole;
 import com.wf.combinedassault.vehicle.crew.CrewRules;
-import com.wf.combinedassault.vehicle.crew.WeaponLoading;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -29,8 +25,7 @@ public record ClientVehicleSwitchWeapon(
 
     public enum WeaponSwitchType {
         PRIMARY,
-        SECONDARY,
-        MULTI
+        SECONDARY
     }
 
     public static void encode(ClientVehicleSwitchWeapon msg, FriendlyByteBuf buf) {
@@ -49,26 +44,9 @@ public record ClientVehicleSwitchWeapon(
     public static void handle(ClientVehicleSwitchWeapon msg, IPayloadContext ctx) {
         var serverPlayer = (ServerPlayer) ctx.player();
         if (serverPlayer.level().getEntity(msg.vehicleEntityId) instanceof AbstractVehicle vehicle) {
-            if (msg.switchType == WeaponSwitchType.MULTI && CrewRules.loaderAboard(vehicle)
-                    && CrewRules.has(vehicle, serverPlayer, CrewRole.LOADER)) {
-                // Loader cycles ammo for every served gun except self-loaded ones.
-                for (PartUnit<?> unit : vehicle.getPartUnits()) {
-                    if (unit instanceof WeaponUnit served && CrewRules.loading(served) != WeaponLoading.SELF) {
-                        served.cycleMultiWeapon(msg.next);
-                    }
-                }
-                return;
-            }
             var partUnit = vehicle.getOwnOperatorUnit(serverPlayer);
             if (partUnit instanceof WeaponUnit weaponUnit) {
                 switch (msg.switchType) {
-                    case MULTI -> {
-                        if (CrewRules.maySwitchAmmo(serverPlayer, weaponUnit)) {
-                            weaponUnit.cycleMultiWeapon(msg.next);
-                        } else {
-                            serverPlayer.displayClientMessage(Component.translatable("tips.crew.loader_picks_ammo"), true);
-                        }
-                    }
                     case PRIMARY -> {
                         if (CrewRules.mayOperate(serverPlayer, weaponUnit)) {
                             weaponUnit.switchWeapon(false, msg.next, false);

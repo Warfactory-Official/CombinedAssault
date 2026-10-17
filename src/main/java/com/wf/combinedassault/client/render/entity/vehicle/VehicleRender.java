@@ -138,6 +138,12 @@ public class VehicleRender<T extends AbstractVehicle> extends EntityRenderer<T> 
         }
     }
 
+    /** Piloted UAV seen from its own lens; scripts hide the camera head ({@code isOwnLensView}). */
+    public static boolean ownLensView(AbstractVehicle vehicle) {
+        return vehicle.uav && vehicle == LocalVehiclePlayer.instance.vehicle
+                && LocalVehiclePlayer.instance.viewType != LocalVehiclePlayer.ViewType.THIRD_PERSON;
+    }
+
     /** True: operator view of own vehicle with a cabin display (swaps in the cabin model). */
     public static boolean isCabinView(AbstractVehicle vehicle, VehicleDisplay<?, ?> display) {
         return LocalVehiclePlayer.instance.vehicle == vehicle

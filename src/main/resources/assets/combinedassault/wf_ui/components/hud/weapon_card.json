@@ -50,18 +50,30 @@
                 "x": 5,
                 "y": 18,
                 "child": {
-                  "type": "when",
-                  "if": "primary.reloading",
-                  "then": {
-                    "type": "text",
-                    "text": "RELOADING",
-                    "color": "#ffff6040"
-                  },
-                  "else": {
-                    "type": "text",
-                    "text": "{primary.ammo} / {primary.capacity}",
-                    "color": "$ammo"
-                  }
+                  "type": "row",
+                  "gap": 5,
+                  "children": [
+                    {
+                      "type": "when",
+                      "if": "primary.reloading",
+                      "then": {
+                        "type": "text",
+                        "text": "RELOADING",
+                        "color": "#ffff6040"
+                      },
+                      "else": {
+                        "type": "text",
+                        "text": "{primary.ammo} / {primary.capacity}",
+                        "color": "$ammo"
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "text": "{primary.round}",
+                      "color": "#ffff8c00",
+                      "max_width": "primary.reloading || primary.capacity >= 100 ? 28 : primary.capacity >= 10 ? 40 : 52"
+                    }
+                  ]
                 }
               },
               {
@@ -75,26 +87,6 @@
                   "value": "primary.capacity > 0 ? primary.ammo / primary.capacity : 0",
                   "fill": "$ammo_bar",
                   "back": "#dd0f2210"
-                }
-              },
-              {
-                "type": "when",
-                "if": "primary.multi > 0",
-                "then": {
-                  "type": "place",
-                  "x": 63,
-                  "y": 19,
-                  "child": {
-                    "type": "repeat",
-                    "items": "primary.multi_dots",
-                    "gap": 3,
-                    "child": {
-                      "type": "rect",
-                      "w": 6,
-                      "h": 6,
-                      "color": "index == primary.multi_selected ? #ffff8c00 : #ff333333"
-                    }
-                  }
                 }
               },
               {

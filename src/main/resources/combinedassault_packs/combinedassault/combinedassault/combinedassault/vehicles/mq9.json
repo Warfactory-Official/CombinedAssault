@@ -51,10 +51,12 @@
             "type": "combinedassault:weapon",
             "operator_on_weapon_unit": false,
             "rot_info": {
-                "x_rot_speed": 0,
-                "y_rot_speed": 0
+                "x_rot_speed": 5,
+                "y_rot_speed": 5
             },
             "optical_sight_type": "crt",
+            "with_stabilizer": true,
+            "with_focus_locker": true,
             "with_thermal_imager": true,
             "with_night_vision": true,
             "with_ir": true,
@@ -86,8 +88,7 @@
             "is_seat": false,
             "accepts": [
                 "SMALL"
-            ],
-            "capacity": 6
+            ]
         },
         {
             "id": "landing_gear",

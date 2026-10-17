@@ -60,9 +60,7 @@ public abstract class CameraMixin {
             }
             Vec3 position = instance.cameraPosition(operatorUnit, pPartialTick);
             this.setPosition(position.x, position.y, position.z);
-            Vector3f euler = instance.cameraRotationO()
-                    .slerp(instance.cameraRotation(), pPartialTick)
-                    .getEulerAnglesYXZ(new Vector3f());
+            Vector3f euler = instance.frameCameraRotation(pPartialTick).getEulerAnglesYXZ(new Vector3f());
             this.setRotation((float) Math.toDegrees(-euler.y) + (float) FirstPersonHandler.getCurrentYawShake(),
                     (float) Math.toDegrees(euler.x) + (float) FirstPersonHandler.getCurrentPitchShake(),
                     (float) Math.toDegrees(euler.z) + (float) FirstPersonHandler.getCurrentRollShake());

@@ -1,6 +1,8 @@
 package com.wf.combinedassault.client.fx;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.gemrender.asset.GemRenderModels;
+import com.wf.gemrender.gltf.GemRenderGltfModel;
 import com.wf.gemrender.particle.GemRenderParticleTypes;
 import com.wf.gemrender.particle.ParticleBuffer;
 import com.wf.gemrender.particle.ParticleInstance;
@@ -8,11 +10,13 @@ import com.wf.gemrender.particle.ParticleModels;
 import com.wf.gemrender.particle.ParticleStyle;
 import dev.engine_room.flywheel.api.instance.InstanceType;
 import dev.engine_room.flywheel.api.model.Model;
+import com.wf.wflib.ammo.Casing;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
-/** Vehicle particle kinds (hits, wakes) on GemRender. {@code ring} = emitter capacity per region (oldest overwritten). Units per second. */
+/** Vehicle particle kinds (hits, wakes, spent cases) on GemRender. {@code ring} = emitter capacity per region (oldest overwritten). Units per second. */
 enum HitFxKind {
     FLASH(64, GemRenderParticleTypes.BILLBOARD, () -> ParticleStyle.builder()
             .size(1, -0.3F)
@@ -96,13 +100,24 @@ enum HitFxKind {
             .drag(ParticleStyle.dragFromPerTickFactor(WakeFx.BUBBLE_DRAG))
             .gravity(-WakeFx.BUBBLE_LIFT)
             .size(0.1F, 0.05F)
-            .build(), "minecraft:textures/particle/bubble.png", false);
+            .build(), "minecraft:textures/particle/bubble.png", false),
+    CASING_PISTOL(64, Casing.PISTOL, 0.00495F),
+    CASING_RIFLE(256, Casing.RIFLE, 0.00478F),
+    CASING_LARGE(256, Casing.LARGE, 0.0102F),
+    CASING_SHOTSHELL(32, Casing.SHOTSHELL, 0.0111F),
+    CASING_CANNON(64, Casing.CANNON, 0.056F);
+
+    /** Case tumble rad/s; life s. */
+    static final float CASING_SPIN = 30;
+    static final float CASING_LIFE = 8;
 
     final int ring;
     final InstanceType<ParticleInstance> type;
     private final Supplier<ParticleStyle> style;
     private final ResourceLocation texture;
     private final boolean glow;
+    /** Case glTF radius, m; 0 => not a case. */
+    final float radius;
     private int styleId = -1;
 
     HitFxKind(int ring, InstanceType<ParticleInstance> type, Supplier<ParticleStyle> style, String texture, boolean glow) {
@@ -112,6 +127,37 @@ enum HitFxKind {
         this.texture = texture.contains(":") ? ResourceLocation.parse(texture)
                 : CombinedAssault.modLocation("textures/particle/fx/" + texture + ".png");
         this.glow = glow;
+        this.radius = 0;
+    }
+
+    HitFxKind(int ring, Casing casing, float radius) {
+        this.ring = ring;
+        this.type = GemRenderParticleTypes.BODY;
+        this.style = () -> ParticleStyle.builder()
+                .gravity(16)
+                .spin(CASING_SPIN)
+                .bouncesOnContact(0.3F, 0.45F)
+                .fadeOut(0.9F)
+                .build();
+        this.texture = ResourceLocation.fromNamespaceAndPath("wflib", "models/casing/" + casing.key + ".gltf");
+        this.glow = false;
+        this.radius = radius;
+    }
+
+    boolean rigid() {
+        return radius > 0;
+    }
+
+    @Nullable
+    static HitFxKind of(Casing c) {
+        return switch (c) {
+            case NONE -> null;
+            case PISTOL -> CASING_PISTOL;
+            case RIFLE -> CASING_RIFLE;
+            case LARGE -> CASING_LARGE;
+            case SHOTSHELL -> CASING_SHOTSHELL;
+            case CANNON -> CASING_CANNON;
+        };
     }
 
     /** Registered on first use (256 styles per JVM, never released). */
@@ -122,8 +168,13 @@ enum HitFxKind {
         return styleId;
     }
 
-    /** Client thread. */
+    /** Client thread. Null: case glTF not loaded yet (requested). */
+    @Nullable
     Model model() {
+        if (rigid()) {
+            GemRenderGltfModel m = GemRenderModels.get(texture);
+            return m == null ? null : ParticleModels.rigid(m);
+        }
         return glow ? ParticleModels.glowing(texture) : this == FOAM ? ParticleModels.decal(texture)
                 : this == CHIP || this == BUBBLE ? ParticleModels.cutout(texture) : ParticleModels.absorbance(texture);
     }

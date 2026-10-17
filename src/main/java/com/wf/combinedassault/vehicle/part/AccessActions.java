@@ -1,18 +1,25 @@
 package com.wf.combinedassault.vehicle.part;
 
 import com.wf.wflib.probe.ProbeActions;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.all.AllItems;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.item.VehicleSpawnItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 
-/** Access node actions, sent as probe action packets: door toggle ({@code arg} = part index), board ({@code arg} = seat), storage. */
+/** Access node actions, sent as probe action packets: door toggle ({@code arg} = part index), board ({@code arg} = seat), storage, pick up. */
 public final class AccessActions {
 
     public static final ResourceLocation TOGGLE = CombinedAssault.modLocation("toggle_door");
     public static final ResourceLocation BOARD = CombinedAssault.modLocation("board_seat");
     public static final ResourceLocation STORAGE = CombinedAssault.modLocation("open_storage");
+    public static final ResourceLocation PICK_UP = CombinedAssault.modLocation("pick_up");
 
     private AccessActions() {
     }
@@ -30,11 +37,38 @@ public final class AccessActions {
             vehicle.openCustomInventoryScreen(player);
             return true;
         });
+        ProbeActions.registerEntity(PICK_UP, (player, entity, arg) -> entity instanceof AbstractVehicle vehicle
+                && pickUp(player, vehicle));
     }
 
-    /** Doors, hatches, canopies, tailgates; not gear, airbrakes, bays or arming switches (their own subclasses). */
+    /** Crewed, operated, carried or wrecked => refused. Autonomy state (route, orders) not kept; engine off. */
+    public static boolean pickUp(ServerPlayer player, AbstractVehicle vehicle) {
+        if (!vehicle.pickup || vehicle.isDestroyed() || player.isPassenger()) {
+            return false;
+        }
+        if (vehicle.isVehicle() || vehicle.isPassenger()) {
+            player.displayClientMessage(Component.translatable("access.combinedassault.pick_up.occupied"), true);
+            return false;
+        }
+        CompoundTag state = new CompoundTag();
+        vehicle.addAdditionalSaveData(state);
+        state.remove("Drone");
+        state.putBoolean("Engine", false);
+        ItemStack stack = AllItems.VEHICLE_SPAWN_ITEM.get().createInstance(vehicle.getVehicleId());
+        CompoundTag tag = stack.get(DataComponents.CUSTOM_DATA).copyTag();
+        tag.put(VehicleSpawnItem.TAG_STATE, state);
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+        vehicle.discard();
+        if (!player.getInventory().add(stack)) {
+            player.drop(stack, false);
+        }
+        return true;
+    }
+
+    /** Doors, hatches, canopies, tailgates, hand-worked bays; not gear, airbrakes, powered bays or arming switches. */
     public static boolean isDoor(PartUnit<?> part) {
-        return part instanceof DoorUnit || part.getClass() == SwitchableUnit.class;
+        return part instanceof DoorUnit || part.getClass() == SwitchableUnit.class
+                || part instanceof WeaponBayUnit bay && bay.handWorked();
     }
 
     public static boolean toggle(ServerPlayer player, AbstractVehicle vehicle, int index) {

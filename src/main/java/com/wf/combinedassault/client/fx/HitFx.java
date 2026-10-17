@@ -76,6 +76,7 @@ public final class HitFx {
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener(HitFxWorld::onTick);
+        NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> CasingFx.onTick());
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Pre e) -> {
             spent = 0;
             if (++ticks % SYSTEM_PERIOD == 0) {
@@ -85,6 +86,10 @@ public final class HitFx {
                 systemTicks++;
             }
         });
+    }
+
+    public static void onReload(dev.engine_room.flywheel.api.event.EndClientResourceReloadEvent e) {
+        HitFxWorld.onReload(e);
     }
 
     public static void impact(ServerHitEffect hit) {

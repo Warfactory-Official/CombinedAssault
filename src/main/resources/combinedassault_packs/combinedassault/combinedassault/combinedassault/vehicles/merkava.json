@@ -51,10 +51,7 @@
             "with_night_vision": true,
             "zoom_max": 8,
             "weapons": [
-                [
-                    "combinedassault:cannon_120mm_apfsds",
-                    "combinedassault:cannon_120mm_heat"
-                ],
+                "combinedassault:cannon_120mm",
                 {
                     "id": "combinedassault:gun_12.7mm",
                     "part_unit_id": "turret_machine_gun",

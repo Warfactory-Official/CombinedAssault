@@ -134,6 +134,14 @@
                 "combinedassault:laser"
             ],
             "with_thermal_imager": true
+        },
+        {
+            "id": "canisters",
+            "name": "part.combinedassault.canisters",
+            "type": "combinedassault:missile_holder",
+            "is_seat": false,
+            "detachable": false,
+            "accepts": []
         }
     ],
     "model": "combinedassault:models/ground/mim104/mim104.gltf",
