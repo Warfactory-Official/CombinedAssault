@@ -77,6 +77,7 @@ public class LaserGameTest {
     @GameTest(template = TEMPLATE, timeoutTicks = 400)
     public static void aJammedMavicIsNeverEngaged(GameTestHelper helper) {
         AbstractVehicle[] target = new AbstractVehicle[1];
+        java.util.Set<String> others = new java.util.TreeSet<>();
         boolean[] fired = {false};
         int[] ticks = {0};
         TestLanes.run(helper, LANE_Z + 2 * LANE_PITCH, FLOOR_X, FLOOR_Z, TRAILER, (seq, v) -> seq.thenExecute(() -> {
@@ -88,12 +89,17 @@ public class LaserGameTest {
             Interference.put(level, target[0].getUUID(), new Interference.Area(Band.RADAR, Interference.Scope.TARGET,
                     target[0].position(), PortableJammerItem.RADIUS, PortableJammerItem.FACTOR,
                     level.getGameTime() + 2, 0.0f));
-            fired[0] |= turret(helper, v.get()).airDefense().state() == InterceptBattery.State.FIRED;
+            AirDefense station = turret(helper, v.get()).airDefense();
+            // Sibling lanes' unjammed Mavics sit inside laser range => FIRED alone proves nothing.
+            if (station.state() == InterceptBattery.State.FIRED) {
+                fired[0] |= target[0].getUUID().equals(station.target());
+                others.add(TestLanes.describe(helper, station.target(), v.get()));
+            }
             helper.assertTrue(++ticks[0] >= MAVIC_DEADLINE, "jamming");
         }).thenExecute(() -> {
             float health = target[0].getHealth();
             target[0].discard();
-            helper.assertFalse(fired[0], "the station burned a jammed Mavic");
+            helper.assertFalse(fired[0], "the station burned a jammed Mavic; fired at " + others);
             helper.assertTrue(health == target[0].getMaxHealth(), "jammed Mavic at " + health);
         }), at -> {
         });
@@ -131,8 +137,8 @@ public class LaserGameTest {
     }
 
     private static WeaponUnit turret(GameTestHelper helper, AbstractVehicle vehicle) {
-        helper.assertTrue(vehicle.getPartUnit("launcher").orElse(null) instanceof WeaponUnit unit
+        helper.assertTrue(vehicle.getPartUnit("laser").orElse(null) instanceof WeaponUnit unit
                 && unit.airDefense() != null, "the laser trailer has no air defence turret");
-        return (WeaponUnit) vehicle.getPartUnit("launcher").get();
+        return (WeaponUnit) vehicle.getPartUnit("laser").get();
     }
 }

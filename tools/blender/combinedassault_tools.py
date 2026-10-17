@@ -43,6 +43,7 @@ HIDDEN = ca_validate.HIDDEN
 RESOURCE = ca_validate.RESOURCE
 # combinedassault meta keys the panels own; any other key rides through from import (raw_extras).
 OWNED_META = {"main", "deck", "solid", "world", "name", "hit", "index", "system", "side", "skip", "swept", "health",
+              "road_wheel",
               "x_rot_min", "x_rot_max", "y_rot_min", "y_rot_max"}
 ARMOR = re.compile(r"(?i)armou?r[_ ]?(\d+(?:\.\d+)?)")
 DECOR = re.compile(r"(?i)(?:^|[_ .])decor(?:$|[_ .])")
@@ -132,6 +133,23 @@ def open_edges(faces):
     return [key for key, count in edges.items() if count != 2]
 
 
+def coplanar_neighbours(points, faces):
+    """Edge-sharing face pair on one plane, else None. Game keeps authored faces => 2-triangle box bottom = 3-corner
+    ground manifold; LOCUST cabinet spun over on landing."""
+    owner = {}
+    for index, face in enumerate(faces):
+        for i in range(len(face)):
+            a, b = face[i], face[(i + 1) % len(face)]
+            owner.setdefault((min(a, b), max(a, b)), []).append(index)
+    for pair in owner.values():
+        if len(pair) != 2:
+            continue
+        p, q = plane_of(points, faces[pair[0]]), plane_of(points, faces[pair[1]])
+        if p and q and p[0].dot(q[0]) > 1 - 1.0e-6 and abs(p[1] - q[1]) < PLANAR_EPS:
+            return pair
+    return None
+
+
 def check_collider(obj, depsgraph=None):
     """Reasons the game's ConvexHull would refuse this piece."""
     problems = []
@@ -168,13 +186,15 @@ def local_is_identity(obj):
                for r in range(4) for c in range(4))
 
 
-def check_object(obj, depsgraph=None):
-    """(errors, warnings) for one object as the export would write it."""
+def check_object(obj, depsgraph=None, part_model=False):
+    """(errors, warnings) for one object as the export would write it. part_model: scene has no body (part mounts)."""
     errors, warnings = [], []
     settings = obj.combinedassault
     role = role_of(obj)
     action = obj.animation_data.action if obj.animation_data else None
-    if role != "NONE" and role != "BODY" and not under_body(obj):
+    if part_model and role in ("PART", "PITCH"):
+        errors.append("is a %s frame in a part model (no body): frames live on the carrier" % role.lower())
+    elif not part_model and role != "NONE" and role != "BODY" and not under_body(obj):
         errors.append("is a %s but not under the body frame" % role.lower())
     if role == "BODY" and not obj.matrix_world.is_identity:
         errors.append("body frame is not at the origin, unrotated, unscaled")
@@ -188,6 +208,11 @@ def check_object(obj, depsgraph=None):
                 # The game builds the hull from the faces alone: a T-junction is fine, a missing face is a hole.
                 warnings.append("is not closed: %d open edge(s), first %d-%d; fine for a vertex on another face's "
                                 "edge, a missing face leaves a hole" % (len(gaps), gaps[0][0], gaps[0][1]))
+            points, faces = faces_of(obj, depsgraph)
+            flat = coplanar_neighbours(points, faces)
+            if flat:
+                warnings.append("faces %d and %d share a plane: the game keeps each, a contact clips to one; "
+                                "Make convex hull merges them" % tuple(flat))
         if settings.main and role_of(frame_of(obj)) != "BODY":
             errors.append("main collider rides a part frame")
         if action is not None:
@@ -212,7 +237,7 @@ def check_object(obj, depsgraph=None):
     if role == "SOCKET":
         if settings.field in UNTARGETED and settings.target:
             errors.append("socket %s takes no interface" % settings.field)
-        if settings.field not in UNTARGETED and not settings.target:
+        if settings.field not in UNTARGETED and not settings.target and not part_model:
             errors.append("socket %s names no %s (interface)" % (settings.field, "id" if settings.field in (
                 "era", "slat", "mount_point", "hitch") else "part"))
         if obj.type == "MESH" and settings.field not in MESH_FIELDS:
@@ -242,8 +267,9 @@ def check_scene(scene, depsgraph=None):
     if len(mains) > 1:
         errors.append("more than one collider is Main: %s" % ", ".join(o.name for o in mains))
     bodies = [obj for obj in objects if role_of(obj) == "BODY"]
-    if len(bodies) != 1:
-        errors.append("needs exactly one body frame, has %d" % len(bodies))
+    # No body: part model (vehicle `mounts`), like ca_validate.
+    if len(bodies) > 1:
+        errors.append("needs at most one body frame, has %d" % len(bodies))
     seen = {}
     for obj in objects:
         if role_of(obj) in ("PART", "PITCH"):
@@ -251,8 +277,11 @@ def check_scene(scene, depsgraph=None):
             if key in seen:
                 errors.append("%s %s on %s and %s" % (key[0].lower(), key[1], seen[key], obj.name))
             seen[key] = obj.name
+    wheels = [obj.name for obj in objects if role_of(obj) == "NONE" and obj.combinedassault.meta_road_wheel]
+    if wheels and not any(role_of(o) == "SOCKET" and o.combinedassault.field == "track" for o in objects):
+        errors.append("road wheels %s but no track socket" % ", ".join(wheels))
     for obj in objects:
-        e, w = check_object(obj, depsgraph)
+        e, w = check_object(obj, depsgraph, not bodies)
         errors += ["%s %s" % (obj.name, m) for m in e]
         warnings += ["%s %s" % (obj.name, m) for m in w]
     for material in used_materials(scene):
@@ -360,6 +389,8 @@ def node_extras(obj):
             meta["swept"] = settings.meta_swept == "ON"
         if settings.meta_health > 0:
             meta["health"] = round(settings.meta_health, 3)
+        if role == "NONE" and settings.meta_road_wheel:
+            meta["road_wheel"] = True
         if role in ("PART", "PITCH") and settings.limit_pitch:
             meta["x_rot_min"] = round(settings.x_rot_min, PLACES)
             meta["x_rot_max"] = round(settings.x_rot_max, PLACES)
@@ -629,6 +660,7 @@ def apply_extras(obj, extras):
     if "swept" in meta:
         settings.meta_swept = "ON" if meta["swept"] else "OFF"
     settings.meta_health = meta.get("health", 0.0)
+    settings.meta_road_wheel = bool(meta.get("road_wheel"))
     if "x_rot_min" in meta or "x_rot_max" in meta:
         settings.limit_pitch = True
         settings.x_rot_min = meta.get("x_rot_min", -90.0)
@@ -878,6 +910,9 @@ class CombinedAssaultObjectSettings(PropertyGroup):
         items=[("AUTO", "Auto", "Rotor systems spin"), ("ON", "On", ""), ("OFF", "Off", "")],
         default="AUTO")
     meta_health: FloatProperty(name="Health", description="0 = system default", default=0.0, min=0.0)
+    meta_road_wheel: BoolProperty(
+        name="Road wheel", description="Rides the nearest track: own spring probe under it, lower run follows",
+        default=False)
 
 
 class CombinedAssaultMaterialSettings(PropertyGroup):
@@ -1383,6 +1418,8 @@ class COMBINEDASSAULT_PT_object(Panel):
             layout.prop(settings, "index")
         if role in ("NONE", "BODY", "PART", "PITCH"):
             layout.prop(settings, "hidden")
+        if role == "NONE" and obj.type == "MESH":
+            layout.prop(settings, "meta_road_wheel")
         if role != "COLLIDER":
             layout.prop(settings, "posed")
         if role in ("NONE", "BODY", "PART", "PITCH", "HIT", "HIT_SURFACE"):
@@ -1395,7 +1432,8 @@ class COMBINEDASSAULT_PT_object(Panel):
             row.prop(settings, "meta_skip")
             row.prop(settings, "meta_swept")
             box.prop(settings, "meta_health")
-        errors, warnings = check_object(obj, context.evaluated_depsgraph_get())
+        errors, warnings = check_object(obj, context.evaluated_depsgraph_get(),
+                                        not any(role_of(o) == "BODY" for o in context.scene.objects))
         if errors or warnings:
             box = layout.box()
             for message, icon in [(m, "ERROR") for m in errors] + [(m, "INFO") for m in warnings]:

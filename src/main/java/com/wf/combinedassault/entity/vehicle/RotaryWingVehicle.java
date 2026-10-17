@@ -282,6 +282,14 @@ public class RotaryWingVehicle extends AbstractVehicle
 
     @Override
     protected Vec3 tickMove() {
+        // Wreck: rigid body only; airborne spin as upstream.
+        physicsEngine.lockCenterRot = !isDestroyed();
+        if (isDestroyed()) {
+            if (!onGround()) {
+                setYRot(getYRot() + 10);
+            }
+            return Vec3.ZERO;
+        }
         float collectivePitch = getCollectivePitch();
         if (controlUnit.up) {
             collectivePitch += 5;
@@ -468,10 +476,6 @@ public class RotaryWingVehicle extends AbstractVehicle
         yRotSpeed = Math.signum(yRotSpeed) * (Math.max(0, Math.abs(yRotSpeed) - ROT_FRICTION));
         xRotSpeed = Math.signum(xRotSpeed) * (Math.max(0, Math.abs(xRotSpeed) - ROT_FRICTION));
         zRotSpeed = Math.signum(zRotSpeed) * (Math.max(0, Math.abs(zRotSpeed) - ROT_FRICTION));
-
-        if (isDestroyed() && !onGround()) {
-            this.setYRot(this.getYRot() + 10);
-        }
 
         return force;
     }

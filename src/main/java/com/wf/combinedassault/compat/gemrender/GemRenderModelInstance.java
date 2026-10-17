@@ -30,6 +30,7 @@ import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.RadarUnit;
 import com.wf.combinedassault.vehicle.part.RotatableUnit;
 import com.wf.combinedassault.vehicle.part.SuspensionUnit;
+import com.wf.combinedassault.vehicle.part.TrackUnit;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
 import net.minecraft.world.phys.Vec3;
 
@@ -97,6 +98,8 @@ final class GemRenderModelInstance implements VehicleModelInstance {
     private GemRenderGltfModel framesModel;
     private AbstractVehicle framesVehicle;
     private float framesPartialTick;
+    /** {@link #applyPose} ran since the last {@link #publish}. */
+    private boolean posed;
     private boolean[] claimed = new boolean[0];
 
     private Pose bindPose;
@@ -175,24 +178,29 @@ final class GemRenderModelInstance implements VehicleModelInstance {
             table.setScale(state, slot, scale.x(), scale.y(), scale.z());
         }
         if (framesModel == gltf) {
-            Quaternionf rotation = new Quaternionf();
-            for (FrameDrive drive : frameDrives) {
-                if (drive.slot < claimed.length && claimed[drive.slot]) {
-                    continue;
-                }
-                table.restRotation(drive.slot, rotation);
-                // Unit convention (RotatableUnit#getViewGroupRotation): rest * Ry(-yaw) * Rx(pitch).
-                if (drive.yaw) {
-                    rotation.rotateY((float) Math.toRadians(-drive.unit.getViewYRot(framesPartialTick)));
-                }
-                if (drive.pitch) {
-                    rotation.rotateX((float) Math.toRadians(drive.unit.getViewXRot(framesPartialTick)));
-                }
-                table.setRotation(state, drive.slot, rotation);
-            }
+            applyFrames(table);
         }
         Arrays.fill(claimed, false);
+        posed = true;
         compose(gltf);
+    }
+
+    private void applyFrames(NodeTable table) {
+        Quaternionf rotation = new Quaternionf();
+        for (FrameDrive drive : frameDrives) {
+            if (drive.slot < claimed.length && claimed[drive.slot]) {
+                continue;
+            }
+            table.restRotation(drive.slot, rotation);
+            // Unit convention (RotatableUnit#getViewGroupRotation): rest * Ry(-yaw) * Rx(pitch).
+            if (drive.yaw) {
+                rotation.rotateY((float) Math.toRadians(-drive.unit.getViewYRot(framesPartialTick)));
+            }
+            if (drive.pitch) {
+                rotation.rotateX((float) Math.toRadians(drive.unit.getViewXRot(framesPartialTick)));
+            }
+            table.setRotation(state, drive.slot, rotation);
+        }
     }
 
     /** Joints the animation graph poses itself (scripts, controller bindings): frame drives leave them alone. */
@@ -267,19 +275,30 @@ final class GemRenderModelInstance implements VehicleModelInstance {
             travelled = new boolean[table.nodeCount()];
         }
         for (SuspensionUnit<?> unit : vehicle.getSuspensionUnits()) {
-            String bone = unit.getRenderBoneName();
-            int slot = bone == null || unit.isDetached() ? -1 : table.slotOfName(bone);
-            if (slot < 0) {
+            if (unit.isDetached()) {
                 continue;
             }
-            Vec3 offset = unit.getVisualOffset(partialTick);
-            int at = slot * 3;
-            travelMoved |= travel[at] != (float) offset.x || travel[at + 1] != (float) offset.y || travel[at + 2] != (float) offset.z;
-            travel[at] = (float) offset.x;
-            travel[at + 1] = (float) offset.y;
-            travel[at + 2] = (float) offset.z;
-            travelled[slot] = true;
+            if (unit instanceof TrackUnit track) {
+                track.roadWheelTravel(partialTick, (bone, offset) -> travel(table.slotOfName(bone), offset));
+            }
+            String bone = unit.getRenderBoneName();
+            int slot = bone == null ? -1 : table.slotOfName(bone);
+            if (slot >= 0) {
+                travel(slot, unit.getVisualOffset(partialTick));
+            }
         }
+    }
+
+    private void travel(int slot, Vec3 offset) {
+        if (slot < 0) {
+            return;
+        }
+        int at = slot * 3;
+        travelMoved |= travel[at] != (float) offset.x || travel[at + 1] != (float) offset.y || travel[at + 2] != (float) offset.z;
+        travel[at] = (float) offset.x;
+        travel[at + 1] = (float) offset.y;
+        travel[at + 2] = (float) offset.z;
+        travelled[slot] = true;
     }
 
     /** Model-space travel -> parent-local translation: parent world rotation from {@code state}. */
@@ -497,13 +516,20 @@ final class GemRenderModelInstance implements VehicleModelInstance {
         poseStack.last().normal().mul(new Matrix3f(transform));
     }
 
-    /** Rest pose if never posed (display without a controller); recompose for clips/travel moved without {@link #applyPose}. */
+    /** Rest pose if never posed (display without a controller); recompose for frames/clips/travel without {@link #applyPose}. */
     @Override
     public void publish() {
+        GemRenderGltfModel gltf = model.gltf();
         if (published == null) {
             resetPose();
-        } else if ((clipsMoved || travelMoved) && model.gltf() != null) {
-            compose(model.gltf());
         }
+        // No animation graph (generic type: emplacements) => applyPose never runs => frames driven here.
+        if (!posed && gltf != null && framesModel == gltf && !frameDrives.isEmpty()) {
+            applyFrames(gltf.layout().nodeTable());
+            compose(gltf);
+        } else if ((clipsMoved || travelMoved) && gltf != null) {
+            compose(gltf);
+        }
+        posed = false;
     }
 }

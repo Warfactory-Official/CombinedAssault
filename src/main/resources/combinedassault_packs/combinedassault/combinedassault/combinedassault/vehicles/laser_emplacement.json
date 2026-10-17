@@ -20,8 +20,8 @@
     },
     "parts": [
         {
-            "id": "ciws",
-            "name": "ciws",
+            "id": "laser",
+            "name": "part.combinedassault.laser",
             "type": "combinedassault:weapon",
             "crew_roles": [
                 "driver",
@@ -50,12 +50,22 @@
                 "max_elevation": 85,
                 "cooldown": 10,
                 "dwell": 40
-            }
+            },
+            "mounts": [
+                {
+                    "model": "combinedassault:models/weapon/locust/locust_yoke.gltf",
+                    "node": "laser"
+                },
+                {
+                    "model": "combinedassault:models/weapon/locust/locust_head.gltf",
+                    "node": "laser_pitch"
+                }
+            ]
         }
     ],
-    "model": "combinedassault:models/emplacement/mk15/mk15.gltf",
+    "model": "combinedassault:models/emplacement/laser_emplacement/laser_emplacement.gltf",
     "display": {
-        "icon": "combinedassault:textures/slot/mk15.png",
+        "icon": "combinedassault:textures/slot/laser_emplacement.png",
         "controller": "combinedassault:mk15_controller",
         "tab_index": 603
     }

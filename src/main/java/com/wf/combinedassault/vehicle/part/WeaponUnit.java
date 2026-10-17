@@ -376,11 +376,11 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         }
     }
 
-    /** Owner unless spotted; spotter through {@code sensor}. */
+    /** Owner unless spotted or crew-split ({@link #aimedFromSensorSeat}); spotter through {@code sensor}. */
     private boolean aimedLocally() {
         LocalVehiclePlayer local = LocalVehiclePlayer.instance;
         Player me = local.getPlayer();
-        return getOwner() == me ? !spottedBy(me) : local.sightUnit() == this;
+        return getOwner() == me ? !spottedBy(me) && !aimedFromSensorSeat() : local.sightUnit() == this;
     }
 
     public void afterVehicleRot(float dXRot, float dYRot, float dZRot) {

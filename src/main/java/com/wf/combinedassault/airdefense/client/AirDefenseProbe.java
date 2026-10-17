@@ -45,8 +45,11 @@ public final class AirDefenseProbe {
             info.entry(Component.translatable(KEY + "status"), mode == AirDefense.Mode.AUTO
                     ? Component.translatable(KEY + "state." + station.getString("State").toLowerCase(Locale.ROOT))
                     : Component.translatable(KEY + "state.manual"));
-            info.entry(Component.translatable(KEY + "interceptors"), Component.literal(
-                    Integer.toString(station.getInt("Interceptors"))));
+            boolean beam = station.getBoolean("Beam");
+            if (!beam) {
+                info.entry(Component.translatable(KEY + "interceptors"), Component.literal(
+                        Integer.toString(station.getInt("Interceptors"))));
+            }
             int index = unit.getIndex();
             AirDefense.Mode nextMode = AirDefense.Mode.values()[(mode.ordinal() + 1) % AirDefense.Mode.values().length];
             AirDefense.Source nextSource =
@@ -59,8 +62,10 @@ public final class AirDefenseProbe {
                     AirDefenseActions.arg(index, nextSource.ordinal()),
                     Component.translatable(KEY + "set_source", name("source", nextSource),
                             name("source", source))));
-            offer(info, may, refused, ProbeAction.of(AirDefenseActions.SALVO, AirDefenseActions.arg(index, nextSalvo),
-                    Component.translatable(KEY + "set_salvo", nextSalvo, salvo)));
+            if (!beam) {
+                offer(info, may, refused, ProbeAction.of(AirDefenseActions.SALVO, AirDefenseActions.arg(index, nextSalvo),
+                        Component.translatable(KEY + "set_salvo", nextSalvo, salvo)));
+            }
         }
         if (data.getBoolean("Claimed")) {
             offer(info, may, refused, ProbeAction.of(AirDefenseActions.CLAIM, 0,

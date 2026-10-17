@@ -105,7 +105,7 @@
             "stow_when_towed": true
         },
         {
-            "id": "launcher",
+            "id": "laser",
             "name": "part.combinedassault.laser",
             "type": "combinedassault:weapon",
             "crew_roles": [
@@ -133,20 +133,22 @@
             "weapons": [
                 "combinedassault:laser"
             ],
-            "with_thermal_imager": true
-        },
-        {
-            "id": "canisters",
-            "name": "part.combinedassault.canisters",
-            "type": "combinedassault:missile_holder",
-            "is_seat": false,
-            "detachable": false,
-            "accepts": []
+            "with_thermal_imager": true,
+            "mounts": [
+                {
+                    "model": "combinedassault:models/weapon/locust/locust_yoke.gltf",
+                    "node": "laser_t"
+                },
+                {
+                    "model": "combinedassault:models/weapon/locust/locust_head.gltf",
+                    "node": "laser_pitch_t"
+                }
+            ]
         }
     ],
-    "model": "combinedassault:models/ground/mim104/mim104.gltf",
+    "model": "combinedassault:models/ground/laser_trailer/laser_trailer.gltf",
     "display": {
-        "icon": "combinedassault:textures/slot/mim104.png",
+        "icon": "combinedassault:textures/slot/laser_trailer.png",
         "controller": "combinedassault:mim104_controller",
         "tab_index": 207
     }

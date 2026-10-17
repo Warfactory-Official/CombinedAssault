@@ -82,6 +82,7 @@ public final class MountDefaults {
             defaults.accept(mount);
         }
         defaults.frames();
+        defaults.roadWheels();
         defaults.flushLists();
         defaults.centerOfMass();
         return new Result(defaults.vehicle, List.copyOf(defaults.repeated), List.copyOf(defaults.overridden),
@@ -270,6 +271,42 @@ public final class MountDefaults {
         String key = "parts/" + part + "/tracks";
         if (lists.computeIfAbsent(key, k -> new TreeMap<>()).put(Math.max(mount.index(), 0), path) != null) {
             throw fail(mount, "repeats index " + Math.max(mount.index(), 0));
+        }
+    }
+
+    /** Road wheel -> glTF track path whose mean x is nearest: {@code road_wheels} entry of that track part. */
+    private void roadWheels() {
+        for (ModelMounts.Wheel wheel : mounts.wheels()) {
+            String part = null;
+            int track = -1;
+            double best = Double.POSITIVE_INFINITY;
+            for (var list : lists.entrySet()) {
+                String key = list.getKey();
+                if (!key.startsWith("parts/") || !key.endsWith("/tracks")) {
+                    continue;
+                }
+                for (var path : list.getValue().entrySet()) {
+                    double x = 0;
+                    for (JsonElement point : path.getValue().getAsJsonArray()) {
+                        x += point.getAsJsonArray().get(0).getAsDouble();
+                    }
+                    double off = Math.abs(x / path.getValue().getAsJsonArray().size() - wheel.centre().x);
+                    if (off < best) {
+                        best = off;
+                        part = key.substring("parts/".length(), key.length() - "/tracks".length());
+                        track = list.getValue().headMap(path.getKey()).size();
+                    }
+                }
+            }
+            if (part == null) {
+                throw new IllegalArgumentException(vehicleId + ": road_wheel " + wheel.name() + " but no track socket");
+            }
+            JsonObject entry = new JsonObject();
+            entry.addProperty("node", wheel.name());
+            entry.addProperty("track", track);
+            entry.add("center", vec(wheel.centre()));
+            TreeMap<Integer, JsonElement> list = lists.computeIfAbsent("parts/" + part + "/road_wheels", k -> new TreeMap<>());
+            list.put(list.size(), entry);
         }
     }
 

@@ -51,7 +51,7 @@ public class MountsGameTest {
                 {"parts": [{"id": "turret", "type": "combinedassault:weapon", "seat_offset": [9, 9, 9]}]}""")
                 .getAsJsonObject();
 
-        MountDefaults.Result result = MountDefaults.apply("test", vehicle, new ModelMounts(links, mounts, rig));
+        MountDefaults.Result result = MountDefaults.apply("test", vehicle, new ModelMounts(links, mounts, List.of(), rig));
         JsonObject part = result.vehicle().getAsJsonArray("parts").get(0).getAsJsonObject();
         JsonObject era = result.vehicle().getAsJsonArray("addon_armor").get(0).getAsJsonObject();
         String got = part.get("seat_offset") + " rot " + part.get("seat_rot") + ", era " + era;
@@ -98,13 +98,16 @@ public class MountsGameTest {
                            {"id": "gun", "type": "combinedassault:weapon"},
                            {"id": "track_l", "type": "combinedassault:track"}]}""").getAsJsonObject();
 
-        JsonObject out = MountDefaults.apply("test", vehicle, new ModelMounts(links, mounts, rig)).vehicle();
+        List<ModelMounts.Wheel> wheels = List.of(new ModelMounts.Wheel("road_0", new Vector3f(1, 0.3f, 0.5f)));
+        JsonObject out = MountDefaults.apply("test", vehicle, new ModelMounts(links, mounts, wheels, rig)).vehicle();
         var parts = out.getAsJsonArray("parts");
         String got = out.getAsJsonObject("physics_info").get("center") + " " + out.get("center_offset") + " "
                 + parts.get(0).getAsJsonObject().get("render_bone") + " " + parts.get(1).getAsJsonObject().get("rot_info")
-                + " " + parts.get(1).getAsJsonObject().get("render_bone") + " " + parts.get(2).getAsJsonObject().get("tracks");
+                + " " + parts.get(1).getAsJsonObject().get("render_bone") + " " + parts.get(2).getAsJsonObject().get("tracks")
+                + " " + parts.get(2).getAsJsonObject().get("road_wheels");
         if (!got.equals("[0.0,1.0,0.5] [0.0,2.0,0.0] \"wheel_node\" {\"x_rot_min\":-10.0,\"x_rot_max\":60.0} null "
-                + "[[[1.0,0.0,0.0],[1.0,0.0,1.0],[1.0,1.0,1.0],[1.0,1.0,0.0]]]")) {
+                + "[[[1.0,0.0,0.0],[1.0,0.0,1.0],[1.0,1.0,1.0],[1.0,1.0,0.0]]] "
+                + "[{\"node\":\"road_0\",\"track\":0,\"center\":[1.0,0.3,0.5]}]")) {
             helper.fail(got);
             return;
         }

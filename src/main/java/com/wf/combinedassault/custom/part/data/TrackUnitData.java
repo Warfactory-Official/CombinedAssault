@@ -16,11 +16,19 @@ public class TrackUnitData extends SuspensionUnitData {
     private static final float COLLISION_THICKNESS = 1.0f / 16;
     private final float trackWidth;
     private List<List<Vec3>> tracks;
+    private final List<TrackUnitPojo.RoadWheel> roadWheels;
 
     public TrackUnitData(TrackUnitPojo pojo) {
         super(pojo);
         this.trackWidth = pojo.trackWidth;
         this.tracks = copyTracks(pojo.tracks);
+        this.roadWheels = List.copyOf(pojo.roadWheels);
+        for (TrackUnitPojo.RoadWheel wheel : roadWheels) {
+            if (wheel.track() < 0 || wheel.track() >= tracks.size()) {
+                throw new IllegalArgumentException("road wheel " + wheel.node() + " names track " + wheel.track()
+                        + " of " + tracks.size());
+            }
+        }
     }
 
     private static List<List<Vec3>> copyTracks(List<List<Vec3>> tracks) {
@@ -87,6 +95,10 @@ public class TrackUnitData extends SuspensionUnitData {
 
     public List<List<Vec3>> getTracks() {
         return tracks;
+    }
+
+    public List<TrackUnitPojo.RoadWheel> getRoadWheels() {
+        return roadWheels;
     }
 
 }

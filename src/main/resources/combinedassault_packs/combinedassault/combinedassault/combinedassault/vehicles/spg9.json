@@ -19,6 +19,18 @@
       "zoom_max": 4,
       "rot_info": {"x_rot_speed": 3, "y_rot_speed": 4, "need_power": false},
       "weapons": ["combinedassault:spg9"],
+      "pose": "stand",
+      "crew_roles": ["gunner", "loader"],
+      "loading": "manual",
+      "protect_passenger": false
+    },
+    {
+      "id": "sight",
+      "name": "part.combinedassault.spg9_sight",
+      "type": "combinedassault:generic",
+      "component": "crew",
+      "sensor": "gun",
+      "crew_roles": ["gunner"],
       "pose": "sit",
       "protect_passenger": false
     }

@@ -1,5 +1,6 @@
 package com.wf.combinedassault.api;
 
+import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -10,6 +11,7 @@ import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 public class CombinedAssaultAPI {
 
@@ -36,6 +38,14 @@ public class CombinedAssaultAPI {
 
     public static IVehicleDataManager getVehicleDataManager() {
         return CommonAssetsManager.vehicleDataManager();
+    }
+
+    /**
+     * Edit each vehicle def JSON before parse, every (re)load. Register on both sides before the first load
+     * (mod construction / startup scripts); client and server defs must agree.
+     */
+    public static void patchVehicleDefs(BiConsumer<ResourceLocation, JsonObject> patch) {
+        CommonAssetsManager.addVehicleDefPatch(patch);
     }
 
 }

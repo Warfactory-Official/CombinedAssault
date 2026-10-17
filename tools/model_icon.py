@@ -62,11 +62,14 @@ def local(node):
     return m
 
 
-def gather(doc, blob):
-    """Every triangle in the scene, in model space, with its texture coordinates and material index (-1: none)."""
-    tris, uvs, mats = [], [], []
+def gather(doc, blob, mounts=None):
+    """Every triangle in the scene, in model space, with its texture coordinates and material index (-1: none),
+    + [(material offset, doc)] grafted. mounts: node name -> [(doc, blob)] grafted under it (def part `mounts`)."""
+    tris, uvs, mats, grafted = [], [], [], []
+    mounts = mounts or {}
+    base = [len(doc.get("materials", []))]
 
-    def visit(index, parent):
+    def visit(doc, blob, index, parent, offset):
         node = doc["nodes"][index]
         # = GemRender GltfImporter.HIDDEN_PREFIXES + extras.gemrenderHidden: subtree not drawn.
         if node.get("name", "").startswith(("hit_", "socket_")) or (node.get("extras") or {}).get("gemrenderHidden"):
@@ -81,13 +84,37 @@ def gather(doc, blob):
                 idx = accessor(doc, blob, prim["indices"]).astype(np.int64).reshape(-1, 3)
                 tris.append(pos[idx])
                 uvs.append(uv[idx])
-                mats.append(np.full(len(idx), prim.get("material", -1)))
+                material = prim.get("material", -1)
+                mats.append(np.full(len(idx), material + offset if material >= 0 else -1))
         for child in node.get("children", []):
-            visit(child, here)
+            visit(doc, blob, child, here, offset)
+        for mount_doc, mount_blob in mounts.get(node.get("name"), []):
+            mount_offset = base[0]
+            base[0] += len(mount_doc.get("materials", []))
+            grafted.append((mount_offset, mount_doc))
+            for root in mount_doc["scenes"][mount_doc.get("scene", 0)]["nodes"]:
+                visit(mount_doc, mount_blob, root, here, mount_offset)
 
     for root in doc["scenes"][doc.get("scene", 0)]["nodes"]:
-        visit(root, np.eye(4))
-    return np.concatenate(tris), np.concatenate(uvs), np.concatenate(mats)
+        visit(doc, blob, root, np.eye(4), 0)
+    return np.concatenate(tris), np.concatenate(uvs), np.concatenate(mats), grafted
+
+
+def part_mounts(rig):
+    """Def part mounts drawn on the icon: plain ones + each part's first weapon's. node -> [(doc, blob)]."""
+    path = os.path.join(PACK, NS, NS, "vehicles", f"{rig}.json")
+    out = {}
+    if not os.path.exists(path):
+        return out
+    for part in json.load(open(path)).get("parts", []):
+        first = (part.get("weapons") or [None])[0]
+        for mount in part.get("mounts", []):
+            if mount.get("weapon", first) != first:
+                continue
+            gltf = resource(mount["model"])
+            blob = open(os.path.splitext(gltf)[0] + ".bin", "rb").read()
+            out.setdefault(mount["node"], []).append((json.load(open(gltf)), blob))
+    return out
 
 
 def sheets(doc):
@@ -109,8 +136,10 @@ def render(rig):
     (path,) = glob.glob(os.path.join(PACK, "assets", NS, "models", "*", rig, f"{rig}.gltf"))
     doc = json.load(open(path))
     blob = open(os.path.join(os.path.dirname(path), f"{rig}.bin"), "rb").read()
-    tris, uvs, mats = gather(doc, blob)
+    tris, uvs, mats, grafted = gather(doc, blob, part_mounts(rig))
     maps = sheets(doc)
+    for offset, mount_doc in grafted:
+        maps.update({offset + i: sheet for i, sheet in sheets(mount_doc).items() if i >= 0})
 
     yaw, pitch = np.radians(YAW), np.radians(PITCH)
     right = np.array([np.cos(yaw), 0, -np.sin(yaw)])
@@ -120,6 +149,7 @@ def render(rig):
     flat = tris.reshape(-1, 3)
     centre = (flat.min(0) + flat.max(0)) / 2
     view = (flat - centre) @ np.stack([right, up, forward], axis=1)
+    view[:, :2] -= (view[:, :2].min(0) + view[:, :2].max(0)) / 2
     span = max(view[:, 0].max() - view[:, 0].min(), view[:, 1].max() - view[:, 1].min()) * 1.06
     px = SIZE * SUPERSAMPLE
     screen = np.empty_like(view)

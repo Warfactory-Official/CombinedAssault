@@ -1235,7 +1235,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             return;
         }
         if (isDestroyed()) {
-            setPower(Math.max(getPower() - 2, 0));
+            setPower(Math.max(getPower() - 10, 0));
             return;
         }
         setPower(Mth.clamp(getPower() + (isEngineOn() ? 1 : -1), 0, 100));
@@ -4274,7 +4274,8 @@ public abstract class AbstractVehicle extends ContainerCraft
             flushTravel(rig);
             this.setDeltaMovement(rig.getDeltaMovement());
             this.setOnGround(rig.onGround());
-            if (rig.impactVelocityDiff > 0) {
+            // Wreck pool = weapons only: its own crash would discard it on touchdown.
+            if (rig.impactVelocityDiff > 0 && !isDestroyed()) {
                 DamageSystem.impactHurt(rig.impactVelocityDiff, rig.impactPos, this);
             }
             for (int i = 0, size = step.touched.size(); i < size; i++) {

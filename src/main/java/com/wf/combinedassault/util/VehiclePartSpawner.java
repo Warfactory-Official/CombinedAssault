@@ -7,6 +7,11 @@ import com.wf.combinedassault.vehicle.part.PartUnit;
 
 public final class VehiclePartSpawner {
 
+    /** Blocks/tick. */
+    private static final double POP_SPEED = 0.15;
+    /** Rad/tick. */
+    private static final double POP_TOPPLE = 0.12;
+
     private VehiclePartSpawner() {}
 
     public static void spawnDestroyedParts(AbstractVehicle vehicle) {
@@ -25,6 +30,23 @@ public final class VehiclePartSpawner {
             vehiclePart.setDeltaMovement(flingVelocity(vehicle, partUnit));
             vehicle.level().addFreshEntity(vehiclePart);
         }
+    }
+
+    /** Destroyed wheel off a live vehicle: rolls clear, outward and up; no cube => just gone. */
+    public static void popOff(PartUnit<?> partUnit) {
+        AbstractVehicle vehicle = partUnit.getVehicle();
+        VehiclePart vehiclePart = partUnit.detach();
+        if (vehiclePart == null) {
+            partUnit.setDetached(true);
+            return;
+        }
+        Vec3 out = partUnit.worldPivotPosition().subtract(vehicle.position().add(vehicle.centerOffset)).multiply(1, 0, 1);
+        out = out.lengthSqr() < 1e-6 ? Vec3.ZERO : out.normalize();
+        vehiclePart.setDestroyed();
+        vehiclePart.setDeltaMovement(vehicle.getDeltaMovement().add(out.scale(POP_SPEED)).add(0, POP_SPEED, 0));
+        // Box of a wheel stands on its tread face: top tipped outward (up x out) or it never falls.
+        vehiclePart.physicsEngine.angularVelocity.set(new Vec3(0, 1, 0).cross(out).scale(POP_TOPPLE).toVector3f());
+        vehicle.level().addFreshEntity(vehiclePart);
     }
 
     private static Vec3 flingVelocity(AbstractVehicle vehicle, PartUnit<?> partUnit) {

@@ -7,6 +7,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.StringUtils;
 import com.wf.combinedassault.CombinedAssault;
@@ -82,6 +84,8 @@ public class BaseVehicleData<T extends AbstractVehicle> {
     protected ClipRig clipRig;
     private final Map<String, VehicleCubeGroup> groupsByName = new HashMap<>();
     protected double structureLength;
+    /** Local XZ extents of body + part cubes: minX, maxX, minZ, maxZ. */
+    protected final double[] extentsXZ = new double[4];
     /** Z extent of the solid body colliders; turn geometry. Main cube = one convex piece, not the hull. */
     protected float bodyDepth;
     protected List<PartUnitEntry<?, ?>> parts;
@@ -204,6 +208,10 @@ public class BaseVehicleData<T extends AbstractVehicle> {
             }
         }
         this.structureLength = Math.max(maxX - minX, maxZ - minZ);
+        extentsXZ[0] = minX;
+        extentsXZ[1] = maxX;
+        extentsXZ[2] = minZ;
+        extentsXZ[3] = maxZ;
     }
 
     public void inject(T vehicle) {}
@@ -381,6 +389,21 @@ public class BaseVehicleData<T extends AbstractVehicle> {
 
     public double getStructureLength() {
         return structureLength;
+    }
+
+    /** World box of body + part cubes spawned at {@code pos} facing {@code yRot}; y = [pos.y, pos.y + height]. */
+    public AABB footprint(Vec3 pos, float yRot, double height) {
+        double minX = Double.POSITIVE_INFINITY, maxX = Double.NEGATIVE_INFINITY;
+        double minZ = Double.POSITIVE_INFINITY, maxZ = Double.NEGATIVE_INFINITY;
+        float rad = -yRot * Mth.DEG_TO_RAD;
+        for (int i = 0; i < 4; i++) {
+            Vec3 corner = new Vec3(extentsXZ[i & 1], 0, extentsXZ[2 + (i >> 1)]).yRot(rad);
+            minX = Math.min(minX, corner.x);
+            maxX = Math.max(maxX, corner.x);
+            minZ = Math.min(minZ, corner.z);
+            maxZ = Math.max(maxZ, corner.z);
+        }
+        return new AABB(pos.x + minX, pos.y, pos.z + minZ, pos.x + maxX, pos.y + height, pos.z + maxZ);
     }
 
     public float getBodyDepth() {

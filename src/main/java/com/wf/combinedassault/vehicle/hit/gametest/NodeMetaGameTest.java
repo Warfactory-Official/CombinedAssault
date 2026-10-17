@@ -101,7 +101,7 @@ public class NodeMetaGameTest {
         }
         List<ModelMounts.Link> links = model.nodes().stream()
                 .map(n -> new ModelMounts.Link(n.name(), n.parent(), n.world())).toList();
-        JsonObject vehicle = MountDefaults.apply("test", new JsonObject(), new ModelMounts(links, List.of(), rig)).vehicle();
+        JsonObject vehicle = MountDefaults.apply("test", new JsonObject(), new ModelMounts(links, List.of(), List.of(), rig)).vehicle();
         String center = vehicle.getAsJsonObject("physics_info").get("center").toString();
         if (!center.equals("[3.5,0.5,0.5]")) {
             helper.fail("centre of mass " + center);

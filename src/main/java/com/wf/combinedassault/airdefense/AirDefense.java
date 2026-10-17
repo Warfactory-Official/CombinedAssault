@@ -77,7 +77,7 @@ public final class AirDefense implements InterceptBattery.Mount {
             return;
         }
         this.running = true;
-        boolean beam = this.laser() != null;
+        boolean beam = this.beam();
         this.state = this.battery().tick(sl, new InterceptBattery.Settings(this.spec.range(),
                 this.source == Source.ORGANIC, this.spec.mast(), beam ? this.spec.dwell() : this.salvo,
                 beam ? 0 : this.spec.salvoSpacing(), this.spec.cooldown()));
@@ -165,6 +165,11 @@ public final class AirDefense implements InterceptBattery.Mount {
     @Override
     public boolean valid() {
         return this.unit.getVehicle().isAlive();
+    }
+
+    /** Continuous beam: no salvo, no interceptors. */
+    public boolean beam() {
+        return this.laser() != null;
     }
 
     @Nullable

@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 public final class ModelDataManager {
 
     private static final Set<String> HIT_KEYS = Set.of("system", "side", "unit", "spin", "health", "swept", "skip",
-            "index");
+            "index", "road_wheel");
     /** Frame-only: fill the part's {@code rot_info} ({@link MountDefaults}). */
     private static final Set<String> FRAME_KEYS = Set.of("x_rot_min", "x_rot_max", "y_rot_min", "y_rot_max");
     /** A rotor disc thinner than this is padded to it: a shot must be able to find it. */
@@ -103,10 +103,18 @@ public final class ModelDataManager {
         List<ModelMounts.Link> links = new ArrayList<>();
         List<ModelMounts.Mount> mounts = new ArrayList<>();
         List<VehicleLight> lights = new ArrayList<>();
+        List<ModelMounts.Wheel> wheels = new ArrayList<>();
         for (int i = 0; i < gltf.nodes().size(); i++) {
             GltfReader.Node node = gltf.nodes().get(i);
             NodeRole role = NodeRole.of(node.role());
             links.add(new ModelMounts.Link(node.name(), node.parent(), node.world()));
+            if (node.meta().has("road_wheel") && node.meta().get("road_wheel").getAsBoolean()) {
+                if (role != null || node.triangles().length == 0) {
+                    throw new IllegalArgumentException(source + ": road_wheel " + node.name()
+                            + " must be a drawn mesh node without a role");
+                }
+                wheels.add(new ModelMounts.Wheel(node.name(), node.origin()));
+            }
             if (weaponOf.get(i) != null && role != null && role != NodeRole.BOLT && role != NodeRole.HIT
                     && role != NodeRole.HIT_SURFACE) {
                 throw new IllegalArgumentException(source + ": node " + node.name() + " (" + role.key()
@@ -128,7 +136,7 @@ public final class ModelDataManager {
                         node.rotation(), node.world().getScale(new Vector3f()), world, weaponOf.get(i)));
             }
         }
-        ModelMounts modelMounts = new ModelMounts(List.copyOf(links), List.copyOf(mounts), rig);
+        ModelMounts modelMounts = new ModelMounts(List.copyOf(links), List.copyOf(mounts), List.copyOf(wheels), rig);
         ClipRig clips = ClipRig.of(gltf);
         if (vehicle.has("hitbox") && !vehicle.get("hitbox").getAsBoolean()) {
             return new ModelData(source, rig, null, modelMounts, clips, List.copyOf(lights));

@@ -186,6 +186,19 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
         return sensor == null ? null : (WeaponUnit) vehicle.getPartUnit(sensor).orElseThrow();
     }
 
+    /** Crew on + a seat declares {@code sensor} = this station: that seat aims, the station seat only fires. */
+    public boolean aimedFromSensorSeat() {
+        if (!CrewRules.enabled()) {
+            return false;
+        }
+        for (PartUnit<?> part : vehicle.getPartUnits()) {
+            if (part.sensorUnit() == this) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Another occupant spots through this sight: their slew owns it. */
     public boolean spottedBy(@Nullable LivingEntity except) {
         for (PartUnit<?> part : vehicle.getPartUnits()) {
@@ -446,7 +459,8 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
         PartUnit<?> target = vehicle.getPartUnits().get(message.partUnitIndex);
         PartUnit<?> own = vehicle.getOwnOperatorUnit(player);
         boolean spotting = !message.shoot && own != null && own.sensorUnit() == target;
-        if (CrewRules.enabled() && !spotting && (target.getOwner() != player || !CrewRules.has(vehicle, player, CrewRole.GUNNER))) {
+        if (CrewRules.enabled() && !spotting && (target.getOwner() != player || !CrewRules.has(vehicle, player, CrewRole.GUNNER)
+                || !message.shoot && target.aimedFromSensorSeat())) {
             return;
         }
         if (message.shoot) {

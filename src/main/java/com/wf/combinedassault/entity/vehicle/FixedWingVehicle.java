@@ -256,6 +256,11 @@ public class FixedWingVehicle extends AbstractVehicle
 
     @Override
     protected Vec3 tickMove() {
+        // Wreck: rigid body only. Locked rotation + flight writes => wedged at impact attitude.
+        physicsEngine.lockCenterRot = !isDestroyed();
+        if (isDestroyed()) {
+            return Vec3.ZERO;
+        }
         Vector3f[] axes;
         boolean onGround = groundedOrOnDeck();
         if (onGround) {
@@ -266,23 +271,18 @@ public class FixedWingVehicle extends AbstractVehicle
         Vec3 forwardDirection = new Vec3(axes[2]);
         Vec3 upDirection = new Vec3(axes[1]);
         Vec3 leftDirection = new Vec3(axes[0]);
-        float throttleLevel;
-        if (isDestroyed()) {
-            throttleLevel = 0;
-        } else {
-            throttleLevel = getThrottleLevel();
-            if (controlUnit.forward || controlUnit.backward) {
-                if (thrustK > 1) {
-                    if (controlUnit.forward && throttleLevel + 5 > 100) {
-                        throttleLevel = 100 * thrustK;
-                    } else if (controlUnit.backward && throttleLevel > 100) {
-                        throttleLevel = 100;
-                    } else {
-                        throttleLevel = Mth.clamp(throttleLevel + (controlUnit.forward ? 5 : -5), 0, 100);
-                    }
+        float throttleLevel = getThrottleLevel();
+        if (controlUnit.forward || controlUnit.backward) {
+            if (thrustK > 1) {
+                if (controlUnit.forward && throttleLevel + 5 > 100) {
+                    throttleLevel = 100 * thrustK;
+                } else if (controlUnit.backward && throttleLevel > 100) {
+                    throttleLevel = 100;
                 } else {
                     throttleLevel = Mth.clamp(throttleLevel + (controlUnit.forward ? 5 : -5), 0, 100);
                 }
+            } else {
+                throttleLevel = Mth.clamp(throttleLevel + (controlUnit.forward ? 5 : -5), 0, 100);
             }
         }
         setThrottleLevel(Math.max(0f, throttleLevel));

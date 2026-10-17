@@ -36,7 +36,11 @@ public final class AirDefenseActions {
         ProbeActions.registerEntity(SOURCE, (player, entity, arg) -> set(player, entity, arg,
                 AirDefense.Source.values().length, (ad, v) -> ad.setSource(AirDefense.Source.values()[v])));
         ProbeActions.registerEntity(SALVO, (player, entity, arg) -> set(player, entity, arg,
-                AirDefense.MAX_SALVO + 1, AirDefense::setSalvo));
+                AirDefense.MAX_SALVO + 1, (ad, v) -> {
+                    if (!ad.beam()) {
+                        ad.setSalvo(v);
+                    }
+                }));
         ProbeActions.registerEntity(CLAIM, AirDefenseActions::claim);
         ProbeRegistry.addEntityData(entity -> entity instanceof AbstractVehicle vehicle && defended(vehicle),
                 AirDefenseActions::data, ProbeRegistry.CAPABILITY_PRIORITY);
@@ -101,6 +105,7 @@ public final class AirDefenseActions {
                 CompoundTag station = ad.save();
                 station.putString("State", ad.state().name());
                 station.putInt("Interceptors", ad.interceptors());
+                station.putBoolean("Beam", ad.beam());
                 out.put(Integer.toString(unit.getIndex()), station);
             }
         }

@@ -19,6 +19,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 
+import bmesh  # noqa: E402
 import bpy  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
@@ -169,6 +170,27 @@ def run():
     bpy.data.objects.remove(dent, do_unlink=True)
     flap.combinedassault.posed = False
 
+    flat = box("flat", (6, 0, 0), (1, 1, 1))
+    flat.parent = scene.objects["tank"]
+    flat.combinedassault.role = "COLLIDER"
+    _, warnings = T.check_scene(scene)
+    check("quad collider: no shared-plane warning", not any("flat" in w and "plane" in w for w in warnings), str(warnings))
+    bm = bmesh.new()
+    bm.from_mesh(flat.data)
+    bmesh.ops.triangulate(bm, faces=bm.faces)
+    bm.to_mesh(flat.data)
+    bm.free()
+    _, warnings = T.check_scene(scene)
+    check("triangulated collider warned", any("flat" in w and "share a plane" in w for w in warnings), str(warnings))
+    bpy.data.objects.remove(flat, do_unlink=True)
+
+    wheel = box("road_wheel_0", (2, 0, 0.5), (0.3, 1, 1))
+    wheel.parent = body
+    wheel.combinedassault.meta_road_wheel = True
+    errors, _ = T.check_scene(scene)
+    check("road wheel without a track refused", any("no track socket" in e for e in errors), str(errors))
+    bpy.data.objects.remove(wheel, do_unlink=True)
+
     orphan = box("orphan", (10, 0, 0), (1, 1, 1))
     orphan.combinedassault.role = "HIT"
     errors, _ = T.check_scene(scene)
@@ -263,9 +285,11 @@ def run():
 
     roundtrip("ground/humvee/humvee", ["humvee"])
     roundtrip("aircraft/c5/c5", ["c5"])
+    roundtrip("ground/t90/t90", ["t90"])
     validator_refuses()
     texture_setup(work)
     player_reference()
+    part_model()
 
     print("SUMMARY %d failure(s)" % len(FAILURES))
     return 1 if FAILURES else 0
@@ -453,6 +477,26 @@ def player_reference():
         names = [n["name"] for n in json.load(source)["nodes"]]
     check("reference never exported", not any("player" in n for n in names), str(names))
     shutil.rmtree(pack)
+
+
+
+def part_model():
+    fresh_scene()
+    scene = bpy.context.scene
+    root = bpy.data.objects.new("gun", None)
+    scene.collection.objects.link(root)
+    box("gun_mesh", (0, 0, 0), (1, 1, 1)).parent = root
+    bolt = bpy.data.objects.new("socket_bolt_0", None)
+    scene.collection.objects.link(bolt)
+    bolt.parent = root
+    bolt.combinedassault.role = "SOCKET"
+    bolt.combinedassault.field = "bolt"
+    errors, _ = T.check_scene(scene)
+    check("part model (no body), untargeted socket accepted", not errors, str(errors))
+    root.combinedassault.role = "PITCH"
+    root.combinedassault.target = "gun"
+    errors, _ = T.check_scene(scene)
+    check("frame in a part model refused", any("gun" in e and "part model" in e for e in errors), str(errors))
 
 
 if __name__ == "__main__":

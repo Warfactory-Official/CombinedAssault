@@ -19,6 +19,7 @@ import com.wf.combinedassault.api.custom.sync.SyncDataSerializers;
 import com.wf.combinedassault.custom.part.data.SuspensionUnitData;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.util.PhysicsHelper;
+import com.wf.combinedassault.util.VehiclePartSpawner;
 import com.wf.combinedassault.vehicle.PhysicsEngine;
 import com.wf.combinedassault.vehicle.collision.BoxBuffer;
 import com.wf.combinedassault.vehicle.parenting.CarrierLink;
@@ -104,7 +105,7 @@ public class SuspensionUnit<T extends SuspensionUnitData> extends PartUnit<T> {
     }
 
     /** Wheel-bottom probes; a body longer than max(spacing, 1.5 x its height) gets one per spacing. */
-    private Vec3[] buildSupportOffsets() {
+    protected Vec3[] buildSupportOffsets() {
         if (structureGroup == null) {
             return new Vec3[]{Vec3.ZERO};
         }
@@ -420,8 +421,13 @@ public class SuspensionUnit<T extends SuspensionUnitData> extends PartUnit<T> {
 
     @Override
     public void tick() {
-        if (data.stowWhenTowed() && !vehicle.level().isClientSide()) {
-            deploy = Mth.approach(deploy, vehicle.towLink() == null ? 1 : 0, DEPLOY_RATE);
+        if (!vehicle.level().isClientSide()) {
+            if (data.stowWhenTowed()) {
+                deploy = Mth.approach(deploy, vehicle.towLink() == null ? 1 : 0, DEPLOY_RATE);
+            }
+            if (isDestroyed() && !isDetached() && !vehicle.isDestroyed() && isDetachable()) {
+                VehiclePartSpawner.popOff(this);
+            }
         }
         if (vehicle.level().isClientSide() && !vehicle.predicted()) {
             // Client: rebuild wheel geometry off interpolated hull; grounded flag stays server-synced.
@@ -494,6 +500,42 @@ public class SuspensionUnit<T extends SuspensionUnitData> extends PartUnit<T> {
         return clampCompression(compression != Double.NEGATIVE_INFINITY ? (float) compression : fallback);
     }
 
+    /**
+     * Per probe (support offset order): drawn compression - its rest length, parent-frame +y. Inactive or tipped
+     * strut: every probe the unit's {@code fallback} compression.
+     */
+    @OnlyIn(Dist.CLIENT)
+    protected void probeTravel(float partialTick, float fallback, double[] out) {
+        Vec3 direction = getSuspensionDirection(partialTick);
+        if (!isActive() || direction.y >= -0.25) {
+            Arrays.fill(out, clampCompression(fallback) - restLength);
+            return;
+        }
+        Vec3 mount = worldPositionWithBaseRot(pivotOffset, partialTick);
+        Quaternionf rotation = getSuspensionRotation(partialTick);
+        PhysicsEngine.CellTops tops = PhysicsEngine.CellTops.live(vehicle.level());
+        Vector3f offset = new Vector3f();
+        for (int i = 0; i < supportOffsets.length; i++) {
+            rotation.transform(supportOffsets[i].toVector3f(), offset);
+            double length = probe(mount.x + offset.x, mount.y + offset.y, mount.z + offset.z, direction, i,
+                    CONTACT_RECOVERY, tops);
+            double min = minCompression(supportRestLengths[i]);
+            double compression = length == Double.POSITIVE_INFINITY ? min
+                    : Mth.clamp(supportRestLengths[i] - length, min, Math.max(supportMaxCompressions[i], min));
+            out[i] = compression - supportRestLengths[i];
+        }
+    }
+
+    /** Unit compression drawn this frame before ground probing: interpolated tick value. */
+    @OnlyIn(Dist.CLIENT)
+    protected float interpolatedCompression(float partialTick) {
+        return (float) Mth.lerp(partialTick, structureGroup.offsetO.y + restLength, compression);
+    }
+
+    protected int supportCount() {
+        return supportOffsets.length;
+    }
+
     public boolean isGrounded() {
         return grounded;
     }
@@ -564,9 +606,7 @@ public class SuspensionUnit<T extends SuspensionUnitData> extends PartUnit<T> {
         if (structureGroup == null) {
             return Vec3.ZERO;
         }
-        float interpolatedCompression = (float) Mth.lerp(partialTick,
-                structureGroup.offsetO.y + restLength, compression);
-        float visualCompression = getVisualCompression(partialTick, interpolatedCompression);
+        float visualCompression = getVisualCompression(partialTick, interpolatedCompression(partialTick));
         Vec3 visualOffset = new Vec3(0, visualCompression - restLength, 0);
         Vec3 position = structureGroup.globalTransform(Vec3.ZERO, false,
                 group -> getViewGroupRotation(group, partialTick),

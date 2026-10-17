@@ -19,6 +19,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiConsumer;
 
 /**
  * Pack defs, parsed: weapons -> vehicle models -> vehicles. One per JVM (both sides read the same packs; the handshake
@@ -28,6 +30,7 @@ import java.util.Optional;
 public final class CommonAssetsManager {
 
     private static volatile CommonAssetsManager INSTANCE;
+    private static final List<BiConsumer<ResourceLocation, JsonObject>> VEHICLE_DEF_PATCHES = new CopyOnWriteArrayList<>();
 
     private final Map<ResourceLocation, JsonObject> vehicleDefs;
     private final Map<ResourceLocation, JsonObject> weaponDefs;
@@ -55,6 +58,7 @@ public final class CommonAssetsManager {
         Map<ResourceLocation, JsonObject> weaponDefs = json(CombinedPacks.defs("weapons"));
         Map<ResourceLocation, CombinedPacks.Def> vehicleFiles = CombinedPacks.defs("vehicles");
         Map<ResourceLocation, JsonObject> vehicleDefs = json(vehicleFiles);
+        VEHICLE_DEF_PATCHES.forEach(patch -> vehicleDefs.forEach(patch));
         Map<ResourceLocation, String> vehiclePacks = new LinkedHashMap<>();
         vehicleFiles.forEach((id, def) -> vehiclePacks.put(id, def.pack().id()));
         VehicleWeaponManager weapons = new VehicleWeaponManager(weaponDefs, problems);
@@ -67,6 +71,11 @@ public final class CommonAssetsManager {
                 weapons, vehicles);
         CombinedAssault.LOGGER.info("CombinedAssault content: {} vehicles, {} weapons in {} ms", vehicleDefs.size(),
                 weaponDefs.size(), (System.nanoTime() - start) / 1_000_000);
+    }
+
+    /** Applied in order to every vehicle def on each load; both sides must register the same patches. */
+    public static void addVehicleDefPatch(BiConsumer<ResourceLocation, JsonObject> patch) {
+        VEHICLE_DEF_PATCHES.add(patch);
     }
 
     private static Map<ResourceLocation, JsonObject> json(Map<ResourceLocation, CombinedPacks.Def> defs) {
@@ -115,7 +124,7 @@ public final class CommonAssetsManager {
         return instance().vehiclePacks.get(vehicle);
     }
 
-    /** Vehicle defs as authored, before glTF socket defaults. */
+    /** Vehicle defs after def patches, before glTF socket defaults. */
     public static Map<ResourceLocation, JsonObject> vehicleDefs() {
         return instance().vehicleDefs;
     }

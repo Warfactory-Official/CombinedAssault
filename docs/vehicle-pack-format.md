@@ -351,7 +351,7 @@ that type adds — there is no nested `data` object.
 | `combinedassault:linked_hinge` | bone swung open while another switchable part is on (ramp with its doors); `rot_info` speed |
 | `combinedassault:rope` | a winch; adds `max_length` |
 | `combinedassault:suspension` | sprung wheel; `part` frame = wheel, its parent frame the sprung one; probe = the frame's colliders |
-| `combinedassault:track` | track geometry and a `suspension` of its own; adds `tracks`, `track_width` |
+| `combinedassault:track` | track geometry and a `suspension` of its own; adds `tracks`, `track_width`, `road_wheels` |
 | `combinedassault:payload` | drone ordnance hardpoint |
 
 ### 4.2 Fields every part has
@@ -364,7 +364,7 @@ that type adds — there is no nested `data` object.
 | `defense_stats` | object | inherits | as [§3.6](#36-defense_stats) |
 | `component` | string | inferred from `id`/type | a system kind ([§6.6](#66-hit-geometry) table); `generic`/`crew` = not a system |
 | `render_bone` | string | `suspension`: its `part` frame node; else none | glTF node that is this part: hidden when detached (drawn by the part entity instead); suspension travel moves it |
-| `detachable` | bool | `true` | may be blown off as its own entity |
+| `detachable` | bool | `true` | may be blown off as its own entity; `suspension` at 0 health on a live vehicle pops off, repair refits |
 | `is_seat` | bool | `true` | **defaults to true** — a part that is not a seat must say so |
 | `seat_rot` | float | — | |
 | `seat_offset` | Vec3 | `[0,0,0]` | where the rider's eyes go |
@@ -373,7 +373,7 @@ that type adds — there is no nested `data` object.
 | `protect_passenger` | bool | vehicle `protect_passenger` | seat override; `false` on exposed stations (shipped `stand` seats) => AHF rig hits land |
 | `passenger_can_use_item` | bool | `false` | |
 | `owner_view_offset` | Vec3 | none | camera position when operating this part; weapon => load error (`operator_view_offset`) |
-| `sensor` | string | none | seat: weapon part id whose sight it looks through and slews (SCOPE; WSO); fires nothing; reticle = boresight. Spotter seated => owner's SCOPE view-only, other views stop aiming it |
+| `sensor` | string | none | seat: weapon part id whose sight it looks through and slews (SCOPE; WSO); fires nothing; reticle = boresight. Spotter seated => owner's SCOPE view-only, other views stop aiming it. `crew.required` => only this seat aims the station (empty => holds); station seat fires (SPG-9: `sight` aims, `gun` fires + loads) |
 | `crew_roles` | enum[] | derived | `driver`, `gunner`, `commander`, `loader`; gate stations under server config `crew.required`; driver seat always. Absent => seat 0 `driver` (+ `gunner` if a weapon station), other weapon seat `gunner`, else `commander`. Driver = first occupied `driver` seat (`crew.required` off: none occupied => seat 0 drives too); boarding takes an empty `driver` seat first; free seat probe node boards that seat |
 | `display_id` | id | — | |
 | `display_offset` | Vec3 | — | |
@@ -443,7 +443,7 @@ Entry: string (one weapon id) or object. Array form REMOVED: ammo kinds = one we
 | --- | --- | --- | --- |
 | `door` | `door_for_seat_id` | string | — | exit: door's `dismount_offset` (feet) else pivot − eye/2; nearest door serves seats without their own |
 | `landing_gear`, `airbrake` | `drag_k` | float | `0.5` |
-| `missile_holder` | `accepts` | enum[] | all | any of `SMALL`, `MEDIUM`, `LARGE`, `HUGE`, `POD` (MLRS cell), `POD_LARGE` (ATACMS) — upper case; item tags `wflib:missile/<size>`; `[]` = loads nothing (shared model's sockets on a vehicle without rounds: `laser_trailer`) |
+| `missile_holder` | `accepts` | enum[] | all | any of `SMALL`, `MEDIUM`, `LARGE`, `HUGE`, `POD` (MLRS cell), `POD_LARGE` (ATACMS) — upper case; item tags `wflib:missile/<size>`; `[]` = loads nothing |
 | | `capacity` | int | station count | slots; slot i = `station` socket i ([§6.7](#67-sockets)); slots past the last station: internal (no draw, launch from the shot). < station count => load error |
 | | `pods` | ingredient | — | WFLib pod items it seats; set => `accepts` unused, slots = seated pod's tubes ([§15](#15-pylon-missiles)) |
 | | `default_pod` | item id | — | pod seated, empty, at spawn; not a pod => load error |
@@ -469,6 +469,7 @@ Entry: string (one weapon id) or object. Array form REMOVED: ammo kinds = one we
 | | `stow_when_towed` | bool | `false` | landing leg: towed => reach 0, drawn at bind (modelled stowed); else reaches the ground; 2 s stroke |
 | `track` | `tracks` | Vec3[][] | `track` sockets — each inner list is one closed track path |
 | | `track_width` | float | `0.5` | collision box width per track |
+| | `road_wheels` | `{node, track, center}`[] | `road_wheel` nodes | one probe per wheel (centre x/z, track-box bottom), own spring row; node drawn at its travel; lower run below axle height lerps between wheels, fades to 0 toward loop ends. None => probe per block of run, track drawn at unit travel |
 | `payload` | `payload` | object | absent | `{"type": id, ...}` fixed payload; with `loadouts` leave out (loadout equips it) |
 | | `attach_offset` | Vec3 | `[0,0,0]` | blast / drop origin |
 | `radar` | `radar_type` | string | `""` |
@@ -689,6 +690,7 @@ Node frame => its part: a node under a part's `part`/`pitch` frame is that part'
 | `health` | pool size; `0` = 30% of `max_health`; larger of shared nodes wins |
 | `swept` | force / forbid the rotor disc |
 | `skip` | node has no hit geometry |
+| `road_wheel` | untagged mesh only: road wheel of the track path with nearest mean x; no `track` socket => load fails |
 
 | `system` | HUD | step s | effect |
 | --- | --- | --- | --- |
@@ -1350,8 +1352,8 @@ Cargo parachute (`combinedassault:cargo_parachute`): use on a vehicle to fit, sn
 
 ## 18. Air defence
 
-- Per station: `air_defense` ([§4.4](#44-weapon-stations--weapon-auto_weapon)). Shipped: `mim104` (`uav`; four `LARGE` canisters on the elevating launcher; `indirect_fire` map); `laser_trailer` (mim104 model, placeholder), `laser_emplacement` (mk15 model, placeholder; `mountable` `naval_emplacement`): weapon `laser`.
-- Laser station `AUTO`: same battery; lead speed 1e6, fire = beam tick with clear line, energy-gated. Damage: wflib `LaserDamage` per vehicle mass (kg) + nominal armour of the face toward the source; `DamageSystem` LASER = no threshold, THERMAL wear at nearest hull point. Measured: Mavic burns, MQ-9 > 95 % after 100 beam ticks (`LaserGameTest`).
+- Per station: `air_defense` ([§4.4](#44-weapon-stations--weapon-auto_weapon)). Shipped: `mim104` (`uav`; four `LARGE` canisters on the elevating launcher; `indirect_fire` map); `laser_trailer` (LOCUST module on towed chassis), `laser_emplacement` (LOCUST cabinet; `mountable` `naval_emplacement`): weapon `laser`; turret = part mounts `weapon/locust/locust_yoke` (yaw node) + `locust_head` (pitch node).
+- Laser station `AUTO`: same battery; lead speed 1e6, fire = beam tick with clear line, energy-gated. Damage: wflib `LaserDamage` per vehicle mass (kg) + nominal armour of the face toward the source; `DamageSystem` LASER = no threshold, THERMAL wear at nearest hull point. Measured: Mavic burns, MQ-9 > 95 % after 100 beam ticks (`LaserGameTest`). Probe: no salvo / interceptor rows.
 
 | field | default | |
 | --- | --- | --- |

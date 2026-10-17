@@ -134,7 +134,12 @@
     0.34052952239999995,
     2.252466648
    ],
-   "mesh": 5
+   "mesh": 5,
+   "extras": {
+    "combinedassault": {
+     "road_wheel": true
+    }
+   }
   },
   {
    "name": "wheel2",
@@ -143,7 +148,12 @@
     0.34052952239999995,
     1.496467944
    ],
-   "mesh": 6
+   "mesh": 6,
+   "extras": {
+    "combinedassault": {
+     "road_wheel": true
+    }
+   }
   },
   {
    "name": "wheel3",
@@ -152,7 +162,12 @@
     0.34052952239999995,
     0.7404681815999999
    ],
-   "mesh": 7
+   "mesh": 7,
+   "extras": {
+    "combinedassault": {
+     "road_wheel": true
+    }
+   }
   },
   {
    "name": "wheel4",
@@ -161,7 +176,12 @@
     0.34052952239999995,
     -0.015531757199999996
    ],
-   "mesh": 8
+   "mesh": 8,
+   "extras": {
+    "combinedassault": {
+     "road_wheel": true
+    }
+   }
   },
   {
    "name": "wheel5",
@@ -170,7 +190,12 @@
     0.34052952239999995,
     -0.7715317427999999
    ],
-   "mesh": 9
+   "mesh": 9,
+   "extras": {
+    "combinedassault": {
+     "road_wheel": true
+    }
+   }
   },
   {
    "name": "wheel6",
@@ -179,7 +204,12 @@
     0.34052952239999995,
     -1.527532596
    ],
-   "mesh": 10
+   "mesh": 10,
+   "extras": {
+    "combinedassault": {
+     "road_wheel": true
+    }
+   }
   },
   {
    "name": "wheel7",
@@ -225,7 +255,12 @@
     0.34052952239999995,
     2.252466648
    ],
-   "mesh": 13
+   "mesh": 13,
+   "extras": {
+    "combinedassault": {
+     "road_wheel": true
+    }
+   }
   },
   {
    "name": "wheel12",
@@ -234,7 +269,12 @@
     0.34052952239999995,
     1.496467944
    ],
-   "mesh": 14
+   "mesh": 14,
+   "extras": {
+    "combinedassault": {
+     "road_wheel": true
+    }
+   }
   },
   {
    "name": "wheel13",
@@ -243,7 +283,12 @@
     0.34052952239999995,
     0.7404681815999999
    ],
-   "mesh": 15
+   "mesh": 15,
+   "extras": {
+    "combinedassault": {
+     "road_wheel": true
+    }
+   }
   },
   {
    "name": "wheel14",
@@ -252,7 +297,12 @@
     0.34052952239999995,
     -0.015531757199999996
    ],
-   "mesh": 16
+   "mesh": 16,
+   "extras": {
+    "combinedassault": {
+     "road_wheel": true
+    }
+   }
   },
   {
    "name": "wheel15",
@@ -261,7 +311,12 @@
     0.34052952239999995,
     -0.7715317427999999
    ],
-   "mesh": 17
+   "mesh": 17,
+   "extras": {
+    "combinedassault": {
+     "road_wheel": true
+    }
+   }
   },
   {
    "name": "wheel16",
@@ -270,7 +325,12 @@
     0.34052952239999995,
     -1.527532596
    ],
-   "mesh": 18
+   "mesh": 18,
+   "extras": {
+    "combinedassault": {
+     "road_wheel": true
+    }
+   }
   },
   {
    "name": "wheel17",
@@ -2247,14 +2307,14 @@
    "count": 12,
    "type": "VEC3",
    "min": [
-    -1.8184,
-    0.0,
-    -3.4563
+    -1.8184000253677368,
+    0.30000001192092896,
+    -3.4563000202178955
    ],
    "max": [
-    1.8184,
-    1.2149,
-    3.3822
+    1.8184000253677368,
+    1.214900016784668,
+    3.382200002670288
    ]
   },
   {

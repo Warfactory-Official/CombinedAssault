@@ -41,6 +41,11 @@ public class SettleGameTest {
         drop(helper, "m252a1", 1);
     }
 
+    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    public static void aDroppedLaserEmplacementSettles(GameTestHelper helper) {
+        drop(helper, "laser_emplacement", 2);
+    }
+
     private static void drop(GameTestHelper helper, String name, int lane) {
         ResourceLocation id = CombinedAssault.modLocation(name);
         ServerLevel level = helper.getLevel();

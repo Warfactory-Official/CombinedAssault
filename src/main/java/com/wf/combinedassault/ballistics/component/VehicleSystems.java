@@ -254,7 +254,11 @@ public final class VehicleSystems {
             return part.getMaxHealth();
         }
 
+        /** Repair onto a popped-off part of a live vehicle refits it. */
         public void setHealth(float health) {
+            if (health > 0 && part.isDetached() && !part.getVehicle().isDestroyed()) {
+                part.setDetached(false);
+            }
             if (!part.isDetached()) {
                 part.setHealth(Mth.clamp(health, 0, part.getMaxHealth()));
             }

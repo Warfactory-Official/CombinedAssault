@@ -11,9 +11,14 @@ import java.util.List;
  * Socket-role nodes, rest pose, vehicle frame (blocks, +X port, +Z forward). {@link MountDefaults} turns them into
  * vehicle def defaults.
  *
- * @param links every glTF node, reader order; {@link Mount#node} and {@link Link#parent} index it
+ * @param links  every glTF node, reader order; {@link Mount#node} and {@link Link#parent} index it
+ * @param wheels drawn nodes with meta {@code road_wheel}
  */
-public record ModelMounts(List<Link> links, List<Mount> mounts, ModelRig rig) {
+public record ModelMounts(List<Link> links, List<Mount> mounts, List<Wheel> wheels, ModelRig rig) {
+
+    /** @param centre rest origin */
+    public record Wheel(String name, Vector3f centre) {
+    }
 
     public record Link(String name, int parent, Matrix4f world) {
 

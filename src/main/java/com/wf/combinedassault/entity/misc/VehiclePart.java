@@ -4,8 +4,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
@@ -146,6 +149,12 @@ public class VehiclePart extends AbstractVehicle {
             updateOBBs();
             initialObbsUpdated = true;
         }
+    }
+
+    /** Debris: no hold, no seat (a wreck's interact opens its loot). */
+    @Override
+    public InteractionResult interact(Player player, InteractionHand hand) {
+        return InteractionResult.PASS;
     }
 
     @Override

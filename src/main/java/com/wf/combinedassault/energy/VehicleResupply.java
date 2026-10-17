@@ -42,21 +42,24 @@ public final class VehicleResupply {
             return;
         }
         Level level = vehicle.level();
-        BlockPos below = BlockPos.containing(vehicle.position()).below();
-        if (!level.isLoaded(below)) {
-            return;
+        // Origin inside its block: partial blocks (GT drum: hull at +0.65), contact slop into full blocks. Else block below.
+        BlockPos in = BlockPos.containing(vehicle.position());
+        if (!resupplyFrom(vehicle, level, in)) {
+            resupplyFrom(vehicle, level, in.below());
+        }
+    }
+
+    private static boolean resupplyFrom(AbstractVehicle vehicle, Level level, BlockPos pos) {
+        if (!level.isLoaded(pos)) {
+            return false;
         }
         if (vehicle.isElectric()) {
             int budget = vehicle.energyInfo.chargeRateFe() * INTERVAL;
-            IEnergyStorage source = level.getCapability(Capabilities.EnergyStorage.BLOCK, below, Direction.UP);
-            int moved = pullCharge(vehicle, source, budget);
-            if (moved <= 0) {
-                GregTechCompat.pullFromBlock(vehicle, level, below, Direction.UP, budget);
-            }
-        } else {
-            IFluidHandler source = level.getCapability(Capabilities.FluidHandler.BLOCK, below, Direction.UP);
-            pullFuel(vehicle, source, PUMP_MB_PER_TICK * INTERVAL);
+            IEnergyStorage source = level.getCapability(Capabilities.EnergyStorage.BLOCK, pos, Direction.UP);
+            return pullCharge(vehicle, source, budget) > 0 || GregTechCompat.pullFromBlock(vehicle, level, pos, Direction.UP, budget) > 0;
         }
+        IFluidHandler source = level.getCapability(Capabilities.FluidHandler.BLOCK, pos, Direction.UP);
+        return pullFuel(vehicle, source, PUMP_MB_PER_TICK * INTERVAL) > 0;
     }
 
     /**

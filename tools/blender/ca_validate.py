@@ -20,7 +20,7 @@ SYSTEMS = ["hull", "engine", "track", "wheel", "turret", "barrel", "fuel", "ammo
 # NodeRole SOCKET kind.
 SOCKET_FIELDS = ["seat", "dismount", "view", "sight", "bolt", "eject", "era", "slat", "mount_point", "hitch", "towable",
                  "axle", "exhaust", "vortex", "smoke", "afterburner", "camera", "camera_zoomed", "light", "cargo_bay",
-                 "center_of_mass", "pivot", "track", "propeller"]
+                 "center_of_mass", "pivot", "track", "propeller", "station"]
 # Socket fields with no interface (MountDefaults `none`).
 UNTARGETED = {"towable", "axle", "camera", "camera_zoomed", "exhaust", "vortex", "smoke", "afterburner", "light",
               "cargo_bay", "center_of_mass", "pivot", "propeller"}
