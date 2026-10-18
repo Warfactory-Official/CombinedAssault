@@ -25,6 +25,9 @@ import java.util.function.IntPredicate;
  */
 public final class VehicleHits {
 
+    /** Drawn surface first met eye -> point more than this short of it, m => hidden. Seats sit ~1 m inside the near side. */
+    public static final double SIGHT_DEPTH = 1.5;
+
     /** How far behind the struck surface an authored tagged piece still claims the hit: drawn inside the skin. */
     public static final double AUTHORED_DEPTH = 1.0;
 
@@ -129,14 +132,26 @@ public final class VehicleHits {
         return parts[node];
     }
 
-    /** A node that rides a detached part is that part entity's business; a weapon mount's, only while selected. */
+    /** A node that rides a detached part is that part entity's business; a kit mount's, only while fitted. */
     public boolean live(int node) {
         if (parts[node] == null) {
             return true;
         }
-        String weapon = model.nodes().get(node).mesh().weapon();
-        return !parts[node].isDetached() && (weapon == null || parts[node] instanceof WeaponUnit unit
-                && unit.currentWeaponId() != null && weapon.equals(unit.currentWeaponId().toString()));
+        String kit = model.nodes().get(node).mesh().kit();
+        return !parts[node].isDetached() && (kit == null || parts[node] instanceof WeaponUnit unit
+                && unit.kit() != null && kit.equals(unit.kit().toString()));
+    }
+
+    /** {@code at} further than {@link #SIGHT_DEPTH} behind the first hull surface on {@code eye -> at}. */
+    public boolean hidden(Vec3 eye, Vec3 at) {
+        Hit hit = surface(eye, at);
+        return hit != null && (1 - hit.fraction()) * eye.distanceTo(at) > SIGHT_DEPTH;
+    }
+
+    /** {@code part}'s hit centre, else its pivot. */
+    public static Vec3 anchor(@Nullable VehicleHits hits, PartUnit<?> part) {
+        Vec3 centre = hits == null ? null : hits.centre(part);
+        return centre != null ? centre : part.worldPivotPosition();
     }
 
     /** Nearest live surface (drawn) node along {@code from -> to}, or null. */
@@ -478,5 +493,33 @@ public final class VehicleHits {
                 .rotate(vehicle.groupRotation(index))
                 .translate(offset[node])
                 .rotate(toGroup[node]);
+    }
+
+    /** World point -> model frame with {@code node}'s group at rest (armour zones). */
+    public Vector3f restPoint(int node, Vec3 world) {
+        Vec3 c = vehicle.centerOffset;
+        Vector3f v = new Vector3f((float) (world.x - vehicle.getX() - c.x), (float) (world.y - vehicle.getY() - c.y),
+                (float) (world.z - vehicle.getZ() - c.z));
+        new Quaternionf(vehicle.rotYXZ()).conjugate().transform(v).add((float) c.x, (float) c.y, (float) c.z);
+        int slot = model.nodes().get(node).group();
+        int index = groupIndex[slot];
+        new Quaternionf(vehicle.groupRotation(index)).conjugate().transform(v.sub(vehicle.groupOffset(index)));
+        return model.fromGroup(slot, v, true);
+    }
+
+    /** World direction -> model frame with {@code node}'s group at rest. */
+    public Vector3f restDirection(int node, Vector3f world) {
+        int slot = model.nodes().get(node).group();
+        Vector3f v = new Quaternionf(vehicle.rotYXZ()).conjugate().transform(new Vector3f(world));
+        new Quaternionf(vehicle.groupRotation(groupIndex[slot])).conjugate().transform(v);
+        return model.fromGroup(slot, v, false);
+    }
+
+    /** Inverse of {@link #restDirection}. */
+    public Vector3f worldDirection(int node, Vector3f rest) {
+        int slot = model.nodes().get(node).group();
+        Vector3f v = model.toGroupDirection(slot, new Vector3f(rest));
+        vehicle.groupRotation(groupIndex[slot]).transform(v);
+        return vehicle.rotYXZ().transform(v);
     }
 }

@@ -1,10 +1,12 @@
 package com.wf.combinedassault.energy.gametest;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.material.Fluids;
@@ -25,6 +27,7 @@ import com.wf.combinedassault.custom.CommonAssetsManager;
 import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
 import com.wf.combinedassault.energy.VehicleFuelTank;
 import com.wf.combinedassault.energy.VehicleResupply;
+import com.wf.combinedassault.entity.misc.VehiclePart;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.vehicle.pojo.EnergyInfo;
 import com.wf.combinedassault.vehicle.pojo.FuelEntry;
@@ -552,6 +555,22 @@ public class VehicleEnergyGameTest {
         }
         burner.discard();
         battery.discard();
+        helper.succeed();
+    }
+
+    /** Capabilities register per type => vehicle type missing from {@code AllEntities.vehicleTypes} answers none. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 20)
+    public static void everyVehicleTypeOffersATank(GameTestHelper helper) {
+        for (EntityType<?> type : BuiltInRegistries.ENTITY_TYPE) {
+            if (!BuiltInRegistries.ENTITY_TYPE.getKey(type).getNamespace().equals(CombinedAssault.MOD_ID)
+                    || !(type.create(helper.getLevel()) instanceof AbstractVehicle vehicle) || vehicle instanceof VehiclePart) {
+                continue;
+            }
+            if (vehicle.getCapability(Capabilities.FluidHandler.ENTITY, null) == null) {
+                helper.fail(EntityType.getKey(type) + " offers no fuel tank");
+                return;
+            }
+        }
         helper.succeed();
     }
 

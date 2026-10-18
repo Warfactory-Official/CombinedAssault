@@ -78,20 +78,20 @@ public final class ModelDataManager {
         }
         ResourceLocation modelId = ResourceLocation.parse(vehicle.get("model").getAsString());
         GltfReader.Model gltf = gltf(modelId);
-        // Per node: weapon of the weapon-scoped mount it was grafted from, else null.
-        List<String> weaponOf = new ArrayList<>(java.util.Collections.nCopies(gltf.nodes().size(), (String) null));
+        // Per node: kit of the kit-scoped mount it was grafted from, else null.
+        List<String> kitOf = new ArrayList<>(java.util.Collections.nCopies(gltf.nodes().size(), (String) null));
         if (vehicle.has("parts")) {
             for (JsonElement element : vehicle.getAsJsonArray("parts")) {
                 JsonObject part = element.getAsJsonObject();
                 if (part.has("mounts")) {
                     for (JsonElement entry : part.getAsJsonArray("mounts")) {
                         JsonObject mount = entry.getAsJsonObject();
-                        String weapon = mount.has("weapon")
-                                ? ResourceLocation.parse(mount.get("weapon").getAsString()).toString() : null;
+                        String kit = mount.has("kit")
+                                ? ResourceLocation.parse(mount.get("kit").getAsString()).toString() : null;
                         gltf = graft(gltf, gltf(ResourceLocation.parse(mount.get("model").getAsString())),
                                 mount.get("node").getAsString(), part.get("id").getAsString());
-                        while (weaponOf.size() < gltf.nodes().size()) {
-                            weaponOf.add(weapon);
+                        while (kitOf.size() < gltf.nodes().size()) {
+                            kitOf.add(kit);
                         }
                     }
                 }
@@ -115,10 +115,10 @@ public final class ModelDataManager {
                 }
                 wheels.add(new ModelMounts.Wheel(node.name(), node.origin()));
             }
-            if (weaponOf.get(i) != null && role != null && role != NodeRole.BOLT && role != NodeRole.HIT
+            if (kitOf.get(i) != null && role != null && role != NodeRole.BOLT && role != NodeRole.HIT
                     && role != NodeRole.HIT_SURFACE) {
                 throw new IllegalArgumentException(source + ": node " + node.name() + " (" + role.key()
-                        + ") in a weapon mount of " + weaponOf.get(i) + "; weapon mounts carry bolts, hit and hit_surface nodes only");
+                        + ") in the mount of kit " + kitOf.get(i) + "; kit mounts carry bolts, hit and hit_surface nodes only");
             }
             if (role == NodeRole.LIGHT) {
                 lights.add(VehicleLight.read(i, node.name(), node.meta()));
@@ -133,7 +133,7 @@ public final class ModelDataManager {
                 }
                 mounts.add(new ModelMounts.Mount(i, node.name(), role, node.iface(),
                         node.meta().has("index") ? node.meta().get("index").getAsInt() : -1, node.origin(),
-                        node.rotation(), node.world().getScale(new Vector3f()), world, weaponOf.get(i)));
+                        node.rotation(), node.world().getScale(new Vector3f()), world, kitOf.get(i)));
             }
         }
         ModelMounts modelMounts = new ModelMounts(List.copyOf(links), List.copyOf(mounts), List.copyOf(wheels), rig);
@@ -141,11 +141,11 @@ public final class ModelDataManager {
         if (vehicle.has("hitbox") && !vehicle.get("hitbox").getAsBoolean()) {
             return new ModelData(source, rig, null, modelMounts, clips, List.copyOf(lights));
         }
-        return new ModelData(source, rig, hitMesh(source, gltf, rig, weaponOf), modelMounts, clips, List.copyOf(lights));
+        return new ModelData(source, rig, hitMesh(source, gltf, rig, kitOf), modelMounts, clips, List.copyOf(lights));
     }
 
-    /** @param weaponOf per node: weapon-scoped mount it was grafted from, else null */
-    public static HitMesh hitMesh(String source, GltfReader.Model gltf, ModelRig rig, List<String> weaponOf) {
+    /** @param kitOf per node: kit of the kit-scoped mount it was grafted from, else null */
+    public static HitMesh hitMesh(String source, GltfReader.Model gltf, ModelRig rig, List<String> kitOf) {
         float[] armour = new float[gltf.materials().size()];
         boolean[] decor = new boolean[armour.length];
         byte[] surfaces = new byte[armour.length];
@@ -260,7 +260,7 @@ public final class ModelDataManager {
             nodes.add(new HitMesh.Node(node.name(), node.parent(), module, rig.nodeFrame()[n], component,
                     meta.has("side") ? meta.get("side").getAsString() : "",
                     meta.has("unit") ? meta.get("unit").getAsString() : "", spin, health, rotation, origin, mesh, disc,
-                    weaponOf.get(n)));
+                    kitOf.get(n)));
         }
         return new HitMesh(source, List.copyOf(nodes));
     }
@@ -278,7 +278,7 @@ public final class ModelDataManager {
         });
     }
 
-    /** {@code mount}'s roots re-parented under node {@code at}; its part-target sockets without an interface => {@code part}. */
+    /** {@code mount}'s roots re-parented under node {@code at}; its part-target sockets without an interface => {@code part}; its clips appended. */
     static GltfReader.Model graft(GltfReader.Model base, GltfReader.Model mount, String at, String part) {
         int attach = -1;
         for (int i = 0; i < base.nodes().size(); i++) {
@@ -313,7 +313,15 @@ public final class ModelDataManager {
         }
         List<String> materials = new ArrayList<>(base.materials());
         materials.addAll(mount.materials());
-        return new GltfReader.Model(List.copyOf(nodes), List.copyOf(materials), base.clips());
+        List<GltfReader.Clip> clips = new ArrayList<>(base.clips());
+        for (GltfReader.Clip clip : mount.clips()) {
+            List<GltfReader.Channel> channels = new ArrayList<>(clip.channels().size());
+            for (GltfReader.Channel c : clip.channels()) {
+                channels.add(new GltfReader.Channel(c.node() + nodeBase, c.path(), c.times(), c.values(), c.step()));
+            }
+            clips.add(new GltfReader.Clip(clip.name(), clip.duration(), List.copyOf(channels)));
+        }
+        return new GltfReader.Model(List.copyOf(nodes), List.copyOf(materials), List.copyOf(clips));
     }
 
     private static HitMesh.Disc disc(float[] tris) {

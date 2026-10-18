@@ -70,6 +70,15 @@ public class SyncDataHolder<T> {
         return value;
     }
 
+    /** Server: continue from {@code version} (rebuilt part; clients drop entries <= the version they hold). */
+    public void continueFrom(int version) {
+        this.version = Math.max(this.version, version);
+    }
+
+    public int version() {
+        return version;
+    }
+
     public boolean isDirty() {
         return isDirty;
     }

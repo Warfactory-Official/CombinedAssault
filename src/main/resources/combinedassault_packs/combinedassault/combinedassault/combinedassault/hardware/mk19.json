@@ -1,0 +1,7 @@
+{
+  "model": "combinedassault:models/weapon/mk19/mk19.gltf",
+  "weapons": ["combinedassault:mk19"],
+  "fits": ["pintle", "tripod"],
+  "install_ticks": 120,
+  "station": {"optical_sight_type": "operator", "zoom_max": 2}
+}

@@ -12,6 +12,7 @@ Every field the mod reads from a pack: unit, default. Defaults from the deserial
 <pack>/pack.mcmeta
 <pack>/combinedassault/<ns>/vehicles/<path>.json      vehicle def (§3)
 <pack>/combinedassault/<ns>/weapons/<path>.json       weapon def (§5)
+<pack>/combinedassault/<ns>/hardware/<path>.json      hardware kit (§21)
 <pack>/combinedassault/<ns>/decorations/<path>.json   {model, icon} (§6.8)
 <pack>/assets/<ns>/models/**.gltf|.bin|.glb           vehicle glTF: drawn, rigged, collided, hit (§6)
 <pack>/assets/<ns>/textures/**.png                    model images, slot icons, paint masks, damage tiles
@@ -92,7 +93,7 @@ Every field the mod reads from a pack: unit, default. Defaults from the deserial
 | `uav` | bool | `false` | operated remotely (wflib PDA, UAVs app); the operator's body stays behind, standing; no storage over the link |
 | `autonomy` | object | absent | `uav` only; wflib autopilot body — [§19](#19-autonomy) |
 | `pickup` | bool | `false` | probe hull `Pick up` -> spawn item with save data (`VehicleState`; autonomy dropped, engine off); crewed / operated / carried / wrecked => refused |
-| `loadouts` | array | `[]` | configurations picked with the modding tool — [§20](#20-loadouts) |
+| `loadouts` | array | `[]` | payload configurations (modding tool) — [§20](#20-loadouts) |
 | `can_wade` | bool | `false` | |
 | `with_warning_receiver` | bool | `false` | carries an RWR |
 | `protect_passenger` | bool | `true` | |
@@ -177,13 +178,26 @@ Impact: `dv` = contact-cancelled velocity (m/s). `dv > impact_speed_threshold` =
 
 ### 3.7 `armor`
 
-Nominal plate in millimetres of RHA, one number per face (front/side/rear/top/bottom by the struck face's normal). A glTF face with an `armor_<mm>` material overrides it ([§6.6](#66-hit-geometry)). **Every face zero => not armoured**: stock damage model.
+mm RHAe vs kinetic rounds, slope included. **Every hull face zero => not armoured**: stock damage model.
+- Hull face = main collider face the shot line entered through; struck point outside that box + 0.25 m => dominant vehicle axis of the reversed shot. LOS `value x wear / cos(shot, face axis)`.
+- Part listed in `parts`: its faces, face = dominant axis of the reversed shot in the part's rest frame (turns with the turret).
+- Precedence: `armor_<mm>` material > first matching zone > part faces > hull faces.
+- Real plate (`armor_<mm>`, `plate` zone): LOS `mm x wear / cos(shot, mesh normal)`.
+- Mesh normal: ricochet always. Gap: surface past `ricochet_angle` (M1A2 upper glacis ~79 deg) bounces anything not overmatching the LOS.
+- F3: plate under the crosshair (face, part, zone, KE/CE, model coords at rest); F3+B: hit mesh coloured by KE LOS from the camera.
 
 | field | type | default |
 | --- | --- | --- |
-| `front` / `side` / `rear` / `top` / `bottom` | float | `0` | |
+| `front` / `side` / `rear` / `top` / `bottom` | float | `0` | hull, KE |
+| `ce` | faces | none | vs HEAT / tandem; face 0 => KE value |
+| `parts` | map part id -> faces (+ `ce`) | `{}` | part id must exist |
+| `zones` | list | `[]` | first match wins |
 | `ricochet_angle` | float | `70` | degrees from the normal past which a shot skates off, unless overmatched; WFLib KINETIC / SMALL_ARMS rounds then fly on deflected (WFLib guide §29e; shooter's readout RICOCHET), others do no damage |
 | `wear_floor` | float | `0.6` | fraction of the plate a fully worn region keeps |
+
+Zone: `name`, `min` / `max` (glTF model coords, part at rest), `ke` (> 0), `ce` (0 => `ke`), `part` (listed in `parts`; absent => hull), `face` (absent => any), `plate` (false). Measure with F3 `Model x y z`.
+
+Shipped values: open-source estimates (fprado armorsite M1A2 SEP KE 940 / CE 1320-1620 turret, hull 560-650 / 510-1050; Wikipedia T-90 / T-90A with Kontakt-5 800-910 / 1150-1450; Stryker 14.5 mm front, 7.62 mm all round; Centauro 25 mm front, 14.5 mm all round; M1151 armour kit vs 7.62 mm). Merkava 4 and T-84 Oplot: extrapolated, no consistent public figures.
 
 - Wear per region (6 faces of the main collider x 3x3 cells, `ArmorRegions`); thickness `nominal x lerp(1 - wear, wear_floor, 1)`. Hull health no longer thins armour.
 - Region durability `4 x nominal mm` points; every positioned hit adds `damage x share`: rounds 0.3, blasts 0.2 (+50% to same-face neighbours), thermite 1.2 (+35%), collisions 0.05 (+50%), other 0.2.
@@ -369,7 +383,7 @@ that type adds — there is no nested `data` object.
 | `seat_rot` | float | — | |
 | `seat_offset` | Vec3 | `[0,0,0]` | where the rider's eyes go |
 | `dismount_offset` | Vec3 | none | |
-| `pose` | string | driver seat: `drive` (`pilot` on aircraft); else `sit` | rider pose: `sit` / `drive` / `pilot` / `stand` (`assets/combinedassault/player_animator/seat_*.json`, AHF pose set: drawn = hit rig); unknown => load error |
+| `pose` | string | driver seat: `drive` (`pilot` on aircraft); else `sit` | rider pose: `sit` / `drive` / `pilot` / `stand` / `kneel` (`assets/combinedassault/player_animator/seat_*.json`, AHF pose set: drawn = hit rig); unknown => load error |
 | `protect_passenger` | bool | vehicle `protect_passenger` | seat override; `false` on exposed stations (shipped `stand` seats) => AHF rig hits land |
 | `passenger_can_use_item` | bool | `false` | |
 | `owner_view_offset` | Vec3 | none | camera position when operating this part; weapon => load error (`operator_view_offset`) |
@@ -377,7 +391,7 @@ that type adds — there is no nested `data` object.
 | `crew_roles` | enum[] | derived | `driver`, `gunner`, `commander`, `loader`; gate stations under server config `crew.required`; driver seat always. Absent => seat 0 `driver` (+ `gunner` if a weapon station), other weapon seat `gunner`, else `commander`. Driver = first occupied `driver` seat (`crew.required` off: none occupied => seat 0 drives too); boarding takes an empty `driver` seat first; free seat probe node boards that seat |
 | `display_id` | id | — | |
 | `display_offset` | Vec3 | — | |
-| `mounts` | object[] | `[]` | `{"model": glTF id, "node": vehicle glTF node, "weapon"?: weapon id, "name"?: lang key}` each: separate models carried by the part (e.g. shield on the yaw node + gun on the pitch node). Grafted under `node`: drawn (own instance, vehicle paint), hit ([§6.6](#66-hit-geometry)), sockets read ([§6.7](#67-sockets)). Unknown/duplicate `node` => load error. `weapon` (one of the part's `weapons`, else load error): mount drawn, hit and fired from only while that weapon is selected; carries `bolt` / `hit` nodes only; any => part's weapons switch by modding tool only (sneak-use on the part, weapon screen, or weapon node with the tool carried), never from the seat. `name` (weapon mounts only, else load error): vehicle display name while carried |
+| `mounts` | object[] | `[]` | `{"model": glTF id, "node": vehicle glTF node}` each: separate models carried by the part (e.g. shield on the yaw node + gun on the pitch node). Grafted under `node`: drawn (own instance, vehicle paint), hit ([§6.6](#66-hit-geometry)), sockets read ([§6.7](#67-sockets)). Unknown/duplicate `node` => load error. Kit mounts: added by `hardpoint` ([§21](#21-hardware-kits)), never authored. Mount clips appended to the vehicle's ([§6.4](#64-part-clips) naming), driving the mount instance |
 | `sub_part_unit_ids` | string[] | `[]` | parts carried by this one |
 
 ### 4.3 `rot_info` — `rotatable`, `weapon`, `auto_weapon`, `thrust`
@@ -398,7 +412,8 @@ that type adds — there is no nested `data` object.
 
 | field | type | default | notes |
 | --- | --- | --- | --- |
-| `weapons` | array | `[]` | see [§4.5](#45-the-weapons-list) |
+| `weapons` | array | `[]` | see [§4.5](#45-the-weapons-list); with `hardpoint` => load error (kits bring them) |
+| `hardpoint` | object | absent | swappable gun kits, fitted in the field: [§21](#21-hardware-kits) |
 | `bolts` | array | none | each `{"offset": Vec3, "barrel_length": float, "x_rot": float, "y_rot": float}` — the muzzles |
 | `ammo_capacity` | int | `-1` | `-1` is unlimited |
 | `firing_mode` | enum | `ripple` | `ripple`, `salvo`, `full_salvo` |
@@ -524,10 +539,11 @@ Muzzle light peak `clamp(6 caliber, 30, 900)`, `1.5 + caliber/40` ticks; caliber
 | item | fires as |
 | --- | --- |
 | `wflib:cartridge_<calibre>` (+ `wflib:ammo_variant`) | kinetic preset under the variant id; motor => interceptable rocket entity |
-| `wflib:shell_*`, `wflib:rocket_*`, `wflib:bomb_*` (dumb) | kinetic preset; motor => rocket entity; speed 0 => dropped at vehicle velocity |
-| `wflib:missile_*`, `wflib:bomb_gbu_*` | WFLib missile to the aim point / lock; beam riders + SAR guided by the firing unit |
+| `wflib:shell_*`, `combinedassault:rocket_*`, `combinedassault:bomb_*` (dumb) | kinetic preset; motor => rocket entity; speed 0 => dropped at vehicle velocity |
+| `wflib:missile_*`, `combinedassault:missile_*`, `combinedassault:bomb_gbu_*` | WFLib missile to the aim point / lock; beam riders + SAR guided by the firing unit |
 | `wflib:flare_cartridge`, `smoke_grenade`, `aps_grenade` | WFLib countermeasure entity |
 
+- WFLib catalogue rounds exist only once requested: every `wflib:` item / `#wflib:` tag named in a pack def and every size tag a `missile_holder` accepts is requested at mod construction (`compat/wflib/Ordnance.java`); a tag requests the members of WFLib's own tag file.
 - Same calibre, any variant: `"ammo": "wflib:cartridge_20x102"` takes HEI, API and every pack-registered 20x102 load.
 - Size/calibre tags = mount compatibility: `#wflib:missile/<small|medium|large|huge|pod>`, `#wflib:bomb/<small|medium|large>`, `#wflib:rocket/<70mm|80mm>`, `#wflib:artillery_shells`. Third-party round tagged => loadable.
 - Loose: one kind per load: reload takes the picked kind, else the first accepted stack (=> new pick); then only same item + components (variant).
@@ -671,11 +687,11 @@ Where shots land, what they damage, plate thickness; from the vehicle glTF at lo
 
 | glTF | meaning |
 | --- | --- |
-| drawn node | hit surface: exact triangles (BVH), true face normal => armour incidence |
+| drawn node | hit surface: exact triangles (BVH), true face normal => ricochet, `armor_<mm>` incidence |
 | node with rotor-kind `system` (self or ancestor) | surface = disc: spin axis = thinnest axis, radius = furthest vertex, height from blade span (> 50% radius), min 0.3 |
 | role `hit` | module: never drawn, not surface; pool = `system` + `side` |
 | role `hit_surface` (or collider `hit: true`) | surface override: replaces the parent node's drawn subtree (`hit` modules inside kept); own materials (`armor_<mm>`), inherits `system`/`side`. Nested override inside a replaced subtree => load error |
-| material `armor_<mm>` (`armour` too) | that face's plate, mm RHA; else the vehicle's face value. Needs an `armor` block ([§3.7](#37-armor)) |
+| material `armor_<mm>` (`armour` too) | that face's real plate, mm RHA; else the vehicle's aspect value. Needs an `armor` block ([§3.7](#37-armor)) |
 | material token `decor` (`paint_decor`, `decor.cloth`; `_ . space` delimited) | drawn only: not hit surface, not in generated colliders |
 | material token `rubber` / `glass` / `soft` (`fabric`, `cloth`, `canvas`) | hit effect material ([Hit effects](#hit-effects)); untagged = steel |
 
@@ -779,7 +795,7 @@ Role nodes read at load (rest pose, vehicle frame). Each fills a vehicle def key
 - Weapon view / sight: relative to the part frame; bolt, eject: in its `pitch` frame (none: `part`).
 - Addon `bone` = the socket's frame name.
 - `light` keys (`combinedassault.*`): `kind` `head` (default) \| `search`, `color` `#rrggbb`, `range`, `intensity` (E ~1 at `sqrt(intensity)` blocks), `inner`/`outer` half-angle deg (`0 < inner <= outer < 89`), `shadow`, `cookie`. Defaults per kind: `VehicleLight.Kind`. Toggle key (default `\`): driver -> `head`, other crew -> `search`; vehicle with one kind => that kind. Destroyed => off.
-- Part `mounts` model: its part-target sockets with no interface => the carrying part. Weapon-scoped mount bolts replace the part's `bolts` while that weapon is selected. Station sockets (gunner seat, view) belong in a mount, not the shared hull model: an unarmed sibling then loads.
+- Part `mounts` model: its part-target sockets with no interface => the carrying part. Kit mount bolts replace the part's `bolts` while that kit is fitted. Station sockets (gunner seat, view) belong in a mount, not the shared hull model: an unarmed sibling then loads.
 - Model shared by two vehicles: its sockets apply to both; a part one lacks fails that one's load => per-vehicle offsets in the def.
 - Def geometry -> sockets: `tools/def_sockets.py move` (shared model: only values every def agrees on), load, `prune <log>` deletes what the load reports repeated.
 - Stays json: tuning (springs, forces, mass, health), crew, weapons.
@@ -1403,26 +1419,21 @@ Pilot by class: `multirotor` => `Multirotor.step` setpoint; rotary => hover loop
 ```json
 "loadouts": [
   {"id": "plain", "flight_mode": "stabilized"},
-  {"id": "kamikaze", "part": "hardpoint", "payload": {"type": "combinedassault:warhead", "arming_ticks": 40}, "flight_mode": "fpv"},
-  {"id": "m2", "part": "roof_mount", "weapon": "combinedassault:gun_12.7mm",
-   "install": [{"item": "minecraft:iron_ingot", "count": 24}]}
+  {"id": "kamikaze", "part": "hardpoint", "payload": {"type": "combinedassault:warhead", "arming_ticks": 40}, "flight_mode": "fpv"}
 ]
 ```
 
 | field | notes |
 | --- | --- |
 | `id` | lang `loadout.combinedassault.<id>` |
-| `part` | part the hardware goes on; absent = nothing to fit |
-| `payload` | `payload` part: type + config; strapped items = cost |
-| `weapon` | weapon part: one of its `weapons`, selected while fitted |
-| `install` | weapon hardware cost; `item` = id or `#tag` (tag costs not refunded) |
+| `part` | `payload` part the hardware goes on; absent = nothing to fit |
+| `payload` | type + config, with `part` (both or neither, else load error); strapped items = cost |
 | `flight_mode` | multirotor default on selection |
 
-- First loadout applied at first spawn. Modding tool button cycles: free, fitted hardware back to the player.
-- Probe node on `part`: strap one accepted item per action / fit (pays `install`); take off => refund.
+- First loadout applied at first spawn. Modding tool button cycles: free, strapped hardware back to the player.
+- Probe node on current loadout's `part`: strap one accepted item per action; take off => refund.
 - UAV + use with item: current payload accepts => strapped; else first payload loadout accepting it selected, then strapped. Item fits => hull probe storage row omitted (else it claims use).
-- Loadout-named weapon part: unfitted => no gun (`currentWeaponId` null, mounts hidden, never fires); direct tool swaps refused.
-- Load errors: unknown part, wrong part kind, unknown payload type / weapon, both or neither of `payload`/`weapon`.
+- Load errors: unknown part, not a payload part, unknown payload type.
 
 | payload type | holds | trigger | config |
 | --- | --- | --- | --- |
@@ -1431,6 +1442,42 @@ Pilot by class: `multirotor` => `Multirotor.step` setpoint; rotary => hover loop
 | `speaker` | 1 `wflib:loudspeaker` (0.6 kg) | none; carrier radio voice = SPEAKER | - |
 
 - Autopilot STRIKE ([§19](#19-autonomy)): offered only while loaded; rack drops one per release tick (stick); `warhead` => terminal dive on the aim point.
-- Shipped: `mavic`, `amazog` (plain / kamikaze / bomber / speaker), `humvee` (unarmed / m2 / mk19).
+- Shipped: `mavic`, `amazog` (plain / kamikaze / bomber / speaker).
 - Radio (wflib `RadioCarrier`): synced `RADIO` station, NBT `Radio`; voice = SPEAKER if `speaker` loaded, else CABIN for non-UAV hulls with seats and not destroyed. Key K (`radio_station`) cycles while riding; PDA Radio app for linked bodies. HUD `hud/radio`.
 
+## 21. Hardware kits
+
+Gun = kit def; vehicle part = typed `hardpoint`. Fitted / taken off in the field with the kit item, no modding tool.
+
+```json
+// combinedassault/<ns>/hardware/m2.json
+{"model": "combinedassault:models/weapon/m2/m2.gltf", "weapons": ["combinedassault:gun_12.7mm"],
+ "fits": ["pintle", "tripod"], "install_ticks": 120, "station": {"optical_sight_type": "operator", "zoom_max": 2}}
+
+// vehicle part (type combinedassault:weapon, no weapons)
+"hardpoint": {"node": "weapon", "accepts": ["tripod"], "fitted": null,
+  "overrides": {"combinedassault:m2": {"vehicle_name": "entity.combinedassault.spg9_m2", "rot_info": {"x_rot_min": -30}}}}
+```
+
+| kit field | notes |
+| --- | --- |
+| `model` | mount glTF, grafted under the hardpoint `node`; role nodes `bolt`, `hit`, `hit_surface` only |
+| `weapons` | [§4.5](#45-the-weapons-list) entries; each gets `kit` + `save_id` `<kit>/<weapon>` |
+| `fits` | hardpoint classes (free strings) |
+| `install_ticks` | fit / take off duration, default 100 |
+| `station` | weapon part keys over the hardpoint part's own |
+
+| hardpoint field | notes |
+| --- | --- |
+| `node` | vehicle glTF node the kit model grafts under |
+| `accepts` | classes; kits = every loaded kit with a `fits` class here, by id; none => load error |
+| `fitted` | kit at first spawn; absent / null = empty |
+| `overrides` | kit id -> station keys for this vehicle only, + `vehicle_name` (lang key: vehicle display name while fitted) |
+
+- Station keys: `pose`, `seat_offset`, `seat_rot`, `dismount_offset`, `protect_passenger`, `passenger_can_use_item`, `crew_roles`, `rot_info`, `bolts`, `ejects`, `ammo_capacity`, `firing_mode`, `optical_sight_offset`, `operator_view_offset`, `operator_on_weapon_unit`, `fire_control_sensor_type`, `optical_sight_type`, `with_*`, `loading`, `zoom_min`, `zoom_max`, `crosshair_style`. Other key => load error.
+- Merge: part (glTF sockets applied) < kit `station` < hardpoint override; objects (`rot_info`) merge by key, else replace.
+- No kit => no gun: `currentWeaponId` null, kit mounts hidden and unhit, never fires. Seat switch cycles within the fitted kit; modding tool swaps refused.
+- Item `combinedassault:hardware`, component `combinedassault:hardware_kit` = kit id; name lang `hardware.<ns>.<path>`; drawn from the kit model. Recipes: result `{"id": "combinedassault:hardware", "components": {"combinedassault:hardware_kit": "<kit>"}}`.
+- Probe node `hardpoint:<part index>`: empty => one timed `hardpoint_fit` row per kit (arg = part << 8 | kit index), item consumed; fitted => timed `hardpoint_take_off`, item back. Refused: wreck, part detached, kit already on, eye > 4 blocks from pivot, pivot > 1.5 m behind hull surface from the eye, a seat of the part occupied, item missing (creative exempt).
+- NBT `Kit` (id, "" = empty) per hardpoint part.
+- Shipped kits: `m2`, `mk19` (`pintle`, `tripod`), `spg9` (`tripod`). Hardpoints: `humvee` roof (`pintle`, empty), `riverine` bows / stern (`pintle`, M2 / M2 / Mk 19), `spg9` weapon tripod (`tripod`, empty, `kneel`).

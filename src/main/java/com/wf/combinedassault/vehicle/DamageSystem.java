@@ -146,7 +146,7 @@ public class DamageSystem {
                     : thermal ? ArmorRegions.Kind.THERMAL
                     : damageSource.is(AllDamageTypes.VEHICLE_COLLISION) ? ArmorRegions.Kind.COLLISION
                     : ArmorRegions.Kind.OTHER;
-            wearArmor(vehicle, hitPos, ballistic == null ? null : ballistic.normal().toVector3f(), incoming, kind);
+            wearArmor(vehicle, hitPos, ballistic == null ? null : ballistic.faceNormal().toVector3f(), incoming, kind);
         }
         // Core-line falloff applies to hull only; struck system takes the hit whole.
         float systemAmount = amount;

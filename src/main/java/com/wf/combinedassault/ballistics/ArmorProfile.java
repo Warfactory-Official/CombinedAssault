@@ -1,49 +1,56 @@
 package com.wf.combinedassault.ballistics;
 
 import com.google.gson.annotations.SerializedName;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
- * Nominal armour per face, mm RHE. All-zero => unarmoured, every shot falls back to stock damage.
- * Collision boxes are a shell approximation (oversized vs. the real hull) => thickness is authored
- * here rather than measured off geometry.
+ * Hull faces, slope included. All-zero => unarmoured, stock damage. {@code parts}: a part's own faces in its frame
+ * (turret). {@code zones}: boxes overriding both (weak spots, real plates).
  */
-public class ArmorProfile {
-
-    @SerializedName("front")
-    public float front = 0;
-
-    @SerializedName("side")
-    public float side = 0;
-
-    @SerializedName("rear")
-    public float rear = 0;
-
-    @SerializedName("top")
-    public float top = 0;
-
-    @SerializedName("bottom")
-    public float bottom = 0;
+public class ArmorProfile extends ArmorFaces {
 
     /** Degrees from surface normal past which a shot ricochets; overmatch overrides. See {@link ArmorResolver}. */
     @SerializedName("ricochet_angle")
     public float ricochetAngle = 70;
 
-    /** Thickness fraction retained at zero hull health; full health = 1.0x nominal. */
+    /** Thickness fraction a fully worn {@link ArmorRegions} region keeps. */
     @SerializedName("wear_floor")
     public float wearFloor = 0.6f;
 
-    public boolean isDefined() {
-        return front > 0 || side > 0 || rear > 0 || top > 0 || bottom > 0;
-    }
+    /** Part id -> faces in the part's rest frame. */
+    @SerializedName("parts")
+    public Map<String, ArmorFaces> parts = Map.of();
 
-    public float nominal(ArmorFace face) {
-        return switch (face) {
-            case FRONT -> front;
-            case SIDE -> side;
-            case REAR -> rear;
-            case TOP -> top;
-            case BOTTOM -> bottom;
-        };
+    /** First match wins. */
+    @SerializedName("zones")
+    public List<Zone> zones = List.of();
+
+    /**
+     * Box in model coordinates at rest ({@code part}: that part's rest pose, moves with it).
+     *
+     * @param plate true: real plate, incidence vs the struck surface ({@code armor_<mm>} rule); false: RHAe, slope
+     *              included, incidence vs the face
+     * @param ce    0 = {@code ke}
+     * @param face  null = any
+     */
+    public record Zone(@SerializedName("name") String name, @SerializedName("part") @Nullable String part,
+                       @SerializedName("face") @Nullable ArmorFace face,
+                       @SerializedName("min") float[] min, @SerializedName("max") float[] max,
+                       @SerializedName("ke") float ke, @SerializedName("ce") float ce,
+                       @SerializedName("plate") boolean plate) {
+
+        public boolean matches(@Nullable String part, ArmorFace face, float x, float y, float z) {
+            return Objects.equals(this.part, part) && (this.face == null || this.face == face)
+                    && x >= min[0] && x <= max[0] && y >= min[1] && y <= max[1] && z >= min[2] && z <= max[2];
+        }
+
+        public float nominal(boolean shapedCharge) {
+            return shapedCharge && ce > 0 ? ce : ke;
+        }
     }
 
 }

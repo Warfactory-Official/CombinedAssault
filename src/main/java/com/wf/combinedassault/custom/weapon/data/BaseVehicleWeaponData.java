@@ -114,6 +114,11 @@ public class BaseVehicleWeaponData {
             return magazines != null;
         }
 
+        @Nullable
+        public Ingredient getMagazines() {
+            return magazines;
+        }
+
         public boolean takesLoose() {
             return magazines == null || loose;
         }

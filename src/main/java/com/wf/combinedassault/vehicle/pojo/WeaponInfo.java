@@ -29,6 +29,10 @@ public class WeaponInfo {
     @SerializedName("save_id")
     public String saveId;
 
+    /** Hardware kit that brought this weapon onto a hardpoint; null = the part's own. */
+    @Nullable
+    public ResourceLocation kit;
+
     /** Model bones showing this weapon's loaded rounds, firing order; drawn as the loaded round's mesh. */
     @SerializedName("round_bones")
     public List<String> roundBones = List.of();

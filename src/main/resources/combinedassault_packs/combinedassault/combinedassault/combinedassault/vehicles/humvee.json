@@ -11,11 +11,11 @@
     },
     "max_health": 260,
     "armor": {
-        "front": 10,
-        "side": 8,
+        "front": 12,
+        "side": 10,
         "rear": 8,
-        "top": 5,
-        "bottom": 5
+        "top": 6,
+        "bottom": 8
     },
     "view_info": {
         "third_person_distance": 7,
@@ -85,8 +85,6 @@
             "max_health": 120,
             "render_bone": "roof_mount",
             "operator_on_weapon_unit": false,
-            "optical_sight_type": "operator",
-            "zoom_max": 2,
             "rot_info": {
                 "x_rot_speed": 4,
                 "y_rot_speed": 4,
@@ -94,26 +92,18 @@
                 "x_rot_min": -40,
                 "need_power": false
             },
-            "weapons": [
-                "combinedassault:gun_12.7mm",
-                "combinedassault:mk19"
-            ],
+            "hardpoint": {
+                "node": "roof_mount_pitch",
+                "accepts": ["pintle"],
+                "overrides": {
+                    "combinedassault:m2": {"vehicle_name": "entity.combinedassault.humvee_m2"},
+                    "combinedassault:mk19": {"vehicle_name": "entity.combinedassault.humvee_mk19"}
+                }
+            },
             "mounts": [
                 {
                     "model": "combinedassault:models/ground/humvee/humvee_turret.gltf",
                     "node": "roof_mount"
-                },
-                {
-                    "model": "combinedassault:models/weapon/mk19/mk19.gltf",
-                    "node": "roof_mount_pitch",
-                    "weapon": "combinedassault:mk19",
-                    "name": "entity.combinedassault.humvee_mk19"
-                },
-                {
-                    "model": "combinedassault:models/weapon/m2/m2.gltf",
-                    "node": "roof_mount_pitch",
-                    "weapon": "combinedassault:gun_12.7mm",
-                    "name": "entity.combinedassault.humvee_m2"
                 }
             ],
             "pose": "stand",
@@ -206,41 +196,6 @@
             "rest_length": 0.25,
             "max_compression": 0.25,
             "max_extension": 0.2
-        }
-    ],
-    "loadouts": [
-        {
-            "id": "unarmed"
-        },
-        {
-            "id": "m2",
-            "part": "roof_mount",
-            "weapon": "combinedassault:gun_12.7mm",
-            "install": [
-                {
-                    "item": "minecraft:iron_ingot",
-                    "count": 24
-                },
-                {
-                    "item": "minecraft:redstone",
-                    "count": 4
-                }
-            ]
-        },
-        {
-            "id": "mk19",
-            "part": "roof_mount",
-            "weapon": "combinedassault:mk19",
-            "install": [
-                {
-                    "item": "minecraft:iron_ingot",
-                    "count": 32
-                },
-                {
-                    "item": "minecraft:redstone",
-                    "count": 8
-                }
-            ]
         }
     ],
     "model": "combinedassault:models/ground/humvee/humvee.gltf",

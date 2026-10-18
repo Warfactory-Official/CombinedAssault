@@ -3,6 +3,8 @@ package com.wf.combinedassault.compat.gemrender;
 import com.wf.gemrender.asset.GemRenderModels;
 import com.wf.gemrender.asset.ModelCache;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
+import com.wf.gemrender.gltf.GltfPose;
+import com.wf.gemrender.gltf.NodeTable;
 import com.wf.gemrender.iris.ShaderPacks;
 import com.wf.gemrender.texture.Paint;
 import com.wf.gemrender.render.BoneBuffer;
@@ -24,6 +26,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector4f;
@@ -32,6 +35,7 @@ import com.wf.combinedassault.client.model.VehicleModelInstance;
 import com.wf.combinedassault.client.render.entity.vehicle.VehicleRender;
 import com.wf.combinedassault.custom.part.data.PartMount;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.PartClipTracks;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 
 import java.util.ArrayList;
@@ -69,7 +73,7 @@ public class VehicleGemVisual<T extends AbstractVehicle> extends AbstractEntityV
     private final List<Mount> mounts = new ArrayList<>();
     private boolean mountsRead;
 
-    /** One of a part's {@link PartMount}s: own instance at its bone's posed frame, rest palette. */
+    /** One of a part's {@link PartMount}s: own instance at its bone's posed frame; rest palette, or its clips posed. */
     private static final class Mount {
         final PartUnit<?> part;
         final PartMount mount;
@@ -79,6 +83,32 @@ public class VehicleGemVisual<T extends AbstractVehicle> extends AbstractEntityV
         GemRenderInstance instance;
         Matrix4f[] rest;
         final Vector4f sphere = new Vector4f();
+        PartClipTracks clipsTracks;
+        @Nullable
+        PartClips clips;
+        float[] state = new float[0];
+        Matrix4f[] palette;
+        final GltfPose.Scratch scratch = new GltfPose.Scratch();
+
+        /** Rest + clips at current progress. */
+        Matrix4f[] posed(GemRenderGltfModel gltf, float partialTick) {
+            NodeTable table = gltf.layout().nodeTable();
+            if (state.length != table.scratchFloats()) {
+                state = table.newScratch();
+            }
+            table.resetToRest(state);
+            clips.advance(partialTick);
+            clips.apply(state);
+            int joints = gltf.jointCount();
+            if (palette == null || palette.length != joints) {
+                palette = new Matrix4f[joints];
+                for (int i = 0; i < joints; i++) {
+                    palette[i] = new Matrix4f();
+                }
+            }
+            GltfPose.evaluate(gltf.layout(), state, palette, gltf.morphs(), null, scratch);
+            return palette;
+        }
 
         Mount(PartUnit<?> part, PartMount mount) {
             this.part = part;
@@ -174,11 +204,11 @@ public class VehicleGemVisual<T extends AbstractVehicle> extends AbstractEntityV
         int light = light(partialTick);
         body.light(light);
         body.setChanged();
-        updateMounts(gltf, snapshot, paint, light);
+        updateMounts(gltf, snapshot, paint, light, partialTick);
     }
 
     private void updateMounts(GemRenderGltfModel vehicle, GemRenderModelInstance.Snapshot snapshot, Paint paint,
-                              int light) {
+                              int light, float partialTick) {
         if (!mountsRead) {
             mountsRead = true;
             for (PartUnit<?> part : entity.getPartUnits()) {
@@ -209,10 +239,17 @@ public class VehicleGemVisual<T extends AbstractVehicle> extends AbstractEntityV
                         .instancer(GemRenderInstanceTypes.SKINNED, gltf.model())
                         .createInstance();
                 mount.instance.colorArgb(0xFFFFFFFF);
+                mount.clipsTracks = null;
+            }
+            PartClipTracks tracks = entity.clipTracks();
+            if (mount.clipsTracks != tracks) {
+                mount.clipsTracks = tracks;
+                mount.clips = tracks == null ? null : PartClips.bind(gltf, tracks);
             }
             GemRenderInstance instance = mount.instance;
             instance.pose.set(body.pose).mul(snapshot.palette()[slot]);
-            int palette = BoneBuffer.getInstance().addSharedPalette(mount.rest, gltf.jointCount());
+            int palette = mount.clips == null ? BoneBuffer.getInstance().addSharedPalette(mount.rest, gltf.jointCount())
+                    : BoneBuffer.getInstance().addPalette(mount.posed(gltf, partialTick), gltf.jointCount());
             instance.boneBase = palette;
             instance.boneSphere.set(mount.sphere);
             Paint own = gltf.paintable() ? paint : Paint.NONE;

@@ -265,7 +265,9 @@ public final class VehicleStep {
         engine.buoyancy(velocity, acceleration);
         if (sprung) {
             spin.y = engine.decayYawSpin(spin.y, v.onGround());
-            if (wheelsWereDown) {
+            if (wheelsWereDown && v.isDestroyed()) {
+                PhysicsEngine.skid(velocity, FRICTION);
+            } else if (wheelsWereDown) {
                 engine.rollingResistance(velocity);
             }
         } else if ((v.towedOnWheels() || gear) && v.onGround()) {

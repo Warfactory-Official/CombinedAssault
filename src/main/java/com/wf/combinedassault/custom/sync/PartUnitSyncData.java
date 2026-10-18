@@ -55,6 +55,13 @@ public class PartUnitSyncData {
     }
 
 
+    /** Server: versions of {@code old} (the part this one replaces) carried by holder index. */
+    public void continueFrom(PartUnitSyncData old) {
+        for (int i = 0; i < Math.min(dataHolders.size(), old.dataHolders.size()); i++) {
+            dataHolders.get(i).continueFrom(old.dataHolders.get(i).version());
+        }
+    }
+
     public void onUpdateReceived(List<SyncDataEntry<?>> entries) {
         for (var entry : entries) {
             var holder = dataHolders.get(entry.index());

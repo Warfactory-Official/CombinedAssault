@@ -8,10 +8,17 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.component.VehicleSystems;
+import com.wf.combinedassault.entity.misc.VehiclePart;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.gametest.TestLanes;
 
-/** Aircraft killed in the air: wreck turns out of its kill attitude on the ground, comes to rest. Lane forces +-16 blocks. */
+import java.util.Locale;
+
+/**
+ * Aircraft killed in the air: wreck turns out of its kill attitude on the ground, comes to rest. Ground vehicle killed
+ * moving (user: hulls slide when they explode): wreck stops like a dragged hull. Lane forces +-16 blocks.
+ */
 @GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class WreckGameTest {
@@ -19,6 +26,10 @@ public class WreckGameTest {
     private static final String TEMPLATE = "empty";
     private static final int DROP = 18;
     private static final int REST = 100;
+    /** Blocks/tick (6 m/s). */
+    private static final double KILL_SPEED = 0.3;
+    /** Slide limit, blocks. Humvee measured 2.7 alone, 6.1 under full-suite load; free roll 27.6. */
+    private static final double SLIDE = 10;
 
     @GameTest(template = TEMPLATE, timeoutTicks = 600)
     public static void aJetKilledInADiveDoesNotStayWedgedNoseDown(GameTestHelper helper) {
@@ -32,6 +43,45 @@ public class WreckGameTest {
         wreck(helper, -3000, CombinedAssault.modLocation("ka52"), 0, 45, Vec3.ZERO,
                 v -> Math.abs(Mth.wrapDegrees(v.getZRot()) - 45) > 10,
                 v -> "roll " + v.getZRot());
+    }
+
+    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    public static void aTruckKilledMovingStopsOnItsBelly(GameTestHelper helper) {
+        groundWreck(helper, -6000, CombinedAssault.modLocation("humvee"));
+    }
+
+    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    public static void aTankKilledMovingStopsOnItsBelly(GameTestHelper helper) {
+        groundWreck(helper, -6200, CombinedAssault.modLocation("m1a2"));
+    }
+
+    /** Killed through {@code hurt} at {@link #KILL_SPEED} forwards; mu 0.5 drag => {@code v^2 / 2 mu g} ~ 3.7 blocks; frictionless => off the floor. */
+    private static void groundWreck(GameTestHelper helper, int lane, ResourceLocation id) {
+        Vec3[] killedAt = new Vec3[1];
+        TestLanes.run(helper, lane, 12, 16, id, (seq, vehicle) -> seq
+                .thenExecute(() -> {
+                    AbstractVehicle v = vehicle.get();
+                    v.setPos(v.getX(), v.getY(), v.getZ() - 10);
+                    killedAt[0] = v.position();
+                    v.setDeltaMovement(0, 0, KILL_SPEED);
+                    for (VehicleSystems.Cell cell : VehicleSystems.cells(v)) {
+                        cell.members().forEach(m -> m.setHealth(0));
+                    }
+                    v.hurt(helper.getLevel().damageSources().generic(), 1);
+                    helper.assertTrue(v.isDestroyed(), id + " survived the kill");
+                })
+                .thenIdle(REST)
+                .thenExecute(() -> {
+                    AbstractVehicle v = vehicle.get();
+                    Vec3 slid = v.position().subtract(killedAt[0]);
+                    String state = String.format(Locale.ROOT, "%s slid %.2f (x %.2f z %.2f), speed %.3f, yaw %.1f",
+                            id, slid.horizontalDistance(), slid.x, slid.z, v.getDeltaMovement().horizontalDistance(),
+                            Mth.wrapDegrees(v.getYRot()));
+                    CombinedAssault.LOGGER.info("[wreck] {}", state);
+                    helper.assertTrue(v.getDeltaMovement().horizontalDistance() < 0.01, "wreck still sliding: " + state);
+                    helper.assertTrue(slid.horizontalDistance() < SLIDE, "wreck slid: " + state);
+                }), at -> helper.getLevel().getEntitiesOfClass(VehiclePart.class, new net.minecraft.world.phys.AABB(at).inflate(24))
+                .forEach(VehiclePart::discard));
     }
 
     private static void wreck(GameTestHelper helper, int lane, ResourceLocation id, float pitch, float roll, Vec3 velocity,

@@ -5,6 +5,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.wflib.api.StrikeContext;
+import com.wf.wflib.api.ThreatKind;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 
 /**
@@ -40,16 +41,17 @@ public final class Ballistics {
         if (direction.lengthSqr() == 0) {
             return null;
         }
-        return resolver.resolve(vehicle, round.position(), direction, hitPos, hitPart, penetration, amount);
+        return resolver.resolve(vehicle, round.position(), direction, hitPos, hitPart, penetration, amount,
+                round.threat().kind());
     }
 
-    /** Strike before damage: struck face's outward normal when the model answers RICOCHET, else null. */
+    /** Kinetic strike before damage: struck face's outward normal when the model answers RICOCHET, else null. */
     @Nullable
     public static Vec3 ricochet(AbstractVehicle vehicle, Vec3 start, Vec3 velocity, Vec3 hitPos, float penetration) {
         if (penetration <= 0 || velocity.lengthSqr() == 0) {
             return null;
         }
-        BallisticResult r = resolver.resolve(vehicle, start, velocity, hitPos, null, penetration, 0);
+        BallisticResult r = resolver.resolve(vehicle, start, velocity, hitPos, null, penetration, 0, ThreatKind.KINETIC);
         return r != null && r.outcome() == HitOutcome.RICOCHET ? r.normal() : null;
     }
 

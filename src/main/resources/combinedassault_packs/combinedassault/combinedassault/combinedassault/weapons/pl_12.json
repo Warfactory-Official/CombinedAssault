@@ -7,7 +7,7 @@
     "reload": {
         "time": 100,
         "ammo": [
-            "wflib:missile_pl_12",
+            "combinedassault:missile_pl_12",
             "#wflib:missile/large"
         ]
     },

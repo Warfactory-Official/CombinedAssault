@@ -12,6 +12,7 @@ public final class WfLibCompat {
 
     public static void init() {
         ReconBridge.install();
+        Ordnance.register();
     }
 
     /**

@@ -11,6 +11,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -152,6 +153,13 @@ public class VehicleSystemsGameTest {
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.STICK));
         Vec3 beside = vehicle.position().add(3, 0, 0);
         player.setPos(beside.x, beside.y, beside.z);
+        // Tank wider than the arena: its barrier wall stands between => no probe sight.
+        BlockPos.betweenClosed(BlockPos.containing(vehicle.position().add(-6, -1, -6)),
+                BlockPos.containing(vehicle.position().add(8, 4, 6))).forEach(pos -> {
+            if (helper.getLevel().getBlockState(pos).is(Blocks.BARRIER)) {
+                helper.getLevel().setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+            }
+        });
 
         ProbeActions.performEntity(player, vehicle, SystemRepair.ACTION, track.key());
         if (ProbeJobs.busy(player)) {

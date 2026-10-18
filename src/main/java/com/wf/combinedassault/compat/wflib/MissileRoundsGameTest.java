@@ -6,7 +6,6 @@ import com.wf.wflib.missile.SeekerMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -32,7 +31,7 @@ import com.wf.combinedassault.vehicle.weapon.VehicleMissile;
 import java.util.Map;
 import java.util.Optional;
 
-/** WFLib vehicle missiles: seeker mapping, countermeasures, glide, beam riding. */
+/** Vehicle missiles: seeker mapping, countermeasures, glide, beam riding. */
 @GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class MissileRoundsGameTest {
@@ -41,9 +40,9 @@ public class MissileRoundsGameTest {
 
     @Nullable
     private static MissilePreset data(GameTestHelper helper, String id) {
-        MissilePreset preset = MissilePresetRegistry.get(ResourceLocation.fromNamespaceAndPath("wflib", id));
+        MissilePreset preset = MissilePresetRegistry.get(CombinedAssault.modLocation(id));
         if (preset == null) {
-            helper.fail("no WFLib missile " + id);
+            helper.fail("no missile " + id);
         }
         return preset;
     }
@@ -201,7 +200,7 @@ public class MissileRoundsGameTest {
                 .getVehicleData(CombinedAssault.modLocation("ah64d"));
         MissilePreset agm = data(helper, "agm_114");
         if (heli.isEmpty() || agm == null) {
-            helper.fail("ah64d / wflib:agm_114 missing");
+            helper.fail("ah64d / combinedassault:agm_114 missing");
             return;
         }
         BlockPos at = helper.absolutePos(new BlockPos(1, 2, 1));

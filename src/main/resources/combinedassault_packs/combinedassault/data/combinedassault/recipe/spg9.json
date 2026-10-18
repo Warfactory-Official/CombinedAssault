@@ -2,20 +2,12 @@
   "type": "combinedassault:vehicle_printing",
   "materials": [
     {
-      "count": 20,
+      "count": 8,
       "ingredient": { "tag": "c:ingots/iron" }
     },
     {
-      "count": 8,
-      "ingredient": { "tag": "c:ingots/copper" }
-    },
-    {
-      "count": 8,
-      "ingredient": { "item": "minecraft:redstone" }
-    },
-    {
       "count": 2,
-      "ingredient": { "item": "minecraft:glass_pane" }
+      "ingredient": { "tag": "c:ingots/copper" }
     }
   ],
   "result": {
@@ -27,5 +19,5 @@
       }
     }
   },
-  "printingTime": 300
+  "printingTime": 120
 }

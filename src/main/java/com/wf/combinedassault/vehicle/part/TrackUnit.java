@@ -47,7 +47,7 @@ public class TrackUnit extends SuspensionUnit<TrackUnitData> {
     }
 
     @Override
-    protected boolean isActive() {
+    public boolean isActive() {
         return super.isActive() && !partCubeOBBs.isEmpty();
     }
 

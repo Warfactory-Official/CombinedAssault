@@ -1,5 +1,7 @@
 package com.wf.combinedassault.item;
 
+import com.wf.combinedassault.client.tooltip.VehicleTooltips;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.component.DataComponents;
@@ -27,6 +29,7 @@ import com.wf.combinedassault.custom.vehicle.ShipVehicleData;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.naval.ShipPlacement;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -67,6 +70,22 @@ public class VehicleSpawnItem extends Item {
             }
 
         });
+    }
+
+    /** {@code ITEM_NAME} absent (command-made stack): the vehicle's name. */
+    @Override
+    public Component getName(ItemStack stack) {
+        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        ResourceLocation id = tag.contains(TAG_VEHICLE_ID) ? ResourceLocation.tryParse(tag.getString(TAG_VEHICLE_ID)) : null;
+        return id == null ? super.getName(stack) : Component.translatable(id.getNamespace() + "." + id.getPath());
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        BaseVehicleData<?> data = vehicleData(stack);
+        if (data != null) {
+            VehicleTooltips.vehicle(data, tooltip);
+        }
     }
 
     @Override

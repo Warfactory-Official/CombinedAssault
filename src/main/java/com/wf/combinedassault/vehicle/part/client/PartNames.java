@@ -1,5 +1,6 @@
 package com.wf.combinedassault.vehicle.part.client;
 
+import com.wf.combinedassault.custom.part.data.PartUnitData;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
@@ -13,7 +14,11 @@ public final class PartNames {
 
     /** Pack name if it is a translation key, else {@code part.combinedassault.<id>}, else the id spelled out. */
     public static Component name(PartUnit<?> part) {
-        String name = part.getData().getName();
+        return name(part.getData());
+    }
+
+    public static Component name(PartUnitData part) {
+        String name = part.getName();
         if (name != null && I18n.exists(name)) {
             return Component.translatable(name);
         }

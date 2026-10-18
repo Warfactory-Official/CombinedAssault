@@ -35,7 +35,11 @@ public class BombRoundsGameTest {
         return new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("wflib", item)));
     }
 
-    /** mk_82 weapon loads the WFLib bomb (resting round: fuse, no contact, dropped) and refuses a cartridge. */
+    static ItemStack own(String item) {
+        return new ItemStack(BuiltInRegistries.ITEM.get(CombinedAssault.modLocation(item)));
+    }
+
+    /** mk_82 weapon loads the bomb (resting round: fuse, no contact, dropped) and refuses a cartridge. */
     @GameTest(template = TEMPLATE)
     public static void aMk82IsARestingRound(GameTestHelper helper) {
         var index = CommonAssetsManager.vehicleWeaponManager().getIndex(CombinedAssault.modLocation("mk_82"));
@@ -44,7 +48,7 @@ public class BombRoundsGameTest {
             return;
         }
         var reload = index.get().data().getReload();
-        ItemStack bomb = wflib("bomb_mk_82");
+        ItemStack bomb = own("bomb_mk_82");
         KineticPreset preset = Munitions.kinetic(bomb);
         if (reload == null || !reload.isAmmo(bomb) || reload.isAmmo(wflib("cartridge_20x102"))) {
             helper.fail("mk_82 ammo: takes bomb " + (reload != null && reload.isAmmo(bomb)));
@@ -91,7 +95,7 @@ public class BombRoundsGameTest {
         aim.direction = new Vec2(0.0f, 0.0f);
         aim.position = target;
         vehicle.setDeltaMovement(0.0, 0.0, 2.0);
-        Munitions.fire(vehicle, unit, aim, wflib("bomb_gbu_39"), 0f, null, null);
+        Munitions.fire(vehicle, unit, aim, own("bomb_gbu_39"), 0f, null, null);
         List<MissileEntity> dropped = level.getEntitiesOfClass(MissileEntity.class,
                 new AABB(aim.from, aim.from).inflate(1.0));
         vehicle.discard();

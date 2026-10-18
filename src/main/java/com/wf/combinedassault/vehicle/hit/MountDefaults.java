@@ -321,7 +321,7 @@ public final class MountDefaults {
         }
         for (Relative other : relative) {
             if (other.field.equals("bolt") && other.part.equals(part) && other.index == index
-                    && java.util.Objects.equals(other.mount.weapon(), mount.weapon())) {
+                    && java.util.Objects.equals(other.mount.kit(), mount.kit())) {
                 throw fail(mount, "repeats bolt " + index + " of part " + part);
             }
         }
@@ -365,7 +365,7 @@ public final class MountDefaults {
     public record Relative(String part, String field, int index, ModelMounts.Mount mount) {
     }
 
-    /** @param values part id -> json keys the json left out; {@code weapon_bolts}: weapon id -> bolts */
+    /** @param values part id -> json keys the json left out; {@code kit_bolts}: kit id -> bolts */
     public record Resolved(Map<String, JsonObject> values, List<String> repeated, List<String> overridden) {
     }
 
@@ -391,7 +391,7 @@ public final class MountDefaults {
         Map<String, TreeMap<Integer, JsonElement>> stations = new LinkedHashMap<>();
         Map<String, JsonObject> values = new LinkedHashMap<>();
         Map<String, TreeMap<Integer, JsonElement>> bolts = new LinkedHashMap<>();
-        Map<String, Map<String, TreeMap<Integer, JsonElement>>> weaponBolts = new LinkedHashMap<>();
+        Map<String, Map<String, TreeMap<Integer, JsonElement>>> kitBolts = new LinkedHashMap<>();
         Map<String, TreeMap<Integer, JsonElement>> ejects = new LinkedHashMap<>();
         for (Relative r : relative) {
             WeaponUnitData weapon = weapons.get(r.part);
@@ -443,9 +443,9 @@ public final class MountDefaults {
                 bolt.add("barrel_length", number(r.mount.scale().z));
                 bolt.add("x_rot", angle((float) Math.toDegrees(angles.x)));
                 bolt.add("y_rot", angle((float) Math.toDegrees(-angles.y)));
-                (r.mount.weapon() == null ? bolts.computeIfAbsent(r.part, k -> new TreeMap<>())
-                        : weaponBolts.computeIfAbsent(r.part, k -> new LinkedHashMap<>())
-                                .computeIfAbsent(r.mount.weapon(), k -> new TreeMap<>())).put(r.index, bolt);
+                (r.mount.kit() == null ? bolts.computeIfAbsent(r.part, k -> new TreeMap<>())
+                        : kitBolts.computeIfAbsent(r.part, k -> new LinkedHashMap<>())
+                                .computeIfAbsent(r.mount.kit(), k -> new TreeMap<>())).put(r.index, bolt);
             } else {
                 Vector3f pivot = weapon.getPivotOffset().toVector3f();
                 values.computeIfAbsent(r.part, k -> new JsonObject()).add(r.field.equals("view")
@@ -471,14 +471,14 @@ public final class MountDefaults {
             byIndex.values().forEach(list::add);
             values.computeIfAbsent(part, k -> new JsonObject()).add("bolts", list);
         });
-        weaponBolts.forEach((part, byWeapon) -> {
+        kitBolts.forEach((part, byKit) -> {
             JsonObject lists = new JsonObject();
-            byWeapon.forEach((weapon, byIndex) -> {
+            byKit.forEach((kit, byIndex) -> {
                 JsonArray list = new JsonArray();
                 byIndex.values().forEach(list::add);
-                lists.add(weapon, list);
+                lists.add(kit, list);
             });
-            values.computeIfAbsent(part, k -> new JsonObject()).add("weapon_bolts", lists);
+            values.computeIfAbsent(part, k -> new JsonObject()).add("kit_bolts", lists);
         });
         List<String> repeated = new ArrayList<>();
         List<String> overridden = new ArrayList<>();
@@ -509,11 +509,11 @@ public final class MountDefaults {
                 if (keys.has("ejects")) {
                     weapon.applyEjects(List.of(GsonUtil.GSON.fromJson(keys.get("ejects"), Eject[].class)));
                 }
-                if (keys.has("weapon_bolts")) {
-                    Map<ResourceLocation, List<Bolt>> byWeapon = new LinkedHashMap<>();
-                    keys.getAsJsonObject("weapon_bolts").entrySet().forEach(e -> byWeapon.put(
+                if (keys.has("kit_bolts")) {
+                    Map<ResourceLocation, List<Bolt>> byKit = new LinkedHashMap<>();
+                    keys.getAsJsonObject("kit_bolts").entrySet().forEach(e -> byKit.put(
                             ResourceLocation.parse(e.getKey()), List.of(GsonUtil.GSON.fromJson(e.getValue(), Bolt[].class))));
-                    weapon.applyWeaponBolts(byWeapon);
+                    weapon.applyKitBolts(byKit);
                 }
             }
         }

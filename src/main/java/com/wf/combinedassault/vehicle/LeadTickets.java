@@ -1,7 +1,7 @@
 package com.wf.combinedassault.vehicle;
 
 import com.wf.combinedassault.all.AllConfigs;
-import com.wf.wflib.mixin.AccessorChunkMap;
+import com.wf.wflib.api.WFLibAPI;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ChunkTrackingView;
@@ -49,7 +49,7 @@ public final class LeadTickets {
         STAMPS.entrySet().removeIf(e -> e.getKey().isRemoved() || now - e.getValue().tick > REFRESH);
         for (ServerLevel level : server.getAllLevels()) {
             for (ServerPlayer player : level.players()) {
-                stamp(level, player.getRootVehicle(), ((AccessorChunkMap) level.getChunkSource().chunkMap).wfPlayerViewDistance(player), leadTicks, now);
+                stamp(level, player.getRootVehicle(), WFLibAPI.viewDistance(player), leadTicks, now);
             }
         }
     }

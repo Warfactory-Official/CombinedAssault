@@ -1,7 +1,6 @@
 package com.wf.combinedassault.vehicle.part;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.loadout.Loadouts;
 import com.wf.combinedassault.all.AllItems;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.wflib.probe.ProbeActions;
@@ -29,7 +28,7 @@ public final class WeaponActions {
     public static boolean select(ServerPlayer player, AbstractVehicle vehicle, int part, int weapon) {
         if (vehicle.isDestroyed() || part >= vehicle.getPartUnits().size()
                 || !(vehicle.getPartUnits().get(part) instanceof WeaponUnit unit) || !unit.isInteractive()
-                || Loadouts.manages(vehicle, unit)
+                || unit.isHardpoint()
                 || weapon >= unit.weapons.size() || weapon == unit.getCurrentWeaponIndex()
                 || ProbeInventory.find(player, stack -> stack.is(AllItems.MODDING_TOOL.get())).isEmpty()) {
             return false;

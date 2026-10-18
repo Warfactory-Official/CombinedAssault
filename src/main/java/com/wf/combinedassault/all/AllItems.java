@@ -31,6 +31,7 @@ public class AllItems {
     public static final DeferredHolder<Item, AddonArmorItem> SLAT_PANEL = registerItem(AllTabs.Category.MISC, "slat_panel", () -> new AddonArmorItem(AddonFit.SLAT));
     public static final DeferredHolder<Item, CargoParachuteItem> CARGO_PARACHUTE = registerItem(AllTabs.Category.MISC, "cargo_parachute", CargoParachuteItem::new);
     public static final DeferredHolder<Item, ParachutePackItem> PARACHUTE_PACK = registerItem(AllTabs.Category.MISC, "parachute_pack", () -> new ParachutePackItem(ArmorItem.Type.CHESTPLATE, new Item.Properties().durability(1)));
+    public static final DeferredHolder<Item, HardwareItem> HARDWARE = registerItem(AllTabs.Category.NONE, "hardware", HardwareItem::new);
     public static final DeferredHolder<Item, Item> AMMO_CREATIVE = registerItem(AllTabs.Category.MISC, "ammo_creative", () -> new Item(new Item.Properties().stacksTo(1)));
 
     public static <T extends Item> DeferredHolder<Item, T> registerItem(AllTabs.Category category, String name, Supplier<T> item) {

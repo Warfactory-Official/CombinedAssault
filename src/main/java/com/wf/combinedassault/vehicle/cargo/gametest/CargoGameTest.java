@@ -46,6 +46,10 @@ public class CargoGameTest {
     private static final double FLOOR = 2.6;
     /** Sling carry speed, blocks/tick (6 m/s). */
     private static final double CARRY = 0.3;
+    /** C-5 airdrop speed, blocks/tick (50 m/s). */
+    private static final double FLIGHT = 2.5;
+    /** Stone + forced chunks past the pad front, blocks: a flight-speed drop lands well ahead. */
+    private static final int RUNWAY = 220;
 
     @GameTest(template = TEMPLATE, timeoutTicks = 600)
     public static void aHoldStowsAndUnloadsAVehicle(GameTestHelper helper) {
@@ -200,6 +204,79 @@ public class CargoGameTest {
             lane.check(dropped.getHealth() >= health[0] * 0.99f, "hurt under canopy; " + report);
             lane.check(Math.abs(carrier[0].cargoHold().mass() - cargo[1].physicsEngine.mass) < 1, "unchuted humvee left the aircraft; " + report);
         }).thenExecute(lane::close).thenSucceed();
+    }
+
+    /**
+     * Carrier driven along +Z at {@link #FLIGHT} (pose set each tick), doors opened in flight: the chuted humvee
+     * leaves at the carrier's speed, the canopy opens and bleeds it, it lands ahead of the exit point unhurt.
+     */
+    @GameTest(template = TEMPLATE, timeoutTicks = 900)
+    public static void anAirdropAtFlightSpeedLandsUnhurt(GameTestHelper helper) {
+        Lane lane = new Lane(helper, 7);
+        lane.runway(true);
+        AbstractVehicle[] carrier = new AbstractVehicle[1];
+        Vec3[] at = new Vec3[1];
+        UUID[] chuted = new UUID[1];
+        float[] health = new float[1];
+        Vec3[] exit = new Vec3[1];
+        double[] exitSpeed = new double[1];
+        boolean[] opened = new boolean[1];
+        List<String> trace = new ArrayList<>();
+        Runnable fly = () -> {
+            at[0] = at[0].add(0, 0, FLIGHT);
+            carrier[0].setPos(at[0]);
+            carrier[0].setDeltaMovement(new Vec3(0, 0, FLIGHT));
+        };
+        var sequence = lane.ready()
+                .thenExecute(() -> {
+                    carrier[0] = lane.spawn("c5", new Vec3(0, 40, -PAD_BACK + 20));
+                    at[0] = carrier[0].position();
+                    doors(carrier[0]).setOn(true);
+                })
+                .thenExecuteFor(40, () -> pin(carrier[0], at[0]))
+                .thenExecute(() -> {
+                    AbstractVehicle humvee = lane.spawnIn(carrier[0], "humvee", new Vec3(0, FLOOR, -8));
+                    humvee.parachute().setFitted(true);
+                    chuted[0] = humvee.getUUID();
+                    health[0] = humvee.getHealth();
+                })
+                .thenExecuteFor(60, () -> pin(carrier[0], at[0]))
+                .thenExecute(() -> doors(carrier[0]).setOn(false))
+                .thenExecuteFor(5, () -> pin(carrier[0], at[0]))
+                .thenExecute(() -> lane.check(carrier[0].cargoHold().mass() > 0, "humvee not stowed"))
+                .thenExecuteFor(10, fly)
+                .thenExecute(() -> doors(carrier[0]).setOn(true))
+                .thenExecuteFor(400, () -> {
+                    if (carrier[0].getZ() < lane.centre.getZ() + RUNWAY - 40) {
+                        fly.run();
+                    } else if (!carrier[0].isRemoved()) {
+                        carrier[0].discard();
+                    }
+                    if (lane.level.getEntity(chuted[0]) instanceof AbstractVehicle dropped) {
+                        if (exit[0] == null) {
+                            exit[0] = dropped.position();
+                            exitSpeed[0] = dropped.getDeltaMovement().horizontalDistance();
+                        }
+                        opened[0] |= dropped.parachuteDeployed();
+                        trace.add(String.format(Locale.ROOT, "y%.1f z%.1f vz%.2f %s", dropped.getY() - lane.floorY,
+                                dropped.getZ() - lane.centre.getZ(), dropped.getDeltaMovement().z,
+                                dropped.parachuteDeployed() ? "C" : "-"));
+                    }
+                });
+        sequence.thenExecute(() -> {
+            AbstractVehicle dropped = lane.level.getEntity(chuted[0]) instanceof AbstractVehicle v ? v : null;
+            lane.check(dropped != null && exit[0] != null, "chuted humvee never left the hold");
+            double carried = dropped.getZ() - exit[0].z;
+            String report = String.format(Locale.ROOT, "[airdrop flight] exit speed %.2f b/t, carried %.1f, opened %s,"
+                            + " ground %s, health %.1f -> %.1f; %s", exitSpeed[0], carried, opened[0], dropped.onGround(),
+                    health[0], dropped.getHealth(), String.join(" ", trace.subList(0, Math.min(40, trace.size()))));
+            CombinedAssault.LOGGER.info(report);
+            lane.check(exitSpeed[0] > FLIGHT * 0.8, "left slower than the carrier; " + report);
+            lane.check(opened[0], "canopy never opened; " + report);
+            lane.check(dropped.onGround(), "not down; " + report);
+            lane.check(carried > 5, "no forward carry; " + report);
+            lane.check(dropped.getHealth() >= health[0] * 0.99f, "hurt; " + report);
+        }).thenExecute(() -> lane.runway(false)).thenExecute(lane::close).thenSucceed();
     }
 
     /** Same 40-block fall: free => hurt; under canopy => unhurt. */
@@ -358,6 +435,21 @@ public class CargoGameTest {
                 vehicle.discard();
             }
             pad(Blocks.AIR.defaultBlockState(), false);
+        }
+
+        /** Strip {@code PAD_FRONT..RUNWAY} ahead, x within 12: placed + forced, or cleared + released. */
+        void runway(boolean on) {
+            BlockState state = (on ? Blocks.STONE : Blocks.AIR).defaultBlockState();
+            for (int x = -12; x <= 12; x++) {
+                for (int z = PAD_FRONT + 1; z <= RUNWAY; z++) {
+                    level.setBlockAndUpdate(centre.offset(x, 0, z), state);
+                }
+            }
+            for (int cx = (centre.getX() - 12) >> 4; cx <= (centre.getX() + 12) >> 4; cx++) {
+                for (int cz = (centre.getZ() + PAD_FRONT + 1) >> 4; cz <= (centre.getZ() + RUNWAY) >> 4; cz++) {
+                    ForcedChunks.set(level, cx, cz, on);
+                }
+            }
         }
 
         private void pad(BlockState state, boolean force) {

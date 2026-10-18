@@ -12,10 +12,36 @@
     "max_health": 900,
     "armor": {
         "front": 60,
-        "side": 30,
+        "side": 25,
         "rear": 20,
-        "top": 10,
-        "bottom": 10
+        "top": 12,
+        "bottom": 10,
+        "ce": {
+            "front": 70,
+            "side": 30,
+            "rear": 20,
+            "top": 12,
+            "bottom": 10
+        },
+        "parts": {
+            "turret": {
+                "front": 60,
+                "side": 25,
+                "rear": 20,
+                "top": 12,
+                "bottom": 12,
+                "ce": {
+                    "front": 70,
+                    "side": 30,
+                    "rear": 20,
+                    "top": 12,
+                    "bottom": 12
+                }
+            }
+        },
+        "zones": [
+            {"name": "barrel", "part": "turret", "min": [-0.3, 2.05, 2.15], "max": [0.3, 2.45, 5.8], "ke": 40}
+        ]
     },
     "view_info": {
         "third_person_distance": 9,

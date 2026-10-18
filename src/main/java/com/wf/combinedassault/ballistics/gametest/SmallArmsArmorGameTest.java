@@ -60,7 +60,7 @@ public class SmallArmsArmorGameTest {
         NeoForge.EVENT_BUS.addListener(HitVehicleEvent.class, HITS::add);
     }
 
-    /** Humvee side 8 mm: 5.56 (5) stopped, 7.62 (8) through, .50 (20) overmatch. */
+    /** Humvee side 10 mm: 5.56 (5) stopped, 7.62 (8) partly through, .50 (20) overmatch. */
     @GameTest(template = TEMPLATE, timeoutTicks = 200)
     public static void calibreDecidesAgainstHumveeSide(GameTestHelper helper) {
         onLane(helper, 0, HUMVEE, (seq, v) -> seq
@@ -72,12 +72,12 @@ public class SmallArmsArmorGameTest {
                 .thenIdle(3).thenExecute(() -> expect(helper, v.get(), "overmatch")));
     }
 
-    /** Pen x |v|^2 / v0^2: .50 ball 20 mm at f = 1 / 0.75 / 0.6 / 0.45 vs 8 mm; damage falls with it. */
+    /** Pen x |v|^2 / v0^2: .50 ball 20 mm at f = 1 / 0.75 / 0.65 / 0.5 vs 10 mm; damage falls with it. */
     @GameTest(template = TEMPLATE, timeoutTicks = 240)
     public static void penetrationFallsWithImpactSpeed(GameTestHelper helper) {
         float[] damage = new float[4];
         String[] want = {"overmatch", "penetration", "partial", "absorbed"};
-        double[] f = {1, 0.75, 0.6, 0.45};
+        double[] f = {1, 0.75, 0.65, 0.5};
         onLane(helper, 1, HUMVEE, (seq, v) -> {
             for (int k = 0; k < 4; k++) {
                 int i = k;
@@ -94,7 +94,7 @@ public class SmallArmsArmorGameTest {
         });
     }
 
-    /** 620 mm front: .50 stopped, hull damage < 1% of its full payload (spall x ratio 0.03). */
+    /** 940 mm turret front: .50 stopped, hull damage < 1% of its full payload (spall x ratio 0.03). */
     @GameTest(template = TEMPLATE, timeoutTicks = 200)
     public static void heavyMachineGunDoesNothingToTankFront(GameTestHelper helper) {
         onLane(helper, 2, M1A2, (seq, v) -> seq

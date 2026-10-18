@@ -6,7 +6,7 @@
     "reload": {
         "time": 100,
         "ammo": [
-            "wflib:missile_kh_31",
+            "combinedassault:missile_kh_31",
             "#wflib:missile/large"
         ]
     },

@@ -13,6 +13,7 @@ import com.wf.wflib.ammo.AmmoItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Pig;
@@ -25,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/** SPG-9: weapon clip tracks bound off the model, backblast cone behind the breech. */
+/** Weapon tripod: SPG-9 mount clip tracks (grafted), backblast cone behind the breech; takes each tripod gun. */
 @GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class Spg9GameTest {
@@ -103,6 +104,42 @@ public class Spg9GameTest {
         }).thenSucceed();
     }
 
+    /** Spawned unarmed; each kit fitted: its gun selected with a bolt, display name = its hardpoint override's. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    public static void theTripodTakesEachGun(GameTestHelper helper) {
+        AbstractVehicle tripod = bare(helper, 2);
+        if (tripod == null) {
+            return;
+        }
+        WeaponUnit unit = (WeaponUnit) tripod.getPartUnit("gun").orElseThrow();
+        List<String> wrong = new ArrayList<>();
+        if (unit.currentWeaponId() != null) {
+            wrong.add("spawned armed with " + unit.currentWeaponId());
+        }
+        for (String[] want : new String[][]{{"spg9", "combinedassault:spg9", "entity.combinedassault.spg9_mounted"},
+                {"m2", "combinedassault:gun_12.7mm", "entity.combinedassault.spg9_m2"},
+                {"mk19", "combinedassault:mk19", "entity.combinedassault.spg9_mk19"}}) {
+            fit(tripod, want[0]);
+            Object name = tripod.getDisplayName().getContents() instanceof TranslatableContents t ? t.getKey() : null;
+            if (!want[1].equals(String.valueOf(unit.currentWeaponId())) || unit.getCurrentBolt() == null
+                    || !want[2].equals(name)) {
+                wrong.add(want[0] + ": gun " + unit.currentWeaponId() + ", bolt " + unit.getCurrentBolt() + ", name " + name);
+            }
+        }
+        tripod.discard();
+        if (!wrong.isEmpty()) {
+            helper.fail(String.join("; ", wrong));
+            return;
+        }
+        helper.succeed();
+    }
+
+    private static void fit(AbstractVehicle vehicle, String kit) {
+        WeaponUnit unit = (WeaponUnit) vehicle.getPartUnit("gun").orElseThrow();
+        unit.fitKit(-1);
+        unit.fitKit(unit.hardpoint().indexOf(CombinedAssault.modLocation(kit)));
+    }
+
     /** NoAI, no gravity: centre on the given point. */
     private static Pig pig(GameTestHelper helper, Vec3 centre) {
         Pig pig = EntityType.PIG.create(helper.getLevel());
@@ -123,8 +160,18 @@ public class Spg9GameTest {
         return null;
     }
 
+    /** SPG-9 fitted. */
     @Nullable
     private static AbstractVehicle spawn(GameTestHelper helper, int y) {
+        AbstractVehicle vehicle = bare(helper, y);
+        if (vehicle != null) {
+            fit(vehicle, "spg9");
+        }
+        return vehicle;
+    }
+
+    @Nullable
+    private static AbstractVehicle bare(GameTestHelper helper, int y) {
         Optional<BaseVehicleData> data = CommonAssetsManager.vehicleDataManager().getVehicleData(SPG9);
         if (data.isEmpty()) {
             helper.fail(SPG9 + " is not in the roster");

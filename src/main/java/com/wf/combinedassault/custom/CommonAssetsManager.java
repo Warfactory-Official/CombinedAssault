@@ -6,6 +6,7 @@ import com.wf.combinedassault.api.custom.IVehicleDataManager;
 import com.wf.combinedassault.api.custom.IVehicleWeaponManager;
 import com.wf.combinedassault.pack.CombinedPacks;
 import com.wf.combinedassault.pack.PackHandshake;
+import com.wf.combinedassault.vehicle.hardware.HardwareKits;
 import com.wf.combinedassault.vehicle.hit.ModelData;
 import com.wf.combinedassault.vehicle.hit.ModelDataManager;
 import net.minecraft.resources.ResourceLocation;
@@ -23,8 +24,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 
 /**
- * Pack defs, parsed: weapons -> vehicle models -> vehicles. One per JVM (both sides read the same packs; the handshake
- * keeps a remote client's identical). Built on first read or at common setup; {@code /reload} rescans the packs.
+ * Pack defs, parsed: weapons + hardware kits -> vehicle models -> vehicles. One per JVM (both sides read the same
+ * packs; the handshake keeps a remote client's identical). Built on first read or at common setup; {@code /reload}
+ * rescans the packs.
  */
 @EventBusSubscriber
 public final class CommonAssetsManager {
@@ -59,6 +61,16 @@ public final class CommonAssetsManager {
         Map<ResourceLocation, CombinedPacks.Def> vehicleFiles = CombinedPacks.defs("vehicles");
         Map<ResourceLocation, JsonObject> vehicleDefs = json(vehicleFiles);
         VEHICLE_DEF_PATCHES.forEach(patch -> vehicleDefs.forEach(patch));
+        HardwareKits.load(json(CombinedPacks.defs("hardware")), problems);
+        vehicleDefs.entrySet().removeIf(e -> {
+            try {
+                HardwareKits.expand(e.getValue());
+                return false;
+            } catch (RuntimeException ex) {
+                problems.add("vehicle " + e.getKey() + ": " + ex.getMessage());
+                return true;
+            }
+        });
         Map<ResourceLocation, String> vehiclePacks = new LinkedHashMap<>();
         vehicleFiles.forEach((id, def) -> vehiclePacks.put(id, def.pack().id()));
         VehicleWeaponManager weapons = new VehicleWeaponManager(weaponDefs, problems);
@@ -124,7 +136,7 @@ public final class CommonAssetsManager {
         return instance().vehiclePacks.get(vehicle);
     }
 
-    /** Vehicle defs after def patches, before glTF socket defaults. */
+    /** Vehicle defs after def patches and hardpoint expansion, before glTF socket defaults. */
     public static Map<ResourceLocation, JsonObject> vehicleDefs() {
         return instance().vehicleDefs;
     }

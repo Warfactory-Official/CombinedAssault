@@ -39,7 +39,7 @@ public final class SeatPoses {
     public static final Map<String, ResourceLocation> SETS = new LinkedHashMap<>();
 
     static {
-        for (String name : new String[]{"sit", "drive", "pilot", "stand"}) {
+        for (String name : new String[]{"sit", "drive", "pilot", "stand", "kneel"}) {
             SETS.put(name, CombinedAssault.modLocation("seat_" + name));
         }
     }

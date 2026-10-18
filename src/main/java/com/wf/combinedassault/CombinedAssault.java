@@ -56,6 +56,7 @@ public class CombinedAssault {
         initCompat();
         AddonActions.register();
         com.wf.combinedassault.vehicle.loadout.Loadouts.register();
+        com.wf.combinedassault.vehicle.hardware.Hardpoints.register();
         com.wf.combinedassault.vehicle.part.AccessActions.register();
         com.wf.combinedassault.vehicle.part.WeaponActions.register();
         com.wf.combinedassault.vehicle.part.StationActions.register();

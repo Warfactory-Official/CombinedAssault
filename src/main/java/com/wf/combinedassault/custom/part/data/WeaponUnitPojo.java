@@ -1,6 +1,7 @@
 package com.wf.combinedassault.custom.part.data;
 
 import com.wf.combinedassault.vehicle.crew.WeaponLoading;
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import net.minecraft.world.phys.Vec3;
 import com.wf.combinedassault.vehicle.pojo.Bolt;
@@ -84,5 +85,9 @@ public class WeaponUnitPojo extends RotatableUnitPojo {
 
     @SerializedName("weapons")
     public List<WeaponInfo> weapons = List.of();
+
+    /** Kits fitted here ({@code HardwareKits.expand} filled {@code weapons} / {@code mounts} from them). */
+    @SerializedName("hardpoint")
+    public JsonObject hardpoint = null;
 
 }

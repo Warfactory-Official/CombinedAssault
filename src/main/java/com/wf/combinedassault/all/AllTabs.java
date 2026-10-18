@@ -4,6 +4,8 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
+import com.wf.combinedassault.item.HardwareItem;
+import com.wf.combinedassault.vehicle.hardware.HardwareKits;
 import net.minecraft.world.level.ItemLike;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -28,8 +30,17 @@ public class AllTabs {
                     .builder()
                     .title(Component.translatable("tab.misc"))
                     .icon(AllItems.FIGURE_BOX.get()::getDefaultInstance)
-                    .displayItems((displayParams, output) ->
-                            MISC_ITEMS.forEach(itemLike -> output.accept(itemLike.get())))
+                    .displayItems((displayParams, output) -> {
+                        MISC_ITEMS.forEach(itemLike -> output.accept(itemLike.get()));
+                        CommonAssetsManager.ensureLoaded();
+                        HardwareKits.all().forEach(kit -> output.accept(HardwareItem.of(kit.id())));
+                        com.wf.wflib.item.ModItems.missileItems().stream().map(DeferredHolder::get)
+                                .filter(i -> i.preset().id().getNamespace().equals(CombinedAssault.MOD_ID))
+                                .forEach(output::accept);
+                        com.wf.wflib.item.ModItems.shellItems().stream().map(DeferredHolder::get)
+                                .filter(i -> i.preset().id().getNamespace().equals(CombinedAssault.MOD_ID))
+                                .forEach(output::accept);
+                    })
                     .build());
 
     /** One tab per pack; icon = its first vehicle. */

@@ -26,11 +26,11 @@ public record HitMesh(String source, List<Node> nodes) {
      * @param origin    rest pose, model frame; geometry is in this node's frame
      * @param mesh      triangles, null for a node with none
      * @param disc      swept volume of a spinning node (rotor), replacing its triangles
-     * @param weapon    grafted from a weapon-scoped part mount: live only while that weapon is selected
+     * @param kit       grafted from a kit-scoped part mount: live only while that kit is fitted
      */
     public record Node(String name, int parent, boolean module, int frame, String component, String side,
                        String unit, String spin, float health, Quaternionf rotation, Vector3f origin,
-                       @Nullable TriangleBvh mesh, @Nullable Disc disc, @Nullable String weapon) {
+                       @Nullable TriangleBvh mesh, @Nullable Disc disc, @Nullable String kit) {
 
         /** 6 floats, node frame; inverted when empty. */
         public float[] bounds() {

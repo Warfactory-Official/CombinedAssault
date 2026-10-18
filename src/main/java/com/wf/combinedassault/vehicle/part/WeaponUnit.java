@@ -51,7 +51,7 @@ import com.wf.combinedassault.util.VectorUtil;
 import com.wf.combinedassault.indirect.GunLaying;
 import com.wf.combinedassault.indirect.IndirectFire;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.combinedassault.vehicle.loadout.Loadouts;
+import com.wf.combinedassault.vehicle.hardware.HardwareKits;
 import com.wf.combinedassault.vehicle.pojo.AimContext;
 import com.wf.combinedassault.vehicle.pojo.Bolt;
 import com.wf.combinedassault.vehicle.pojo.Eject;
@@ -74,23 +74,23 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     private final int coldLaunchTimeTick;
     private final Vec3 coldLaunchVelocity;
     /** Camera offset from the pivot, ADS (scoped) view. */
-    private final Vec3 opticalSightOffset;
+    private Vec3 opticalSightOffset;
     /** Camera offset from the pivot, operator view. */
-    private final Vec3 operatorViewOffset;
+    private Vec3 operatorViewOffset;
     private boolean operatorOnWeaponUnit = true;
     public WeaponUnitData.OpticalSightType opticalSightType;
-    private final boolean withStabilizer;
-    private final boolean withFocusLocker;
-    private final boolean withThermalImager;
-    private final boolean withNightVision;
-    private final boolean withIr;
-    private final WeaponLoading loading;
-    private final float zoomMin;
-    private final float zoomMax;
+    private boolean withStabilizer;
+    private boolean withFocusLocker;
+    private boolean withThermalImager;
+    private boolean withNightVision;
+    private boolean withIr;
+    private WeaponLoading loading;
+    private float zoomMin;
+    private float zoomMax;
     private float zoom;
     private WeaponUnit parentWeaponUnit;
     private final List<WeaponUnit> subWeaponUnits = new ArrayList<>();
-    private final WeaponUnitData.FireControlSensorType fireControlSensorType;
+    private WeaponUnitData.FireControlSensorType fireControlSensorType;
     private Vec3 focusLockPos;
     private Entity lockedEntity;
     private int loseLockTick;
@@ -126,33 +126,27 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     private final GunLaying indirectFire = new GunLaying();
     @Nullable
     private final AirDefense airDefense;
+    /** Hardpoint-free station data; {@link #data} = its variant for the fitted kit. */
+    private final WeaponUnitData base;
+    /** Index into the hardpoint's kits; -1 = none fitted. */
+    private int kit = -1;
+    private final Map<AbstractVehicleWeapon<?>, ResourceLocation> weaponKits = new HashMap<>();
     /** Client: operator's standing fire mission. */
     @Nullable
     private com.wf.combinedassault.indirect.FireMission fireMission;
 
     public WeaponUnit(int index, AbstractVehicle vehicle, WeaponUnitData data) {
         super(index, vehicle, data);
-        this.seatOffset = data.getSeatOffset();
-        this.ammoCapacity = data.getAmmoCapacity();
-        this.firingMode = data.getFiringMode();
+        this.base = data;
         this.coldLaunchTimeTick = data.getColdLaunchTimeTick();
         this.coldLaunchVelocity = data.getColdLaunchVelocity();
         this.parentWeaponUnitAim = data.isParentWeaponUnitAim();
-        this.opticalSightOffset = data.getOpticalSightOffset();
-        this.operatorViewOffset = data.getOperatorViewOffset();
-        this.operatorOnWeaponUnit = data.isOperatorOnWeaponUnit();
-        this.fireControlSensorType = data.getFireControlSensorType();
-        this.opticalSightType = data.getOpticalSightType();
-        this.withStabilizer = data.withStabilizer();
-        this.withFocusLocker = data.withFocusLocker();
-        this.withThermalImager = data.withThermalImager();
-        this.withNightVision = data.withNightVision();
-        this.withIr = data.withIr();
-        this.loading = data.getLoading();
-        this.zoomMin = data.getZoomMin();
-        this.zoomMax = data.getZoomMax();
-        this.zoom = this.zoomMin;
-        this.crosshairStyle = data.getCrosshairStyle();
+        if (data.getHardpoint() != null) {
+            this.kit = data.getHardpoint().indexOf(data.getHardpoint().fitted());
+            this.data = data.variant(kit());
+        }
+        bindStation();
+        this.getSyncData().define(SyncDataSerializers.INT, this::applyKit, () -> kit, -1);
         this.airDefense = data.getAirDefense() == null ? null : new AirDefense(this, data.getAirDefense());
         this.currentWeaponIndexHolder = this.getSyncData().define(
                 SyncDataSerializers.INT,
@@ -182,16 +176,101 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         }
     }
 
-    public void switchWeapon(boolean secondary, boolean next, boolean modding) {
-        if (!modding && !secondary && swapsMounts()) {
+    /** {@link #data}'s station keys into the copied fields (kit fitted / taken off); aim and zoom kept in range. */
+    private void bindStation() {
+        WeaponUnitData d = data;
+        this.seatRot = d.getSeatRot();
+        this.seatOffset = d.getSeatOffset();
+        this.dismountOffset = d.getDismountOffset();
+        var rotInfo = d.getRotInfo();
+        this.xRotSpeed = rotInfo.xRotSpeed;
+        this.yRotSpeed = rotInfo.yRotSpeed;
+        this.xRotMax = rotInfo.xRotMax;
+        this.xRotMin = rotInfo.xRotMin;
+        this.yRotMax = rotInfo.yRotMax;
+        this.yRotMin = rotInfo.yRotMin;
+        this.needPower = rotInfo.needPower;
+        this.ammoCapacity = d.getAmmoCapacity();
+        this.firingMode = d.getFiringMode();
+        this.opticalSightOffset = d.getOpticalSightOffset();
+        this.operatorViewOffset = d.getOperatorViewOffset();
+        this.operatorOnWeaponUnit = d.isOperatorOnWeaponUnit();
+        this.fireControlSensorType = d.getFireControlSensorType();
+        this.opticalSightType = d.getOpticalSightType();
+        this.withStabilizer = d.withStabilizer();
+        this.withFocusLocker = d.withFocusLocker();
+        this.withThermalImager = d.withThermalImager();
+        this.withNightVision = d.withNightVision();
+        this.withIr = d.withIr();
+        this.loading = d.getLoading();
+        this.zoomMin = d.getZoomMin();
+        this.zoomMax = d.getZoomMax();
+        this.zoom = Math.max(zoomMin, Math.min(zoomMax, zoom == 0 ? zoomMin : zoom));
+        this.crosshairStyle = d.getCrosshairStyle();
+        this.xAimRot = Math.max(xRotMin, Math.min(xRotMax, xAimRot));
+        this.xRot = Math.max(xRotMin, Math.min(xRotMax, xRot));
+    }
+
+    public boolean isHardpoint() {
+        return base.getHardpoint() != null;
+    }
+
+    @Nullable
+    public HardwareKits.Hardpoint hardpoint() {
+        return base.getHardpoint();
+    }
+
+    /** Fitted kit; null = none, or no hardpoint. */
+    @Nullable
+    public ResourceLocation kit() {
+        return kit < 0 ? null : base.getHardpoint().kits().get(kit).id();
+    }
+
+    public int kitIndex() {
+        return kit;
+    }
+
+    /** {@code weapon} is the part's own or the fitted kit's. */
+    public boolean carries(AbstractVehicleWeapon<?> weapon) {
+        ResourceLocation from = weaponKits.get(weapon);
+        return from == null || from.equals(kit());
+    }
+
+    /** Both sides (sync setter): {@code index} fitted, -1 = none; its station bound. */
+    private void applyKit(int index) {
+        if (index == kit) {
             return;
         }
+        kit = index;
+        data = base.variant(kit());
+        bindStation();
+    }
+
+    /** Server: {@code index} fitted (-1 = taken off); its first weapon selected. */
+    public void fitKit(int index) {
+        applyKit(index);
+        ResourceLocation fitted = kit();
+        for (int i = 0; fitted != null && i < weapons.size(); i++) {
+            if (fitted.equals(weaponKits.get(weapons.get(i)))) {
+                selectWeaponIndex(false, i, true);
+                return;
+            }
+        }
+    }
+
+    public void switchWeapon(boolean secondary, boolean next, boolean modding) {
         int size = secondary ? secondaryWeapons.size() : weapons.size();
         if (size < 2) {
             return;
         }
-        int index = ((secondary ? currentSecondaryWeaponIndex : currentWeaponIndex) + (next ? 1 : size - 1)) % size;
-        selectWeaponIndex(secondary, index, modding);
+        int at = secondary ? currentSecondaryWeaponIndex : currentWeaponIndex;
+        for (int step = 1; step < size; step++) {
+            int index = Math.floorMod(at + (next ? step : -step), size);
+            if (secondary || !isHardpoint() || kit() != null && kit().equals(weaponKits.get(weapons.get(index)))) {
+                selectWeaponIndex(secondary, index, modding);
+                return;
+            }
+        }
     }
 
     public void selectWeaponIndex(boolean secondary, int index, boolean modding) {
@@ -275,6 +354,9 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
                         secondaryWeapons.add(weapon);
                     } else {
                         weapons.add(weapon);
+                    }
+                    if (weaponInfo.kit != null) {
+                        weaponKits.put(weapon, weaponInfo.kit);
                     }
                     if (weaponInfo.fullSalvo) {
                         fullSalvoWeapons.add(weapon);
@@ -547,7 +629,7 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     @Override
     public boolean onInteract(Player player, InteractionHand hand) {
         if (!vehicle.level().isClientSide() && hand == InteractionHand.MAIN_HAND && isInteractive() && player.isShiftKeyDown()) {
-            if (player.getItemInHand(hand).getItem() == AllItems.MODDING_TOOL.get() && !Loadouts.manages(vehicle, this)) {
+            if (player.getItemInHand(hand).getItem() == AllItems.MODDING_TOOL.get() && !isHardpoint()) {
                 switchWeapon(false, true, true);
                 AbstractVehicleWeapon<?> weapon = getCurrentWeapon().get();
                 player.displayClientMessage(Component.translatable("tips.use_weapon", weapon.getDisplayName()), true);
@@ -643,7 +725,7 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     }
 
     public void shoot(int weaponIndex, List<AimContext> aimContexts, @Nullable LivingEntity operator) {
-        if (!Loadouts.fitted(vehicle, this) || ComponentDamage.state(this) == ComponentState.BROKEN
+        if (currentWeaponId() == null || ComponentDamage.state(this) == ComponentState.BROKEN
                 || operator != null && vehicle.linkLost()) {
             // Wrecked well before the part is annihilated, which is when the stock gate fires.
             return;
@@ -1034,24 +1116,20 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         return bolts.get(currentBoltIndex % bolts.size());
     }
 
-    /** The selected weapon's: a weapon-scoped mount brings its own. */
+    /** {@link #data}'s: the fitted kit's variant carries its mount's. */
     public List<Bolt> getBolts() {
-        List<Bolt> bolts = data.getBolts(currentWeaponId());
+        List<Bolt> bolts = data.getBolts();
         return bolts != null ? bolts : PIVOT_BOLT;
     }
 
-    /** Null while a loadout names this part and its hardware is off: mounts hidden, nothing fires. */
+    /** Null on a hardpoint without a kit, or whose selected weapon is another kit's: nothing fires. */
     @Nullable
     public ResourceLocation currentWeaponId() {
-        if (!Loadouts.fitted(vehicle, this)) {
+        Optional<AbstractVehicleWeapon<?>> current = getCurrentWeapon();
+        if (current.isEmpty() || isHardpoint() && (kit() == null || !kit().equals(weaponKits.get(current.get())))) {
             return null;
         }
-        return getCurrentWeapon().map(weapon -> weapon.getData().getWeaponId()).orElse(null);
-    }
-
-    /** Weapons swap mount models: chosen with the modding tool, never from the seat. */
-    public boolean swapsMounts() {
-        return data.getMounts().stream().anyMatch(mount -> mount.weapon() != null);
+        return current.get().getData().getWeaponId();
     }
 
     public WeaponUnitData.FiringMode getFiringMode() {
@@ -1222,7 +1300,7 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     }
 
     public boolean isInteractive() {
-        return parentWeaponUnit != null || swapsMounts();
+        return parentWeaponUnit != null || isHardpoint();
     }
 
     public boolean isParentWeaponUnitAim() {
@@ -1322,6 +1400,9 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     public CompoundTag serializeNBT(HolderLookup.Provider provider) {
         CompoundTag tag = super.serializeNBT(provider);
         tag.putInt("CurrentWeaponIndex", currentWeaponIndex);
+        if (isHardpoint()) {
+            tag.putString("Kit", kit() == null ? "" : kit().toString());
+        }
         CompoundTag weaponTag = new CompoundTag();
         this.indexedWeapons.forEach(weapon -> {
             String serializeId = weapon.getSerializeId();
@@ -1345,6 +1426,10 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
           super.deserializeNBT(provider, nbt);
           worldVec = worldVec();
           worldAimVec = worldVec;
+          if (isHardpoint() && nbt.contains("Kit", Tag.TAG_STRING)) {
+              String saved = nbt.getString("Kit");
+              applyKit(saved.isEmpty() ? -1 : hardpoint().indexOf(ResourceLocation.tryParse(saved)));
+          }
           this.initWeapon(nbt.getInt("CurrentWeaponIndex"));
         CompoundTag weaponTag = nbt.getCompound("WeaponTag");
         this.indexedWeapons.forEach(weapon -> {

@@ -40,61 +40,19 @@ public class AllEntities {
                     .clientTrackingRange(32)
                     .build("vehicle_part"));
 
-    public static final DeferredHolder<EntityType<?>, EntityType<NoneVehicle>> NONE_VEHICLE = ENTITIES.register("none_vehicle",
-            () -> EntityType.Builder.of(NoneVehicle::new, MobCategory.MISC)
-                    .noSummon()
-                    .sized(1f, 1f)
-                    .updateInterval(1)
-                    .clientTrackingRange(32)
-                    .build("none_vehicle"));
+    public static final DeferredHolder<EntityType<?>, EntityType<NoneVehicle>> NONE_VEHICLE = registerVehicle("none_vehicle", NoneVehicle::new, false);
 
-    public static final DeferredHolder<EntityType<?>, EntityType<WheeledVehicle>> WHEELED_VEHICLE = ENTITIES.register("wheeled_vehicle",
-            () -> EntityType.Builder.of(WheeledVehicle::new, MobCategory.MISC)
-                    .noSummon()
-                    .sized(1f, 1f)
-                    .updateInterval(1)
-                    .clientTrackingRange(32)
-                    .build("wheeled_vehicle"));
+    public static final DeferredHolder<EntityType<?>, EntityType<WheeledVehicle>> WHEELED_VEHICLE = registerVehicle("wheeled_vehicle", WheeledVehicle::new, false);
 
-    public static final DeferredHolder<EntityType<?>, EntityType<TrackedVehicle>> TRACKED_VEHICLE = ENTITIES.register("tracked_vehicle",
-            () -> EntityType.Builder.of(TrackedVehicle::new, MobCategory.MISC)
-                    .noSummon()
-                    .sized(1f, 1f)
-                    .updateInterval(1)
-                    .clientTrackingRange(32)
-                    .build("tracked_vehicle"));
+    public static final DeferredHolder<EntityType<?>, EntityType<TrackedVehicle>> TRACKED_VEHICLE = registerVehicle("tracked_vehicle", TrackedVehicle::new, false);
 
-    public static final DeferredHolder<EntityType<?>, EntityType<VesselVehicle>> VESSEL_VEHICLE = ENTITIES.register("vessel_vehicle",
-            () -> EntityType.Builder.of(VesselVehicle::new, MobCategory.MISC)
-                    .noSummon()
-                    .sized(1f, 1f)
-                    .updateInterval(1)
-                    .clientTrackingRange(32)
-                    .build("vessel_vehicle"));
+    public static final DeferredHolder<EntityType<?>, EntityType<VesselVehicle>> VESSEL_VEHICLE = registerVehicle("vessel_vehicle", VesselVehicle::new, false);
 
-    public static final DeferredHolder<EntityType<?>, EntityType<RotaryWingVehicle>> ROTARY_WING_VEHICLE = ENTITIES.register("rotary_wing_vehicle",
-            () -> EntityType.Builder.of(RotaryWingVehicle::new, MobCategory.MISC)
-                    .noSummon()
-                    .sized(1f, 1f)
-                    .updateInterval(1)
-                    .clientTrackingRange(32)
-                    .build("rotary_wing_vehicle"));
+    public static final DeferredHolder<EntityType<?>, EntityType<RotaryWingVehicle>> ROTARY_WING_VEHICLE = registerVehicle("rotary_wing_vehicle", RotaryWingVehicle::new, false);
 
-    public static final DeferredHolder<EntityType<?>, EntityType<FixedWingVehicle>> FIXED_WING_VEHICLE = ENTITIES.register("fixed_wing_vehicle",
-            () -> EntityType.Builder.of(FixedWingVehicle::new, MobCategory.MISC)
-                    .noSummon()
-                    .sized(1f, 1f)
-                    .updateInterval(1)
-                    .clientTrackingRange(32)
-                    .build("fixed_wing_vehicle"));
+    public static final DeferredHolder<EntityType<?>, EntityType<FixedWingVehicle>> FIXED_WING_VEHICLE = registerVehicle("fixed_wing_vehicle", FixedWingVehicle::new, false);
 
-    public static final DeferredHolder<EntityType<?>, EntityType<ShipVehicle>> SHIP = ENTITIES.register("ship",
-            () -> EntityType.Builder.of(ShipVehicle::new, MobCategory.MISC)
-                    .noSummon()
-                    .sized(1f, 1f)
-                    .updateInterval(1)
-                    .clientTrackingRange(32)
-                    .build("ship"));
+    public static final DeferredHolder<EntityType<?>, EntityType<ShipVehicle>> SHIP = registerVehicle("ship", ShipVehicle::new, false);
 
     public static final DeferredHolder<EntityType<?>, EntityType<M1a2>> M1A2 = registerVehicle("m1a2", M1a2::new);
 
@@ -114,12 +72,17 @@ public class AllEntities {
     public static <T extends AbstractVehicle> DeferredHolder<EntityType<?>, EntityType<T>> registerVehicle(
             String name, EntityType.EntityFactory<T> factory
     ) {
-        DeferredHolder<EntityType<?>, EntityType<T>> holder = ENTITIES.register(name, () -> EntityType.Builder
-                .of(factory, MobCategory.MISC)
-                .sized(1f, 1f)
-                .updateInterval(1)
-                .clientTrackingRange(32)
-                .build(name));
+        return registerVehicle(name, factory, true);
+    }
+
+    private static <T extends AbstractVehicle> DeferredHolder<EntityType<?>, EntityType<T>> registerVehicle(
+            String name, EntityType.EntityFactory<T> factory, boolean summonable
+    ) {
+        DeferredHolder<EntityType<?>, EntityType<T>> holder = ENTITIES.register(name, () -> {
+            EntityType.Builder<T> builder = EntityType.Builder.of(factory, MobCategory.MISC);
+            if (!summonable) builder.noSummon();
+            return builder.sized(1f, 1f).updateInterval(1).clientTrackingRange(32).build(name);
+        });
         VEHICLE_TYPES.add(holder);
         return holder;
     }
@@ -131,16 +94,6 @@ public class AllEntities {
             types.add(holder.get());
         }
         return types;
-    }
-
-    static {
-        // Built directly above, not via registerVehicle() => must list here manually.
-        VEHICLE_TYPES.add(NONE_VEHICLE);
-        VEHICLE_TYPES.add(WHEELED_VEHICLE);
-        VEHICLE_TYPES.add(TRACKED_VEHICLE);
-        VEHICLE_TYPES.add(ROTARY_WING_VEHICLE);
-        VEHICLE_TYPES.add(FIXED_WING_VEHICLE);
-        VEHICLE_TYPES.add(SHIP);
     }
 
     public static void register(IEventBus eventBus) {

@@ -155,7 +155,7 @@ public class VehicleModdingToolScreen extends ApricityScreen {
     private boolean hasWeaponSelections() {
         return vehicle.getPartUnits().stream().anyMatch(partUnit ->
                 partUnit instanceof WeaponUnit weaponUnit && weaponUnit.isInteractive() && weaponUnit.weapons.size() > 1
-                        && !Loadouts.manages(vehicle, weaponUnit));
+                        && !weaponUnit.isHardpoint());
     }
 
     private void buildDisplayCatalog() {

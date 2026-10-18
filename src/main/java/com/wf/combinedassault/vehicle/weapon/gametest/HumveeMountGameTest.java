@@ -20,11 +20,11 @@ import com.wf.combinedassault.custom.CommonAssetsManager;
 import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.vehicle.hit.VehicleHits;
-import com.wf.combinedassault.vehicle.loadout.Loadouts;
+import com.wf.combinedassault.item.HardwareItem;
+import com.wf.combinedassault.vehicle.hardware.Hardpoints;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import com.wf.combinedassault.vehicle.pojo.AimContext;
@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/** Humvee roof_mount: hull + shield mount; gun = weapon-scoped mount glTF (Mk 19 / M2), swapped by modding tool. */
+/** Humvee roof_mount: hull + shield mount; gun = hardware kit (Mk 19 / M2) on the {@code pintle} hardpoint. */
 @GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class HumveeMountGameTest {
@@ -166,9 +166,9 @@ public class HumveeMountGameTest {
         helper.succeed();
     }
 
-    /** Gun follows the loadout: seat switching and direct tool swaps refused, name follows the gun. */
+    /** Gun follows the kit: seat switching stays inside it, tool swaps refused, name follows the gun. */
     @GameTest(template = TEMPLATE, timeoutTicks = 100)
-    public static void theLoadoutPicksTheGunNotTheSeat(GameTestHelper helper) {
+    public static void theKitPicksTheGunNotTheSeat(GameTestHelper helper) {
         WeaponUnit unit = roofMount(helper, MK19_HUMVEE);
         if (unit == null) {
             return;
@@ -177,50 +177,61 @@ public class HumveeMountGameTest {
         unit.switchWeapon(false, true, false);
         ResourceLocation fromSeat = unit.currentWeaponId();
         fit(vehicle, M2_HUMVEE);
-        ResourceLocation fromLoadout = unit.currentWeaponId();
+        ResourceLocation fromKit = unit.currentWeaponId();
         Object name = vehicle.getDisplayName().getContents() instanceof TranslatableContents t ? t.getKey()
                 : vehicle.getDisplayName().getString();
-        boolean managed = Loadouts.manages(vehicle, unit);
+        boolean hardpoint = unit.isHardpoint();
         vehicle.discard();
-        if (!MK19.equals(fromSeat) || !M2.equals(fromLoadout) || !managed
+        if (!MK19.equals(fromSeat) || !M2.equals(fromKit) || !hardpoint
                 || !"entity.combinedassault.humvee_m2".equals(name)) {
-            helper.fail("seat switch -> " + fromSeat + " (want " + MK19 + "), loadout -> " + fromLoadout + " (want " + M2
-                    + "), managed " + managed + ", name " + name + " (want the M2 Humvee's)");
+            helper.fail("seat switch -> " + fromSeat + " (want " + MK19 + "), kit -> " + fromKit + " (want " + M2
+                    + "), hardpoint " + hardpoint + ", name " + name + " (want the M2 Humvee's)");
             return;
         }
         helper.succeed();
     }
 
-    /** Fitting pays the install cost; taking it off refunds it and the gun stops firing. */
+    /**
+     * Ad hoc, no modding tool: unarmed Humvee + carried M2 kit item => fit puts the M2 on, item consumed; take off
+     * returns it and the gun stops firing. Refused without the item, with a gun on.
+     */
     @GameTest(template = TEMPLATE, timeoutTicks = 100)
-    public static void fittingTheGunCostsMaterials(GameTestHelper helper) {
+    public static void aCarriedWeaponItemFitsAdHoc(GameTestHelper helper) {
         AbstractVehicle vehicle = spawn(helper, HUMVEE);
         if (vehicle == null) {
             return;
         }
         WeaponUnit unit = (WeaponUnit) vehicle.getPartUnit("roof_mount").orElseThrow();
-        Loadouts.select(vehicle, index(vehicle, M2_HUMVEE), null);
-        boolean unfittedSilent = unit.currentWeaponId() == null;
+        int m2 = kit(unit, M2_HUMVEE);
+        int mk19 = kit(unit, MK19_HUMVEE);
+        boolean unarmed = unit.kit() == null && unit.currentWeaponId() == null;
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
         player.setGameMode(GameType.SURVIVAL);
         Vec3 near = unit.worldPivotPosition();
         player.moveTo(near.x + 1, near.y - player.getEyeHeight(), near.z);
         player.getInventory().clearContent();
-        boolean refused = Loadouts.install(player, vehicle);
-        player.getInventory().add(new ItemStack(Items.IRON_INGOT, 30));
-        player.getInventory().add(new ItemStack(Items.REDSTONE, 4));
-        boolean fitted = Loadouts.install(player, vehicle);
-        int ironLeft = player.getInventory().countItem(Items.IRON_INGOT);
+        boolean refusedEmpty = Hardpoints.fitRefusal(player, unit, m2) != null;
+        player.getInventory().add(HardwareItem.of(CombinedAssault.modLocation(M2_HUMVEE)));
+        player.getInventory().add(HardwareItem.of(CombinedAssault.modLocation(MK19_HUMVEE)));
+        boolean allowed = Hardpoints.fitRefusal(player, unit, m2) == null;
+        Hardpoints.fit(player, unit, m2);
+        boolean consumed = count(player, M2_HUMVEE) == 0;
         ResourceLocation gun = unit.currentWeaponId();
-        boolean removed = Loadouts.remove(player, vehicle);
-        int ironBack = player.getInventory().countItem(Items.IRON_INGOT);
+        boolean secondRefused = Hardpoints.fitRefusal(player, unit, mk19) != null;
+        boolean offAllowed = Hardpoints.takeOffRefusal(player, unit) == null;
+        Hardpoints.takeOff(player, unit);
+        boolean back = count(player, M2_HUMVEE) == 1;
         boolean silentAgain = unit.currentWeaponId() == null;
         player.getInventory().clearContent();
         vehicle.discard();
-        helper.assertTrue(unfittedSilent, "selected but unfitted gun answers " + unit.currentWeaponId());
-        helper.assertTrue(!refused && fitted && ironLeft == 6 && M2.equals(gun),
-                "refused " + refused + ", fitted " + fitted + ", iron left " + ironLeft + ", gun " + gun);
-        helper.assertTrue(removed && ironBack == 30 && silentAgain, "removed " + removed + ", iron " + ironBack);
+        helper.assertTrue(unarmed, "spawned armed: " + unit.currentWeaponId());
+        helper.assertTrue(refusedEmpty && allowed && consumed && M2.equals(gun), "refused empty " + refusedEmpty
+                + ", allowed " + allowed + ", consumed " + consumed + ", gun " + gun);
+        helper.assertTrue(secondRefused, "Mk 19 fit allowed over a fitted M2");
+        helper.assertTrue(offAllowed && back && silentAgain, "take off allowed " + offAllowed + ", item back " + back
+                + ", silent " + silentAgain);
+        helper.assertTrue(unit.hardpoint().kits().get(m2).installTicks() == 120, "install_ticks "
+                + unit.hardpoint().kits().get(m2).installTicks());
         helper.succeed();
     }
 
@@ -287,10 +298,10 @@ public class HumveeMountGameTest {
             return;
         }
         WeaponUnit unit = (WeaponUnit) vehicle.getPartUnit("roof_mount").orElseThrow();
-        String loadout = vehicle.loadout() == null ? null : vehicle.loadout().id;
+        ResourceLocation kit = unit.kit();
         ResourceLocation gun = unit.currentWeaponId();
         vehicle.discard();
-        helper.assertTrue("unarmed".equals(loadout) && gun == null, "spawned " + loadout + " with gun " + gun);
+        helper.assertTrue(kit == null && gun == null, "spawned " + kit + " with gun " + gun);
         helper.succeed();
     }
 
@@ -314,9 +325,9 @@ public class HumveeMountGameTest {
         return preset;
     }
 
-    /** Humvee with {@code loadout} selected and fitted. */
+    /** Humvee with kit {@code kit} fitted. */
     @Nullable
-    private static WeaponUnit roofMount(GameTestHelper helper, String loadout) {
+    private static WeaponUnit roofMount(GameTestHelper helper, String kit) {
         AbstractVehicle vehicle = spawn(helper, HUMVEE);
         if (vehicle == null) {
             return null;
@@ -325,23 +336,30 @@ public class HumveeMountGameTest {
             helper.fail("humvee has no roof_mount weapon part");
             return null;
         }
-        fit(vehicle, loadout);
+        fit(vehicle, kit);
         return unit;
     }
 
-    private static int index(AbstractVehicle vehicle, String loadout) {
-        for (int i = 0; i < vehicle.loadouts().size(); i++) {
-            if (vehicle.loadouts().get(i).id.equals(loadout)) {
-                return i;
-            }
+    private static int kit(WeaponUnit unit, String kit) {
+        int i = unit.hardpoint().indexOf(CombinedAssault.modLocation(kit));
+        if (i < 0) {
+            throw new IllegalArgumentException("no kit " + kit);
         }
-        throw new IllegalArgumentException("no loadout " + loadout);
+        return i;
     }
 
-    private static void fit(AbstractVehicle vehicle, String loadout) {
-        int i = index(vehicle, loadout);
-        Loadouts.select(vehicle, i, null);
-        vehicle.setLoadout(i, true);
+    private static void fit(AbstractVehicle vehicle, String kit) {
+        WeaponUnit unit = (WeaponUnit) vehicle.getPartUnit("roof_mount").orElseThrow();
+        unit.fitKit(-1);
+        unit.fitKit(kit(unit, kit));
+    }
+
+    private static int count(ServerPlayer player, String kit) {
+        int n = 0;
+        for (ItemStack stack : player.getInventory().items) {
+            n += Hardpoints.matcher(CombinedAssault.modLocation(kit)).test(stack) ? stack.getCount() : 0;
+        }
+        return n;
     }
 
     @Nullable

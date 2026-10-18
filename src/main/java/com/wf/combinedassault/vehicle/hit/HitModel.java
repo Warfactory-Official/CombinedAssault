@@ -59,6 +59,17 @@ public final class HitModel {
         groupRestInverse[slot].transform(offset.set(origin).sub(groupRestOffset[slot]));
     }
 
+    /** Group slot {@code slot}'s frame -> model frame at rest; {@code point} false => direction. */
+    public Vector3f fromGroup(int slot, Vector3f v, boolean point) {
+        new Quaternionf(groupRestInverse[slot]).conjugate().transform(v);
+        return point ? v.add(groupRestOffset[slot]) : v;
+    }
+
+    /** Model-frame direction -> group slot {@code slot}'s frame. */
+    public Vector3f toGroupDirection(int slot, Vector3f v) {
+        return groupRestInverse[slot].transform(v);
+    }
+
     public HitMesh mesh() {
         return mesh;
     }

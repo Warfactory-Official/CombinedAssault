@@ -4,6 +4,7 @@ import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.wf.wflib.ammo.Ammo;
 import com.wf.wflib.ammo.AmmoVariant;
+import com.wf.wflib.api.ThreatKind;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.resources.ResourceLocation;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -155,7 +156,7 @@ public final class BallisticsCommand {
         }
         PartUnit<?> part = VectorUtil.hitPartUnit(vehicle, start, end, false);
         BallisticResult result = new ArmorResolver().resolve(vehicle, start, look, hitPos, part,
-                penetration, PROBE_DAMAGE);
+                penetration, PROBE_DAMAGE, ThreatKind.KINETIC);
         if (result == null) {
             source.sendFailure(Component.literal("no answer: the face hit has no armour set"));
             return 0;

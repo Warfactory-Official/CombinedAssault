@@ -243,7 +243,7 @@ public class SuspensionUnit<T extends SuspensionUnitData> extends PartUnit<T> {
         return length - deploy * (length - min);
     }
 
-    protected boolean isActive() {
+    public boolean isActive() {
         return structureGroup != null && !isDetached() && !isDestroyed();
     }
 

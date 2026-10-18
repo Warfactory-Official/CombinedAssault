@@ -35,10 +35,10 @@ public record ModelMounts(List<Link> links, List<Mount> mounts, List<Wheel> whee
      * @param target    {@code combinedassaultInterface}: part id or entry id, "" if none
      * @param index     {@code combinedassault.index}, -1 if none
      * @param triangles world positions, 9 per triangle; empty for an empty
-     * @param weapon    weapon-scoped part mount it came from, or null
+     * @param kit       kit-scoped part mount it came from, or null
      */
     public record Mount(int node, String name, NodeRole role, String target, int index, Vector3f origin,
-                        Quaternionf rotation, Vector3f scale, float[] triangles, @Nullable String weapon) {
+                        Quaternionf rotation, Vector3f scale, float[] triangles, @Nullable String kit) {
     }
 
     /** Rig frame node of {@code part}: pitch => its pitch frame, else (or none) its part frame. -1: none. */

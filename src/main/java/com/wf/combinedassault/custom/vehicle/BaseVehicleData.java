@@ -331,6 +331,21 @@ public class BaseVehicleData<T extends AbstractVehicle> {
             CombinedAssault.LOGGER.warn("{}: {} has armor_<mm> materials but the vehicle has no armor block, so nothing "
                     + "reads them", vehicleId, hitMesh.source());
         }
+        if (armor != null) {
+            for (String part : armor.parts.keySet()) {
+                if (!present.contains(part)) {
+                    throw new IllegalArgumentException(vehicleId + ": armor.parts names no part '" + part + "'");
+                }
+            }
+            for (ArmorProfile.Zone zone : armor.zones) {
+                if (zone.name() == null || zone.min() == null || zone.max() == null || zone.min().length != 3
+                        || zone.max().length != 3 || zone.ke() <= 0
+                        || zone.part() != null && !armor.parts.containsKey(zone.part())) {
+                    throw new IllegalArgumentException(vehicleId + ": armor zone " + zone.name()
+                            + " needs name, min[3], max[3], ke > 0, part listed in armor.parts");
+                }
+            }
+        }
     }
 
     /** Null: no clips. */

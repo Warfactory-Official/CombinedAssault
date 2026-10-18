@@ -17,11 +17,41 @@
     },
     "max_health": 2600,
     "armor": {
-        "front": 700,
-        "side": 150,
-        "rear": 60,
+        "front": 750,
+        "side": 80,
+        "rear": 50,
         "top": 50,
-        "bottom": 40
+        "bottom": 30,
+        "ce": {
+            "front": 1150,
+            "side": 80,
+            "rear": 50,
+            "top": 50,
+            "bottom": 30
+        },
+        "parts": {
+            "turret": {
+                "front": 850,
+                "side": 330,
+                "rear": 70,
+                "top": 50,
+                "bottom": 40,
+                "ce": {
+                    "front": 1300,
+                    "side": 550,
+                    "rear": 70,
+                    "top": 50,
+                    "bottom": 40
+                }
+            }
+        },
+        "zones": [
+            {"name": "lower_front_plate", "face": "front", "min": [-1.9, -0.1, 3.0], "max": [1.9, 0.95, 3.9], "ke": 250, "ce": 300},
+            {"name": "skirt_front", "face": "side", "min": [-1.9, 0.3, 1.0], "max": [1.9, 1.4, 3.9], "ke": 120, "ce": 400},
+            {"name": "barrel", "part": "turret", "min": [-0.3, 1.55, 2.25], "max": [0.3, 2.0, 5.6], "ke": 60},
+            {"name": "mantlet", "part": "turret", "face": "front", "min": [-0.4, 1.45, 1.2], "max": [0.4, 2.05, 2.25], "ke": 300, "ce": 450},
+            {"name": "bustle_side", "part": "turret", "face": "side", "min": [-1.7, 1.4, -2.5], "max": [1.7, 2.8, -1.0], "ke": 70, "ce": 80}
+        ]
     },
     "view_info": {
         "third_person_distance": 7

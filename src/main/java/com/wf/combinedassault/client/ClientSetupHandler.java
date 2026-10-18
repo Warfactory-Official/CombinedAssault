@@ -60,19 +60,8 @@ public class ClientSetupHandler {
                 new com.wf.combinedassault.indirect.client.FireMissionMapTool()));
         event.enqueueWork(() -> com.wf.wflib.client.map.WFMaps.addTool(
                 new com.wf.combinedassault.indirect.client.CallForFireMapTool()));
-        event.enqueueWork(() -> EntityRenderers.register(AllEntities.NONE_VEHICLE.get(), VehicleRender::new));
+        event.enqueueWork(() -> AllEntities.vehicleTypes().forEach(type -> EntityRenderers.register(type, VehicleRender::new)));
         event.enqueueWork(() -> EntityRenderers.register(AllEntities.VEHICLE_PART.get(), VehiclePartRender::new));
-        event.enqueueWork(() -> EntityRenderers.register(AllEntities.WHEELED_VEHICLE.get(), VehicleRender::new));
-        event.enqueueWork(() -> EntityRenderers.register(AllEntities.TRACKED_VEHICLE.get(), VehicleRender::new));
-        event.enqueueWork(() -> EntityRenderers.register(AllEntities.VESSEL_VEHICLE.get(), VehicleRender::new));
-        event.enqueueWork(() -> EntityRenderers.register(AllEntities.ROTARY_WING_VEHICLE.get(), VehicleRender::new));
-        event.enqueueWork(() -> EntityRenderers.register(AllEntities.FIXED_WING_VEHICLE.get(), VehicleRender::new));
-        event.enqueueWork(() -> EntityRenderers.register(AllEntities.SHIP.get(), VehicleRender::new));
-
-        event.enqueueWork(() -> EntityRenderers.register(AllEntities.M1A2.get(), VehicleRender::new));
-        event.enqueueWork(() -> EntityRenderers.register(AllEntities.AH64D.get(), VehicleRender::new));
-
-
         event.enqueueWork(() -> EntityRenderers.register(AllEntities.RADAR_MARKER.get(), RadarMarkerRenderer::new));
         event.enqueueWork(() -> EntityRenderers.register(AllEntities.PARAGLIDER_CANOPY.get(), NoopRenderer::new));
 

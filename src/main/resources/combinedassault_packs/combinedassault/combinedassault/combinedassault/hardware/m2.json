@@ -1,0 +1,7 @@
+{
+  "model": "combinedassault:models/weapon/m2/m2.gltf",
+  "weapons": ["combinedassault:gun_12.7mm"],
+  "fits": ["pintle", "tripod"],
+  "install_ticks": 120,
+  "station": {"optical_sight_type": "operator", "zoom_max": 2}
+}

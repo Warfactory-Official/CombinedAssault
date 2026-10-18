@@ -13,6 +13,8 @@ import org.apache.logging.log4j.MarkerManager;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.all.ModRegistries;
 import com.wf.combinedassault.api.custom.IVehicleDataManager;
+import com.wf.combinedassault.vehicle.hardware.HardwareKit;
+import com.wf.combinedassault.vehicle.hardware.HardwareKits;
 import com.wf.combinedassault.vehicle.loadout.Loadouts;
 import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
 import com.wf.combinedassault.vehicle.hit.ModelData;
@@ -96,20 +98,17 @@ public class VehicleDataManager implements IVehicleDataManager {
                 }
             }
             for (PartMount mount : entry.data().getMounts()) {
-                if (mount.weapon() != null && !(entry.data() instanceof WeaponUnitData unit
-                        && unit.getWeapons().stream().anyMatch(info -> mount.weapon().equals(info.id)))) {
+                if (mount.kit() != null && !(entry.data() instanceof WeaponUnitData unit
+                        && unit.getHardpoint() != null && unit.getHardpoint().indexOf(mount.kit()) >= 0)) {
                     throw new IllegalArgumentException("part " + entry.data().getId() + " mount " + mount.model()
-                            + " names weapon " + mount.weapon() + ", not one of the part's weapons");
-                }
-                if (mount.name() != null && mount.weapon() == null) {
-                    throw new IllegalArgumentException("part " + entry.data().getId() + " mount " + mount.model()
-                            + " has a name but no weapon");
+                            + " names kit " + mount.kit() + ", which its hardpoint does not take");
                 }
             }
         }
         Loadouts.validate((BaseVehicleData<?>) data);
         MountDefaults.Resolved weapons = MountDefaults.resolve(vehicleId.toString(), obj, mounted.relative(), data);
         MountDefaults.apply(data, weapons.values());
+        variants(MountDefaults.merge(mounted.vehicle(), weapons.values()), (BaseVehicleData<?>) data);
         List<String> repeated = new ArrayList<>(mounted.repeated());
         repeated.addAll(weapons.repeated());
         List<String> overridden = new ArrayList<>(mounted.overridden());
@@ -124,6 +123,33 @@ public class VehicleDataManager implements IVehicleDataManager {
         data.bindHitModel();
         data.setName(Component.translatable("entity." + vehicleId.getNamespace() + "." + vehicleId.getPath()));
         return data;
+    }
+
+    /** Each hardpoint part: one data per accepted kit, its final json with the kit's station over it. */
+    private static void variants(JsonObject merged, BaseVehicleData<?> data) {
+        Map<String, JsonObject> parts = new java.util.HashMap<>();
+        merged.getAsJsonArray("parts").forEach(p -> parts.put(p.getAsJsonObject().get("id").getAsString(),
+                p.getAsJsonObject()));
+        for (PartUnitEntry<?, ?> entry : data.getParts()) {
+            if (!(entry.data() instanceof WeaponUnitData unit) || unit.getHardpoint() == null) {
+                continue;
+            }
+            HardwareKits.Hardpoint hardpoint = unit.getHardpoint();
+            Map<ResourceLocation, WeaponUnitData> out = new java.util.LinkedHashMap<>();
+            for (HardwareKit kit : hardpoint.kits()) {
+                JsonObject station = HardwareKits.station(parts.get(unit.getId()), kit, hardpoint.overrides().get(kit.id()));
+                WeaponUnitData variant = (WeaponUnitData) entry.type().parseAndCreate(station).data();
+                variant.initFrames(unit.getRawStructureGroup(), unit.getRawPitchGroup());
+                boolean ownBolts = kit.station().has("bolts") || hardpoint.overrides().containsKey(kit.id())
+                        && hardpoint.overrides().get(kit.id()).has("bolts");
+                variant.applySockets(null, null, ownBolts ? null : unit.getBolts(kit.id()));
+                if (!kit.station().has("ejects")) {
+                    variant.applyEjects(unit.getEjects());
+                }
+                out.put(kit.id(), variant);
+            }
+            unit.applyVariants(out);
+        }
     }
 
 }

@@ -2,6 +2,7 @@ package com.wf.combinedassault.client.render.util;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -14,7 +15,10 @@ import com.wf.combinedassault.vehicle.hit.HitModel;
 import com.wf.combinedassault.vehicle.hit.TriangleBvh;
 import com.wf.combinedassault.vehicle.hit.VehicleHits;
 import org.joml.Vector3f;
+import com.wf.combinedassault.ballistics.ArmorProfile;
+import com.wf.combinedassault.ballistics.ArmorResolver;
 import com.wf.combinedassault.ballistics.component.ComponentKind;
+import net.minecraft.util.Mth;
 import com.wf.combinedassault.vehicle.structure.ConvexHull;
 import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
 
@@ -69,6 +73,19 @@ public final class HullRenderer {
     /** Faint: duplicates the model the player already sees. */
     private static final float SURFACE = 0.35F;
     private static final int DISC_SIDES = 24;
+    /** LOS armour from the camera, log scale: blue at {@link #RAMP_LO} mm -> red at {@link #RAMP_HI}; 0 mm grey. */
+    public static final float RAMP_LO = 5, RAMP_HI = 1000;
+    private static final float[] NO_ARMOR = {0.5F, 0.5F, 0.5F};
+    private static final float ARMOR_ALPHA = 0.8F;
+
+    public static float[] armorColour(float mm) {
+        if (mm <= 0) {
+            return NO_ARMOR;
+        }
+        float t = Mth.clamp((float) (Math.log(mm / RAMP_LO) / Math.log(RAMP_HI / RAMP_LO)), 0, 1);
+        int rgb = Mth.hsvToRgb((1 - t) * 2 / 3F, 1, 1);
+        return new float[]{(rgb >> 16 & 255) / 255F, (rgb >> 8 & 255) / 255F, (rgb & 255) / 255F};
+    }
 
     /**
      * Hit geometry at its current pose: surface triangles faint (part / system colour), {@code hit_*} modules solid,
@@ -80,6 +97,9 @@ public final class HullRenderer {
             return;
         }
         Matrix4f pose = new Matrix4f();
+        ArmorProfile profile = vehicle.armorProfile;
+        boolean armored = profile != null && profile.isDefined();
+        Vec3 eye = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
         for (int i = 0; i < hits.model().nodes().size(); i++) {
             HitModel.Node node = hits.model().nodes().get(i);
             if (!hits.live(i)) {
@@ -87,13 +107,18 @@ public final class HullRenderer {
             }
             float[] colour = node.part() != null && !node.mesh().module() ? PART : colourOf(node.kind());
             float alpha = node.mesh().module() ? 1.0F : SURFACE;
+            hits.pose(i, vehicle.position(), pose);
             poseStack.pushPose();
-            poseStack.last().pose().mul(hits.pose(i, vehicle.position(), pose));
+            poseStack.last().pose().mul(pose);
             PoseStack.Pose last = poseStack.last();
             TriangleBvh mesh = node.mesh().mesh();
             if (mesh != null) {
                 float[] t = mesh.triangles();
                 for (int k = 0; k < t.length; k += 9) {
+                    if (armored && !node.mesh().module()) {
+                        colour = armorColour(armor(vehicle, profile, i, mesh, k / 9, pose, eye));
+                        alpha = ARMOR_ALPHA;
+                    }
                     line(last, buffer, t, k / 3, k / 3 + 1, colour[0], colour[1], colour[2], alpha);
                     line(last, buffer, t, k / 3 + 1, k / 3 + 2, colour[0], colour[1], colour[2], alpha);
                     line(last, buffer, t, k / 3 + 2, k / 3, colour[0], colour[1], colour[2], alpha);
@@ -124,6 +149,22 @@ public final class HullRenderer {
             }
             poseStack.popPose();
         }
+    }
+
+    /** {@link ArmorResolver#plate} KE LOS mm of triangle {@code t}, shot from {@code eye} to its centre. */
+    private static float armor(AbstractVehicle vehicle, ArmorProfile profile, int node, TriangleBvh mesh, int t,
+                               Matrix4f pose, Vec3 eye) {
+        float[] tri = mesh.triangles();
+        int i = t * 9;
+        Vector3f point = pose.transformPosition(new Vector3f((tri[i] + tri[i + 3] + tri[i + 6]) / 3,
+                (tri[i + 1] + tri[i + 4] + tri[i + 7]) / 3, (tri[i + 2] + tri[i + 5] + tri[i + 8]) / 3));
+        float[] n = new float[3];
+        mesh.normal(t, n);
+        Vector3f normal = pose.transformDirection(new Vector3f(n[0], n[1], n[2])).normalize();
+        Vec3 world = vehicle.position().add(point.x, point.y, point.z);
+        ArmorResolver.Plate plate = ArmorResolver.plate(vehicle, profile, node, world, normal, mesh.armor(t),
+                world.subtract(eye).normalize(), false);
+        return plate == null ? 0 : plate.effective();
     }
 
     public static void render(Vec3 viewOrigin, VehicleCubeOBB cube, PoseStack poseStack,

@@ -138,7 +138,6 @@ import com.wf.combinedassault.vehicle.part.MissileHolderUnit;
 import com.wf.combinedassault.vehicle.part.PartClipTracks;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.RotatableUnit;
-import com.wf.combinedassault.custom.part.data.PartMount;
 import com.wf.combinedassault.vehicle.part.SuspensionUnit;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
 import com.wf.combinedassault.vehicle.OversizedVehicles;
@@ -194,8 +193,6 @@ public abstract class AbstractVehicle extends ContainerCraft
     private static final float LINK_QUANTUM = 1f / 64f;
     /** Index into the data's {@code loadouts}; -1 = none chosen yet. */
     public static final EntityDataAccessor<Integer> LOADOUT = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.INT);
-    /** Weapon loadout's hardware paid for and on. */
-    public static final EntityDataAccessor<Boolean> LOADOUT_FITTED = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Float> POWER = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
     /** wflib radio station; "" = off. */
     public static final EntityDataAccessor<String> RADIO = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.STRING);
@@ -500,7 +497,6 @@ public abstract class AbstractVehicle extends ContainerCraft
         builder.define(CARGO_MASS, 0f);
         builder.define(LINK, 1f);
         builder.define(LOADOUT, -1);
-        builder.define(LOADOUT_FITTED, false);
         builder.define(FUEL, "");
         builder.define(RADIO, "");
         builder.define(POWER, 0f);
@@ -596,7 +592,6 @@ public abstract class AbstractVehicle extends ContainerCraft
             compound.put("Drone", drone.save());
         }
         compound.putInt("Loadout", loadoutIndex());
-        compound.putBoolean("LoadoutFitted", loadoutFitted());
         if (side != null) {
             compound.putUUID("Side", side);
         }
@@ -643,7 +638,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         }
         uavOperator = compound.hasUUID("UavOperator") ? compound.getUUID("UavOperator") : null;
         if (compound.contains("Loadout")) {
-            setLoadout(compound.getInt("Loadout"), compound.getBoolean("LoadoutFitted"));
+            setLoadout(compound.getInt("Loadout"));
         }
         if (compound.contains("Drone")) {
             if (drone != null) {
@@ -934,6 +929,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         int[] riders = seats.stream().mapToInt(seat -> seat.passengerId).toArray();
         this.vehicleCubeOBBs.clear();
         this.partUnits.forEach(PartUnit::onRemoved);
+        List<PartUnit<?>> replaced = List.copyOf(this.partUnits);
         this.partUnits.clear();
         this.seats.clear();
         this.vehicleCubeOBBs.addAll(vehicleStruct.obbs());
@@ -942,6 +938,10 @@ public abstract class AbstractVehicle extends ContainerCraft
         this.bodyDepth = vehicleData.getBodyDepth();
         BaseVehicleData.PartUnitsAndSeats partUnitsAndSeats = vehicleData.createPartUnits(this);
         this.partUnits.addAll(partUnitsAndSeats.partUnitMap().values());
+        // Fresh holders restart at version 0 => tracking clients drop every update until it passes theirs.
+        for (int i = 0; i < Math.min(replaced.size(), partUnits.size()); i++) {
+            partUnits.get(i).getSyncData().continueFrom(replaced.get(i).getSyncData());
+        }
         this.suspensionUnits.clear();
         for (PartUnit<?> partUnit : partUnits) {
             if (partUnit instanceof SuspensionUnit<?> suspension) {
@@ -1018,13 +1018,14 @@ public abstract class AbstractVehicle extends ContainerCraft
         }
     }
 
-    /** Carried named mount (gun swap) > def name. */
+    /** Fitted kit's hardpoint {@code vehicle_name} > def name. */
     @Override
     public Component getDisplayName() {
         for (PartUnit<?> part : partUnits) {
-            for (PartMount mount : part.getData().getMounts()) {
-                if (mount.name() != null && mount.carriedBy(part)) {
-                    return Component.translatable(mount.name());
+            if (part instanceof WeaponUnit unit && unit.kit() != null) {
+                String named = unit.hardpoint().vehicleName(unit.kit());
+                if (named != null) {
+                    return Component.translatable(named);
                 }
             }
         }
@@ -2007,14 +2008,9 @@ public abstract class AbstractVehicle extends ContainerCraft
         return index >= 0 && index < loadouts.size() ? loadouts.get(index) : null;
     }
 
-    public boolean loadoutFitted() {
-        return entityData.get(LOADOUT_FITTED);
-    }
-
     /** Raw state; {@link Loadouts#select} moves hardware. */
-    public void setLoadout(int index, boolean fitted) {
+    public void setLoadout(int index) {
         entityData.set(LOADOUT, index);
-        entityData.set(LOADOUT_FITTED, fitted);
     }
 
     /** Server: remote pilot's link from their parked body to the camera seat. */
@@ -2549,6 +2545,16 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     public boolean hasSuspension() {
         return !suspensionUnits.isEmpty();
+    }
+
+    /** A suspension unit attached and intact. All gone => rigid hull: belly carries it with Coulomb drag. */
+    public boolean hasRunningGear() {
+        for (int i = 0, size = suspensionUnits.size(); i < size; i++) {
+            if (suspensionUnits.get(i).isActive()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public Map<String, DecorationUnit> getDecorationUnits() {

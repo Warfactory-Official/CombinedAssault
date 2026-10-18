@@ -12,10 +12,17 @@
     "max_health": 700,
     "armor": {
         "front": 30,
-        "side": 20,
-        "rear": 15,
+        "side": 15,
+        "rear": 12,
         "top": 8,
-        "bottom": 8
+        "bottom": 10,
+        "ce": {
+            "front": 40,
+            "side": 20,
+            "rear": 12,
+            "top": 8,
+            "bottom": 10
+        }
     },
     "view_info": {
         "third_person_distance": 9,

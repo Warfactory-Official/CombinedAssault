@@ -8,12 +8,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Separate glTF carried by a part, drawn and hit as a subtree of the vehicle glTF node {@code node}.
  *
- * @param weapon one of the part's {@code weapons}: mount exists only while it is selected; null = always
- * @param name   lang key: vehicle's display name while carried; weapon mounts only
+ * @param kit hardware kit the hardpoint expansion made this mount for: exists only while fitted; null = always
  */
-public record PartMount(ResourceLocation model, String node, @Nullable ResourceLocation weapon, @Nullable String name) {
+public record PartMount(ResourceLocation model, String node, @Nullable ResourceLocation kit) {
 
     public boolean carriedBy(PartUnit<?> part) {
-        return weapon == null || part instanceof WeaponUnit unit && weapon.equals(unit.currentWeaponId());
+        return kit == null || part instanceof WeaponUnit unit && kit.equals(unit.kit());
     }
 }

@@ -24,15 +24,15 @@ public class RocketRoundsGameTest {
 
     private static final String TEMPLATE = "empty";
 
-    /** hydra_70 pod loads WFLib's Hydra (4520 N / 11.3 kg, CdA 0.0565); faster at burn-out; engageable. */
+    /** hydra_70 pod loads the Hydra (4520 N / 11.3 kg, CdA 0.0565); faster at burn-out; engageable. */
     @GameTest(template = TEMPLATE)
     public static void aHydraFliesAsAnInterceptableRocket(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         var index = CommonAssetsManager.vehicleWeaponManager().getIndex(CombinedAssault.modLocation("hydra_70"));
-        ItemStack hydra = BombRoundsGameTest.wflib("rocket_hydra_70");
+        ItemStack hydra = BombRoundsGameTest.own("rocket_hydra_70");
         if (index.isEmpty() || index.get().data().getReload() == null
                 || !index.get().data().getReload().isAmmo(hydra)) {
-            helper.fail("hydra_70 does not load wflib:rocket_hydra_70");
+            helper.fail("hydra_70 does not load combinedassault:rocket_hydra_70");
             return;
         }
         KineticPreset preset = Munitions.kinetic(hydra);
@@ -63,10 +63,10 @@ public class RocketRoundsGameTest {
     @GameTest(template = TEMPLATE)
     public static void theApsTakesARocketAndARound(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
-        KineticPreset rocketPreset = Munitions.kinetic(BombRoundsGameTest.wflib("rocket_hydra_70"));
+        KineticPreset rocketPreset = Munitions.kinetic(BombRoundsGameTest.own("rocket_hydra_70"));
         KineticPreset shell = KineticPresetRegistry.get(ResourceLocation.fromNamespaceAndPath("wflib", "heat"));
         if (rocketPreset == null || shell == null) {
-            helper.fail("wflib:rocket_hydra_70 / wflib:heat missing");
+            helper.fail("combinedassault:rocket_hydra_70 / wflib:heat missing");
             return;
         }
         Vec3 at = helper.absoluteVec(new Vec3(1.5, 30.0, 1.5));

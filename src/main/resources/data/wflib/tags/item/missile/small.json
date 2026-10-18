@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "combinedassault:missile_agm_114",
+    "combinedassault:missile_akd_10",
+    "combinedassault:missile_shturm",
+    "combinedassault:missile_vikhr",
+    "combinedassault:missile_tow"
+  ]
+}

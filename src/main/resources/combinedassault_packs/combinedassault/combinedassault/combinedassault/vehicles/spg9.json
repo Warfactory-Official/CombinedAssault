@@ -8,20 +8,27 @@
   "parts": [
     {
       "id": "gun",
-      "name": "part.combinedassault.spg9",
+      "name": "part.combinedassault.tripod_cradle",
       "type": "combinedassault:weapon",
       "max_health": 25,
       "component": "barrel",
       "detachable": false,
       "operator_on_weapon_unit": true,
-      "optical_sight_type": "optical_scope",
-      "crosshair_style": "cross",
-      "zoom_max": 4,
       "rot_info": {"x_rot_speed": 3, "y_rot_speed": 4, "need_power": false},
-      "weapons": ["combinedassault:spg9"],
-      "pose": "stand",
+      "hardpoint": {
+        "node": "weapon",
+        "accepts": ["tripod"],
+        "overrides": {
+          "combinedassault:spg9": {"vehicle_name": "entity.combinedassault.spg9_mounted",
+            "seat_offset": [0.55, 1.15, -0.5], "operator_view_offset": [0.55, 0.56, -0.5]},
+          "combinedassault:m2": {"vehicle_name": "entity.combinedassault.spg9_m2", "rot_info": {"x_rot_min": -30}},
+          "combinedassault:mk19": {"vehicle_name": "entity.combinedassault.spg9_mk19", "rot_info": {"x_rot_min": -40}}
+        }
+      },
+      "pose": "kneel",
+      "seat_offset": [0, 1.15, -0.95],
+      "operator_view_offset": [0, 0.56, -0.95],
       "crew_roles": ["gunner", "loader"],
-      "loading": "manual",
       "protect_passenger": false
     },
     {

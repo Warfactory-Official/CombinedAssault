@@ -56,6 +56,9 @@ public class ClientFigureBoxUpdate implements CustomPacketPayload {
 
     public static void handle(ClientFigureBoxUpdate message, IPayloadContext ctx) {
         ServerPlayer serverPlayer = (ServerPlayer) ctx.player();
+        if (!serverPlayer.canInteractWithBlock(message.blockPos, 4.0)) {
+            return;
+        }
         Level level = serverPlayer.level();
         if (level.getBlockEntity(message.blockPos) instanceof FigureBoxBlockEntity figureBoxBlockEntity) {
             figureBoxBlockEntity.open = message.open;

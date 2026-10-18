@@ -32,6 +32,8 @@ import com.wf.combinedassault.client.render.entity.vehicle.VehicleRender;
 import com.wf.combinedassault.vehicle.loadout.Loadouts;
 import com.wf.combinedassault.vehicle.part.MissileHolderUnit;
 import com.wf.combinedassault.vehicle.loadout.client.LoadoutProbe;
+import com.wf.combinedassault.vehicle.hardware.Hardpoints;
+import com.wf.combinedassault.vehicle.hardware.client.HardpointProbe;
 import com.wf.combinedassault.vehicle.pojo.LoadoutInfo;
 import com.wf.combinedassault.vehicle.pojo.Bolt;
 import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
@@ -95,25 +97,34 @@ public final class VehicleNodes {
         PartUnit<?> looked = aimed ? VectorUtil.pickPartUnit(player, vehicle) : null;
         VehicleHits hits = vehicle.hits();
         boolean tool = ctx.carrying(AllItems.MODDING_TOOL.get());
+        int from = out.size();
 
         for (PartUnit<?> part : vehicle.getPartUnits()) {
             if (part.isDetached()) {
                 continue;
             }
             if (AccessActions.isDoor(part)) {
-                door(out, (SwitchableUnit<?>) part, anchor(hits, part).add(drift), part == looked);
+                door(out, (SwitchableUnit<?>) part, VehicleHits.anchor(hits, part).add(drift), part == looked);
             } else if (tool && part instanceof WeaponUnit unit && unit.isInteractive() && unit.weapons.size() > 1
-                    && !Loadouts.manages(vehicle, unit)) {
-                out.add(new ProbeNode("weapon:" + part.getIndex(), anchor(hits, part).add(drift),
+                    && !unit.isHardpoint()) {
+                out.add(new ProbeNode("weapon:" + part.getIndex(), VehicleHits.anchor(hits, part).add(drift),
                         info -> weapon(info, unit)).colour(WEAPON).claimed(part == looked));
             }
         }
         LoadoutInfo loadout = vehicle.loadout();
         PartUnit<?> hardpoint = Loadouts.part(vehicle, loadout);
-        if (hardpoint != null && !hardpoint.isDetached()) {
-            out.add(new ProbeNode("loadout", anchor(hits, hardpoint).add(drift),
+        if (loadout != null && loadout.payload != null && hardpoint != null && !hardpoint.isDetached()) {
+            out.add(new ProbeNode("loadout", VehicleHits.anchor(hits, hardpoint).add(drift),
                     info -> LoadoutProbe.fill(info, ctx, vehicle, loadout, hardpoint))
                     .colour(MOUNT_FITTED).reach(Loadouts.REACH).claimed(hardpoint == looked));
+        }
+        for (PartUnit<?> part : vehicle.getPartUnits()) {
+            if (part instanceof WeaponUnit unit && unit.isHardpoint() && !part.isDetached()) {
+                out.add(new ProbeNode("hardpoint:" + part.getIndex(), VehicleHits.anchor(hits, part).add(drift),
+                        info -> HardpointProbe.fill(info, ctx, unit))
+                        .colour(unit.kit() != null ? MOUNT_FITTED : MOUNT_EMPTY).reach(Hardpoints.REACH)
+                        .claimed(part == looked));
+            }
         }
         if (!vehicle.uav) {
             for (AbstractVehicle.Seat seat : vehicle.seats) {
@@ -147,6 +158,11 @@ public final class VehicleNodes {
                         .colour(layer.state(i).isEmpty() ? MOUNT_EMPTY : MOUNT_FITTED)
                         .claimed(target != null && target.vehicle() == vehicle && target.mount() == i));
             }
+        }
+        if (hits != null) {
+            Vec3 eye = player.getEyePosition(partialTick).subtract(drift);
+            out.subList(from, out.size()).removeIf(node -> !node.key().equals("hull")
+                    && hits.hidden(eye, node.at().subtract(drift)));
         }
     }
 
@@ -380,11 +396,6 @@ public final class VehicleNodes {
                         Component.translatable(PROBE + "select_weapon", name)).withIcon(icon));
             }
         }
-    }
-
-    private static Vec3 anchor(@Nullable VehicleHits hits, PartUnit<?> part) {
-        Vec3 centre = hits == null ? null : hits.centre(part);
-        return centre != null ? centre : part.worldPivotPosition();
     }
 
     /** Any fit, slat stock or a hull repair tool. */

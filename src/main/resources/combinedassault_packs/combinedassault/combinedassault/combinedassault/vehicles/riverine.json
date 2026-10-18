@@ -69,29 +69,12 @@
             "max_health": 120,
             "render_bone": "gun_bow_port",
             "operator_on_weapon_unit": false,
-            "optical_sight_type": "operator",
-            "zoom_max": 2,
             "rot_info": {
                 "x_rot_speed": 4,
                 "y_rot_speed": 4,
                 "need_power": false
             },
-            "weapons": [
-                "combinedassault:gun_12.7mm",
-                "combinedassault:mk19"
-            ],
-            "mounts": [
-                {
-                    "model": "combinedassault:models/weapon/m2/m2.gltf",
-                    "node": "ATTACH_MOUNT_BOW_PORT",
-                    "weapon": "combinedassault:gun_12.7mm"
-                },
-                {
-                    "model": "combinedassault:models/weapon/mk19/mk19.gltf",
-                    "node": "ATTACH_MOUNT_BOW_PORT",
-                    "weapon": "combinedassault:mk19"
-                }
-            ],
+            "hardpoint": {"node": "ATTACH_MOUNT_BOW_PORT", "accepts": ["pintle"], "fitted": "combinedassault:m2"},
             "pose": "stand",
             "protect_passenger": false
         },
@@ -105,29 +88,12 @@
             "max_health": 120,
             "render_bone": "gun_bow_starboard",
             "operator_on_weapon_unit": false,
-            "optical_sight_type": "operator",
-            "zoom_max": 2,
             "rot_info": {
                 "x_rot_speed": 4,
                 "y_rot_speed": 4,
                 "need_power": false
             },
-            "weapons": [
-                "combinedassault:gun_12.7mm",
-                "combinedassault:mk19"
-            ],
-            "mounts": [
-                {
-                    "model": "combinedassault:models/weapon/m2/m2.gltf",
-                    "node": "ATTACH_MOUNT_BOW_STARBOARD",
-                    "weapon": "combinedassault:gun_12.7mm"
-                },
-                {
-                    "model": "combinedassault:models/weapon/mk19/mk19.gltf",
-                    "node": "ATTACH_MOUNT_BOW_STARBOARD",
-                    "weapon": "combinedassault:mk19"
-                }
-            ],
+            "hardpoint": {"node": "ATTACH_MOUNT_BOW_STARBOARD", "accepts": ["pintle"], "fitted": "combinedassault:m2"},
             "pose": "stand",
             "protect_passenger": false
         },
@@ -141,29 +107,12 @@
             "max_health": 120,
             "render_bone": "gun_stern",
             "operator_on_weapon_unit": false,
-            "optical_sight_type": "operator",
-            "zoom_max": 2,
             "rot_info": {
                 "x_rot_speed": 4,
                 "y_rot_speed": 4,
                 "need_power": false
             },
-            "weapons": [
-                "combinedassault:mk19",
-                "combinedassault:gun_12.7mm"
-            ],
-            "mounts": [
-                {
-                    "model": "combinedassault:models/weapon/m2/m2.gltf",
-                    "node": "ATTACH_MOUNT_STERN",
-                    "weapon": "combinedassault:gun_12.7mm"
-                },
-                {
-                    "model": "combinedassault:models/weapon/mk19/mk19.gltf",
-                    "node": "ATTACH_MOUNT_STERN",
-                    "weapon": "combinedassault:mk19"
-                }
-            ],
+            "hardpoint": {"node": "ATTACH_MOUNT_STERN", "accepts": ["pintle"], "fitted": "combinedassault:mk19"},
             "pose": "stand",
             "protect_passenger": false
         }

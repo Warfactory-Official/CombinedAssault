@@ -6,6 +6,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
+import com.wf.combinedassault.vehicle.hardware.HardwareKits;
 import com.wf.combinedassault.vehicle.pojo.Bolt;
 import com.wf.combinedassault.vehicle.pojo.Eject;
 import com.wf.combinedassault.vehicle.pojo.WeaponInfo;
@@ -17,8 +18,12 @@ import java.util.*;
 public class WeaponUnitData extends RotatableUnitData {
 
     private List<Bolt> bolts;
-    /** Weapon-scoped mount bolts; a weapon absent here fires from {@link #bolts}. */
-    private Map<ResourceLocation, List<Bolt>> weaponBolts = Map.of();
+    /** Kit mount bolts; a kit absent here fires from {@link #bolts}. */
+    private Map<ResourceLocation, List<Bolt>> kitBolts = Map.of();
+    @Nullable
+    private HardwareKits.Hardpoint hardpoint;
+    /** Hardpoint: per kit, this part with the kit's station; identical structure (weapons, mounts, frames). */
+    private Map<ResourceLocation, WeaponUnitData> variants = Map.of();
     /** By bolt index; shorter than the bolts => the rest eject nothing. */
     private List<Eject> ejects = List.of();
     private int ammoCapacity;
@@ -78,6 +83,7 @@ public class WeaponUnitData extends RotatableUnitData {
         this.zoomMax = pojo.zoomMax;
         this.crosshairStyle = pojo.crosshairStyle;
         this.weapons = pojo.weapons;
+        this.hardpoint = pojo.hardpoint == null ? null : HardwareKits.Hardpoint.parse(pojo.hardpoint);
         this.indirectFire = pojo.indirectFire == null ? null
                 : new com.wf.combinedassault.indirect.IndirectFireSpec(pojo.indirectFire.map,
                 pojo.indirectFire.launchElevation);
@@ -106,8 +112,28 @@ public class WeaponUnitData extends RotatableUnitData {
         return ejects;
     }
 
-    public void applyWeaponBolts(Map<ResourceLocation, List<Bolt>> byWeapon) {
-        this.weaponBolts = Map.copyOf(byWeapon);
+    public void applyKitBolts(Map<ResourceLocation, List<Bolt>> byKit) {
+        this.kitBolts = Map.copyOf(byKit);
+    }
+
+    @Nullable
+    public HardwareKits.Hardpoint getHardpoint() {
+        return hardpoint;
+    }
+
+    public void applyVariants(Map<ResourceLocation, WeaponUnitData> variants) {
+        this.variants = Map.copyOf(variants);
+    }
+
+    /** Hardpoint part with {@code kit} fitted; null kit => this. */
+    public WeaponUnitData variant(@Nullable ResourceLocation kit) {
+        return kit == null ? this : variants.get(kit);
+    }
+
+    /** Pitch frame, null if none (yaw frame fires). */
+    @Nullable
+    public VehicleCubeGroup getRawPitchGroup() {
+        return xTurnGroup == structureGroup ? null : xTurnGroup;
     }
 
     public List<Bolt> getBolts() {
@@ -115,8 +141,8 @@ public class WeaponUnitData extends RotatableUnitData {
     }
 
     @Nullable
-    public List<Bolt> getBolts(@Nullable ResourceLocation weapon) {
-        return weapon == null ? bolts : weaponBolts.getOrDefault(weapon, bolts);
+    public List<Bolt> getBolts(@Nullable ResourceLocation kit) {
+        return kit == null ? bolts : kitBolts.getOrDefault(kit, bolts);
     }
 
     public int getAmmoCapacity() {

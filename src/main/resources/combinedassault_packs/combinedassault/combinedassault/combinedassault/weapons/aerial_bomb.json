@@ -7,7 +7,7 @@
     "reload": {
         "time": 100,
         "ammo": [
-            "wflib:bomb_fab_250",
+            "combinedassault:bomb_fab_250",
             "#wflib:bomb/medium"
         ]
     },

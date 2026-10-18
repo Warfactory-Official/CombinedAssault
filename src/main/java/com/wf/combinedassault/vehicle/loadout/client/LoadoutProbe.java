@@ -19,7 +19,7 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
-/** Node panel of the current loadout's hardpoint: what is fitted, fit / strip rows. */
+/** Node panel: current payload loadout's hardpoint (strap / strip). */
 public final class LoadoutProbe {
 
     private static final String KEY = "loadout.combinedassault.";
@@ -31,26 +31,7 @@ public final class LoadoutProbe {
                             PartUnit<?> part) {
         Player player = ctx.player();
         info.title(Component.translatable(KEY + loadout.id));
-        if (part instanceof PayloadUnit hardpoint) {
-            payload(info, player, hardpoint);
-            return;
-        }
-        if (vehicle.loadoutFitted()) {
-            info.entry(Component.translatable(KEY + "hardware"), Component.translatable(KEY + "fitted")
-                    .withStyle(ChatFormatting.GREEN));
-            info.action(ProbeAction.of(Loadouts.REMOVE, 0, Component.translatable(KEY + "action.remove")));
-            return;
-        }
-        info.entry(Component.translatable(KEY + "hardware"), Component.translatable(KEY + "unfitted")
-                .withStyle(ChatFormatting.YELLOW));
-        ProbeAction fit = ProbeAction.of(Loadouts.INSTALL, 0, Component.translatable(KEY + "action.fit"));
-        for (LoadoutInfo.Cost cost : loadout.install) {
-            info.entry(Component.literal(cost.item), Component.literal("x" + cost.count));
-            if (!player.getAbilities().instabuild && ProbeInventory.count(player, Loadouts.matcher(cost)) < cost.count) {
-                fit = fit.unavailable(Component.translatable(KEY + "need", cost.count, cost.item));
-            }
-        }
-        info.action(fit);
+        payload(info, player, (PayloadUnit) part);
     }
 
     private static void payload(ProbeInfo info, Player player, PayloadUnit hardpoint) {

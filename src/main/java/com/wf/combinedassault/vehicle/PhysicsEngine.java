@@ -316,7 +316,7 @@ public class PhysicsEngine {
     }
 
     public boolean suspended() {
-        return vehicle.hasSuspension();
+        return vehicle.hasRunningGear();
     }
 
     /** Tick thread, before a solve is launched: suspension frames are read off-thread. */
@@ -526,6 +526,15 @@ public class PhysicsEngine {
     /** Wheels down: horizontal speed loses {@link #friction} as a force, never reversing. */
     public void rollingResistance(Vector3f velocity) {
         float loss = (float) PhysicsHelper.accelerationPerTick(friction, mass);
+        float horizontal = (float) Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+        float scale = horizontal < 1.0e-4f ? 0 : Math.max(0, horizontal - loss) / horizontal;
+        velocity.x *= scale;
+        velocity.z *= scale;
+    }
+
+    /** Locked running gear (wreck): horizontal speed loses {@code mu} G per tick, never reversing. */
+    public static void skid(Vector3f velocity, float mu) {
+        float loss = mu * G;
         float horizontal = (float) Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
         float scale = horizontal < 1.0e-4f ? 0 : Math.max(0, horizontal - loss) / horizontal;
         velocity.x *= scale;
