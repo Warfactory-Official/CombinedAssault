@@ -15,11 +15,13 @@ import com.wf.combinedassault.ballistics.component.SystemRepair;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
 import com.wf.combinedassault.ballistics.component.client.SystemsHud;
 import com.wf.combinedassault.ballistics.component.client.SystemsProbe;
+import com.wf.combinedassault.energy.VehicleBattery;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.util.VectorUtil;
 import com.wf.combinedassault.vehicle.hit.VehicleHits;
 import com.wf.combinedassault.vehicle.part.AccessActions;
 import com.wf.combinedassault.vehicle.part.BarrelCharge;
+import com.wf.combinedassault.vehicle.part.BatteryActions;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import com.wf.combinedassault.vehicle.part.WeaponActions;
@@ -254,6 +256,22 @@ public final class VehicleNodes {
         }
     }
 
+    private static void battery(ProbeInfo info, Player player, AbstractVehicle vehicle) {
+        ItemStack battery = vehicle.batteryItem();
+        info.entry(Component.translatable(PROBE + "battery"), battery.isEmpty()
+                ? Component.translatable(PROBE + "station_empty") : battery.getHoverName());
+        if (battery.isEmpty()) {
+            ItemStack carried = ProbeInventory.find(player, VehicleBattery::isBattery);
+            if (!carried.isEmpty()) {
+                info.action(ProbeAction.of(BatteryActions.LOAD, 0, Component.translatable(PROBE + "battery_load",
+                        carried.getHoverName())).withIcon(new ProbeElement.Icon(carried, 10, false)));
+            }
+        } else {
+            info.action(ProbeAction.of(BatteryActions.UNLOAD, 0, Component.translatable(PROBE + "battery_unload",
+                    battery.getHoverName())).withIcon(new ProbeElement.Icon(battery, 10, false)));
+        }
+    }
+
     /** Vehicle model frame -> world, as {@link VehicleRender#applyVehicleRotation} draws it. */
     private static Vec3 toWorld(AbstractVehicle vehicle, Vector3f model, float partialTick) {
         Vec3 c = vehicle.centerOffset;
@@ -293,6 +311,9 @@ public final class VehicleNodes {
                 ProbeAction pickUp = ProbeAction.of(AccessActions.PICK_UP, 0, Component.translatable(KEY + "pick_up"));
                 info.action(vehicle.isVehicle() || vehicle.isPassenger()
                         ? pickUp.unavailable(Component.translatable(KEY + "pick_up.occupied")) : pickUp);
+            }
+            if (vehicle.hasBatterySlot()) {
+                battery(info, ctx.player(), vehicle);
             }
             SystemsProbe.grid(info, cells);
             AirDefenseProbe.append(info, ctx, vehicle);

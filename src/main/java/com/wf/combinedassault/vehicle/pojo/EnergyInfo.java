@@ -42,6 +42,10 @@ public class EnergyInfo {
     @SerializedName("charge_rate")
     public int chargeRate = 0;
 
+    /** Takes a swappable battery item (FE or GT); drains into the tank regardless of {@link #energyType}. */
+    @SerializedName("battery_slot")
+    public boolean batterySlot = false;
+
     @SerializedName("engine_particle_offsets")
     public List<Vec3> engineParticleOffsets = new ArrayList<>();
 

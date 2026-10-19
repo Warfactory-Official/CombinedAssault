@@ -153,6 +153,7 @@ import com.wf.combinedassault.vehicle.passenger.WarningReceiver;
 import com.wf.combinedassault.vehicle.pojo.AimContext;
 import com.wf.combinedassault.vehicle.pojo.DefenseStats;
 import com.wf.combinedassault.energy.FuelSpec;
+import com.wf.combinedassault.energy.VehicleBattery;
 import com.wf.combinedassault.energy.VehicleEnergyBuffer;
 import com.wf.combinedassault.energy.VehicleFuelTank;
 import com.wf.combinedassault.energy.VehicleRefuelInteraction;
@@ -266,6 +267,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     public float maxPayload;
     private final VehicleFuelTank fuelTank = new VehicleFuelTank(this);
     private final VehicleEnergyBuffer energyBuffer = new VehicleEnergyBuffer(this);
+    /** Slotted battery item ({@link EnergyInfo#batterySlot}); drains into {@link #addEnergy}, never ejected on its own. */
+    private ItemStack batteryItem = ItemStack.EMPTY;
     @Nullable
     private FuelSpec fuelSpec;
     private String cachedFuelId = "";
@@ -555,6 +558,9 @@ public abstract class AbstractVehicle extends ContainerCraft
         compound.putByte("Lights", entityData.get(LIGHTS));
         compound.putFloat("Energy", getEnergy());
         compound.putString("Fuel", fuelId());
+        if (!batteryItem.isEmpty()) {
+            compound.put("BatteryItem", batteryItem.save(registryAccess()));
+        }
         compound.putString("Radio", radioStation());
         compound.putFloat("Power", getPower());
         compound.putBoolean("Destroyed", isDestroyed());
@@ -633,6 +639,9 @@ public abstract class AbstractVehicle extends ContainerCraft
         if (compound.contains("Fuel", Tag.TAG_STRING)) {
             entityData.set(FUEL, compound.getString("Fuel"));
         }
+        batteryItem = compound.contains("BatteryItem")
+                ? ItemStack.parse(registryAccess(), compound.getCompound("BatteryItem")).orElse(ItemStack.EMPTY)
+                : ItemStack.EMPTY;
         if (compound.contains("Power")) {
             setPower(compound.getFloat("Power"));
         }
@@ -1068,6 +1077,7 @@ public abstract class AbstractVehicle extends ContainerCraft
                 drone.tick();
             }
             VehicleResupply.tick(this);
+            VehicleBattery.tick(this);
             float partMass = addonArmor.mass();
             for (PartUnit<?> part : partUnits) {
                 partMass += part.mass();
@@ -2817,6 +2827,18 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     public boolean isElectric() {
         return energyInfo.isElectric();
+    }
+
+    public boolean hasBatterySlot() {
+        return energyInfo.batterySlot;
+    }
+
+    public ItemStack batteryItem() {
+        return batteryItem;
+    }
+
+    public void setBatteryItem(ItemStack stack) {
+        this.batteryItem = stack;
     }
 
     public void setEnergyInfo(EnergyInfo info) {

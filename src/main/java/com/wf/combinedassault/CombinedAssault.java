@@ -60,6 +60,7 @@ public class CombinedAssault {
         com.wf.combinedassault.vehicle.part.AccessActions.register();
         com.wf.combinedassault.vehicle.part.WeaponActions.register();
         com.wf.combinedassault.vehicle.part.StationActions.register();
+        com.wf.combinedassault.vehicle.part.BatteryActions.register();
         com.wf.combinedassault.airdefense.AirDefenseActions.register();
         com.wf.combinedassault.vehicle.pose.SeatPoses.register();
         com.wf.combinedassault.ballistics.component.SystemRepair.register();

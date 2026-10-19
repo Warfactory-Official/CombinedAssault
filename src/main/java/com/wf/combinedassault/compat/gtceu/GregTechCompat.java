@@ -16,7 +16,8 @@ import java.lang.invoke.MethodType;
 
 /**
  * GregTech EU -> vehicle FE. Reflection, not compile dep: GTCEu API moves per version, jar version-specific.
- * Absent GT => 0 everywhere. Two routes: held battery, or GT block below with output face up (GT has no entity push).
+ * Absent GT => 0 everywhere. Routes: held battery, slotted battery ({@link com.wf.combinedassault.energy.VehicleBattery}),
+ * or GT block below with output face up (GT has no entity push).
  */
 public final class GregTechCompat {
 
@@ -91,7 +92,28 @@ public final class GregTechCompat {
 
     /** @return FE credited. */
     public static int dischargeHeldItem(AbstractVehicle vehicle, ItemStack stack, int budgetFe) {
-        if (!available || stack.isEmpty() || budgetFe <= 0 || !vehicle.isElectric()) {
+        if (!vehicle.isElectric()) {
+            return 0;
+        }
+        int moved = drainItem(stack, Math.min(budgetFe, roomFe(vehicle)));
+        return moved <= 0 ? 0 : vehicle.addCharge(moved);
+    }
+
+    /** @return true if {@code stack} exposes GT's electric-item capability, charged or not. */
+    public static boolean isElectricItem(ItemStack stack) {
+        if (!available || stack.isEmpty()) {
+            return false;
+        }
+        try {
+            return stack.getCapability(electricItemCap, null) != null;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** @return FE pulled out of the item's own charge; nothing credited anywhere. */
+    public static int drainItem(ItemStack stack, int budgetFe) {
+        if (!available || stack.isEmpty() || budgetFe <= 0) {
             return 0;
         }
         try {
@@ -100,15 +122,12 @@ public final class GregTechCompat {
                 return 0;
             }
             int feRatio = euToFeRatio();
-            long wantEu = Math.min(budgetFe, roomFe(vehicle)) / feRatio;
+            long wantEu = budgetFe / feRatio;
             if (wantEu <= 0) {
                 return 0;
             }
             long moved = (long) discharge.invoke(item, wantEu, Integer.MAX_VALUE, true, true, false);
-            if (moved <= 0) {
-                return 0;
-            }
-            return vehicle.addCharge((int) Math.min(Integer.MAX_VALUE, moved * feRatio));
+            return moved <= 0 ? 0 : (int) Math.min(Integer.MAX_VALUE, moved * feRatio);
         } catch (Throwable t) {
             CombinedAssault.LOGGER.warn("GregTech battery discharge failed", t);
             return 0;
