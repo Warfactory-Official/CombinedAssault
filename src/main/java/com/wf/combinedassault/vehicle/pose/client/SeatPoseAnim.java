@@ -101,7 +101,8 @@ public final class SeatPoseAnim {
     /** Rig's rotation layer ({@link GunPoses#adjust}): head + arms + pitch, body none while riding. */
     static final class RotationLayer implements IAnimation {
         private final AbstractClientPlayer player;
-        private final double[] r = new double[3];
+        /** {@link PoseClip#CHANNELS} of one bone: {@link GunPoses#adjust} reads and writes the rotation at 3..5. */
+        private final double[] r = new double[PoseClip.CHANNELS];
         @Nullable
         GunPoses.Selection sel;
 
@@ -125,18 +126,19 @@ public final class SeatPoseAnim {
             }
             int bone = PoseClip.bone(part);
             switch (bone) {
-                case PoseClip.BODY -> r[0] = r[1] = r[2] = 0;
+                case PoseClip.BODY -> java.util.Arrays.fill(r, 0);
                 case PoseClip.HEAD, PoseClip.RIGHT_ARM, PoseClip.LEFT_ARM -> {
-                    r[0] = value.getX();
-                    r[1] = value.getY();
-                    r[2] = value.getZ();
+                    java.util.Arrays.fill(r, 0);
+                    r[3] = value.getX();
+                    r[4] = value.getY();
+                    r[5] = value.getZ();
                 }
                 default -> {
                     return value;
                 }
             }
             GunPoses.adjust(player, tickDelta, sel.lying() ? 1 : 0, bone, r);
-            return new Vec3f((float) r[0], (float) r[1], (float) r[2]);
+            return new Vec3f((float) r[3], (float) r[4], (float) r[5]);
         }
     }
 }
