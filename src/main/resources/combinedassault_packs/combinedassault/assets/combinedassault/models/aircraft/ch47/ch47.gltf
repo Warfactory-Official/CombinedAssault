@@ -156,7 +156,8 @@
     }
    },
    "children": [
-    6
+    6,
+    63
    ]
   },
   {
@@ -240,7 +241,8 @@
     }
    },
    "children": [
-    11
+    11,
+    64
    ]
   },
   {
@@ -323,7 +325,8 @@
     }
    },
    "children": [
-    16
+    16,
+    65
    ]
   },
   {
@@ -984,6 +987,84 @@
     "gemrenderHidden": true,
     "combinedassaultRole": "hitch",
     "combinedassaultInterface": "cargo_hook"
+   }
+  },
+  {
+   "name": "socket_sight_door_gun_r",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    1.75e-05,
+    0.11704,
+    -0.467146,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "sight",
+    "combinedassaultInterface": "door_gun_r"
+   }
+  },
+  {
+   "name": "socket_sight_door_gun_l",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    -1.75e-05,
+    0.11704,
+    -0.467146,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "sight",
+    "combinedassaultInterface": "door_gun_l"
+   }
+  },
+  {
+   "name": "socket_sight_ramp_gun",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    -0.0098625,
+    0.150422,
+    -0.589533,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "sight",
+    "combinedassaultInterface": "ramp_gun"
    }
   }
  ],

@@ -37,6 +37,7 @@ import com.wf.combinedassault.airdefense.AirDefense;
 import com.wf.combinedassault.api.custom.sync.SyncDataSerializers;
 import com.wf.combinedassault.api.event.VehicleFireEvent;
 import com.wf.combinedassault.custom.CommonAssetsManager;
+import com.wf.combinedassault.custom.part.data.OpticSpec;
 import com.wf.combinedassault.custom.part.data.WeaponUnitData;
 import com.wf.combinedassault.custom.sync.SyncDataHolder;
 import com.wf.combinedassault.custom.weapon.VehicleWeaponIndex;
@@ -192,7 +193,8 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         this.needPower = rotInfo.needPower;
         this.ammoCapacity = d.getAmmoCapacity();
         this.firingMode = d.getFiringMode();
-        this.opticalSightOffset = d.getOpticalSightOffset();
+        Vec3 kitSight = base.getKitSight(kit());
+        this.opticalSightOffset = kitSight != null ? kitSight : d.getOpticalSightOffset();
         this.operatorViewOffset = d.getOperatorViewOffset();
         this.operatorOnWeaponUnit = d.isOperatorOnWeaponUnit();
         this.fireControlSensorType = d.getFireControlSensorType();
@@ -1050,6 +1052,29 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     public Vec3 worldCameraPosition() {
         Vec3 offset = opticalSightOffset != null ? opticalSightOffset : operatorViewOffset;
         return offset == null ? super.worldCameraPosition() : worldPosition(pivotOffset.add(offset), 1.0F);
+    }
+
+    @Nullable
+    public Vec3 getOpticalSightOffset() {
+        return opticalSightOffset;
+    }
+
+    /** Sight eye riding the pitch frame (the gun), whatever the sight type. */
+    public Vec3 worldSightEye(float partialTick) {
+        Vec3 offsetFromVehicle = pivotOffset.add(opticalSightOffset);
+        return xTurnGroup != null ? worldPositionWithGroupRot(offsetFromVehicle, xTurnGroup, partialTick)
+                : worldPosition(offsetFromVehicle, partialTick);
+    }
+
+    @Nullable
+    public OpticSpec optic() {
+        return data.getOptic();
+    }
+
+    /** Node of the fitted model's {@code sight_lens}; null => none. */
+    @Nullable
+    public String lensNode() {
+        return base.getLens(kit());
     }
 
     public Vec3 worldOpticalSightPosition(float partialTick) {

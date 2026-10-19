@@ -9,17 +9,21 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.wf.combinedassault.client.handler.FirstPersonHandler;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.recoil.StationRecoil;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 
 @Mixin(Camera.class)
 public abstract class CameraMixin {
+    @Unique
+    private static final float[] JOLT = new float[3];
 
     @Shadow
     protected abstract void setPosition(double pX, double pY, double pZ);
@@ -61,9 +65,10 @@ public abstract class CameraMixin {
             Vec3 position = instance.cameraPosition(operatorUnit, pPartialTick);
             this.setPosition(position.x, position.y, position.z);
             Vector3f euler = instance.frameCameraRotation(pPartialTick).getEulerAnglesYXZ(new Vector3f());
-            this.setRotation((float) Math.toDegrees(-euler.y) + (float) FirstPersonHandler.getCurrentYawShake(),
-                    (float) Math.toDegrees(euler.x) + (float) FirstPersonHandler.getCurrentPitchShake(),
-                    (float) Math.toDegrees(euler.z) + (float) FirstPersonHandler.getCurrentRollShake());
+            float[] jolt = StationRecoil.jolt(pPartialTick, JOLT);
+            this.setRotation((float) Math.toDegrees(-euler.y) + (float) FirstPersonHandler.getCurrentYawShake() + jolt[0],
+                    (float) Math.toDegrees(euler.x) + (float) FirstPersonHandler.getCurrentPitchShake() + jolt[1],
+                    (float) Math.toDegrees(euler.z) + (float) FirstPersonHandler.getCurrentRollShake() + jolt[2]);
             if (instance.viewType == LocalVehiclePlayer.ViewType.THIRD_PERSON) {
                 zoomThirdPerson(vehicle);
             }

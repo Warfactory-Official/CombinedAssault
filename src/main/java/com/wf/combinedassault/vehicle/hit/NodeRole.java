@@ -16,6 +16,8 @@ public enum NodeRole {
     DISMOUNT(Kind.SOCKET),
     VIEW(Kind.SOCKET),
     SIGHT(Kind.SOCKET),
+    /** Drawn lens mesh of a station {@code optic}. */
+    SIGHT_LENS(Kind.SOCKET),
     BOLT(Kind.SOCKET),
     EJECT(Kind.SOCKET),
     ERA(Kind.SOCKET),

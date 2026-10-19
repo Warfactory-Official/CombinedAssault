@@ -106,7 +106,6 @@
     1.4960000000000002,
     -0.6559999999999999
    ],
-   "mesh": 4,
    "extras": {
     "combinedassaultRole": "part",
     "combinedassaultInterface": "anti_aircraft_machine_gun"
@@ -441,8 +440,10 @@
     }
    },
    "children": [
-    46
-   ]
+    46,
+    53
+   ],
+   "mesh": 4
   },
   {
    "name": "suspension_left",
@@ -1067,6 +1068,32 @@
     }
    },
    "mesh": 28
+  },
+  {
+   "name": "socket_sight_anti_aircraft_machine_gun",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.120948,
+    -0.598679,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "sight",
+    "combinedassaultInterface": "anti_aircraft_machine_gun"
+   }
   }
  ],
  "meshes": [

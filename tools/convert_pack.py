@@ -132,9 +132,9 @@ class Gltf:
         self.doc['scenes'][self.doc.get('scene', 0)]['nodes'] = [i]
         return i
 
-    def add_mesh(self, name, positions, indices, faces=None):
+    def add_mesh(self, name, positions, indices, faces=None, material=None):
         """positions: float list xyz, indices: int list; appended to buffer 0. faces: triangle counts => one primitive
-        per face (collider face loops survive exactly)."""
+        per face (collider face loops survive exactly). material: index on every primitive."""
         buf = self.buffers[0]
         while len(buf) % 4:
             buf.append(0)
@@ -157,6 +157,8 @@ class Gltf:
             acc.append({'bufferView': view, 'byteOffset': at * 12, 'componentType': 5125, 'count': count * 3,
                         'type': 'SCALAR'})
             primitives.append({'attributes': {'POSITION': pos_acc}, 'indices': len(acc) - 1, 'mode': 4})
+            if material is not None:
+                primitives[-1]['material'] = material
             at += count
         meshes = self.doc.setdefault('meshes', [])
         meshes.append({'name': name, 'primitives': primitives})

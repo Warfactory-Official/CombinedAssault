@@ -21,7 +21,8 @@
    "name": "mk19",
    "mesh": 0,
    "children": [
-    1
+    1,
+    2
    ]
   },
   {
@@ -48,6 +49,31 @@
      "index": 0
     },
     "gemrenderHidden": true
+   }
+  },
+  {
+   "name": "socket_sight",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    -0.06,
+    0.3365,
+    -0.4,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "sight"
    }
   }
  ],

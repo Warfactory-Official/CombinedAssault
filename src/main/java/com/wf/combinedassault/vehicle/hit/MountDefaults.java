@@ -108,11 +108,11 @@ public final class MountDefaults {
                     put(part, "owner_view_offset", vec(origin), target + ".owner_view_offset");
                 }
             }
-            case "sight" -> {
+            case "sight", "sight_lens" -> {
                 if (!weapon(part(mount, target))) {
-                    throw fail(mount, "sight on part " + target + ", which is not a weapon");
+                    throw fail(mount, field + " on part " + target + ", which is not a weapon");
                 }
-                relative.add(new Relative(target, "sight", 0, mount));
+                relative.add(new Relative(target, field, 0, mount));
             }
             case "bolt" -> bolt(mount, target);
             case "eject" -> eject(mount, target);
@@ -365,7 +365,7 @@ public final class MountDefaults {
     public record Relative(String part, String field, int index, ModelMounts.Mount mount) {
     }
 
-    /** @param values part id -> json keys the json left out; {@code kit_bolts}: kit id -> bolts */
+    /** @param values part id -> json keys the json left out; {@code kit_bolts} / {@code kit_sights}: kit id -> bolts / sight */
     public record Resolved(Map<String, JsonObject> values, List<String> repeated, List<String> overridden) {
     }
 
@@ -429,6 +429,18 @@ public final class MountDefaults {
                 ejects.computeIfAbsent(r.part, k -> new TreeMap<>()).put(r.index, eject);
                 continue;
             }
+            if (r.field.equals("sight_lens")) {
+                JsonObject part = values.computeIfAbsent(r.part, k -> new JsonObject());
+                if (r.mount.kit() == null) {
+                    part.addProperty("sight_lens", r.mount.name());
+                } else {
+                    if (!part.has("kit_lenses")) {
+                        part.add("kit_lenses", new JsonObject());
+                    }
+                    part.getAsJsonObject("kit_lenses").addProperty(r.mount.kit(), r.mount.name());
+                }
+                continue;
+            }
             if (r.field.equals("bolt")) {
                 VehicleCubeGroup group = weapon.getRawXTurnGroup();
                 if (group == null) {
@@ -448,8 +460,16 @@ public final class MountDefaults {
                                 .computeIfAbsent(r.mount.kit(), k -> new TreeMap<>())).put(r.index, bolt);
             } else {
                 Vector3f pivot = weapon.getPivotOffset().toVector3f();
-                values.computeIfAbsent(r.part, k -> new JsonObject()).add(r.field.equals("view")
-                        ? "operator_view_offset" : "optical_sight_offset", vec(new Vector3f(r.mount.origin()).sub(pivot)));
+                JsonElement offset = vec(new Vector3f(r.mount.origin()).sub(pivot));
+                JsonObject part = values.computeIfAbsent(r.part, k -> new JsonObject());
+                if (r.mount.kit() != null) {
+                    if (!part.has("kit_sights")) {
+                        part.add("kit_sights", new JsonObject());
+                    }
+                    part.getAsJsonObject("kit_sights").add(r.mount.kit(), offset);
+                } else {
+                    part.add(r.field.equals("view") ? "operator_view_offset" : "optical_sight_offset", offset);
+                }
             }
         }
         stations.forEach((part, byIndex) -> {
@@ -514,6 +534,20 @@ public final class MountDefaults {
                     keys.getAsJsonObject("kit_bolts").entrySet().forEach(e -> byKit.put(
                             ResourceLocation.parse(e.getKey()), List.of(GsonUtil.GSON.fromJson(e.getValue(), Bolt[].class))));
                     weapon.applyKitBolts(byKit);
+                }
+                if (keys.has("sight_lens") || keys.has("kit_lenses")) {
+                    Map<ResourceLocation, String> byKit = new LinkedHashMap<>();
+                    if (keys.has("kit_lenses")) {
+                        keys.getAsJsonObject("kit_lenses").entrySet().forEach(e -> byKit.put(
+                                ResourceLocation.parse(e.getKey()), e.getValue().getAsString()));
+                    }
+                    weapon.applyLenses(keys.has("sight_lens") ? keys.get("sight_lens").getAsString() : null, byKit);
+                }
+                if (keys.has("kit_sights")) {
+                    Map<ResourceLocation, Vec3> byKit = new LinkedHashMap<>();
+                    keys.getAsJsonObject("kit_sights").entrySet().forEach(e -> byKit.put(
+                            ResourceLocation.parse(e.getKey()), GsonUtil.GSON.fromJson(e.getValue(), Vec3.class)));
+                    weapon.applyKitSights(byKit);
                 }
             }
         }

@@ -75,6 +75,13 @@ public class WeaponUnitPojo extends RotatableUnitPojo {
     @SerializedName("crosshair_style")
     public WeaponUnitData.CrosshairStyle crosshairStyle = WeaponUnitData.CrosshairStyle.CIRCLE;
 
+    @SerializedName("handling")
+    public WeaponUnitData.Handling handling = WeaponUnitData.Handling.REMOTE;
+
+    /** Absent => no picture-in-picture sight. */
+    @SerializedName("optic")
+    public OpticSpec optic = null;
+
     /** Absent => direct fire only. */
     @SerializedName("indirect_fire")
     public IndirectFirePojo indirectFire = null;

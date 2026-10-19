@@ -165,6 +165,7 @@
                 "gunner"
             ],
             "name": "loader_machine_gun",
+            "handling": "manual",
             "type": "combinedassault:weapon",
             "max_health": 150,
             "render_bone": "loader_mg",

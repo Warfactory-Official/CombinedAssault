@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector4f;
+import com.wf.combinedassault.ads.StationPip;
 import com.wf.combinedassault.all.AllEntities;
 import com.wf.combinedassault.client.model.VehicleModelInstance;
 import com.wf.combinedassault.client.render.entity.vehicle.VehicleRender;
@@ -256,6 +257,7 @@ public class VehicleGemVisual<T extends AbstractVehicle> extends AbstractEntityV
             instance.paint(own, gltf.paintReference(), own.isNone() ? 0 : palette);
             instance.light(light);
             instance.setChanged();
+            StationPip.mount(mount.part, gltf, instance.pose, renderOrigin());
         }
     }
 

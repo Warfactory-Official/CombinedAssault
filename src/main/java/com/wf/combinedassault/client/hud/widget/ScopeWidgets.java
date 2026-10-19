@@ -1,5 +1,6 @@
 package com.wf.combinedassault.client.hud.widget;
 
+import com.wf.combinedassault.ads.StationAds;
 import com.wf.combinedassault.client.hud.CaDraw;
 import com.wf.combinedassault.client.hud.HudCache;
 import com.wf.combinedassault.client.hud.HudSubjects;
@@ -102,7 +103,7 @@ public final class ScopeWidgets {
                             canvas.pop();
                             canvas.text(HudCache.translate("ui.focus_lock"), px + 25, py + 40, argb, true);
                         }
-                    } else if (sight != WeaponUnitData.OpticalSightType.OPTICAL_SCOPE) {
+                    } else if (sight != WeaponUnitData.OpticalSightType.OPTICAL_SCOPE && !StationAds.aiming(unit)) {
                         canvas.frame(px - 1, py - 1, px + 1, py + 1, 1, argb);
                     }
                     AimWidgets.reloadArcs(canvas, unit, px, py);
@@ -121,7 +122,8 @@ public final class ScopeWidgets {
                 public void draw(UiEval ev, float x, float y, float w, float h) {
                     WeaponUnit unit = station.get(ev);
                     if (unit == null || ev.graphics == null
-                            || unit.getOpticalSightType() != WeaponUnitData.OpticalSightType.OPTICAL_SCOPE) {
+                            || unit.getOpticalSightType() != WeaponUnitData.OpticalSightType.OPTICAL_SCOPE
+                            || StationAds.aiming(unit)) {
                         return;
                     }
                     ev.canvas.suspend();

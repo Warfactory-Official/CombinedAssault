@@ -273,7 +273,6 @@
     0.9578200000000001,
     -0.11844099999999999
    ],
-   "mesh": 12,
    "extras": {
     "combinedassaultRole": "part",
     "combinedassaultInterface": "mg_l"
@@ -292,7 +291,6 @@
     0.9578200000000001,
     -0.802859
    ],
-   "mesh": 13,
    "extras": {
     "combinedassaultRole": "part",
     "combinedassaultInterface": "mg_r"
@@ -326,8 +324,10 @@
     }
    },
    "children": [
-    49
-   ]
+    49,
+    55
+   ],
+   "mesh": 12
   },
   {
    "name": "mg_r_barrel",
@@ -351,8 +351,10 @@
     }
    },
    "children": [
-    52
-   ]
+    52,
+    56
+   ],
+   "mesh": 13
   },
   {
    "name": "collider_wheel_0_l_0",
@@ -1409,6 +1411,58 @@
     "gemrenderHidden": true,
     "combinedassaultRole": "view",
     "combinedassaultInterface": "driver"
+   }
+  },
+  {
+   "name": "socket_sight_mg_l",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.244142,
+    -0.6804315,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "sight",
+    "combinedassaultInterface": "mg_l"
+   }
+  },
+  {
+   "name": "socket_sight_mg_r",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.244142,
+    -0.68039,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "sight",
+    "combinedassaultInterface": "mg_r"
    }
   }
  ],

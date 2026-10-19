@@ -311,7 +311,8 @@
     }
    },
    "children": [
-    15
+    15,
+    68
    ]
   },
   {
@@ -1423,6 +1424,32 @@
     "gemrenderHidden": true,
     "combinedassaultRole": "hitch",
     "combinedassaultInterface": "cargo_hook"
+   }
+  },
+  {
+   "name": "socket_sight_door_gun",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.002271,
+    0.37689,
+    -0.556523,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "sight",
+    "combinedassaultInterface": "door_gun"
    }
   }
  ],

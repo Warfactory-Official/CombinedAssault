@@ -20,6 +20,12 @@ public class WeaponUnitData extends RotatableUnitData {
     private List<Bolt> bolts;
     /** Kit mount bolts; a kit absent here fires from {@link #bolts}. */
     private Map<ResourceLocation, List<Bolt>> kitBolts = Map.of();
+    /** Kit mount sight sockets; a kit absent here sights from {@link #opticalSightOffset}. */
+    private Map<ResourceLocation, Vec3> kitSights = Map.of();
+    /** {@code sight_lens} node, its own and per kit mount; null => none. */
+    @Nullable
+    private String lens;
+    private Map<ResourceLocation, String> kitLenses = Map.of();
     @Nullable
     private HardwareKits.Hardpoint hardpoint;
     /** Hardpoint: per kit, this part with the kit's station; identical structure (weapons, mounts, frames). */
@@ -45,6 +51,9 @@ public class WeaponUnitData extends RotatableUnitData {
     private float zoomMax;
     private FireControlSensorType fireControlSensorType;
     private CrosshairStyle crosshairStyle;
+    private Handling handling = Handling.REMOTE;
+    @Nullable
+    private OpticSpec optic;
     private List<WeaponInfo> weapons;
     @org.jetbrains.annotations.Nullable
     private com.wf.combinedassault.indirect.IndirectFireSpec indirectFire;
@@ -82,6 +91,11 @@ public class WeaponUnitData extends RotatableUnitData {
         this.zoomMin = pojo.zoomMin;
         this.zoomMax = pojo.zoomMax;
         this.crosshairStyle = pojo.crosshairStyle;
+        this.handling = pojo.handling;
+        if (pojo.optic != null && pojo.optic.zoom().isEmpty()) {
+            throw new IllegalArgumentException("weapon part " + pojo.id + ": optic.zoom empty");
+        }
+        this.optic = pojo.optic;
         this.weapons = pojo.weapons;
         this.hardpoint = pojo.hardpoint == null ? null : HardwareKits.Hardpoint.parse(pojo.hardpoint);
         this.indirectFire = pojo.indirectFire == null ? null
@@ -114,6 +128,27 @@ public class WeaponUnitData extends RotatableUnitData {
 
     public void applyKitBolts(Map<ResourceLocation, List<Bolt>> byKit) {
         this.kitBolts = Map.copyOf(byKit);
+    }
+
+    public void applyKitSights(Map<ResourceLocation, Vec3> byKit) {
+        this.kitSights = Map.copyOf(byKit);
+    }
+
+    @Nullable
+    public Vec3 getKitSight(@Nullable ResourceLocation kit) {
+        return kit == null ? null : kitSights.get(kit);
+    }
+
+    public void applyLenses(@Nullable String lens, Map<ResourceLocation, String> byKit) {
+        if (lens != null) {
+            this.lens = lens;
+        }
+        this.kitLenses = Map.copyOf(byKit);
+    }
+
+    @Nullable
+    public String getLens(@Nullable ResourceLocation kit) {
+        return kit == null ? lens : kitLenses.getOrDefault(kit, lens);
     }
 
     @Nullable
@@ -232,6 +267,15 @@ public class WeaponUnitData extends RotatableUnitData {
         return crosshairStyle;
     }
 
+    public Handling getHandling() {
+        return handling;
+    }
+
+    @Nullable
+    public OpticSpec getOptic() {
+        return optic;
+    }
+
     public List<WeaponInfo> getWeapons() {
         return weapons;
     }
@@ -304,6 +348,14 @@ public class WeaponUnitData extends RotatableUnitData {
         CROSS,
         @SerializedName("big_cross")
         BIG_CROSS
+    }
+
+    /** {@code manual}: operator's hands on the gun => recoil moves the aim. {@code remote}: visual jolt only. */
+    public enum Handling {
+        @SerializedName("manual")
+        MANUAL,
+        @SerializedName("remote")
+        REMOTE
     }
 
 }

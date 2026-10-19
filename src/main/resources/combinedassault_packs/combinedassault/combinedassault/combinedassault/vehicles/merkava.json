@@ -105,6 +105,7 @@
                 "gunner"
             ],
             "name": "anti_aircraft_machine_gun",
+            "handling": "manual",
             "type": "combinedassault:weapon",
             "max_health": 200,
             "render_bone": "mg",

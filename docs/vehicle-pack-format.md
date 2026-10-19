@@ -435,6 +435,8 @@ that type adds — there is no nested `data` object.
 | `with_ir` | bool | `false` | `crt` only; WFLib `wf_cam_ir` chain (active IR: own illuminator, sees through smoke). Illuminator synced per seat (`AbstractVehicle.IR_SIGHTS`) => other players' goggles see it. Cycle key: optical -> thermal -> night vision -> IR, unfitted skipped |
 | `zoom_min` / `zoom_max` | float | `1` / `8` | |
 | `crosshair_style` | enum | `circle` | `none`, `circle`, `square`, `cross`, `big_cross` |
+| `handling` | enum | `remote` | `manual`: operator's own recoil, aim kicked by round momentum (`backblast` => x0.1), recovers; `remote`: visual jolt only. Local operator, client only. `manual` + `sight` socket + (`operator` sight or `optic`) => SCOPE = ADS: eye operator view -> `sight` (rides the pitch frame) over 0.25 s, world FOV / `zoom` x `max(1, fov / 70)`; `magnification_change` (RMB) tap toggles, hold = x1.4 zoom (MineAssault controls) |
+| `optic` | object | absent | ADS picture-in-picture on the `sight_lens` mesh (WFLib `PipLens`): `zoom` float[] non-empty (magnification levels), `reticle` RL png (absent: duplex), `reticle_size` MOA (`<= 0`: lens fill), `reticle_zoom` (second focal plane), `mask` RL png, `eye_relief` m (absent: `sight` -> lens), `objective` m (picture pass origin ahead of the eye; clears the kit's own mesh, Flywheel-drawn => not hideable) |
 
 ### 4.5 The `weapons` list
 
@@ -771,7 +773,8 @@ Role nodes read at load (rest pose, vehicle frame). Each fills a vehicle def key
 | `seat` | part | part `seat_offset`, `seat_rot` | origin = rider eye; yaw |
 | `dismount` | part | part `dismount_offset` | origin |
 | `view` | part | weapon: `operator_view_offset`; else `owner_view_offset` | origin |
-| `sight` | part | `optical_sight_offset` (weapon only) | origin |
+| `sight` | part | `optical_sight_offset` (weapon only); `handling: manual` => ADS eye | origin |
+| `sight_lens` | part | none: lens mesh of the station `optic` (weapon only); drawn | the mesh itself |
 | `bolt` | part | part `bolts` (by `index`) | origin = breech, +Z = bore, Z scale = `barrel_length` |
 | `eject` | part | part `ejects` (by its bolt's `index`; 0..n-1) | origin = case port, +Z = throw, Z scale = speed (blocks/s); pitch frame, rest pose (recoil clips ignored) |
 | `era`, `slat` | entry id | `addon_armor` entry: `kind`, `bone`, `center`, `normal`, `up`, `width`, `height` | quad mesh: normal = winding; `up` = edge nearest +Y (flat: nearest +Z); size/centre = extents. `surface` present => fills it instead |
@@ -795,7 +798,7 @@ Role nodes read at load (rest pose, vehicle frame). Each fills a vehicle def key
 - Weapon view / sight: relative to the part frame; bolt, eject: in its `pitch` frame (none: `part`).
 - Addon `bone` = the socket's frame name.
 - `light` keys (`combinedassault.*`): `kind` `head` (default) \| `search`, `color` `#rrggbb`, `range`, `intensity` (E ~1 at `sqrt(intensity)` blocks), `inner`/`outer` half-angle deg (`0 < inner <= outer < 89`), `shadow`, `cookie`. Defaults per kind: `VehicleLight.Kind`. Toggle key (default `\`): driver -> `head`, other crew -> `search`; vehicle with one kind => that kind. Destroyed => off.
-- Part `mounts` model: its part-target sockets with no interface => the carrying part. Kit mount bolts replace the part's `bolts` while that kit is fitted. Station sockets (gunner seat, view) belong in a mount, not the shared hull model: an unarmed sibling then loads.
+- Part `mounts` model: its part-target sockets with no interface => the carrying part. Kit mount `bolt` / `sight` / `sight_lens` replace the part's while that kit is fitted. Station sockets (gunner seat, view) belong in a mount, not the shared hull model: an unarmed sibling then loads.
 - Model shared by two vehicles: its sockets apply to both; a part one lacks fails that one's load => per-vehicle offsets in the def.
 - Def geometry -> sockets: `tools/def_sockets.py move` (shared model: only values every def agrees on), load, `prune <log>` deletes what the load reports repeated.
 - Stays json: tuning (springs, forces, mass, health), crew, weapons.
@@ -1474,7 +1477,7 @@ Gun = kit def; vehicle part = typed `hardpoint`. Fitted / taken off in the field
 | `fitted` | kit at first spawn; absent / null = empty |
 | `overrides` | kit id -> station keys for this vehicle only, + `vehicle_name` (lang key: vehicle display name while fitted) |
 
-- Station keys: `pose`, `seat_offset`, `seat_rot`, `dismount_offset`, `protect_passenger`, `passenger_can_use_item`, `crew_roles`, `rot_info`, `bolts`, `ejects`, `ammo_capacity`, `firing_mode`, `optical_sight_offset`, `operator_view_offset`, `operator_on_weapon_unit`, `fire_control_sensor_type`, `optical_sight_type`, `with_*`, `loading`, `zoom_min`, `zoom_max`, `crosshair_style`. Other key => load error.
+- Station keys: `pose`, `seat_offset`, `seat_rot`, `dismount_offset`, `protect_passenger`, `passenger_can_use_item`, `crew_roles`, `rot_info`, `bolts`, `ejects`, `ammo_capacity`, `firing_mode`, `optical_sight_offset`, `operator_view_offset`, `operator_on_weapon_unit`, `fire_control_sensor_type`, `optical_sight_type`, `with_*`, `loading`, `zoom_min`, `zoom_max`, `crosshair_style`, `handling`, `optic`. Other key => load error.
 - Merge: part (glTF sockets applied) < kit `station` < hardpoint override; objects (`rot_info`) merge by key, else replace.
 - No kit => no gun: `currentWeaponId` null, kit mounts hidden and unhit, never fires. Seat switch cycles within the fitted kit; modding tool swaps refused.
 - Item `combinedassault:hardware`, component `combinedassault:hardware_kit` = kit id; name lang `hardware.<ns>.<path>`; drawn from the kit model. Recipes: result `{"id": "combinedassault:hardware", "components": {"combinedassault:hardware_kit": "<kit>"}}`.

@@ -1,5 +1,6 @@
 package com.wf.combinedassault.vehicle.control;
 
+import com.wf.combinedassault.ads.StationAds;
 import com.wf.combinedassault.vehicle.crew.CrewRole;
 import com.wf.combinedassault.vehicle.crew.CrewRules;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -188,7 +189,8 @@ public class InputHandler {
             return;
         }
         LocalVehiclePlayer instance = LocalVehiclePlayer.instance;
-        if (instance.onVehicle() && MAGNIFICATION_CHANGE.isDown() && instance.onVehicleTickCount > 5) {
+        if (instance.onVehicle() && MAGNIFICATION_CHANGE.isDown() && instance.onVehicleTickCount > 5
+                && !StationAds.capable(instance.getWeaponUnit())) {
             AbstractVehicle vehicle = instance.vehicle;
             if (instance.sightUnit() instanceof WeaponUnit weaponUnit) {
                 if (instance.viewType == LocalVehiclePlayer.ViewType.SCOPE) {

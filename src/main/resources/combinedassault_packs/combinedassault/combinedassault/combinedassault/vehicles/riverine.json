@@ -62,6 +62,7 @@
         {
             "id": "gun_bow_port",
             "name": "gun_bow_port",
+            "handling": "manual",
             "type": "combinedassault:weapon",
             "crew_roles": [
                 "gunner"
@@ -81,6 +82,7 @@
         {
             "id": "gun_bow_starboard",
             "name": "gun_bow_starboard",
+            "handling": "manual",
             "type": "combinedassault:weapon",
             "crew_roles": [
                 "gunner"
@@ -100,6 +102,7 @@
         {
             "id": "gun_stern",
             "name": "gun_stern",
+            "handling": "manual",
             "type": "combinedassault:weapon",
             "crew_roles": [
                 "gunner"

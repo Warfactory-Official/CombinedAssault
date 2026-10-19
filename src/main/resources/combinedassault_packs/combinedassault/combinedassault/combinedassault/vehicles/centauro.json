@@ -88,6 +88,7 @@
         {
             "id": "mg_l",
             "name": "mg_l",
+            "handling": "manual",
             "type": "combinedassault:weapon",
             "crew_roles": [
                 "commander"
@@ -109,6 +110,7 @@
         {
             "id": "mg_r",
             "name": "mg_r",
+            "handling": "manual",
             "type": "combinedassault:weapon",
             "crew_roles": [
                 "loader"

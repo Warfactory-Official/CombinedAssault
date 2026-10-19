@@ -3,5 +3,6 @@
   "weapons": ["combinedassault:spg9"],
   "fits": ["tripod"],
   "install_ticks": 160,
-  "station": {"optical_sight_type": "optical_scope", "crosshair_style": "cross", "zoom_max": 4, "loading": "manual"}
+  "station": {"optical_sight_type": "optical_scope", "crosshair_style": "cross", "zoom_max": 4, "loading": "manual",
+    "optic": {"zoom": [4], "objective": 0.36}}
 }

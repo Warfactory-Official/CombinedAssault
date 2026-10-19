@@ -8,6 +8,12 @@
                                                         origin = box centre, Z scale = box depth; def capacity dropped.
                                                         Box = cell mouth, not round envelope (m142, mim104) => move by hand
 
+    python3 tools/def_sockets.py sights [model:target ...] gun geometry -> `sight` socket (ADS eye) in the bolt 0 frame:
+                                                        height = top of the gun (|x| < SIGHT_HALF_WIDTH) + SIGHT_CLEAR,
+                                                        SIGHT_EYE_BACK behind its rearmost point; sight line || bore.
+                                                        target "" = kit model (all meshes), else the part subtree, at rest
+    python3 tools/def_sockets.py lens                   LENSES -> drawn `sight_lens` disc nodes (station `optic`)
+
 Model shared by several defs: a value moves only if every def has it equal. A socket the model already has for that
 field + target + index: left alone (def value is an override).
 """
@@ -256,6 +262,47 @@ def positions(gltf, mesh):
     return np.array(out, dtype=float)
 
 
+def triangles(gltf, mesh):
+    """(n, 3) vertex rows of every triangle, three per triangle."""
+    out, base = [], 0
+    p = positions(gltf, mesh)
+    for prim in gltf.doc["meshes"][mesh]["primitives"]:
+        count = gltf.doc["accessors"][prim["attributes"]["POSITION"]]["count"]
+        if "indices" in prim:
+            acc = gltf.doc["accessors"][prim["indices"]]
+            view = gltf.doc["bufferViews"][acc["bufferView"]]
+            start = view.get("byteOffset", 0) + acc.get("byteOffset", 0)
+            dtype = {5121: "<u1", 5123: "<u2", 5125: "<u4"}[acc["componentType"]]
+            size = np.dtype(dtype).itemsize
+            idx = np.frombuffer(bytes(gltf.buffers[view["buffer"]][start:start + acc["count"] * size]), dtype=dtype)
+        else:
+            idx = np.arange(count)
+        out.append(p[base + idx.astype(int)])
+        base += count
+    return np.concatenate(out)
+
+
+def slab(tris, half):
+    """Triangle (n*3, 3) parts inside |x| <= half: clipped polygon vertices."""
+    out = []
+    for t in tris.reshape(-1, 3, 3):
+        poly = list(t)
+        for sign in (1, -1):
+            clipped = []
+            for k in range(len(poly)):
+                a, b = poly[k], poly[(k + 1) % len(poly)]
+                da, db = half - sign * a[0], half - sign * b[0]
+                if da >= 0:
+                    clipped.append(a)
+                if da * db < 0:
+                    clipped.append(a + (b - a) * (da / (da - db)))
+            poly = clipped
+            if not poly:
+                break
+        out.extend(poly)
+    return np.array(out).reshape(-1, 3)
+
+
 def cmd_stations(args):
     for vid, path in defs().items():
         if args.vehicles and vid.split(":")[1] not in args.vehicles:
@@ -336,6 +383,135 @@ def cmd_prune(args):
         print("%s: %d keys" % (vid, len(labels)))
 
 
+SIGHT_HALF_WIDTH = 0.04
+SIGHT_CLEAR = 0.03
+SIGHT_EYE_BACK = 0.12
+#: model -> station targets; "" = kit model; (target, {"x"|"y"|"z": bolt frame m}) overrides that coordinate
+SIGHT_TARGETS = {
+    "combinedassault:models/weapon/m2/m2.gltf": [""],
+    "combinedassault:models/weapon/mk19/mk19.gltf": [("", {"x": -0.06, "y": 0.233, "z": -0.4})],
+    # PGO-9 eyepiece: LENSES centre - relief
+    "combinedassault:models/weapon/spg9/spg9.gltf": [("", {"x": -0.149, "y": 0.048, "z": 0.885})],
+    "combinedassault:models/aircraft/ch47/ch47.gltf": ["door_gun_r", "door_gun_l", "ramp_gun"],
+    "combinedassault:models/aircraft/mh60l/mh60l.gltf": ["door_gun_r", "door_gun_l"],
+    "combinedassault:models/aircraft/w3/w3.gltf": ["door_gun"],
+    "combinedassault:models/ground/m1a2/m1a2.gltf": ["loader_machine_gun"],
+    "combinedassault:models/ground/merkava/merkava.gltf": ["anti_aircraft_machine_gun"],
+    "combinedassault:models/ground/centauro/centauro.gltf": ["mg_l", "mg_r"],
+}
+
+
+def parent_of(gltf, index):
+    for i, n in enumerate(gltf.nodes):
+        if index in n.get("children", []):
+            return i
+    return None
+
+
+def subtree(gltf, root):
+    out, stack = [], [root]
+    while stack:
+        i = stack.pop()
+        out.append(i)
+        stack.extend(gltf.nodes[i].get("children", []))
+    return out
+
+
+def cmd_sights(args):
+    targets = collections.defaultdict(list)
+    if args.targets:
+        for t in args.targets:
+            rl, _, target = t.rpartition(":") if t.count(":") > 1 else (t, "", "")
+            targets[rl].append(next((e for e in SIGHT_TARGETS.get(rl, []) if isinstance(e, tuple) and e[0] == target),
+                                    target))
+    else:
+        targets.update(SIGHT_TARGETS)
+    for rl, parts in targets.items():
+        model = Model(rl)
+        g = model.gltf
+        for target in parts:
+            target, fixed = target if isinstance(target, tuple) else (target, {})
+            if model.has("sight", target):
+                print("%s %r: has a sight socket" % (rl, target))
+                continue
+            bolt = next((i for i, n in enumerate(g.nodes) if n.get("extras", {}).get(convert_pack.ROLE) == "bolt"
+                         and n["extras"].get(convert_pack.IFACE, "") == target
+                         and n["extras"].get(convert_pack.DATA, {}).get("index", 0) == 0), None)
+            if bolt is None:
+                sys.exit("%s %r: no bolt 0" % (rl, target))
+            frame = model.frames.get(("pitch", target)) if target else None
+            part = model.frames.get(("part", target)) if target else None
+            roots = subtree(g, part) if part is not None else range(len(g.nodes))
+            at = rigid(g.world(bolt))
+            to_bolt = np.linalg.inv(at)
+            pts = []
+            for i in roots:
+                n = g.nodes[i]
+                if "mesh" not in n or n.get("extras", {}).get(convert_pack.HIDDEN) \
+                        or n.get("extras", {}).get(convert_pack.ROLE) == "sight_lens":
+                    continue
+                p = triangles(g, n["mesh"])
+                pts.append((to_bolt @ g.world(i) @ np.c_[p, np.ones(len(p))].T)[:3].T)
+            line = slab(np.concatenate(pts), SIGHT_HALF_WIDTH)
+            height = line[:, 1].max() + SIGHT_CLEAR
+            back = line[:, 2].min() - SIGHT_EYE_BACK
+            parent = frame if frame is not None else parent_of(g, bolt)
+            eye = [fixed.get("x", 0.0), fixed.get("y", height), fixed.get("z", back)]
+            model.socket("sight", target, at @ translation(eye), parent)
+            print("%s %r: eye %s (bolt frame)" % (rl, target, [round(v, 3) for v in eye]))
+        if model.added:
+            compact = "\n" not in open(model.path).read().strip()
+            g.save(model.path, lambda r, data: open(asset(r), "wb").write(data))
+            if compact:
+                text = json.dumps(json.load(open(model.path)), separators=(",", ":"))
+                open(model.path, "w").write(text)
+
+
+LENS_SEGMENTS = 24
+#: model -> (target, bolt frame centre, radius m); disc faces the eye (-Z)
+LENSES = {
+    "combinedassault:models/weapon/spg9/spg9.gltf": [("", (-0.149, 0.048, 0.953), 0.026)],
+}
+
+
+def cmd_lens(args):
+    for rl, lenses in LENSES.items():
+        model = Model(rl)
+        g = model.gltf
+        for target, centre, radius in lenses:
+            if model.has("sight_lens", target):
+                print("%s %r: has a sight_lens" % (rl, target))
+                continue
+            bolt = next(i for i, n in enumerate(g.nodes) if n.get("extras", {}).get(convert_pack.ROLE) == "bolt"
+                        and n["extras"].get(convert_pack.IFACE, "") == target
+                        and n["extras"].get(convert_pack.DATA, {}).get("index", 0) == 0)
+            frame = model.frames.get(("pitch", target)) if target else None
+            parent = frame if frame is not None else parent_of(g, bolt)
+            positions = [0.0, 0.0, 0.0]
+            for k in range(LENS_SEGMENTS):
+                a = 2 * math.pi * k / LENS_SEGMENTS
+                positions += [radius * math.cos(a), radius * math.sin(a), 0.0]
+            # Wound toward -Z (the eye).
+            indices = [v for k in range(LENS_SEGMENTS) for v in (0, 2 + k % LENS_SEGMENTS if k + 1 < LENS_SEGMENTS
+                                                                 else 1, 1 + k)]
+            material = next((pr.get("material") for m in g.doc["meshes"] for pr in m["primitives"]
+                             if pr.get("material") is not None), None)
+            mesh = g.add_mesh("sight_lens", positions, indices, material=material)
+            at = rigid(g.world(bolt)) @ translation(centre)
+            local = np.linalg.inv(g.world(parent)) @ at
+            node = {"name": "sight_lens" + ("_" + target if target else ""), "mesh": mesh,
+                    "matrix": [float(round(v, 7)) for v in local.T.reshape(-1)]}
+            convert_pack.set_role(node, "sight_lens", target or None)
+            g.add_node(node, parent)
+            model.added += 1
+            print("%s %r: lens r %.4f at %s" % (rl, target, radius, centre))
+        if model.added:
+            compact = "\n" not in open(model.path).read().strip()
+            g.save(model.path, lambda r, data: open(asset(r), "wb").write(data))
+            if compact:
+                open(model.path, "w").write(json.dumps(json.load(open(model.path)), separators=(",", ":")))
+
+
 def main():
     os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
     ap = argparse.ArgumentParser()
@@ -346,8 +522,11 @@ def main():
     p.add_argument("log")
     st = sub.add_parser("stations")
     st.add_argument("vehicles", nargs="*")
+    si = sub.add_parser("sights")
+    si.add_argument("targets", nargs="*")
+    sub.add_parser("lens")
     args = ap.parse_args()
-    {"move": cmd_move, "prune": cmd_prune, "stations": cmd_stations}[args.cmd](args)
+    {"move": cmd_move, "prune": cmd_prune, "stations": cmd_stations, "sights": cmd_sights, "lens": cmd_lens}[args.cmd](args)
 
 
 if __name__ == "__main__":

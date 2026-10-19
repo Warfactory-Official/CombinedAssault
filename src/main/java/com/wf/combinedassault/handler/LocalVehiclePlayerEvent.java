@@ -6,6 +6,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import com.wf.combinedassault.ads.StationAds;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.util.SecondOrderDynamics;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
@@ -37,7 +38,10 @@ public class LocalVehiclePlayerEvent {
             if (entity.getVehicle() instanceof AbstractVehicle vehicle
                     && LocalVehiclePlayer.instance.sightUnit() instanceof WeaponUnit weaponUnit) {
                 float fov;
-                if (LocalVehiclePlayer.instance.sighted()) {
+                float divisor = StationAds.divisor(weaponUnit, (float) event.getFOV(), (float) event.getPartialTick());
+                if (divisor > 0) {
+                    fov = WORLD_FOV_DYNAMICS.update((float) event.getFOV() / divisor);
+                } else if (LocalVehiclePlayer.instance.sighted()) {
                     float targetFov = (float) magnificationToFov(1 + (weaponUnit.getZoom() - 1), event.getFOV());
                     fov = WORLD_FOV_DYNAMICS.update(targetFov);
                 } else if (vehicle.isViewZoomed()) {

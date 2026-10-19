@@ -9,6 +9,7 @@
     {
       "id": "gun",
       "name": "part.combinedassault.tripod_cradle",
+      "handling": "manual",
       "type": "combinedassault:weapon",
       "max_health": 25,
       "component": "barrel",

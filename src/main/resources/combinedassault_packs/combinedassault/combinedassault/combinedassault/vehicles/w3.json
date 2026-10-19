@@ -140,6 +140,7 @@
                 "gunner"
             ],
             "name": "door_gun_r",
+            "handling": "manual",
             "type": "combinedassault:weapon",
             "render_bone": "door_gun",
             "operator_on_weapon_unit": false,

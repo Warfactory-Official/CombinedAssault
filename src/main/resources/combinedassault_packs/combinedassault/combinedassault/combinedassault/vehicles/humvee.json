@@ -78,6 +78,7 @@
         {
             "id": "roof_mount",
             "name": "roof_mount",
+            "handling": "manual",
             "type": "combinedassault:weapon",
             "crew_roles": [
                 "gunner"

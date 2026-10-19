@@ -19,7 +19,9 @@
    "name": "spg9",
    "children": [
     1,
-    68
+    68,
+    69,
+    70
    ]
   },
   {
@@ -707,6 +709,56 @@
     "combinedassault": {
      "index": 0
     }
+   }
+  },
+  {
+   "name": "socket_sight",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    -0.149,
+    0.133,
+    0.091,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "sight"
+   }
+  },
+  {
+   "name": "sight_lens",
+   "mesh": 64,
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    -0.149,
+    0.133,
+    0.159,
+    1.0
+   ],
+   "extras": {
+    "combinedassaultRole": "sight_lens"
    }
   }
  ],
@@ -1603,6 +1655,19 @@
       "TEXCOORD_0": 237
      },
      "indices": 238,
+     "material": 0
+    }
+   ]
+  },
+  {
+   "name": "sight_lens",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 248
+     },
+     "indices": 249,
+     "mode": 4,
      "material": 0
     }
    ]
@@ -3754,6 +3819,29 @@
    "componentType": 5126,
    "count": 51,
    "type": "VEC4"
+  },
+  {
+   "bufferView": 248,
+   "componentType": 5126,
+   "count": 25,
+   "type": "VEC3",
+   "min": [
+    -0.026,
+    -0.026,
+    0.0
+   ],
+   "max": [
+    0.026,
+    0.026,
+    0.0
+   ]
+  },
+  {
+   "bufferView": 249,
+   "byteOffset": 0,
+   "componentType": 5125,
+   "count": 72,
+   "type": "SCALAR"
   }
  ],
  "bufferViews": [
@@ -5235,6 +5323,18 @@
    "buffer": 0,
    "byteLength": 816,
    "byteOffset": 300712
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 301528,
+   "byteLength": 300,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 301828,
+   "byteLength": 288,
+   "target": 34963
   }
  ],
  "materials": [
@@ -5361,7 +5461,7 @@
  ],
  "buffers": [
   {
-   "byteLength": 301528,
+   "byteLength": 302116,
    "extras": {
     "resourceLocation": "combinedassault:models/weapon/spg9/spg9.bin"
    }

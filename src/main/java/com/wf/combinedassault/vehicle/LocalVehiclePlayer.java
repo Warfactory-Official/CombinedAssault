@@ -39,6 +39,8 @@ import com.wf.combinedassault.vehicle.control.ControlUnit;
 import com.wf.combinedassault.vehicle.control.InputHandler;
 import com.wf.combinedassault.vehicle.light.IrSightMessage;
 import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.ads.StationAds;
+import com.wf.combinedassault.recoil.StationRecoil;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
 import com.wf.combinedassault.vehicle.pojo.AimContext;
 
@@ -263,6 +265,7 @@ public class LocalVehiclePlayer {
         if (partUnit == null) {
             return;
         }
+        StationRecoil.tick(this, partUnit);
         cameraAimRotXO = cameraAimRotX;
         cameraAimRotYO = cameraAimRotY;
         cameraAimRotZO = cameraAimRotZ;
@@ -621,8 +624,9 @@ public class LocalVehiclePlayer {
                     weaponUnit.setFocusLockPos(VectorUtil.hitPosition(vehicle, start, end));
                     return true;
                 }
-                pXRot *= 0.15f;
-                pYRot *= 0.15f;
+                float turn = 0.15f / StationAds.turnDivisor(weaponUnit, Minecraft.getInstance().options.fov().get());
+                pXRot *= turn;
+                pYRot *= turn;
                 float vx = scopeAimSensitivity(weaponUnit.getXRotSpeed(), weaponUnit.getXAimRot() - weaponUnit.getXRot());
                 if ((pXRot > 0 && weaponUnit.getXAimRot() < weaponUnit.xRotMax - weaponUnit.xSelfRot) || (pXRot < 0 && weaponUnit.getXAimRot() > weaponUnit.xRotMin - weaponUnit.xSelfRot)) {
                     float rx = (float) (weaponUnit.getXAimRot() + pXRot * vx);
@@ -764,7 +768,8 @@ public class LocalVehiclePlayer {
     public Vec3 cameraPosition(PartUnit<?> operatorUnit, float partialTick) {
         Vec3 position;
         if (viewType == LocalVehiclePlayer.ViewType.SCOPE && sightUnit() instanceof WeaponUnit weaponUnit) {
-            position = weaponUnit.getOpticalSightType() != WeaponUnitData.OpticalSightType.OPERATOR ?
+            Vec3 eye = StationAds.eye(weaponUnit, partialTick);
+            position = eye != null ? eye : weaponUnit.getOpticalSightType() != WeaponUnitData.OpticalSightType.OPERATOR ?
                     weaponUnit.worldOpticalSightPosition(partialTick) : weaponUnit.worldOwnerViewPosition(partialTick);
         } else if (viewType == LocalVehiclePlayer.ViewType.OPERATOR && lensUav()
                 && operatorUnit instanceof WeaponUnit weaponUnit

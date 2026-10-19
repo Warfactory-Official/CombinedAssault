@@ -40,7 +40,7 @@ public final class ModelDataManager {
     /** Material token: drawn only, never hit (gen_hulls.py: never collides). */
     private static final Pattern DECOR = Pattern.compile("(?i)(?:^|[_ .])decor(?:$|[_ .])");
     private static final Set<NodeRole> PART_TARGET = EnumSet.of(NodeRole.SEAT, NodeRole.DISMOUNT, NodeRole.VIEW,
-            NodeRole.SIGHT, NodeRole.BOLT, NodeRole.EJECT);
+            NodeRole.SIGHT, NodeRole.SIGHT_LENS, NodeRole.BOLT, NodeRole.EJECT);
 
     private ModelDataManager() {
     }
@@ -115,10 +115,10 @@ public final class ModelDataManager {
                 }
                 wheels.add(new ModelMounts.Wheel(node.name(), node.origin()));
             }
-            if (kitOf.get(i) != null && role != null && role != NodeRole.BOLT && role != NodeRole.HIT
-                    && role != NodeRole.HIT_SURFACE) {
+            if (kitOf.get(i) != null && role != null && role != NodeRole.BOLT && role != NodeRole.SIGHT
+                    && role != NodeRole.SIGHT_LENS && role != NodeRole.HIT && role != NodeRole.HIT_SURFACE) {
                 throw new IllegalArgumentException(source + ": node " + node.name() + " (" + role.key()
-                        + ") in the mount of kit " + kitOf.get(i) + "; kit mounts carry bolts, hit and hit_surface nodes only");
+                        + ") in the mount of kit " + kitOf.get(i) + "; kit mounts carry bolt, sight, sight_lens, hit and hit_surface nodes only");
             }
             if (role == NodeRole.LIGHT) {
                 lights.add(VehicleLight.read(i, node.name(), node.meta()));
