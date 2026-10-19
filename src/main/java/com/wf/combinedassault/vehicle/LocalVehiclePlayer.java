@@ -290,8 +290,8 @@ public class LocalVehiclePlayer {
                 if (cockpitLook()) {
                     Quaternionf vehicleRot = vehicle.rotYXZ();
                     if (aircraftCockpit()) {
-                        // Head fixed in the airframe; free look released => recentres on the nose.
-                        if (!InputHandler.freeCamera) {
+                        // Head fixed in the airframe; free look released => recentres on the nose. Gunner: head = gun.
+                        if (!InputHandler.freeCamera && (cockpitPilot() || !(partUnit instanceof WeaponUnit))) {
                             playerLocalXRot *= HEAD_RECENTRE;
                             playerLocalYRot *= HEAD_RECENTRE;
                         }
