@@ -1,13 +1,18 @@
 package com.wf.combinedassault.custom.weapon.data;
 
+import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
+import com.mojang.serialization.JsonOps;
 import com.wf.combinedassault.vehicle.weapon.Backblast;
 import com.wf.wflib.audio.SoundSpec;
+import com.wf.wflib.barrel.BarrelSpec;
+import com.wf.wflib.barrel.BarrelTypes;
 import com.wf.wflib.ammo.Ammo;
 import com.wf.wflib.ammo.AmmoItems;
 import com.wf.wflib.ammo.AmmoVariant;
 import com.wf.wflib.magazine.MagFill;
 import com.wf.wflib.magazine.Run;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -54,6 +59,18 @@ public class BaseVehicleWeaponData {
     /** {@code fire} (at the pivot), {@code shell} (half an interval later), {@code reload}. */
     @SerializedName("sounds")
     private Map<String, SoundSpec> sounds = Map.of();
+
+    /** wflib {@link BarrelSpec}; absent = no heat, jams or barrel change. */
+    @SerializedName("barrel")
+    @Nullable
+    private JsonElement barrelJson;
+
+    /** Seconds; jam clear without a {@code <part>.unjam} clip. */
+    @SerializedName("unjam_time")
+    private float unjamTime = 1.5f;
+
+    @Nullable
+    private transient BarrelSpec barrel;
 
     public static class Reload {
 
@@ -212,6 +229,21 @@ public class BaseVehicleWeaponData {
         if (reload == null && needsReload()) {
             throw new IllegalStateException("weapon " + weaponId + ": no reload.ammo");
         }
+        if (barrelJson != null) {
+            barrel = BarrelSpec.CODEC.parse(JsonOps.INSTANCE, barrelJson)
+                    .getOrThrow(error -> new IllegalStateException("weapon " + weaponId + ": barrel: " + error));
+            barrel.type().ifPresent(type -> BarrelTypes.register(type,
+                    Component.translatable("barrel_type." + type.getNamespace() + "." + type.getPath()), barrel));
+        }
+    }
+
+    @Nullable
+    public BarrelSpec getBarrel() {
+        return barrel;
+    }
+
+    public float getUnjamTime() {
+        return unjamTime;
     }
 
     /** False: never reloads (rack-fed). */

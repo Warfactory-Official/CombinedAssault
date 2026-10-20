@@ -151,6 +151,7 @@ public class SyncDataManager {
             manager.registerSerializer(SyncDataSerializers.ITEM);
             manager.registerSerializer(SyncDataSerializers.ROUND);
             manager.registerSerializer(SyncDataSerializers.ROUND_STOCK);
+            manager.registerSerializer(SyncDataSerializers.BARREL);
         }
     }
 

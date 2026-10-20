@@ -29,6 +29,7 @@ public class RootCommand {
         root.then(com.wf.combinedassault.tow.TowCommand.get());
         root.then(ReloadCommand.get());
         root.then(com.wf.combinedassault.vehicle.crew.CrewCommand.get());
+        root.then(com.wf.combinedassault.barrel.BarrelCommand.get());
         dispatcher.register(root);
     }
 

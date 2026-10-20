@@ -24,7 +24,9 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <tr><td>flaps</td><td>any</td><td>deflection / full</td></tr>
  *   <tr><td>linked hinge</td><td>any</td><td>rotation / open rotation</td></tr>
  *   <tr><td>weapon</td><td>{@code .fire}</td><td>time since current weapon's last shot / span; never fired => 1</td></tr>
- *   <tr><td>weapon</td><td>{@code .reload}</td><td>current weapon's reload progress; not reloading => 0</td></tr>
+ *   <tr><td>weapon</td><td>{@code .reload}</td><td>current weapon's reload progress; not reloading => 0; no
+ *   {@code .unjam} clip => max with jam clear progress</td></tr>
+ *   <tr><td>weapon</td><td>{@code .unjam}</td><td>current weapon's jam clear progress; not clearing => 0</td></tr>
  * </table>
  */
 public final class PartClipTracks {
@@ -32,7 +34,7 @@ public final class PartClipTracks {
     /** model + clip, warned once. */
     private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
 
-    private enum Kind { TOGGLE, FLAPS, HINGE, FIRE, RELOAD }
+    private enum Kind { TOGGLE, FLAPS, HINGE, FIRE, RELOAD, UNJAM }
 
     public static final class Track {
         private final PartUnit<?> part;
@@ -40,6 +42,8 @@ public final class PartClipTracks {
         /** Indices into {@link ClipRig#clips}. */
         private final int[] clips;
         private final float span;
+        /** RELOAD of a part without an UNJAM track. */
+        private boolean clearsJams;
         private float progress = Float.NaN;
         private float progressO;
 
@@ -54,6 +58,11 @@ public final class PartClipTracks {
             return part;
         }
 
+        /** Longest clip, seconds. */
+        public float span() {
+            return span;
+        }
+
         public float progress(float partialTick) {
             return switch (kind) {
                 case FLAPS -> Mth.clamp(((FlapUnit) part).level(partialTick), 0, 1);
@@ -62,7 +71,12 @@ public final class PartClipTracks {
                         .map(weapon -> span <= 0 ? 1 : Mth.clamp(weapon.secondsSinceShot(partialTick) / span, 0, 1))
                         .orElse(1f);
                 case RELOAD -> ((WeaponUnit) part).getCurrentWeapon()
-                        .map(weapon -> weapon.reloadProgress(partialTick)).orElse(0f);
+                        .map(weapon -> clearsJams && weapon.barrel() != null
+                                ? Math.max(weapon.reloadProgress(partialTick), weapon.barrel().clearProgress(partialTick))
+                                : weapon.reloadProgress(partialTick)).orElse(0f);
+                case UNJAM -> ((WeaponUnit) part).getCurrentWeapon()
+                        .map(weapon -> weapon.barrel() == null ? 0 : weapon.barrel().clearProgress(partialTick))
+                        .orElse(0f);
                 case TOGGLE -> Float.isNaN(progress) ? target() : Mth.lerp(partialTick, progressO, progress);
             };
         }
@@ -112,7 +126,7 @@ public final class PartClipTracks {
             if (kind == null) {
                 if (WARNED.add(model + "#" + name)) {
                     CombinedAssault.LOGGER.warn("{}: clip '{}' names no switchable, flaps or linked hinge part, nor a "
-                            + "weapon part's .fire / .reload, of {}; never plays", model, name, vehicle);
+                            + "weapon part's .fire / .reload / .unjam, of {}; never plays", model, name, vehicle);
                 }
                 continue;
             }
@@ -129,6 +143,9 @@ public final class PartClipTracks {
             }
             tracks.add(new Track(key.part(), key.kind(), indices.stream().mapToInt(Integer::intValue).toArray(), span));
         });
+        for (Track track : tracks) {
+            track.clearsJams = track.kind == Kind.RELOAD && !byTrack.containsKey(new Key(track.part, Kind.UNJAM));
+        }
         return new PartClipTracks(rig, tracks.toArray(Track[]::new));
     }
 
@@ -150,6 +167,7 @@ public final class PartClipTracks {
             case LinkedHingeUnit hinge -> Kind.HINGE;
             case WeaponUnit weapon when suffix.equals("fire") -> Kind.FIRE;
             case WeaponUnit weapon when suffix.equals("reload") -> Kind.RELOAD;
+            case WeaponUnit weapon when suffix.equals("unjam") -> Kind.UNJAM;
             default -> null;
         };
     }
@@ -167,6 +185,7 @@ public final class PartClipTracks {
             if (track.part.getId().equals(partId) && switch (track.kind) {
                 case FIRE -> suffix.equals("fire");
                 case RELOAD -> suffix.equals("reload");
+                case UNJAM -> suffix.equals("unjam");
                 default -> true;
             }) {
                 return track;

@@ -450,5 +450,21 @@
   "tooltip.combinedassault.ammo": "弹药：%s",
   "tooltip.combinedassault.magazines": "弹匣：%s",
   "tooltip.combinedassault.more": " 及另外 %s 种",
-  "hardpoint.combinedassault.hidden": "从这一侧够不到"
+  "hardpoint.combinedassault.hidden": "从这一侧够不到",
+  "key.combinedassault.reload_clear_jam.desc": "装填 / 排除故障",
+  "key.combinedassault.change_barrel.desc": "更换枪管",
+  "barrel_type.combinedassault.m240": "M240",
+  "barrel_type.combinedassault.m2": "M2HB",
+  "barrel_type.combinedassault.kpvt": "KPVT",
+  "barrel.combinedassault.fixed": "固定枪管",
+  "barrel.combinedassault.on_foot": "下车才能更换枪管",
+  "barrel.combinedassault.busy": "枪管占用中",
+  "barrel.combinedassault.reach": "离枪口太远",
+  "barrel.combinedassault.hidden": "够不到枪口",
+  "barrel.combinedassault.need": "需要备用 %s 枪管",
+  "barrel.combinedassault.temp": "枪管 %s °C",
+  "barrel.combinedassault.wear": "磨损 %s%%",
+  "barrel.combinedassault.jammed": "卡壳",
+  "barrel.combinedassault.change": "更换枪管",
+  "barrel.combinedassault.change_coop": "更换枪管（协助射手）"
 }

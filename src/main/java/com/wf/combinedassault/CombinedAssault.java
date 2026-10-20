@@ -66,6 +66,7 @@ public class CombinedAssault {
         com.wf.combinedassault.ballistics.component.SystemRepair.register();
         com.wf.combinedassault.ballistics.component.ArmorRepair.register();
         com.wf.combinedassault.vehicle.part.BarrelCharge.register();
+        com.wf.combinedassault.barrel.BarrelActions.register();
         modEventBus.register(Channel.class);
     }
 

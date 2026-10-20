@@ -2,6 +2,8 @@ package com.wf.combinedassault.vehicle.weapon;
 
 import net.minecraft.world.level.Level;
 import com.wf.combinedassault.audio.WeaponSounds;
+import com.wf.combinedassault.barrel.GunBarrel;
+import com.wf.combinedassault.barrel.client.BarrelFx;
 import com.wf.combinedassault.vehicle.crew.CrewRules;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.HolderLookup;
@@ -94,6 +96,8 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
     protected SyncDataHolder<Integer> reloadTimeHolder;
     protected Vec3 targetLocation;
     private List<String> roundBones = List.of();
+    @Nullable
+    private final GunBarrel barrel;
 
     /** Prefer the factory in {@link CombinedAssaultAPI#getVehicleWeaponManager()} over this constructor directly. */
     protected AbstractVehicleWeapon(AbstractVehicle vehicle, WeaponUnit weaponUnit, int index, T data, String serializeId) {
@@ -103,6 +107,13 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
         this.data = data;
         this.displayName = Component.translatable(data.getName());
         this.serializeId = serializeId;
+        this.barrel = data.getBarrel() == null ? null : new GunBarrel(this, data.getBarrel());
+    }
+
+    /** Null: weapon has no {@code barrel}. */
+    @Nullable
+    public GunBarrel barrel() {
+        return barrel;
     }
 
     public void defineSyncData(PartUnitSyncData syncData) {
@@ -117,6 +128,9 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
                 () -> magazineCapacity, magazineCapacity);
         syncData.define(SyncDataSerializers.INT, span -> this.reloadSpan = span, () -> reloadSpan, reloadSpan);
         syncData.define(SyncDataSerializers.INT, this::setShots, () -> shots, shots);
+        if (barrel != null) {
+            barrel.defineSyncData(syncData);
+        }
     }
 
     private void setShots(int shots) {
@@ -153,11 +167,12 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
      * {@code shoot_interval < 50} ms fires {@code 50 / shoot_interval} rounds per shot, strung out over the tick.
      */
     protected boolean shootLoaded(List<AimContext> aimContexts) {
-        if (isCoolingDown() || isReloading()) {
+        boolean cookOff = barrel != null && barrel.cookingOff();
+        if (!cookOff && (isCoolingDown() || isReloading()) || barrel != null && !barrel.canFire()) {
             return false;
         }
         int rounds = 1;
-        if (getShootInterval() < 50) {
+        if (!cookOff && getShootInterval() < 50) {
             burstCarry += 50.0 / getShootInterval();
             rounds = (int) burstCarry;
             burstCarry -= rounds;
@@ -166,9 +181,10 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
         int fired = 0;
         for (; fired < rounds && consumeAmmo(aimContexts); fired++) {
             float lead = (float) fired / rounds;
+            float spread = barrel == null ? 0 : barrel.fired();
             for (AimContext aimContext : aimContexts) {
-                if (Munitions.fire(vehicle, weaponUnit, aimContext, feed(), data.getInaccuracy(),
-                        root.getLockedEntity(), root.getOwner(), lead)) {
+                if (Munitions.fire(vehicle, weaponUnit, aimContext, feed(), data.getInaccuracy() + spread,
+                        root.getLockedEntity(), cookOff ? null : root.getOwner(), lead)) {
                     vehicle.queueRecoil(weaponUnit, data.getRecoil());
                     if (data.getBackblast() != null && vehicle.level() instanceof ServerLevel level) {
                         data.getBackblast().fire(level, vehicle, aimContext, weaponUnit.getCurrentBolt().barrelLength,
@@ -176,11 +192,32 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
                     }
                 }
             }
+            if (barrel != null && barrel.rollJam(vehicle.getRandom())) {
+                fired++;
+                break;
+            }
         }
         if (fired == 0) {
             return false;
         }
         markShot();
+        return true;
+    }
+
+    /** Server: one round out of the breech unfired (jam cleared). */
+    public void discardRound() {
+        if (remainAmmo > 0) {
+            remainAmmo--;
+            feed();
+        }
+    }
+
+    /** Server: partly fired => breech back to the stores, {@link #tick()} reloads. */
+    public boolean manualReload() {
+        if (isReloading() || remainAmmo <= 0 || remainAmmo >= getMaxCapacity() || !canReload()) {
+            return false;
+        }
+        unload();
         return true;
     }
 
@@ -292,6 +329,10 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
             return false;
         }
         if (isCoolingDown()) {
+            return false;
+        }
+        if (barrel != null && !barrel.canFire()) {
+            BarrelFx.dryClick(this);
             return false;
         }
         if (!hasAmmo()) {
@@ -713,6 +754,9 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
         if (vehicle.tickCount % STOCK_INTERVAL == 0) {
             stock = countStock();
         }
+        if (barrel != null) {
+            barrel.tick();
+        }
         if (remainAmmo == 0) {
             if (isReloading()) {
                 tickReload();
@@ -767,6 +811,9 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
         if (!magazine.isEmpty()) {
             tag.put("Magazine", magazine.save(provider));
         }
+        if (barrel != null) {
+            barrel.save(tag);
+        }
         return tag;
     }
 
@@ -784,6 +831,9 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
                 : ItemStack.EMPTY;
         this.magazineCapacity = magazine.isEmpty() ? 0
                 : MagFill.contents(magazine).capacity(MagFill.magazine(magazine).perLink());
+        if (barrel != null) {
+            barrel.load(nbt);
+        }
     }
 
     /** Model bones showing loaded rounds, firing order; see {@code RoundStations}. */

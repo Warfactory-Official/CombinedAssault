@@ -7,6 +7,12 @@
         "time": 100,
         "ammo": "wflib:cartridge_14_5x114"
     },
+    "barrel": {
+        "type": "combinedassault:kpvt",
+        "perShot": 1.5,
+        "tau": 150,
+        "swap": {"self": 10, "coop": 4.5}
+    },
     "sounds": {
         "fire": {"event": "combinedassault:gun_14.5mm_shot", "range": 500, "pitch_random": 0.1},
         "reload": {"event": "combinedassault:gun_reload", "range": 24}

@@ -9,6 +9,12 @@
         "magazines": "wflib:ammo_can_12_7x99",
         "loose": true
     },
+    "barrel": {
+        "type": "combinedassault:m2",
+        "perShot": 1.2,
+        "tau": 160,
+        "swap": {"self": 9, "coop": 4}
+    },
     "sounds": {
         "fire": {"event": "combinedassault:gun_12.7mm_shot", "range": 450, "pitch_random": 0.1},
         "reload": {"event": "combinedassault:gun_reload", "range": 24}

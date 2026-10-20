@@ -159,6 +159,7 @@ public final class HudSignals {
         Signals.bool(subject, "reloading", w -> w.getReloadTime() > 0);
         Signals.text(subject, "round", 24, w -> HudCache.roundLabel(w instanceof VehicleMissile missile
                 ? missile.currentRound() : w.getLoadedRound().isEmpty() ? w.getSelectedRound() : w.getLoadedRound()));
+        com.wf.combinedassault.barrel.client.BarrelHud.weapon(subject);
     }
 
     private static void flight() {

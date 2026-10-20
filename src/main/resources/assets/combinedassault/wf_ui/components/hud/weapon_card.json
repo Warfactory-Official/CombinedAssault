@@ -3,7 +3,9 @@
     "tab_w": "floor(130 / count) + (index < mod(130, count) ? 1 : 0)",
     "active": "index == station.active_index",
     "ammo": "primary.ammo == 0 ? #ffff6040 : primary.ammo <= floor(primary.capacity / 4) ? #ddffaa00 : #ff60e880",
-    "ammo_bar": "primary.ammo == 0 ? #ffff6040 : primary.ammo <= floor(primary.capacity / 4) ? #ddffaa00 : #ff30d050"
+    "ammo_bar": "primary.ammo == 0 ? #ffff6040 : primary.ammo <= floor(primary.capacity / 4) ? #ddffaa00 : #ff30d050",
+    "heat": "primary.temp >= 450 ? #ffff5020 : primary.temp >= 150 ? #ffffa030 : #ff60c070",
+    "status": "primary.reloading || primary.jammed || primary.changing > 0"
   },
   "use": [
     "combinedassault:hud"
@@ -55,23 +57,50 @@
                   "children": [
                     {
                       "type": "when",
-                      "if": "primary.reloading",
+                      "if": "primary.jammed",
                       "then": {
-                        "type": "text",
-                        "text": "RELOADING",
-                        "color": "#ffff6040"
+                        "type": "when",
+                        "if": "primary.clearing > 0",
+                        "then": {
+                          "type": "text",
+                          "text": "CLEAR {primary.clearing * 100}%",
+                          "color": "#ffffaa00"
+                        },
+                        "else": {
+                          "type": "text",
+                          "text": "JAMMED",
+                          "color": "blink(0.5) ? #ffff6040 : #ff802010"
+                        }
                       },
                       "else": {
-                        "type": "text",
-                        "text": "{primary.ammo} / {primary.capacity}",
-                        "color": "$ammo"
+                        "type": "when",
+                        "if": "primary.changing > 0",
+                        "then": {
+                          "type": "text",
+                          "text": "BARREL {primary.changing * 100}%",
+                          "color": "#ffffaa00"
+                        },
+                        "else": {
+                          "type": "when",
+                          "if": "primary.reloading",
+                          "then": {
+                            "type": "text",
+                            "text": "RELOADING",
+                            "color": "#ffff6040"
+                          },
+                          "else": {
+                            "type": "text",
+                            "text": "{primary.ammo} / {primary.capacity}",
+                            "color": "$ammo"
+                          }
+                        }
                       }
                     },
                     {
                       "type": "text",
                       "text": "{primary.round}",
                       "color": "#ffff8c00",
-                      "max_width": "primary.reloading || primary.capacity >= 100 ? 28 : primary.capacity >= 10 ? 40 : 52"
+                      "max_width": "$status || primary.capacity >= 100 ? 28 : primary.capacity >= 10 ? 40 : 52"
                     }
                   ]
                 }
@@ -87,6 +116,37 @@
                   "value": "primary.capacity > 0 ? primary.ammo / primary.capacity : 0",
                   "fill": "$ammo_bar",
                   "back": "#dd0f2210"
+                }
+              },
+              {
+                "type": "when",
+                "if": "primary.barrel",
+                "then": {
+                  "type": "place",
+                  "x": 5,
+                  "y": 35,
+                  "child": {
+                    "type": "column",
+                    "gap": 0,
+                    "children": [
+                      {
+                        "type": "bar",
+                        "w": 68.8,
+                        "h": 2,
+                        "value": "clamp(primary.heat, 0, 1)",
+                        "fill": "$heat",
+                        "back": "#dd0f2210"
+                      },
+                      {
+                        "type": "bar",
+                        "w": 68.8,
+                        "h": 1,
+                        "value": "primary.wear",
+                        "fill": "#ff90a0b0",
+                        "back": "#00000000"
+                      }
+                    ]
+                  }
                 }
               },
               {

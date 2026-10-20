@@ -1,6 +1,7 @@
 package com.wf.combinedassault.api.custom.sync;
 
 import com.wf.wflib.ammo.AmmoCodecs;
+import com.wf.wflib.barrel.BarrelState;
 import com.wf.wflib.magazine.MagContents;
 import com.wf.wflib.magazine.MagazineItems;
 import com.wf.wflib.magazine.Run;
@@ -121,6 +122,10 @@ public class SyncDataSerializers {
             },
             RoundCount::same
     );
+
+    public static final SyncDataSerializer<BarrelState> BARREL = SyncDataSerializer.create(
+            BarrelState.STREAM_CODEC::encode, BarrelState.STREAM_CODEC::decode,
+            BarrelState::equals);
 
     private SyncDataSerializers() {}
 

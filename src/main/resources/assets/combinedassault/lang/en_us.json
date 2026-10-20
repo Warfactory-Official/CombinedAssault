@@ -522,5 +522,21 @@
   "item.combinedassault.missile_mica": "MICA",
   "item.combinedassault.missile_r_77": "R-77",
   "item.combinedassault.missile_pl_12": "PL-12",
-  "item.combinedassault.missile_df_41": "DF-41"
+  "item.combinedassault.missile_df_41": "DF-41",
+  "key.combinedassault.reload_clear_jam.desc": "Reload / Clear Jam",
+  "key.combinedassault.change_barrel.desc": "Change Barrel",
+  "barrel_type.combinedassault.m240": "M240",
+  "barrel_type.combinedassault.m2": "M2HB",
+  "barrel_type.combinedassault.kpvt": "KPVT",
+  "barrel.combinedassault.fixed": "Fixed barrel",
+  "barrel.combinedassault.on_foot": "Dismount to change the barrel",
+  "barrel.combinedassault.busy": "Barrel busy",
+  "barrel.combinedassault.reach": "Too far from the muzzle",
+  "barrel.combinedassault.hidden": "Muzzle out of reach",
+  "barrel.combinedassault.need": "Need a spare %s barrel",
+  "barrel.combinedassault.temp": "Barrel %s °C",
+  "barrel.combinedassault.wear": "Wear %s%%",
+  "barrel.combinedassault.jammed": "JAMMED",
+  "barrel.combinedassault.change": "Change barrel",
+  "barrel.combinedassault.change_coop": "Change barrel (assisting gunner)"
 }

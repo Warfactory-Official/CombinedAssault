@@ -533,6 +533,14 @@ Rounds have no recipes in CA or WFLib; crafting = pack (GregTech).
 | `sounds` | key -> [sound](#610-audio) | — | `fire` (pivot; server sends it past tracking range), `shell` (half a cycle later; single-round reload: half the reload, <= 1 s), `reload` |
 | `casing_delay` | float | `0` | s from shot to spent case out of the bolt's `eject` socket; case = round's wflib calibre `casing` (`none` => nothing; `cannon` drawn at case length / 571 mm) |
 | `backblast` | object | — | cone out of the bolt origin, opposite the bore: `length` (`8`), `half_angle` (`30`), `damage` (`12`), `knockback` (`0.8`, blocks/tick); x (1 - d/length)(1 - angle/half_angle); needs line of sight; own vehicle + riders spared |
+| `barrel` | object | none | wflib `BarrelSpec` ([barrels](../../WF-Ballistics/docs/barrels.md)); absent => no heat, jams, cook-off, barrel change. Spread added to `inaccuracy`; jam roll per round (salvo = 1 roll); `cookOff.value` 0 = open bolt; `type` => spare barrel item, name key `barrel_type.<ns>.<path>` |
+| `unjam_time` | float | `1.5` | s to clear a jam; `<part>.unjam` clip => its length |
+
+Barrel runtime:
+- Jammed / clearing / changing => no fire (client dry click). Clear: one round discarded.
+- Cook-off: chambered, idle >= 0.5 s, not reloading => one round through the station, no operator.
+- Change on foot: muzzle probe node (spare of `type` carried or barrel hazy), `swap.coop` while another player mans the station, else `swap.self`. Seated: `change_barrel` key, `swap.self`, spare from inventory or stores. Coolest spare first.
+- Keys: `reload_clear_jam` (6): jammed => clear, else partly fired => breech back to stores + reload; `change_barrel` (7).
 
 Muzzle light peak `clamp(6 caliber, 30, 900)`, `1.5 + caliber/40` ticks; caliber = loaded round's, floor 20.
 
@@ -653,9 +661,10 @@ glTF animations, scrubbed by part progress p ∈ [0,1], never played on a clock:
 | `flaps` | deflection / deepest notch |
 | `linked_hinge` | rotation / open rotation (server hinge speed; collision and picture agree) |
 | `weapon`, clip `<part id>.fire` | time since current weapon's last shot / clip length; never fired => 1 (end key = rest) |
-| `weapon`, clip `<part id>.reload` | current weapon's reload progress; idle => 0 |
+| `weapon`, clip `<part id>.reload` | current weapon's reload progress; idle => 0; no `.unjam` clip => max with jam clear progress |
+| `weapon`, clip `<part id>.unjam` | current weapon's jam clear progress; idle => 0 |
 
-- Name `<part id>` or `<part id>.<suffix>`; no json. Weapon parts: suffix `fire` / `reload` only. Other names: warned once at bind, never played.
+- Name `<part id>` or `<part id>.<suffix>`; no json. Weapon parts: suffix `fire` / `reload` / `unjam` only. Other names: warned once at bind, never played.
 - Weapon clips: key nodes under the pitch frame, never the frames (frames = aim); `.fire` and `.reload` key disjoint nodes.
 - Start key = default state (p 0); end = other state, or full deflection.
 - After the controller graph: clip wins on the channels it keys. Toggle sound: trapdoor.
