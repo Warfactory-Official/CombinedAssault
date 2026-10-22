@@ -144,7 +144,7 @@ public class VehicleDataManager implements IVehicleDataManager {
                         && hardpoint.overrides().get(kit.id()).has("bolts");
                 variant.applySockets(null, null, ownBolts ? null : unit.getBolts(kit.id()));
                 if (!kit.station().has("ejects")) {
-                    variant.applyEjects(unit.getEjects());
+                    variant.applyEjects(unit.getEjects(kit.id()));
                 }
                 out.put(kit.id(), variant);
             }

@@ -25,7 +25,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/** On foot: muzzle node per barrel weapon, shown when a fitting spare is carried or the barrel is hot. */
+/** On foot: muzzle node per barrel weapon, shown for a quick-change barrel or a hot one. */
 final class BarrelNodes {
     private static final String KEY = "barrel.combinedassault.";
     private static final int COOL = 0xFF9AB0C0;
@@ -55,8 +55,7 @@ final class BarrelNodes {
             }
             for (AbstractVehicleWeapon<?> weapon : unit.indexedWeapons) {
                 GunBarrel barrel = weapon.barrel();
-                if (barrel == null || !unit.carries(weapon)
-                        || barrel.state().haze() <= 0 && barrel.spare(player).isEmpty()) {
+                if (barrel == null || !unit.carries(weapon) || barrel.state().haze() <= 0 && !barrel.spec().quickChange()) {
                     continue;
                 }
                 AimContext aim = weapon.getWeaponUnit().aimContext();
@@ -84,13 +83,17 @@ final class BarrelNodes {
         if (barrel.jammed()) {
             info.text(Component.translatable(KEY + "jammed"), 0xFFFF4040);
         }
+        if (!barrel.fitted()) {
+            info.text(Component.translatable(KEY + "none"), 0xFFFF4040);
+        }
         if (!spec.quickChange()) {
             return;
         }
         ItemStack spare = barrel.spare(player);
         int ticks = barrel.probeTicks(player);
-        ProbeAction change = ProbeAction.of(BarrelActions.CHANGE, arg, Component.translatable(KEY
-                + (ticks == spec.swap().selfTicks() ? "change" : "change_coop"))).timed(ticks);
+        String verb = !barrel.fitted() ? "fit" : spare.isEmpty() ? "remove" : "change";
+        ProbeAction change = ProbeAction.of(BarrelActions.CHANGE, arg, Component.translatable(KEY + verb
+                + (ticks == spec.swap().selfTicks() ? "" : "_coop"))).timed(ticks);
         if (!spare.isEmpty()) {
             change = change.withIcon(new ProbeElement.Icon(spare, 10, false));
         }

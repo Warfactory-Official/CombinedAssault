@@ -1,5 +1,8 @@
 package com.wf.combinedassault.vehicle.part;
 
+import com.wf.wflib.client.render.SimGhostEntities;
+import com.wf.wflib.sim.SimTargets;
+import com.wf.combinedassault.barrel.GunBarrel;
 import com.wf.combinedassault.audio.CueLoop;
 import com.wf.wflib.audio.AudioCategory;
 import com.wf.wflib.audio.SoundSpec;
@@ -408,6 +411,9 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
             if (airDefense != null) {
                 airDefense.tick();
             }
+            if (lockedEntity != null) {
+                SimTargets.keep(lockedEntity);
+            }
         }
         super.tick();
         indexedWeapons.forEach(AbstractVehicleWeapon::tick);
@@ -546,6 +552,9 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
             if (weapon instanceof VehicleMissile vehicleMissile) {
                 missileWeapon = vehicleMissile;
             }
+        }
+        if (lockedEntity != null && SimGhostEntities.current(lockedEntity) != lockedEntity) {
+            setLockedEntity(SimGhostEntities.current(lockedEntity));
         }
         if (lockedEntity != null) {
             Vec3 center = lockedEntity.getBoundingBox().getCenter();
@@ -980,8 +989,13 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         vehicle.rotYXZ().mul(rotation).getEulerAnglesYXZ(worldRot);
         aimContext.direction = new Vec2((float) Math.toDegrees(worldRot.x) + bolt.xRot, (float) Math.toDegrees(-worldRot.y) + bolt.yRot);
         Vec3 direction = VectorUtil.rotToVec(aimContext.direction.x, aimContext.direction.y);
-        aimContext.from = boltPosition.add(direction.scale(bolt.barrelLength));
+        aimContext.from = boltPosition.add(direction.scale(barrelLength(bolt)));
         return aimContext;
+    }
+
+    /** Breech -> muzzle, blocks: the current weapon's fitted barrel variant, else the bolt's. */
+    public float barrelLength(Bolt bolt) {
+        return getCurrentWeapon().map(AbstractVehicleWeapon::barrel).map(GunBarrel::length).orElse(bolt.barrelLength);
     }
 
     public Vec3 worldCurrentBoltPosition() {

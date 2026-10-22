@@ -93,7 +93,7 @@ public final class BarrelFx {
     private static void wisp(ClientLevel level, AbstractVehicleWeapon<?> weapon, float haze) {
         AimContext aim = weapon.getWeaponUnit().aimContext();
         Vec3 dir = VectorUtil.rotToVec(aim.direction.x, aim.direction.y).normalize();
-        float length = weapon.getWeaponUnit().getCurrentBolt().barrelLength;
+        float length = weapon.getWeaponUnit().barrelLength(weapon.getWeaponUnit().getCurrentBolt());
         Vec3 at = aim.from.subtract(dir.scale(level.random.nextFloat() * length * 0.4));
         float grey = 0.55f + 0.2f * level.random.nextFloat();
         level.addParticle(new SmokeCloudOption(grey, grey, grey, 0.05f + 0.07f * haze, 0f, 30, 0.04f + 0.03f * haze,
@@ -115,7 +115,7 @@ public final class BarrelFx {
             AimContext aim = weapon.getWeaponUnit().aimContext();
             Vec3 dir = VectorUtil.rotToVec(aim.direction.x, aim.direction.y).normalize();
             Vec3 drift = weapon.getVehicle().position(partialTick).subtract(weapon.getVehicle().position());
-            Vec3 at = aim.from.add(drift).subtract(dir.scale(weapon.getWeaponUnit().getCurrentBolt().barrelLength / 2));
+            Vec3 at = aim.from.add(drift).subtract(dir.scale(weapon.getWeaponUnit().barrelLength(weapon.getWeaponUnit().getCurrentBolt()) / 2));
             BarrelGlow.submit(at.x, at.y, at.z, hot.glow);
         }
     }

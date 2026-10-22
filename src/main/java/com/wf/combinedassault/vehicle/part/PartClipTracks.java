@@ -68,7 +68,7 @@ public final class PartClipTracks {
                 case FLAPS -> Mth.clamp(((FlapUnit) part).level(partialTick), 0, 1);
                 case HINGE -> Mth.clamp(((LinkedHingeUnit) part).openness(partialTick), 0, 1);
                 case FIRE -> ((WeaponUnit) part).getCurrentWeapon()
-                        .map(weapon -> span <= 0 ? 1 : Mth.clamp(weapon.secondsSinceShot(partialTick) / span, 0, 1))
+                        .map(weapon -> span <= 0 ? 1 : Mth.clamp(weapon.cycleSeconds(partialTick) / span, 0, 1))
                         .orElse(1f);
                 case RELOAD -> ((WeaponUnit) part).getCurrentWeapon()
                         .map(weapon -> clearsJams && weapon.barrel() != null
@@ -147,6 +147,14 @@ public final class PartClipTracks {
             track.clearsJams = track.kind == Kind.RELOAD && !byTrack.containsKey(new Key(track.part, Kind.UNJAM));
         }
         return new PartClipTracks(rig, tracks.toArray(Track[]::new));
+    }
+
+    /** Mount model clip: bare {@code fire} / {@code reload} / {@code unjam} => the carrying part's. */
+    public static String mountClip(String clip, String part) {
+        return switch (clip) {
+            case "fire", "reload", "unjam" -> part + "." + clip;
+            default -> clip;
+        };
     }
 
     private static String partId(String clip) {

@@ -11,6 +11,8 @@ import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.part.PartClipTracks;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,10 +27,12 @@ final class PartClips {
     }
 
     /** Null: no clip names a tracked part. */
-    static PartClips bind(GemRenderGltfModel gltf, PartClipTracks tracks) {
+    /** @param part carrying part id of a mount model ({@link PartClipTracks#mountClip}); null = vehicle model */
+    static PartClips bind(GemRenderGltfModel gltf, PartClipTracks tracks, @Nullable String part) {
         List<Bound> bound = new ArrayList<>();
         for (GltfAnimation clip : gltf.animations().values()) {
-            PartClipTracks.Track track = tracks.track(clip.name());
+            PartClipTracks.Track track = tracks.track(part == null ? clip.name()
+                    : PartClipTracks.mountClip(clip.name(), part));
             if (track != null) {
                 bound.add(new Bound(clip, track, bound.stream().noneMatch(b -> b.track == track)));
             }

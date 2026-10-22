@@ -538,5 +538,11 @@
   "barrel.combinedassault.wear": "Wear %s%%",
   "barrel.combinedassault.jammed": "JAMMED",
   "barrel.combinedassault.change": "Change barrel",
-  "barrel.combinedassault.change_coop": "Change barrel (assisting gunner)"
+  "barrel.combinedassault.change_coop": "Change barrel (assisting gunner)",
+  "barrel.combinedassault.remove": "Remove barrel",
+  "barrel.combinedassault.remove_coop": "Remove barrel (assisting gunner)",
+  "barrel.combinedassault.fit": "Fit barrel",
+  "barrel.combinedassault.fit_coop": "Fit barrel (assisting gunner)",
+  "barrel.combinedassault.none": "NO BARREL",
+  "barrel_type.combinedassault.m2.short": "M2HB, short"
 }

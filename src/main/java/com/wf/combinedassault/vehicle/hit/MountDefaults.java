@@ -335,7 +335,8 @@ public final class MountDefaults {
             throw fail(mount, "eject on " + part + ", which is no weapon part");
         }
         for (Relative other : relative) {
-            if (other.field.equals("eject") && other.part.equals(part) && other.index == index) {
+            if (other.field.equals("eject") && other.part.equals(part) && other.index == index
+                    && java.util.Objects.equals(other.mount.kit(), mount.kit())) {
                 throw fail(mount, "repeats eject " + index + " of part " + part);
             }
         }
@@ -365,7 +366,7 @@ public final class MountDefaults {
     public record Relative(String part, String field, int index, ModelMounts.Mount mount) {
     }
 
-    /** @param values part id -> json keys the json left out; {@code kit_bolts} / {@code kit_sights}: kit id -> bolts / sight */
+    /** @param values part id -> json keys the json left out; {@code kit_bolts} / {@code kit_ejects} / {@code kit_sights}: kit id -> bolts / ejects / sight */
     public record Resolved(Map<String, JsonObject> values, List<String> repeated, List<String> overridden) {
     }
 
@@ -393,6 +394,7 @@ public final class MountDefaults {
         Map<String, TreeMap<Integer, JsonElement>> bolts = new LinkedHashMap<>();
         Map<String, Map<String, TreeMap<Integer, JsonElement>>> kitBolts = new LinkedHashMap<>();
         Map<String, TreeMap<Integer, JsonElement>> ejects = new LinkedHashMap<>();
+        Map<String, Map<String, TreeMap<Integer, JsonElement>>> kitEjects = new LinkedHashMap<>();
         for (Relative r : relative) {
             WeaponUnitData weapon = weapons.get(r.part);
             String where = vehicleId + ": glTF node " + r.mount.name() + " ";
@@ -426,7 +428,9 @@ public final class MountDefaults {
                 eject.add("direction", vec(inverse.mul(r.mount.rotation(), new Quaternionf())
                         .transform(new Vector3f(0, 0, 1))));
                 eject.add("speed", number(r.mount.scale().z));
-                ejects.computeIfAbsent(r.part, k -> new TreeMap<>()).put(r.index, eject);
+                (r.mount.kit() == null ? ejects.computeIfAbsent(r.part, k -> new TreeMap<>())
+                        : kitEjects.computeIfAbsent(r.part, k -> new LinkedHashMap<>())
+                                .computeIfAbsent(r.mount.kit(), k -> new TreeMap<>())).put(r.index, eject);
                 continue;
             }
             if (r.field.equals("sight_lens")) {
@@ -477,14 +481,12 @@ public final class MountDefaults {
             byIndex.values().forEach(list::add);
             values.computeIfAbsent(part, k -> new JsonObject()).add("stations", list);
         });
-        ejects.forEach((part, byIndex) -> {
-            if (byIndex.lastKey() != byIndex.size() - 1) {
-                throw new IllegalArgumentException(vehicleId + ": part " + part + " ejects " + byIndex.keySet()
-                        + "; indices run 0.." + (byIndex.size() - 1));
-            }
-            JsonArray list = new JsonArray();
-            byIndex.values().forEach(list::add);
-            values.computeIfAbsent(part, k -> new JsonObject()).add("ejects", list);
+        ejects.forEach((part, byIndex) -> values.computeIfAbsent(part, k -> new JsonObject())
+                .add("ejects", ejectList(vehicleId, part, byIndex)));
+        kitEjects.forEach((part, byKit) -> {
+            JsonObject lists = new JsonObject();
+            byKit.forEach((kit, byIndex) -> lists.add(kit, ejectList(vehicleId, part + " kit " + kit, byIndex)));
+            values.computeIfAbsent(part, k -> new JsonObject()).add("kit_ejects", lists);
         });
         bolts.forEach((part, byIndex) -> {
             JsonArray list = new JsonArray();
@@ -514,6 +516,16 @@ public final class MountDefaults {
         return new Resolved(values, repeated, overridden);
     }
 
+    private static JsonArray ejectList(String vehicleId, String part, TreeMap<Integer, JsonElement> byIndex) {
+        if (byIndex.lastKey() != byIndex.size() - 1) {
+            throw new IllegalArgumentException(vehicleId + ": part " + part + " ejects " + byIndex.keySet()
+                    + "; indices run 0.." + (byIndex.size() - 1));
+        }
+        JsonArray list = new JsonArray();
+        byIndex.values().forEach(list::add);
+        return list;
+    }
+
     /** Resolved values into {@code data}'s weapon / holder parts. */
     public static void apply(BaseVehicleData<?> data, Map<String, JsonObject> values) {
         for (PartUnitEntry<?, ?> entry : data.getParts()) {
@@ -528,6 +540,12 @@ public final class MountDefaults {
                         keys.has("bolts") ? List.of(GsonUtil.GSON.fromJson(keys.get("bolts"), Bolt[].class)) : null);
                 if (keys.has("ejects")) {
                     weapon.applyEjects(List.of(GsonUtil.GSON.fromJson(keys.get("ejects"), Eject[].class)));
+                }
+                if (keys.has("kit_ejects")) {
+                    Map<ResourceLocation, List<Eject>> byKit = new LinkedHashMap<>();
+                    keys.getAsJsonObject("kit_ejects").entrySet().forEach(e -> byKit.put(
+                            ResourceLocation.parse(e.getKey()), List.of(GsonUtil.GSON.fromJson(e.getValue(), Eject[].class))));
+                    weapon.applyKitEjects(byKit);
                 }
                 if (keys.has("kit_bolts")) {
                     Map<ResourceLocation, List<Bolt>> byKit = new LinkedHashMap<>();

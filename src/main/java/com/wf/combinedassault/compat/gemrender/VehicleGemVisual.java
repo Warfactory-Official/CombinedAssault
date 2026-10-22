@@ -87,6 +87,8 @@ public class VehicleGemVisual<T extends AbstractVehicle> extends AbstractEntityV
         PartClipTracks clipsTracks;
         @Nullable
         PartClips clips;
+        @Nullable
+        MountNodes nodes;
         float[] state = new float[0];
         Matrix4f[] palette;
         final GltfPose.Scratch scratch = new GltfPose.Scratch();
@@ -98,8 +100,13 @@ public class VehicleGemVisual<T extends AbstractVehicle> extends AbstractEntityV
                 state = table.newScratch();
             }
             table.resetToRest(state);
-            clips.advance(partialTick);
-            clips.apply(state);
+            if (clips != null) {
+                clips.advance(partialTick);
+                clips.apply(state);
+            }
+            if (nodes != null) {
+                nodes.apply(table, state, part);
+            }
             int joints = gltf.jointCount();
             if (palette == null || palette.length != joints) {
                 palette = new Matrix4f[joints];
@@ -241,15 +248,16 @@ public class VehicleGemVisual<T extends AbstractVehicle> extends AbstractEntityV
                         .createInstance();
                 mount.instance.colorArgb(0xFFFFFFFF);
                 mount.clipsTracks = null;
+                mount.nodes = MountNodes.of(gltf.layout().nodeTable());
             }
             PartClipTracks tracks = entity.clipTracks();
             if (mount.clipsTracks != tracks) {
                 mount.clipsTracks = tracks;
-                mount.clips = tracks == null ? null : PartClips.bind(gltf, tracks);
+                mount.clips = tracks == null ? null : PartClips.bind(gltf, tracks, mount.part.getId());
             }
             GemRenderInstance instance = mount.instance;
             instance.pose.set(body.pose).mul(snapshot.palette()[slot]);
-            int palette = mount.clips == null ? BoneBuffer.getInstance().addSharedPalette(mount.rest, gltf.jointCount())
+            int palette = mount.clips == null && mount.nodes == null ? BoneBuffer.getInstance().addSharedPalette(mount.rest, gltf.jointCount())
                     : BoneBuffer.getInstance().addPalette(mount.posed(gltf, partialTick), gltf.jointCount());
             instance.boneBase = palette;
             instance.boneSphere.set(mount.sphere);

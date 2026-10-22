@@ -264,7 +264,7 @@ final class GemRenderModelInstance implements VehicleModelInstance {
         if (clipsModel != gltf || clipsTracks != tracks) {
             clipsModel = gltf;
             clipsTracks = tracks;
-            clips = tracks == null ? null : PartClips.bind(gltf, tracks);
+            clips = tracks == null ? null : PartClips.bind(gltf, tracks, null);
         }
         if (clips != null) {
             clipsMoved |= clips.advance(partialTick);

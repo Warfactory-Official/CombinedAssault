@@ -92,6 +92,8 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
     private int shots;
     /** {@code vehicle.tickCount} at the last firing; MIN_VALUE = never. */
     private int shotTick = Integer.MIN_VALUE;
+    /** {@code vehicle.tickCount} at the first firing of the current sustained burst ({@link #cycleSeconds}). */
+    private int burstTick;
     protected SyncDataHolder<Integer> remainAmmoHolder;
     protected SyncDataHolder<Integer> reloadTimeHolder;
     protected Vec3 targetLocation;
@@ -135,21 +137,45 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
 
     private void setShots(int shots) {
         if (shots != this.shots) {
-            this.shotTick = vehicle.tickCount;
+            stampShot();
         }
         this.shots = shots;
+    }
+
+    private void stampShot() {
+        if (secondsSinceShot(0) > sustainGap()) {
+            burstTick = vehicle.tickCount;
+        }
+        shotTick = vehicle.tickCount;
+    }
+
+    /** Gap that still continues a burst, s: one interval + one tick. */
+    private float sustainGap() {
+        return getShootInterval() / 1000f + 0.05f;
     }
 
     /** Server, once per firing: cooldown + {@code .fire} clip. */
     protected void markShot() {
         this.lastShootTime = System.currentTimeMillis();
         this.shots++;
-        this.shotTick = vehicle.tickCount;
+        stampShot();
     }
 
     /** +inf before the first firing. */
     public float secondsSinceShot(float partialTick) {
         return shotTick == Integer.MIN_VALUE ? Float.POSITIVE_INFINITY : (vehicle.tickCount - shotTick + partialTick) / 20f;
+    }
+
+    /**
+     * Seconds into the current round's cycle ({@code .fire} clips): interval < 1 tick, burst sustained => phase at
+     * {@code shoot_interval} from the burst start (rounds are strung out within ticks); else since the last firing
+     * (1..2 tick intervals fire every 2 ticks: measured M2 60 ms => 100 ms).
+     */
+    public float cycleSeconds(float partialTick) {
+        float since = secondsSinceShot(partialTick);
+        float interval = getShootInterval() / 1000f;
+        return interval >= 0.05f || since > sustainGap() ? since
+                : (vehicle.tickCount - burstTick + partialTick) / 20f % interval;
     }
 
     /** [0,1] through the current reload; 0 when not reloading. */
@@ -184,11 +210,12 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
             float spread = barrel == null ? 0 : barrel.fired();
             for (AimContext aimContext : aimContexts) {
                 if (Munitions.fire(vehicle, weaponUnit, aimContext, feed(), data.getInaccuracy() + spread,
-                        root.getLockedEntity(), cookOff ? null : root.getOwner(), lead)) {
+                        root.getLockedEntity(), cookOff ? null : root.getOwner(), lead,
+                        barrel == null ? 1 : barrel.velocity())) {
                     vehicle.queueRecoil(weaponUnit, data.getRecoil());
                     if (data.getBackblast() != null && vehicle.level() instanceof ServerLevel level) {
-                        data.getBackblast().fire(level, vehicle, aimContext, weaponUnit.getCurrentBolt().barrelLength,
-                                root.getOwner());
+                        data.getBackblast().fire(level, vehicle, aimContext,
+                                weaponUnit.barrelLength(weaponUnit.getCurrentBolt()), root.getOwner());
                     }
                 }
             }

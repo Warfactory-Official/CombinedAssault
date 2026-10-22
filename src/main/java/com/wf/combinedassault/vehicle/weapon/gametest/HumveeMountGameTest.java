@@ -49,9 +49,9 @@ public class HumveeMountGameTest {
     private static final ResourceLocation HUMVEE = CombinedAssault.modLocation("humvee");
     private static final ResourceLocation MK19 = CombinedAssault.modLocation("mk19");
     private static final ResourceLocation M2 = CombinedAssault.modLocation("gun_12.7mm");
-    /** stage_emb4_humvee: T(MUZZLE), T(M2_MUZZLE) = (p + (0, 0.34, 0)) * 0.9, vehicle frame. */
+    /** Vehicle frame. Mk 19: stage_emb4_humvee T(MUZZLE). M2: m2.gltf socket_bolt_0 tip on the roof mount. */
     private static final Vec3 MK19_MUZZLE = new Vec3(0, 2.4552, 1.6083);
-    private static final Vec3 M2_MUZZLE = new Vec3(0, 2.3904, 1.989);
+    private static final Vec3 M2_MUZZLE = new Vec3(0, 2.3904, 1.84415);
     /** humvee.gltf roof_mount: the yaw axis. */
     private static final Vec3 YAW_AXIS = new Vec3(0, 0, -0.0162);
     private static final double EPS = 1e-3;

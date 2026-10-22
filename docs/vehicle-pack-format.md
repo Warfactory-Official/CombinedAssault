@@ -436,7 +436,7 @@ that type adds — there is no nested `data` object.
 | `zoom_min` / `zoom_max` | float | `1` / `8` | |
 | `crosshair_style` | enum | `circle` | `none`, `circle`, `square`, `cross`, `big_cross` |
 | `handling` | enum | `remote` | `manual`: operator's own recoil, aim kicked by round momentum (`backblast` => x0.1), recovers; `remote`: visual jolt only. Local operator, client only. `manual` + `sight` socket + (`operator` sight or `optic`) => SCOPE = ADS: eye operator view -> `sight` (rides the pitch frame) over 0.25 s, world FOV / `zoom` x `max(1, fov / 70)`; `magnification_change` (RMB) tap toggles, hold = x1.4 zoom (MineAssault controls) |
-| `optic` | object | absent | ADS picture-in-picture on the `sight_lens` mesh (WFLib `PipLens`): `zoom` float[] non-empty (magnification levels), `reticle` RL png (absent: duplex), `reticle_size` MOA (`<= 0`: lens fill), `reticle_zoom` (second focal plane), `mask` RL png, `eye_relief` m (absent: `sight` -> lens), `objective` m (picture pass origin ahead of the eye; clears the kit's own mesh, Flywheel-drawn => not hideable) |
+| `optic` | object | absent | ADS picture-in-picture on the `sight_lens` mesh (WFLib `PipLens`): `zoom` float[] non-empty (magnification levels, vs the surrounding view), `reticle` RL png (absent: duplex), `reticle_size` MOA (`<= 0`: lens fill), `reticle_zoom` (second focal plane), `mask` RL png, `eye_relief` m (absent: `sight` -> lens; field stop = lens radius / it), `objective` m (picture pass origin ahead of the eye; clears the kit's own mesh, Flywheel-drawn => not hideable) |
 
 ### 4.5 The `weapons` list
 
@@ -539,7 +539,8 @@ Rounds have no recipes in CA or WFLib; crafting = pack (GregTech).
 Barrel runtime:
 - Jammed / clearing / changing => no fire (client dry click). Clear: one round discarded.
 - Cook-off: chambered, idle >= 0.5 s, not reloading => one round through the station, no operator.
-- Change on foot: muzzle probe node (spare of `type` carried or barrel hazy), `swap.coop` while another player mans the station, else `swap.self`. Seated: `change_barrel` key, `swap.self`, spare from inventory or stores. Coolest spare first.
+- Change on foot: muzzle probe node (quick-change or hazy barrel), `swap.coop` while another player mans the station, else `swap.self`. Seated: `change_barrel` key, `swap.self`, spare from inventory or stores. Spare: main hand, else coolest. Done: spare => exchanged; none => barrel off into the inventory (gun refuses to fire); empty gun + spare => fitted.
+- `barrel.variants` {id: {length m, velocity}}: spare variant fitted => muzzle at `length` past the breech, round speed x `velocity`; lang `barrel_type.<ns>.<path>.<id>`.
 - Keys: `reload_clear_jam` (6): jammed => clear, else partly fired => breech back to stores + reload; `change_barrel` (7).
 
 Muzzle light peak `clamp(6 caliber, 30, 900)`, `1.5 + caliber/40` ticks; caliber = loaded round's, floor 20.
@@ -660,11 +661,12 @@ glTF animations, scrubbed by part progress p ∈ [0,1], never played on a clock:
 | switchable (`door`, hatch, `landing_gear`, `weapon_bay`, `airbrake`, …) | → on ? 1 : 0 at 1/span per s, per tick, both sides; span = the part's longest clip |
 | `flaps` | deflection / deepest notch |
 | `linked_hinge` | rotation / open rotation (server hinge speed; collision and picture agree) |
-| `weapon`, clip `<part id>.fire` | time since current weapon's last shot / clip length; never fired => 1 (end key = rest) |
+| `weapon`, clip `<part id>.fire` | time since current weapon's last shot / clip length; `shoot_interval` < 50 ms in a sustained burst => time into the round's cycle at `shoot_interval` (one cycle per round); 50..100 ms fires every 2 ticks; never fired => 1 (end key = rest) |
 | `weapon`, clip `<part id>.reload` | current weapon's reload progress; idle => 0; no `.unjam` clip => max with jam clear progress |
 | `weapon`, clip `<part id>.unjam` | current weapon's jam clear progress; idle => 0 |
 
 - Name `<part id>` or `<part id>.<suffix>`; no json. Weapon parts: suffix `fire` / `reload` / `unjam` only. Other names: warned once at bind, never played.
+- Mount model (part `mounts`, kits): bare `fire` / `reload` / `unjam` = `<carrying part id>.<name>`.
 - Weapon clips: key nodes under the pitch frame, never the frames (frames = aim); `.fire` and `.reload` key disjoint nodes.
 - Start key = default state (p 0); end = other state, or full deflection.
 - After the controller graph: clip wins on the channels it keys. Toggle sound: trapdoor.
@@ -807,7 +809,9 @@ Role nodes read at load (rest pose, vehicle frame). Each fills a vehicle def key
 - Weapon view / sight: relative to the part frame; bolt, eject: in its `pitch` frame (none: `part`).
 - Addon `bone` = the socket's frame name.
 - `light` keys (`combinedassault.*`): `kind` `head` (default) \| `search`, `color` `#rrggbb`, `range`, `intensity` (E ~1 at `sqrt(intensity)` blocks), `inner`/`outer` half-angle deg (`0 < inner <= outer < 89`), `shadow`, `cookie`. Defaults per kind: `VehicleLight.Kind`. Toggle key (default `\`): driver -> `head`, other crew -> `search`; vehicle with one kind => that kind. Destroyed => off.
-- Part `mounts` model: its part-target sockets with no interface => the carrying part. Kit mount `bolt` / `sight` / `sight_lens` replace the part's while that kit is fitted. Station sockets (gunner seat, view) belong in a mount, not the shared hull model: an unarmed sibling then loads.
+- Part `mounts` model: its part-target sockets with no interface => the carrying part. Kit mount `bolt` / `eject` / `sight` / `sight_lens` replace the part's while that kit is fitted.
+- Mount model state nodes (posable, by name; carrying part's current weapon): `ammo_can` shown while rounds remain or reloading; `round@<k>` while remaining > k; `barrel@<variant>` (`standard` = no variant, weapon `barrel.variants`) while that barrel is on and not being changed. Drawn only; hits use the rest pose.
+- Station sockets (gunner seat, view) belong in a mount, not the shared hull model: an unarmed sibling then loads.
 - Model shared by two vehicles: its sockets apply to both; a part one lacks fails that one's load => per-vehicle offsets in the def.
 - Def geometry -> sockets: `tools/def_sockets.py move` (shared model: only values every def agrees on), load, `prune <log>` deletes what the load reports repeated.
 - Stays json: tuning (springs, forces, mass, health), crew, weapons.
@@ -1473,7 +1477,7 @@ Gun = kit def; vehicle part = typed `hardpoint`. Fitted / taken off in the field
 
 | kit field | notes |
 | --- | --- |
-| `model` | mount glTF, grafted under the hardpoint `node`; role nodes `bolt`, `hit`, `hit_surface` only |
+| `model` | mount glTF, grafted under the hardpoint `node`; role nodes `bolt`, `eject`, `sight`, `sight_lens`, `hit`, `hit_surface` only; clips `fire` / `reload` / `unjam` ([§6.4](#64-part-clips)); state nodes (below) |
 | `weapons` | [§4.5](#45-the-weapons-list) entries; each gets `kit` + `save_id` `<kit>/<weapon>` |
 | `fits` | hardpoint classes (free strings) |
 | `install_ticks` | fit / take off duration, default 100 |

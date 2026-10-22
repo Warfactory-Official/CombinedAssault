@@ -1,5 +1,6 @@
 package com.wf.combinedassault.entity.vehicle;
 
+import com.wf.wflib.sim.SimTargets;
 import com.wf.wflib.audio.EngineSound;
 import com.wf.combinedassault.audio.VehicleAudio;
 import java.util.List;
@@ -2281,7 +2282,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             } else if (message.lockEntity) {
                 PartUnit<?> partUnit = vehicle.getOwnOperatorUnit(player);
                 if (partUnit instanceof WeaponUnit weaponUnit && CrewRules.mayOperate(player, weaponUnit)) {
-                    weaponUnit.setLockedEntity(player.level().getEntity(message.lockedEntityId));
+                    weaponUnit.setLockedEntity(SimTargets.resolve((ServerPlayer) player, message.lockedEntityId));
                 }
             }
         }

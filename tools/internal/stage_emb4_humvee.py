@@ -4,7 +4,6 @@
 """Stage the EMB4 (McHeliCE addon) Humvee: glTF display + structure, and its Mk 19 as a separate mount model.
 
     python3 tools/internal/stage_emb4_humvee.py      (from combinedassault/)
-    python3 tools/internal/stage_emb4_humvee.py m2   M2 mount from humveewithweapon (same pivots); role layout, shipped pack
 
 MCHeli frame == vehicle frame (+X port, +Z forward); pivots from humvee_mk19.yml. Ours = (p + (0, GROUND, 0)) * SCALE.
 Roof: humvee = open ring only ($body1 roof plug dropped). humvee_mk19 part MOUNT_PART carries two mounts: shield +
@@ -23,7 +22,6 @@ import mqo  # noqa: E402
 
 SRC = os.path.expanduser("~/projects/mcheli-gigarework/McHeliCE/run/mcheli_addons/everything/assets/mcheli")
 SHA1 = "4e99a5570061f37e0538d8b72cf34fb7aecd79c9"
-M2_SHA1 = "dbcdd2c1a332ea2cec4dbcd7c3ae930735d2e3f5"
 PACK = "src/main/resources/default_vehicle"
 SHIPPED = "src/main/resources/combinedassault_packs/combinedassault"
 NS = "combinedassault"
@@ -31,7 +29,6 @@ NS = "combinedassault"
 SCALE, GROUND = 0.9, 0.34
 YAW_PIVOT, PITCH_PIVOT = (0.0, 1.01, -0.018), (0.0, 2.273, 0.869)
 MUZZLE = (0.0, 2.388, 1.787)
-M2_MUZZLE = (0.0, 2.316, 2.21)
 MOUNT_BONE = "roof_mount_pitch"
 MOUNT_PART = "roof_mount"
 # node: (parts, hinge pivot, axis); doors swing about +Y at their front edge, hatches about +X
@@ -168,26 +165,6 @@ def mk19(src):
                                      "scale": [1, 1, round(float(muzzle[2] - breech[2]), 5)]}])
 
 
-def m2(src):
-    """Pitch-pivot frame, role nodes as convert_pack writes them."""
-    w = mqo.GltfWriter(f"{NS}:models/weapon/m2/m2.bin", f"{NS}:textures/weapon/m2/m2.png",
-                       "tools/internal/stage_emb4_humvee.py")
-    pitch_p = T(PITCH_PIVOT)
-    root = w.node("m2", mesh=mesh_of(w, "m2", src.objs(["$weapon0_0"]), pitch_p))
-    muzzle = T(M2_MUZZLE)
-    bolt = w.node("socket_bolt_0", [round(float(v), 5) for v in (muzzle[0], muzzle[1] - pitch_p[1], 0.0)], parent=root)
-    w.doc["nodes"][bolt].update({"scale": [1.0, 1.0, round(float(muzzle[2] - pitch_p[2]), 5)], "extras": {
-        "combinedassaultRole": "bolt", "combinedassault": {"index": 0}, "gemrenderHidden": True}})
-    models = os.path.join(SHIPPED, "assets", NS, "models", "weapon", "m2")
-    textures = os.path.join(SHIPPED, "assets", NS, "textures", "weapon", "m2")
-    os.makedirs(models, exist_ok=True)
-    os.makedirs(textures, exist_ok=True)
-    w.write(os.path.join(models, "m2.gltf"), os.path.join(models, "m2.bin"),
-            {"staged_by": "tools/internal/stage_emb4_humvee.py", "source": "EMB4 McHeliCE humveewithweapon $weapon0_0",
-             "scale": SCALE})
-    shutil.copyfile(os.path.join(SRC, "textures", "tanks", "humveewithweapon.png"), os.path.join(textures, "m2.png"))
-
-
 def cube(lo, hi):
     lo, hi = np.asarray(lo, float), np.asarray(hi, float)
     size = np.maximum(hi - lo, 0.05)
@@ -236,9 +213,6 @@ def clips():
 
 def main():
     os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-    if sys.argv[1:] == ["m2"]:
-        m2(Source("humveewithweapon", M2_SHA1))
-        return
     src = Source()
     textures = os.path.join(PACK, "assets", NS, "textures", "ground", "humvee")
     os.makedirs(textures, exist_ok=True)

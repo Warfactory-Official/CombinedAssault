@@ -1,5 +1,7 @@
 package com.wf.combinedassault.vehicle.part;
 
+import com.wf.wflib.client.render.SimGhostEntities;
+import com.wf.wflib.sim.SimTargets;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -191,6 +193,9 @@ public class RadarUnit extends RotatableUnit<RadarUnitData> {
 
     public void tickLock() {
         if (vehicle.level().isClientSide()) {
+            if (lockedEntity != null && SimGhostEntities.current(lockedEntity) != lockedEntity) {
+                setLockedEntity(SimGhostEntities.current(lockedEntity));
+            }
             if (lockedEntity != null) {
                 // Decoys can spoof the lock here.
                 Entity checkEntity = Radar.checkTarget(vehicle, detectedObjects.values().stream()
@@ -209,6 +214,9 @@ public class RadarUnit extends RotatableUnit<RadarUnitData> {
         } else {
             if (lockedEntity != null && !lockedEntity.isAlive()) {
                 setLockedEntity(null);
+            }
+            if (lockedEntity != null) {
+                SimTargets.keep(lockedEntity);
             }
         }
     }

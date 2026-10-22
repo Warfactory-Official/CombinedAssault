@@ -20,6 +20,8 @@ public class WeaponUnitData extends RotatableUnitData {
     private List<Bolt> bolts;
     /** Kit mount bolts; a kit absent here fires from {@link #bolts}. */
     private Map<ResourceLocation, List<Bolt>> kitBolts = Map.of();
+    /** Kit mount case ports; a kit absent here ejects from {@link #ejects}. */
+    private Map<ResourceLocation, List<Eject>> kitEjects = Map.of();
     /** Kit mount sight sockets; a kit absent here sights from {@link #opticalSightOffset}. */
     private Map<ResourceLocation, Vec3> kitSights = Map.of();
     /** {@code sight_lens} node, its own and per kit mount; null => none. */
@@ -124,6 +126,14 @@ public class WeaponUnitData extends RotatableUnitData {
 
     public List<Eject> getEjects() {
         return ejects;
+    }
+
+    public void applyKitEjects(Map<ResourceLocation, List<Eject>> byKit) {
+        this.kitEjects = Map.copyOf(byKit);
+    }
+
+    public List<Eject> getEjects(ResourceLocation kit) {
+        return kitEjects.getOrDefault(kit, ejects);
     }
 
     public void applyKitBolts(Map<ResourceLocation, List<Bolt>> byKit) {

@@ -7,6 +7,7 @@ import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.pack.CombinedPacks;
 import com.wf.combinedassault.vehicle.light.VehicleLight;
+import com.wf.combinedassault.vehicle.part.PartClipTracks;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
@@ -115,10 +116,10 @@ public final class ModelDataManager {
                 }
                 wheels.add(new ModelMounts.Wheel(node.name(), node.origin()));
             }
-            if (kitOf.get(i) != null && role != null && role != NodeRole.BOLT && role != NodeRole.SIGHT
+            if (kitOf.get(i) != null && role != null && role != NodeRole.BOLT && role != NodeRole.EJECT && role != NodeRole.SIGHT
                     && role != NodeRole.SIGHT_LENS && role != NodeRole.HIT && role != NodeRole.HIT_SURFACE) {
                 throw new IllegalArgumentException(source + ": node " + node.name() + " (" + role.key()
-                        + ") in the mount of kit " + kitOf.get(i) + "; kit mounts carry bolt, sight, sight_lens, hit and hit_surface nodes only");
+                        + ") in the mount of kit " + kitOf.get(i) + "; kit mounts carry bolt, eject, sight, sight_lens, hit and hit_surface nodes only");
             }
             if (role == NodeRole.LIGHT) {
                 lights.add(VehicleLight.read(i, node.name(), node.meta()));
@@ -319,7 +320,8 @@ public final class ModelDataManager {
             for (GltfReader.Channel c : clip.channels()) {
                 channels.add(new GltfReader.Channel(c.node() + nodeBase, c.path(), c.times(), c.values(), c.step()));
             }
-            clips.add(new GltfReader.Clip(clip.name(), clip.duration(), List.copyOf(channels)));
+            clips.add(new GltfReader.Clip(PartClipTracks.mountClip(clip.name(), part), clip.duration(),
+                    List.copyOf(channels)));
         }
         return new GltfReader.Model(List.copyOf(nodes), List.copyOf(materials), List.copyOf(clips));
     }

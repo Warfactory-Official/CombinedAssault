@@ -6,7 +6,6 @@ import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.WeaponUnit;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
 import com.wf.wflib.client.sight.PipLens;
-import com.wf.wflib.client.sight.ScopeMath;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Vec3i;
@@ -31,7 +30,7 @@ import org.joml.Vector3f;
 public final class StationPip {
     /** Below this ADS progress no pass runs. */
     private static final float MIN_ADS = 0.02F;
-    static final int SIZE = 512;
+    static final int SIZE = 2048;
     private static final PipLens LENS = new PipLens();
     private static final float[] FLEX = new float[2];
     private static final Vector3f EULER = new Vector3f();
@@ -99,9 +98,8 @@ public final class StationPip {
         float pt = e.getPartialTick().getGameTimeDeltaPartialTick(false);
         boolean aiming = StationAds.aiming(unit);
         LENS.select(unit, aiming ? unit.optic() : null, null, null);
-        float fov = mc.options.fov().get();
-        LENS.frame(e.getPartialTick(), aiming && mc.player != null && StationAds.progress(pt) >= MIN_ADS,
-                fov / ScopeMath.refZoom(fov, StationAds.REFERENCE_FOV), SIZE, mc.player, POSE);
+        LENS.frame(e.getPartialTick(), aiming && mc.player != null && StationAds.progress(pt) >= MIN_ADS, SIZE,
+                mc.player, POSE);
     }
 
     @SubscribeEvent
@@ -126,9 +124,7 @@ public final class StationPip {
         F_VIEW.set(VIEW).mul(EYE);
         MODEL_F.set(EYE).invertAffine().mul(MODEL);
         MODEL_VIEW.set(VIEW).mul(MODEL);
-        Matrix4f proj = RenderSystem.getProjectionMatrix();
-        float fovDeg = (float) Math.toDegrees(2 * Math.atan(1 / proj.m11()));
-        LENS.draw(m, lens, MODEL_F, F_VIEW, MODEL_VIEW, proj, fovDeg, FLEX);
+        LENS.draw(m, lens, MODEL_F, F_VIEW, MODEL_VIEW, RenderSystem.getProjectionMatrix(), FLEX);
     }
 
     @SubscribeEvent

@@ -20,7 +20,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Barrel change at a muzzle probe node ({@code arg = holder unit index << 8 | weapon index}), seated jam clear,
+ * Barrel change ({@link GunBarrel#change}) at a muzzle probe node ({@code arg = holder unit index << 8 | weapon index}), seated jam clear,
  * reload and barrel change ({@link BarrelPacket}).
  */
 public final class BarrelActions {
@@ -64,7 +64,7 @@ public final class BarrelActions {
                     return false;
                 }
                 GunBarrel barrel = barrel(entity, arg);
-                barrel.exchange(barrel.spare(player));
+                barrel.change(player);
                 sound(player, barrel.weapon());
                 return true;
             }
@@ -116,7 +116,7 @@ public final class BarrelActions {
         if (hits != null && hits.hidden(player.getEyePosition(), muzzle)) {
             return Component.translatable(KEY + "hidden");
         }
-        if (barrel.spare(player).isEmpty()) {
+        if (!barrel.fitted() && barrel.spare(player).isEmpty()) {
             return Component.translatable(KEY + "need", BarrelTypes.name(barrel.spec().type().orElseThrow()));
         }
         return null;

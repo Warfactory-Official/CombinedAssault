@@ -1,5 +1,6 @@
 package com.wf.combinedassault.network.message;
 
+import com.wf.wflib.sim.SimTargets;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -48,10 +49,10 @@ public class ClientRadarAction implements CustomPacketPayload {
                     return;
                 }
                 Level level = player.level();
-                Entity toEntity = level.getEntity(message.toEntityId);
                 if (message.action == Action.LOCK) {
-                    mainRadarUnit.setLockedEntity(toEntity);
+                    mainRadarUnit.setLockedEntity(SimTargets.resolve(player, message.toEntityId));
                 } else if (message.action == Action.DETECT) {
+                    Entity toEntity = level.getEntity(message.toEntityId);
                     if (toEntity != null) {
                         mainRadarUnit.detect(toEntity);
                     }

@@ -11,8 +11,10 @@ import com.wf.combinedassault.vehicle.weapon.AbstractVehicleWeapon;
 import com.wf.wflib.barrel.BarrelSpec;
 import com.wf.wflib.barrel.BarrelState;
 import com.wf.wflib.barrel.Barrels;
+import com.wf.wflib.barrel.SpareBarrel;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -22,9 +24,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-/** One weapon's barrel: heat, jam + clear, barrel change. Server-authoritative, synced. */
+/**
+ * One weapon's barrel: heat, jam + clear, barrel change (spare <-> barrel, barrel off without a spare, spare onto an
+ * empty gun), {@link BarrelSpec#variants}. Server-authoritative, synced.
+ */
 public final class GunBarrel {
     /** Ticks since the last shot before a chambered round may cook off. */
     static final int COOK_OFF_QUIET = 10;
@@ -34,6 +40,9 @@ public final class GunBarrel {
     private final AbstractVehicleWeapon<?> weapon;
     private final BarrelSpec spec;
     private BarrelState state = BarrelState.NEW;
+    private boolean fitted = true;
+    /** {@link BarrelSpec#variants} key; empty = standard. */
+    private Optional<String> variant = Optional.empty();
     private boolean jammed;
     private int clearing;
     private int clearSpan;
@@ -56,6 +65,9 @@ public final class GunBarrel {
 
     public void defineSyncData(PartUnitSyncData sync) {
         sync.define(SyncDataSerializers.BARREL, s -> state = s, () -> state, state);
+        sync.define(SyncDataSerializers.BOOLEAN, f -> fitted = f, () -> fitted, fitted);
+        sync.define(SyncDataSerializers.STRING, v -> variant = v.isEmpty() ? Optional.empty() : Optional.of(v),
+                () -> variant.orElse(""), "");
         sync.define(SyncDataSerializers.BOOLEAN, j -> jammed = j, () -> jammed, jammed);
         sync.define(SyncDataSerializers.INT, c -> clearing = c, () -> clearing, clearing);
         sync.define(SyncDataSerializers.INT, c -> clearSpan = c, () -> clearSpan, clearSpan);
@@ -85,6 +97,25 @@ public final class GunBarrel {
         this.state = state;
     }
 
+    public boolean fitted() {
+        return fitted;
+    }
+
+    public Optional<String> variant() {
+        return variant;
+    }
+
+    /** Fitted variant's barrel length, m; null = the bolt's {@code barrel_length}. */
+    @Nullable
+    public Float length() {
+        return variant.map(v -> spec.variants().get(v).length()).orElse(null);
+    }
+
+    /** Muzzle speed factor of the fitted barrel. */
+    public float velocity() {
+        return variant.map(v -> spec.variants().get(v).velocity()).orElse(1F);
+    }
+
     public boolean jammed() {
         return jammed;
     }
@@ -102,7 +133,7 @@ public final class GunBarrel {
     }
 
     public boolean canFire() {
-        return !jammed && clearing == 0 && swapping == 0;
+        return fitted && !jammed && clearing == 0 && swapping == 0;
     }
 
     public boolean cookingOff() {
@@ -175,7 +206,7 @@ public final class GunBarrel {
 
     /** Server: seated gunner's own change, spare from their inventory or the stores. */
     public boolean startSeatedSwap(ServerPlayer gunner) {
-        if (!spec.quickChange() || swapping > 0 || clearing > 0 || spare(gunner).isEmpty()) {
+        if (!spec.quickChange() || swapping > 0 || clearing > 0 || !fitted && spare(gunner).isEmpty()) {
             return false;
         }
         swapping = swapSpan = spec.swap().selfTicks();
@@ -184,16 +215,52 @@ public final class GunBarrel {
         return true;
     }
 
-    /** Server: barrel off into {@code spare}'s place, the spare's barrel on. */
-    public void exchange(ItemStack spare) {
-        state = Barrels.exchange(spare, state, now());
+    /**
+     * Server, change done: fitted + {@link #spare} => exchanged in place; fitted, none => barrel off into
+     * {@code player}'s inventory (full => dropped); empty gun => spare on.
+     */
+    public void change(Player player) {
+        ItemStack spare = spare(player);
+        ResourceLocation type = spec.type().orElseThrow();
+        if (fitted && !spare.isEmpty()) {
+            SpareBarrel in = Barrels.exchange(spare, variant, state, now());
+            mount(in);
+        } else if (fitted) {
+            ItemStack off = Barrels.spare(new SpareBarrel(type, variant, state.at(spec, now())));
+            if (!player.getInventory().add(off)) {
+                player.drop(off, false);
+            }
+            fitted = false;
+            variant = Optional.empty();
+        } else if (!spare.isEmpty()) {
+            SpareBarrel in = Barrels.spareOf(spare);
+            spare.shrink(1);
+            mount(new SpareBarrel(type, in.variant(), in.state().at(spec, now())));
+        }
         stopSwap();
     }
 
-    /** Coolest fitting spare: {@code player}'s inventory, then (seated) the vehicle's stores; empty = none. */
+    private void mount(SpareBarrel in) {
+        if (in.variant().isPresent() && !spec.variants().containsKey(in.variant().get())) {
+            throw new IllegalStateException(weapon.getData().getWeaponId() + ": spare variant " + in.variant().get()
+                    + " not in barrel variants " + spec.variants().keySet());
+        }
+        state = in.state();
+        variant = in.variant();
+        fitted = true;
+    }
+
+    /**
+     * Fitting spare: held in the main hand, else coolest of {@code player}'s inventory, then (seated) the vehicle's
+     * stores; empty = none.
+     */
     public ItemStack spare(Player player) {
         if (spec.type().isEmpty()) {
             return ItemStack.EMPTY;
+        }
+        SpareBarrel held = Barrels.spareOf(player.getMainHandItem());
+        if (held != null && held.type().equals(spec.type().get())) {
+            return player.getMainHandItem();
         }
         List<ItemStack> stacks = new ArrayList<>(player.getInventory().items);
         stacks.addAll(player.getInventory().offhand);
@@ -260,12 +327,11 @@ public final class GunBarrel {
         if (--swapping > 0) {
             return;
         }
-        ItemStack spare = spare(gunner);
-        if (spare.isEmpty()) {
+        if (!fitted && spare(gunner).isEmpty()) {
             stopSwap();
             return;
         }
-        exchange(spare);
+        change(gunner);
         BarrelActions.sound(gunner, weapon);
     }
 
@@ -284,6 +350,8 @@ public final class GunBarrel {
     public void save(CompoundTag tag) {
         tag.put("Barrel", BarrelState.CODEC.encodeStart(NbtOps.INSTANCE, state).getOrThrow());
         tag.putBoolean("Jammed", jammed);
+        tag.putBoolean("Fitted", fitted);
+        variant.ifPresent(v -> tag.putString("Variant", v));
     }
 
     public void load(CompoundTag tag) {
@@ -291,6 +359,8 @@ public final class GunBarrel {
                 ? BarrelState.CODEC.parse(NbtOps.INSTANCE, tag.get("Barrel")).result().orElse(BarrelState.NEW)
                 : BarrelState.NEW;
         jammed = tag.getBoolean("Jammed");
+        fitted = !tag.contains("Fitted") || tag.getBoolean("Fitted");
+        variant = tag.contains("Variant") ? Optional.of(tag.getString("Variant")) : Optional.empty();
         clearing = clearSpan = 0;
         stopSwap();
     }

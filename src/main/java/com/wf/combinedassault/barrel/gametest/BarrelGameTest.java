@@ -27,6 +27,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
@@ -38,6 +39,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /** Humvee M2 (quick-change, closed bolt) and Mk 19 (fixed, open bolt) barrels. */
@@ -182,6 +184,43 @@ public class BarrelGameTest {
                     "fitted barrel " + on + ", swapping " + barrel.swapping());
             helper.assertTrue(off != null && off.state().temp() > 400 && off.state().wear() >= 0.4f,
                     "removed barrel in the slot " + (off == null ? null : off.state()));
+            helper.succeed();
+        });
+    }
+
+    /** No spare: the change takes the barrel off (gun dead); a short spare in hand goes on, muzzle at its length. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    public static void aBarrelComesOffWithoutASpareAndAShortOneGoesOn(GameTestHelper helper) {
+        AbstractVehicle humvee = spawn(helper, "m2");
+        AbstractVehicleWeapon<?> m2 = weapon(humvee, BMG);
+        GunBarrel barrel = m2.barrel();
+        WeaponUnit unit = m2.getWeaponUnit();
+        float standard = (float) unit.aimContext().from.distanceTo(unit.worldCurrentBoltPosition());
+        ServerPlayer gunner = player(helper, "barrel_off_gunner");
+        seat(humvee, gunner);
+        BarrelActions.seated(gunner, m2, BarrelPacket.Action.CHANGE);
+        int self = barrel.spec().swap().selfTicks();
+        helper.runAfterDelay(self + 3, () -> {
+            SpareBarrel off = Barrels.spareOf(gunner.getInventory().items.stream()
+                    .filter(st -> Barrels.spareOf(st) != null).findFirst().orElse(ItemStack.EMPTY));
+            m2.setRemainAmmo(10);
+            m2.setLoadedRound(AmmoItems.stack(BMG, 1));
+            helper.assertTrue(!barrel.fitted() && !fire(m2), "barrel off: fitted " + barrel.fitted());
+            helper.assertTrue(off != null && off.variant().isEmpty(), "standard barrel in the inventory " + off);
+            gunner.getInventory().items.replaceAll(st -> Barrels.spareOf(st) != null ? ItemStack.EMPTY : st);
+            gunner.setItemInHand(InteractionHand.MAIN_HAND, Barrels.spare(new SpareBarrel(M2_TYPE,
+                    Optional.of("short"), BarrelState.NEW)));
+            BarrelActions.seated(gunner, m2, BarrelPacket.Action.CHANGE);
+        });
+        helper.runAfterDelay(2 * self + 8, () -> {
+            float length = (float) unit.aimContext().from.distanceTo(unit.worldCurrentBoltPosition());
+            humvee.discard();
+            helper.assertTrue(barrel.fitted() && barrel.variant().equals(Optional.of("short")),
+                    "short barrel on: fitted " + barrel.fitted() + " " + barrel.variant());
+            helper.assertTrue(gunner.getMainHandItem().isEmpty(), "spare used up: " + gunner.getMainHandItem());
+            helper.assertTrue(Math.abs(length - 0.6f) < 1e-3 && standard > 1,
+                    "muzzle " + standard + " -> " + length + " past the breech");
+            helper.assertTrue(barrel.velocity() < 1, "short barrel velocity " + barrel.velocity());
             helper.succeed();
         });
     }
