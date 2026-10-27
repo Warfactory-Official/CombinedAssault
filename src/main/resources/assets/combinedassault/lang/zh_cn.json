@@ -424,6 +424,7 @@
   "ui.indirect.fire_mission": "射击任务 %s x%s",
   "item.combinedassault.hardware": "武器挂件",
   "hardware.combinedassault.m2": "M2 重机枪",
+  "hardware.combinedassault.kord": "Kord 12.7mm 重机枪",
   "hardware.combinedassault.mk19": "Mk 19 榴弹发射器",
   "hardware.combinedassault.spg9": "SPG-9 无后坐力炮",
   "hardpoint.combinedassault.hardware": "挂载",

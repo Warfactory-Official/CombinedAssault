@@ -469,6 +469,7 @@
   "death.attack.combinedassault.breech_fire.player": "%1$s burned in the breech, thanks to %2$s",
   "item.combinedassault.hardware": "Weapon hardware",
   "hardware.combinedassault.m2": "M2 .50 cal machine gun",
+  "hardware.combinedassault.kord": "Kord 12.7mm machine gun",
   "hardware.combinedassault.mk19": "Mk 19 grenade launcher",
   "hardware.combinedassault.spg9": "SPG-9 recoilless rifle",
   "hardpoint.combinedassault.hardware": "Hardware",
@@ -544,5 +545,6 @@
   "barrel.combinedassault.fit": "Fit barrel",
   "barrel.combinedassault.fit_coop": "Fit barrel (assisting gunner)",
   "barrel.combinedassault.none": "NO BARREL",
-  "barrel_type.combinedassault.m2.short": "M2HB, short"
+  "barrel_type.combinedassault.m2.short": "M2HB, short",
+  "barrel_type.combinedassault.kord": "Kord"
 }

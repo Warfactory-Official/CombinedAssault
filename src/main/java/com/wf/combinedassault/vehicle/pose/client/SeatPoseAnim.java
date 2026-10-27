@@ -137,7 +137,7 @@ public final class SeatPoseAnim {
                     return value;
                 }
             }
-            GunPoses.adjust(player, tickDelta, sel.lying() ? 1 : 0, bone, r);
+            GunPoses.adjust(player, tickDelta, sel.lying() ? 1 : 0, bone, r, null);
             return new Vec3f((float) r[3], (float) r[4], (float) r[5]);
         }
     }

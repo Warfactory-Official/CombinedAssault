@@ -46,19 +46,25 @@ public class HumveeMountGameTest {
     private static final ResourceLocation BMG = ResourceLocation.fromNamespaceAndPath("wflib", "12.7x99/ball");
     private static final String MK19_HUMVEE = "mk19";
     private static final String M2_HUMVEE = "m2";
+    private static final String KORD_HUMVEE = "kord";
     private static final ResourceLocation HUMVEE = CombinedAssault.modLocation("humvee");
     private static final ResourceLocation MK19 = CombinedAssault.modLocation("mk19");
     private static final ResourceLocation M2 = CombinedAssault.modLocation("gun_12.7mm");
+    private static final ResourceLocation KORD = CombinedAssault.modLocation("kord");
+    private static final ResourceLocation B32 = ResourceLocation.fromNamespaceAndPath("wflib", "12.7x108/ball");
     /** Vehicle frame. Mk 19: stage_emb4_humvee T(MUZZLE). M2: m2.gltf socket_bolt_0 tip on the roof mount. */
     private static final Vec3 MK19_MUZZLE = new Vec3(0, 2.4552, 1.6083);
     private static final Vec3 M2_MUZZLE = new Vec3(0, 2.3904, 1.84415);
+    /** kord.gltf socket_bolt_0 tip: M2's + (1.25459 - 1.06205) barrel length. */
+    private static final Vec3 KORD_MUZZLE = new Vec3(0, 2.3904, 2.03673);
     /** humvee.gltf roof_mount: the yaw axis. */
     private static final Vec3 YAW_AXIS = new Vec3(0, 0, -0.0162);
     private static final double EPS = 1e-3;
 
     @GameTest(template = TEMPLATE, timeoutTicks = 100)
     public static void eachGunMountPutsTheMuzzleAtItsBarrelTip(GameTestHelper helper) {
-        for (var c : List.of(new Object[]{MK19_HUMVEE, MK19_MUZZLE}, new Object[]{M2_HUMVEE, M2_MUZZLE})) {
+        for (var c : List.of(new Object[]{MK19_HUMVEE, MK19_MUZZLE}, new Object[]{M2_HUMVEE, M2_MUZZLE},
+                new Object[]{KORD_HUMVEE, KORD_MUZZLE})) {
             WeaponUnit unit = roofMount(helper, (String) c[0]);
             if (unit == null) {
                 return;
@@ -161,6 +167,30 @@ public class HumveeMountGameTest {
         }
         if (!preset.id().equals(BMG)) {
             helper.fail("round flies preset " + preset.id() + " != " + BMG);
+            return;
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    public static void theKordFiresA127x108RoundFromItsMuzzle(GameTestHelper helper) {
+        WeaponUnit unit = roofMount(helper, KORD_HUMVEE);
+        if (unit == null) {
+            return;
+        }
+        AbstractVehicleWeapon<?> weapon = unit.getCurrentWeapon().orElse(null);
+        if (!(weapon instanceof VehicleCannon gun) || !KORD.equals(unit.currentWeaponId())) {
+            helper.fail("roof mount weapon " + weapon + " is not the Kord");
+            return;
+        }
+        gun.setRemainAmmo(4);
+        gun.setLoadedRound(com.wf.wflib.ammo.AmmoItems.stack(B32, 1));
+        var preset = fired(helper, unit, gun.shoot(new ArrayList<>(List.of(unit.aimContext())), null));
+        if (preset == null) {
+            return;
+        }
+        if (!preset.id().equals(B32)) {
+            helper.fail("round flies preset " + preset.id() + " != " + B32);
             return;
         }
         helper.succeed();

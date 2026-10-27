@@ -9,6 +9,7 @@ import com.wf.combinedassault.pack.CombinedPack;
 import com.wf.combinedassault.pack.CombinedPacks;
 import com.wf.combinedassault.vehicle.pojo.MissileSize;
 import com.wf.wflib.MissileModels;
+import com.wf.wflib.api.StrappedExplosive;
 import com.wf.wflib.api.ThreatKind;
 import com.wf.wflib.content.WFLibContent;
 import com.wf.wflib.item.MissilePresetRegistry;
@@ -37,6 +38,10 @@ public final class Ordnance {
     public static void register() {
         rockets();
         missiles();
+        // drone_explosive's #c:ammo/rockets/explosive member isn't reachable via requestTag (foreign namespace,
+        // not recursed into); request its calibres directly so this doesn't depend on a gun elsewhere wanting them.
+        WFLibContent.requestTag(CombinedAssault.MOD_ID + " drone payload", StrappedExplosive.TAG.location());
+        WFLibContent.calibres(CombinedAssault.MOD_ID + " drone payload", "rpg7", "pzf3", "73mm_spg9");
         for (CombinedPack pack : CombinedPacks.packs()) {
             requestPack(pack);
         }
@@ -151,8 +156,7 @@ public final class Ordnance {
 
     private static void requestTests() {
         String source = CombinedAssault.MOD_ID + " game tests";
-        WFLibContent.calibres(source, "5.56x45", "7.62x51", "12.7x99", "20x102", "30x29", "40x53", "60mm", "73mm_spg9",
-                "81mm", "88x571r", "120mm", "125mm", "rpg7", "vog25");
+        WFLibContent.calibres(source, "5.56x45", "7.62x51", "12.7x99", "20x102", "40x53", "88x571r", "120mm", "125mm");
         WFLibContent.kinetic(source, "heat", "rap");
         WFLibContent.missiles(source, "cruise", "ballistic", "gmlrs", "gmlrs_aw", "atacms", "interceptor_hypersonic");
         WFLibContent.magazines(source, "ammo_can_12_7x99", "pod_gmlrs", "pod_atacms");

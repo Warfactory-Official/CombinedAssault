@@ -64,6 +64,7 @@
   "entity.combinedassault.humvee": "M1151 悍马",
   "entity.combinedassault.humvee_mk19": "M1151 悍马 (Mk 19)",
   "entity.combinedassault.humvee_m2": "M1151 悍马 (M2)",
+  "entity.combinedassault.humvee_kord": "M1151 悍马 (Kord)",
   "vehicle.weapon.mk19": "Mk 19 40毫米",
   "part.combinedassault.roof_mount": "车顶武器站",
   "part.combinedassault.gun_bow_port": "左舷艏炮位",

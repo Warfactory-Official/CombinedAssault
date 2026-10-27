@@ -23,6 +23,7 @@
           "combinedassault:spg9": {"vehicle_name": "entity.combinedassault.spg9_mounted",
             "seat_offset": [0.55, 1.15, -0.5], "operator_view_offset": [0.55, 0.56, -0.5]},
           "combinedassault:m2": {"vehicle_name": "entity.combinedassault.spg9_m2", "rot_info": {"x_rot_min": -30}},
+          "combinedassault:kord": {"vehicle_name": "entity.combinedassault.spg9_kord", "rot_info": {"x_rot_min": -30}},
           "combinedassault:mk19": {"vehicle_name": "entity.combinedassault.spg9_mk19", "rot_info": {"x_rot_min": -40}}
         }
       },

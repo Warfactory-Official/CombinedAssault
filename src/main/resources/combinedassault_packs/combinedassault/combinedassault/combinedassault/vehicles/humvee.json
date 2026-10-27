@@ -98,6 +98,7 @@
                 "accepts": ["pintle"],
                 "overrides": {
                     "combinedassault:m2": {"vehicle_name": "entity.combinedassault.humvee_m2"},
+                    "combinedassault:kord": {"vehicle_name": "entity.combinedassault.humvee_kord"},
                     "combinedassault:mk19": {"vehicle_name": "entity.combinedassault.humvee_mk19"}
                 }
             },
