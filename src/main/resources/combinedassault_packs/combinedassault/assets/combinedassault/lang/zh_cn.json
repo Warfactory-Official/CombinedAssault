@@ -81,6 +81,7 @@
   "entity.combinedassault.mim104": "MIM-104 爱国者拖车",
   "hitch.combinedassault.fifth_wheel": "牵引鞍座",
   "hitch.combinedassault.pintle": "拖钩",
+  "hitch.combinedassault.lunette": "牵引环",
   "entity.combinedassault.assault_boat": "突击艇",
   "combinedassault.b2a": "B-2A 幽灵",
   "entity.combinedassault.b2a": "B-2A 幽灵",
@@ -141,5 +142,12 @@
   "combinedassault.laser_emplacement": "高能激光炮台",
   "entity.combinedassault.laser_emplacement": "高能激光炮台",
   "vehicle.weapon.laser": "高能激光",
-  "part.combinedassault.laser": "激光炮塔"
+  "part.combinedassault.laser": "激光炮塔",
+  "combinedassault.m777": "M777 榴弹炮",
+  "entity.combinedassault.m777": "M777 榴弹炮",
+  "part.combinedassault.m777": "M777",
+  "part.combinedassault.m777_loader": "装填手",
+  "part.combinedassault.m777_assistant": "弹药手",
+  "part.combinedassault.m777_deploy": "炮架",
+  "vehicle.weapon.m777": "155毫米 M777"
 }

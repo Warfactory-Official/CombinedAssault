@@ -99,6 +99,7 @@
   "entity.combinedassault.mim104": "MIM-104 Patriot trailer",
   "hitch.combinedassault.fifth_wheel": "fifth wheel",
   "hitch.combinedassault.pintle": "pintle hook",
+  "hitch.combinedassault.lunette": "lunette ring",
   "entity.combinedassault.assault_boat": "Assault Boat",
   "combinedassault.b2a": "B-2A Spirit",
   "entity.combinedassault.b2a": "B-2A Spirit",
@@ -160,5 +161,12 @@
   "combinedassault.laser_emplacement": "HEL laser emplacement",
   "entity.combinedassault.laser_emplacement": "HEL laser emplacement",
   "vehicle.weapon.laser": "HEL laser",
-  "part.combinedassault.laser": "Laser turret"
+  "part.combinedassault.laser": "Laser turret",
+  "combinedassault.m777": "M777 Howitzer",
+  "entity.combinedassault.m777": "M777 Howitzer",
+  "part.combinedassault.m777": "M777",
+  "part.combinedassault.m777_loader": "Loader",
+  "part.combinedassault.m777_assistant": "Ammunition handler",
+  "part.combinedassault.m777_deploy": "Trails",
+  "vehicle.weapon.m777": "155 mm M777"
 }

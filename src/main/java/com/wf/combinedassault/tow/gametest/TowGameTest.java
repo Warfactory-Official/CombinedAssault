@@ -81,6 +81,36 @@ public class TowGameTest {
         });
     }
 
+    /** Howitzer on the M983's lunette: tows nose first round a turn with the barrel as the drawbar. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    public static void aHowitzerFollowsTheTractorOnTheLunette(GameTestHelper helper) {
+        Lane lane = lane(helper, 11);
+        Train train = couple(helper, lane, TowMode.HITCH, "lunette", CombinedAssault.modLocation("m777"));
+        if (train == null) {
+            return;
+        }
+        double[] worst = new double[1];
+        double[] tilt = new double[1];
+        Vec3[] start = new Vec3[1];
+        drive(helper, lane, train.tractor, 40, 160, tractor -> {
+            if (start[0] == null) {
+                start[0] = train.trailer.position();
+            }
+            tractor.controlUnit.forward = true;
+            tractor.controlUnit.right = true;
+            worst[0] = Math.max(worst[0], train.gap());
+            tilt[0] = Math.max(tilt[0], Math.max(Math.abs(train.trailer.getXRot()), Math.abs(train.trailer.getZRot())));
+        }, () -> {
+            double moved = train.trailer.position().distanceTo(start[0]);
+            String report = String.format(Locale.ROOT, "worst gap %.3f, worst tilt %.1f, howitzer moved %.1f", worst[0], tilt[0], moved);
+            boolean towed = TowLinks.isTowed(train.trailer);
+            release(lane, train.tractor, train.trailer);
+            if (!towed || worst[0] > HELD || tilt[0] > 30 || moved < 5) {
+                helper.fail(report);
+            }
+        });
+    }
+
     /** Reversing on full lock is how a real rig jackknifes. */
     @GameTest(template = TEMPLATE, timeoutTicks = 400)
     public static void aJackknifeIsHeldAtTheStops(GameTestHelper helper) {
@@ -506,16 +536,21 @@ public class TowGameTest {
 
     @Nullable
     private static Train couple(GameTestHelper helper, Lane lane, TowMode mode) {
+        return couple(helper, lane, mode, "fifth_wheel", TRAILER);
+    }
+
+    @Nullable
+    private static Train couple(GameTestHelper helper, Lane lane, TowMode mode, String hitchId, ResourceLocation towed) {
         AbstractVehicle tractor = spawn(helper, lane, TRACTOR, 0);
-        HitchInfo hitch = tractor.towing.hitch("fifth_wheel");
+        HitchInfo hitch = tractor.towing.hitch(hitchId);
         if (hitch == null) {
-            helper.fail("the tractor declares no fifth wheel; check its towing block");
+            helper.fail("the tractor declares no " + hitchId + "; check its towing block");
             return null;
         }
-        AbstractVehicle trailer = spawn(helper, lane, TRAILER, 0);
+        AbstractVehicle trailer = spawn(helper, lane, towed, 0);
         seat(trailer, TowLinks.hitchPoint(tractor, hitch));
         if (!TowLinks.couple(tractor, trailer, hitch, mode)) {
-            helper.fail("the trailer would not couple to the fifth wheel");
+            helper.fail("the " + towed.getPath() + " would not couple to the " + hitchId);
             return null;
         }
         return new Train(tractor, trailer, hitch);

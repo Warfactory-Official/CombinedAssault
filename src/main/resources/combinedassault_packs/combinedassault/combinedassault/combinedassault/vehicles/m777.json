@@ -1,0 +1,154 @@
+{
+  "type": "combinedassault:generic",
+  "attributes": {},
+  "max_health": 400,
+  "view_info": {
+    "third_person_distance": 10,
+    "third_person_distance_zoomed": 0
+  },
+  "energy_info": {
+    "energy_capacity": 1000,
+    "energy_consumption_per_tick": 0.01
+  },
+  "physics_info": {
+    "mass": 4200
+  },
+  "storage": {
+    "slots": 18
+  },
+  "parts": [
+    {
+      "id": "gun",
+      "name": "part.combinedassault.m777",
+      "type": "combinedassault:weapon",
+      "max_health": 150,
+      "component": "barrel",
+      "detachable": false,
+      "operator_on_weapon_unit": true,
+      "needs_on": "deploy",
+      "indirect_fire": {},
+      "optical_sight_type": "optical_scope",
+      "crosshair_style": "cross",
+      "zoom_max": 6,
+      "handling": "manual",
+      "loading": "manual",
+      "crew_roles": [
+        "gunner"
+      ],
+      "rot_info": {
+        "x_rot_speed": 1,
+        "y_rot_speed": 2,
+        "x_rot": 4.4,
+        "need_power": false
+      },
+      "weapons": [
+        "combinedassault:m777"
+      ],
+      "pose": "stand",
+      "protect_passenger": false
+    },
+    {
+      "id": "loader",
+      "name": "part.combinedassault.m777_loader",
+      "type": "combinedassault:generic",
+      "max_health": 40,
+      "component": "crew",
+      "detachable": false,
+      "crew_roles": [
+        "loader"
+      ],
+      "pose": "stand",
+      "protect_passenger": false
+    },
+    {
+      "id": "assistant",
+      "name": "part.combinedassault.m777_assistant",
+      "type": "combinedassault:generic",
+      "max_health": 40,
+      "component": "crew",
+      "detachable": false,
+      "crew_roles": [
+        "loader"
+      ],
+      "pose": "stand",
+      "protect_passenger": false
+    },
+    {
+      "id": "deploy",
+      "name": "part.combinedassault.m777_deploy",
+      "type": "combinedassault:switchable",
+      "is_seat": false
+    },
+    {
+      "id": "trail_l",
+      "name": "trail_l",
+      "type": "combinedassault:generic"
+    },
+    {
+      "id": "trail_r",
+      "name": "trail_r",
+      "type": "combinedassault:generic"
+    },
+    {
+      "id": "stab_l",
+      "name": "stab_l",
+      "type": "combinedassault:generic"
+    },
+    {
+      "id": "stab_r",
+      "name": "stab_r",
+      "type": "combinedassault:generic"
+    },
+    {
+      "id": "wheel_l",
+      "name": "wheel_l",
+      "type": "combinedassault:suspension",
+      "max_health": 80,
+      "spring_stiffness": 176400,
+      "damping": 3600,
+      "rest_length": 0.3,
+      "max_compression": 0.3,
+      "max_droop": 0.1,
+      "max_extension": 0.2
+    },
+    {
+      "id": "wheel_r",
+      "name": "wheel_r",
+      "type": "combinedassault:suspension",
+      "max_health": 80,
+      "spring_stiffness": 176400,
+      "damping": 3600,
+      "rest_length": 0.3,
+      "max_compression": 0.3,
+      "max_droop": 0.1,
+      "max_extension": 0.2
+    }
+  ],
+  "towing": {
+    "towable": {
+      "enabled": true,
+      "stowed_by": "deploy",
+      "tags": [
+        "trailer",
+        "artillery"
+      ],
+      "modes": [
+        "hitch",
+        "cable"
+      ]
+    }
+  },
+  "screens": {
+    "computer": {
+      "layout": "combinedassault:gun_computer",
+      "part": "gun"
+    }
+  },
+  "model": "combinedassault:models/ground/m777/m777.gltf",
+  "display": {
+    "icon": "combinedassault:textures/slot/m777.png",
+    "controller": "combinedassault:m777_controller",
+    "tab_index": 607,
+    "description": ""
+  }
+}

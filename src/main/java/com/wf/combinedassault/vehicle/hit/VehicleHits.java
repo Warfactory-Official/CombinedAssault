@@ -52,12 +52,16 @@ public final class VehicleHits {
     private final Vector3f[] offset;
     @Nullable
     private final PartClipTracks clips;
+    /** Per model group slot: frame node a clip drives that group by, else -1 ({@link ClipFrames}). */
+    private final int[] groupNode;
+    private final Matrix4f relative = new Matrix4f();
     private Matrix4f[] clipWorld;
     private boolean[] clipMoved;
     private int posedVersion = -1;
 
     public VehicleHits(AbstractVehicle vehicle, HitModel model, Map<VehicleCubeGroup, VehicleCubeGroup> copies,
-                       Map<String, PartUnit<?>> partsById, @Nullable PartClipTracks clips) {
+                       Map<String, PartUnit<?>> partsById, @Nullable PartClipTracks clips,
+                       @Nullable com.wf.combinedassault.vehicle.part.ClipFrames clipFrames) {
         this.vehicle = vehicle;
         this.model = model;
         List<VehicleCubeGroup> typeGroups = model.groups();
@@ -66,6 +70,10 @@ public final class VehicleHits {
             groups[i] = copies.getOrDefault(typeGroups.get(i), typeGroups.get(i));
         }
         groupIndex = new int[groups.length];
+        groupNode = new int[groups.length];
+        for (int i = 0; i < groups.length; i++) {
+            groupNode[i] = clipFrames == null ? -1 : clipFrames.nodeOf(groups[i]);
+        }
         parts = new PartUnit<?>[model.nodes().size()];
         for (int i = 0; i < parts.length; i++) {
             String part = model.nodes().get(i).part();
@@ -104,6 +112,14 @@ public final class VehicleHits {
             if (!clipMoved[i]) {
                 toGroup[i].set(node.toGroup());
                 offset[i].set(node.offset());
+                continue;
+            }
+            int frame = groupNode[node.group()];
+            if (frame >= 0 && clipMoved[frame]) {
+                // The group already follows the clip: the node's pose in its frame.
+                relative.set(clipWorld[frame]).invert().mul(clipWorld[i]);
+                relative.getTranslation(offset[i]);
+                relative.getUnnormalizedRotation(toGroup[i]).normalize();
                 continue;
             }
             clipWorld[i].getTranslation(origin);

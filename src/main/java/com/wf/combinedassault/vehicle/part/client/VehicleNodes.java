@@ -106,7 +106,8 @@ public final class VehicleNodes {
                 continue;
             }
             if (AccessActions.isDoor(part)) {
-                door(out, (SwitchableUnit<?>) part, VehicleHits.anchor(hits, part).add(drift), part == looked);
+                door(out, (SwitchableUnit<?>) part, VehicleHits.anchor(hits, part).add(drift), part == looked,
+                        vehicle.towing.towable.stowedBy);
             } else if (tool && part instanceof WeaponUnit unit && unit.isInteractive() && unit.weapons.size() > 1
                     && !unit.isHardpoint()) {
                 out.add(new ProbeNode("weapon:" + part.getIndex(), VehicleHits.anchor(hits, part).add(drift),
@@ -168,12 +169,13 @@ public final class VehicleNodes {
         }
     }
 
-    private static void door(List<ProbeNode> out, SwitchableUnit<?> door, Vec3 at, boolean looked) {
+    private static void door(List<ProbeNode> out, SwitchableUnit<?> door, Vec3 at, boolean looked, String stowedBy) {
         boolean jammed = door.isDestroyed();
         out.add(new ProbeNode("door:" + door.getIndex(), at, info -> {
             info.title(PartNames.name(door));
             ProbeAction toggle = ProbeAction.of(AccessActions.TOGGLE, door.getIndex(),
-                    Component.translatable(KEY + (door.isOn() ? "close" : "open")));
+                    Component.translatable(KEY + (door.getId().equals(stowedBy) ? (door.isOn() ? "stow" : "deploy")
+                            : door.isOn() ? "close" : "open")));
             info.action(jammed ? toggle.unavailable(Component.translatable("door.combinedassault.jammed")) : toggle);
         }).colour(jammed ? SystemsHud.colour(ComponentState.BROKEN) : DOOR)
                 .claimed(looked));

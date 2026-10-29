@@ -49,6 +49,22 @@
                 ],
                 "cable_length": 9,
                 "max_mass": 4000
+            },
+            {
+                "id": "lunette",
+                "name": "hitch.combinedassault.lunette",
+                "offset": [
+                    0.0,
+                    1.0,
+                    -4.3
+                ],
+                "modes": [
+                    "hitch"
+                ],
+                "accepts": [
+                    "#artillery"
+                ],
+                "max_mass": 8000
             }
         ],
         "towable": {

@@ -22,6 +22,10 @@ public class TowableInfo {
     @SerializedName("modes")
     public List<TowMode> modes = List.of(TowMode.CABLE);
 
+    /** Id of a switchable part that must be off to couple (deployed trails => not towable); null => no gate. */
+    @SerializedName("stowed_by")
+    public String stowedBy = null;
+
     /** Kingpin, lunette or towing eye, blocks, own frame. */
     @SerializedName("offset")
     public Vec3 offset = Vec3.ZERO;

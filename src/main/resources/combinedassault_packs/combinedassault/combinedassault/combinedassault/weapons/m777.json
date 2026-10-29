@@ -1,0 +1,28 @@
+{
+  "type": "combinedassault:cannon",
+  "name": "vehicle.weapon.m777",
+  "inaccuracy": 0.03,
+  "shoot_interval": 1500,
+  "max_capacity": 1,
+  "reload": {
+    "time": 120,
+    "ammo": [
+      "wflib:cartridge_155mm"
+    ]
+  },
+  "sounds": {
+    "fire": {
+      "event": "combinedassault:cannon_125mm_shot",
+      "range": 1000,
+      "pitch_random": 0.1
+    },
+    "shell": {
+      "event": "combinedassault:cannon_shell_drop",
+      "range": 24
+    },
+    "reload": {
+      "event": "combinedassault:artillery_reload",
+      "range": 24
+    }
+  }
+}

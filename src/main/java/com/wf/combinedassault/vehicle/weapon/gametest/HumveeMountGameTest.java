@@ -52,8 +52,8 @@ public class HumveeMountGameTest {
     private static final ResourceLocation M2 = CombinedAssault.modLocation("gun_12.7mm");
     private static final ResourceLocation KORD = CombinedAssault.modLocation("kord");
     private static final ResourceLocation B32 = ResourceLocation.fromNamespaceAndPath("wflib", "12.7x108/ball");
-    /** Vehicle frame. Mk 19: stage_emb4_humvee T(MUZZLE). M2: m2.gltf socket_bolt_0 tip on the roof mount. */
-    private static final Vec3 MK19_MUZZLE = new Vec3(0, 2.4552, 1.6083);
+    /** Vehicle frame: {mk19,m2}.gltf socket_bolt_0 tip on the roof mount. */
+    private static final Vec3 MK19_MUZZLE = new Vec3(0, 2.4552, 1.31462);
     private static final Vec3 M2_MUZZLE = new Vec3(0, 2.3904, 1.84415);
     /** kord.gltf socket_bolt_0 tip: M2's + (1.25459 - 1.06205) barrel length. */
     private static final Vec3 KORD_MUZZLE = new Vec3(0, 2.3904, 2.03673);

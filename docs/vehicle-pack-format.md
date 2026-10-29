@@ -430,7 +430,7 @@ that type adds — there is no nested `data` object.
 | `with_stabilizer` | bool | `false` | |
 | `with_focus_locker` | bool | `false` | |
 | `with_thermal_imager` | bool | `false` | `crt` only; WFLib `wf_cam_thermal` chain |
-| `loading` | enum | `self` | `self`, `autoloader`, `manual`; read only under `crew.required`. `manual`: no `loader` aboard => no reload. `autoloader`: loader aboard => reload * `crew.loaderReloadMultiplier`. Loader aboard on either => ammo type (multi switch) is the loader's, cycling every served station |
+| `loading` | enum | `self` | `self`, `autoloader`, `manual`; read only under `crew.required`. `manual`: no `loader` aboard => no reload; two => reload * `crew.loaderReloadMultiplier`. `autoloader`: loader aboard => reload * `crew.loaderReloadMultiplier`. Loader aboard on either => ammo type (multi switch) is the loader's, cycling every served station |
 | `with_night_vision` | bool | `false` | `crt` only; WFLib `wf_cam_intensifier` chain (image intensifier) |
 | `with_ir` | bool | `false` | `crt` only; WFLib `wf_cam_ir` chain (active IR: own illuminator, sees through smoke). Illuminator synced per seat (`AbstractVehicle.IR_SIGHTS`) => other players' goggles see it. Cycle key: optical -> thermal -> night vision -> IR, unfitted skipped |
 | `zoom_min` / `zoom_max` | float | `1` / `8` | |
@@ -670,7 +670,7 @@ glTF animations, scrubbed by part progress p ∈ [0,1], never played on a clock:
 - Weapon clips: key nodes under the pitch frame, never the frames (frames = aim); `.fire` and `.reload` key disjoint nodes.
 - Start key = default state (p 0); end = other state, or full deflection.
 - After the controller graph: clip wins on the channels it keys. Toggle sound: trapdoor.
-- Hit mesh follows clips (server + client). Colliders: rest pose; moving collision = `linked_hinge`.
+- Hit mesh follows clips (server + client). Colliders: rest pose unless their frame has `extras.combinedassault.follows_clips: true` (frame group posed from the part clip each tick, hit nodes under it use the relative pose; frame's part must not be rotatable, e.g. `generic`); else moving collision = `linked_hinge`.
 - `linked_hinge` collider turns by `+open_x_rot`; a script drawing the bone at `-xrot` swings the collider opposite the picture (C-5, CH-47 ramps rose into walls). Hinge frame rest rotation: same split (GemRender cancels it, colliders keep it).
 - Script `if (context.isPartOn(..)) setRotation(..)`: snaps, no hit motion => bake to a clip (`tools/script_clips.py`).
 - Author: Blender add-on Key part clip; staged models `tools/mqo.py` `append_clip` / `hinge_keys`.
@@ -940,7 +940,7 @@ body heading.
 
 ## 9. Indirect fire
 
-- Per station: `indirect_fire` ([§4.4](#44-weapon-stations--weapon-auto_weapon)); absent => `Y` refused. Shipped: `m252a1`, `m1129` (map), `krupp_c34`, `oto127`, `m142` (map).
+- Per station: `indirect_fire` ([§4.4](#44-weapon-stations--weapon-auto_weapon)); absent => `Y` refused. Shipped: `m252a1`, `m1129` (map), `krupp_c34`, `oto127`, `m142` (map), `m777`.
 - Solved for the loaded round ([§11](#11-indirect-fire-and-ccip-rounds)). Missile station = self-guided: laid on the bearing at `launch_elevation`; the round flies its own guidance to the point.
 - `Y` cycles `DIRECT` -> `MANUAL` -> `AUTO` -> `DIRECT`; a missile station skips `MANUAL`.
 
@@ -1208,6 +1208,7 @@ that says nothing here cannot tow and cannot be towed.
 | `enabled` | bool | `false` | opt-in, like `mountable` |
 | `tags` | string[] | `[]` | names a hitch can match with `#tag` |
 | `modes` | enum[] | `["cable"]` | which couplings this vehicle accepts |
+| `stowed_by` | string | none | switchable part id that must be off to couple; on => `NOT_STOWED`, tip `tips.tow.not_stowed`; deploying while towed refused |
 | `offset` | Vec3 | `[0,0,0]` | the kingpin, lunette or towing eye, in this vehicle's own frame |
 | `axle` | Vec3 | `[0,0,0]` | the wheels it pivots about while towed; only the ground-plane position is used |
 
@@ -1270,6 +1271,15 @@ which is the worst of the coupling gap, the trailer's clearance and the articula
 bumper so it can be recovered on someone else's cable. `combinedassault:mim104` is the Patriot launcher
 trailer: a semi-trailer with its kingpin over its origin, its tandem axle 7.22 blocks behind that.
 Unmanned launcher: [§18](#18-air-defence).
+
+`combinedassault:m777`: towed 155 mm howitzer, `#artillery` on the M983 `lunette` hitch (`hitch`, 8000 kg), tow eye = barrel yoke.
+- Rest = tow stance, `x_rot` 4.4 (eye height at the lunette). Elevation `-40`..`5`.
+- Part `deploy` (switchable, probe node "Trails": Deploy trails / Stow for towing): clip `deploy` 4 s, trails + stabilisers tow -> ground. Colliders follow the clip: frames `04_REAR_TRAIL_L/R`, `05_FRONT_STABILIZER_L/R` (`follows_clips`, generic parts `trail_l/r`, `stab_l/r`).
+- `towable.stowed_by: deploy` => deployed trails block coupling. `gun.needs_on: deploy` => stowed gun fires nothing (any part: `needs_on` = switchable id that must be on; unknown / non-switchable id => load error).
+- `screens` (vehicle level): `{"<id>": {"layout", "part"?, "max_fps"? 20, "units_width"? 192}}` binds the model's `screen_<id>` slot mesh (material `extras.textureSlot: "screen_<id>"`, textured quad, UVs 0..1 across the screen) to a layout. Pose, bone, size, normal = the mesh. Drawn unlit through GemRender direct path (`GemScreens`, after the body). Binding without slot => error log, skipped; `screen_*` slot without binding => warning. `part` default = first weapon part. Layout: `scaling: absolute` + `size: [w, h]` (design size); fitted into the quad, bars where aspect differs. m777: `screen_computer` on `traverse`, layout `combinedassault:gun_computer` (subject `computer`: state STOWED / UNLOADED / LOADING / READY, elevation, azimuth, level-ground range + time of flight, round, load progress, crew, hull pitch / roll, stops).
+- Model: black display case + dead screen + buttons cut from `30_CONTROLS_AND_SIGHTS_mesh`; `screen_computer` quad added to `m777.gltf` / `.bin` directly. warty `build_m777.py` has the cut but not the quad, outputs not regenerated => a regen drops the screen quad.
+- Clip `gun.fire` 1.2 s: recoil group (barrel, brake, yoke) slides 1.0 m back along the bore in 0.16 s, 0.04 s hold, 1.0 s run-out (smoothstep).
+- `crew.required`: `gun` gunner, `loader` + `assistant` loaders; `loading: manual` => one loader to load, both => reload * `crew.loaderReloadMultiplier`.
 
 ---
 

@@ -31,6 +31,7 @@ public class PartUnitData {
     protected Vec3 ownerViewOffset = null;
     protected String sensor;
     protected List<CrewRole> crewRoles;
+    protected String needsOn;
     protected Vec3 pivotOffset = Vec3.ZERO;
     protected ResourceLocation displayId;
     protected Vec3 displayOffset;
@@ -64,6 +65,7 @@ public class PartUnitData {
         this.passengerCanUseItem = pojo.passengerCanUseItem;
         this.ownerViewOffset = pojo.ownerViewOffset;
         this.crewRoles = pojo.crewRoles;
+        this.needsOn = pojo.needsOn;
         this.displayId = pojo.displayId;
         this.displayOffset = pojo.displayOffset;
         this.mounts = pojo.mounts;
@@ -171,6 +173,11 @@ public class PartUnitData {
 
     public boolean passengerCanUseItem() {
         return passengerCanUseItem;
+    }
+
+    @Nullable
+    public String getNeedsOn() {
+        return needsOn;
     }
 
     public List<CrewRole> getCrewRoles() {

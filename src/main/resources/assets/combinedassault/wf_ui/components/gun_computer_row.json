@@ -1,0 +1,8 @@
+{
+  "use": ["combinedassault:hud"],
+  "params": {"key": "key", "value": "text"},
+  "root": {"type": "sized", "w": 82, "h": 12, "child": {"type": "stack", "children": [
+    {"type": "place", "y": 2, "child": {"type": "text", "text": "{tr:$key}", "color": "$label"}},
+    {"type": "place", "x": 82, "pivot": "top_right", "child": {"type": "text", "text": "$value", "color": "$green", "scale": 1.4, "shadow": true}}
+  ]}}
+}

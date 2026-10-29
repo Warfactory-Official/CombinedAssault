@@ -194,6 +194,9 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
      */
     protected boolean shootLoaded(List<AimContext> aimContexts) {
         boolean cookOff = barrel != null && barrel.cookingOff();
+        if (!weaponUnit.supported()) {
+            return false;
+        }
         if (!cookOff && (isCoolingDown() || isReloading()) || barrel != null && !barrel.canFire()) {
             return false;
         }

@@ -65,6 +65,10 @@ public class PartUnitPojo {
     @SerializedName("crew_roles")
     public List<CrewRole> crewRoles = null;
 
+    /** Id of a switchable part that must be on for this part to work (a gun: trails down). */
+    @SerializedName("needs_on")
+    public String needsOn = null;
+
     @SerializedName("display_id")
     public ResourceLocation displayId;
 

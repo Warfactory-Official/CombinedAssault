@@ -27,7 +27,9 @@ public final class TowCoupler {
         }
         Match match = best(tractor);
         if (match == null) {
-            return Component.translatable("tips.tow.nothing_in_reach");
+            AbstractVehicle deployed = deployedInReach(tractor);
+            return deployed == null ? Component.translatable("tips.tow.nothing_in_reach")
+                    : Component.translatable("tips.tow.not_stowed", deployed.getDisplayName());
         }
         if (!TowLinks.couple(tractor, match.towed(), match.hitch(), match.mode())) {
             return Component.translatable("tips.tow.refused", match.towed().getDisplayName());
@@ -71,6 +73,24 @@ public final class TowCoupler {
             }
         }
         return best;
+    }
+
+    /** A vehicle {@link #best} skipped only because its {@code stowed_by} part is on; null => none. */
+    @Nullable
+    private static AbstractVehicle deployedInReach(AbstractVehicle tractor) {
+        for (HitchInfo hitch : tractor.towing.hitches) {
+            Vec3 at = TowLinks.hitchPoint(tractor, hitch);
+            AABB around = new AABB(at, at).inflate(TowLinks.COUPLE_REACH + 16);
+            for (AbstractVehicle candidate : tractor.level().getEntitiesOfClass(AbstractVehicle.class,
+                    around, vehicle -> vehicle != tractor && vehicle.towing.towable.enabled && !TowLinks.stowed(vehicle))) {
+                for (TowMode mode : TowMode.values()) {
+                    if (TowLinks.check(tractor, candidate, hitch, mode, true) == TowLinks.Refusal.NOT_STOWED) {
+                        return candidate;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /** Hitch beats sling beats cable; else nearer wins. */

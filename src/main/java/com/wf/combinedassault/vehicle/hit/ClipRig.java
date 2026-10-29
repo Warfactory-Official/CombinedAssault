@@ -49,6 +49,11 @@ public final class ClipRig {
         return parent.length;
     }
 
+    /** Node-to-model matrix at rest. */
+    public Matrix4f restWorld(int node) {
+        return restWorld[node];
+    }
+
     /**
      * Node-to-model matrices with clip {@code c} at {@code times[c]} seconds (NaN: not applied), later clips winning.
      *

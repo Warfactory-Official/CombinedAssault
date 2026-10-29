@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # TODO: writes the pre-role layout (default_vehicle/, Bedrock structure + hull json, display json); restaging needs
 # a port to role nodes, or a run through tools/convert_pack.py.
-"""Stage the EMB4 (McHeliCE addon) Humvee: glTF display + structure, and its Mk 19 as a separate mount model.
+"""Stage the EMB4 (McHeliCE addon) Humvee: glTF display + structure (Mk 19: `stage_mk19.py`).
 
     python3 tools/internal/stage_emb4_humvee.py      (from combinedassault/)
 
@@ -146,25 +146,6 @@ def turret(src, station):
     mqo.append_nodes(gltf, binary, kept)
 
 
-def mk19(src):
-    """Pitch-pivot frame. Bolt: breech over the trunnion on the bore line, Z scale = barrel length."""
-    w = mqo.GltfWriter(f"{NS}:models/weapon/mk19/mk19.bin", f"{NS}:textures/ground/humvee/humvee.png",
-                       "tools/internal/stage_emb4_humvee.py")
-    pitch_p = T(PITCH_PIVOT)
-    w.node("mk19", mesh=mesh_of(w, "mk19", src.objs(["$weapon0_0"]), pitch_p))
-    muzzle = T(MUZZLE)
-    breech = np.array([muzzle[0], muzzle[1], pitch_p[2]])
-    models = os.path.join(PACK, "assets", NS, "models", "weapon", "mk19")
-    os.makedirs(models, exist_ok=True)
-    gltf, binary = os.path.join(models, "mk19.gltf"), os.path.join(models, "mk19.bin")
-    w.write(gltf, binary, {"staged_by": "tools/internal/stage_emb4_humvee.py", "source": "EMB4 McHeliCE humvee_mk19 $weapon0_0",
-                           "scale": SCALE})
-    mqo.append_nodes(gltf, binary, [{"name": "socket_bolt_0", "parent": "mk19",
-                                     "translation": [round(float(v), 5) for v in breech - pitch_p],
-                                     "rotation": [0, 0, 0, 1],
-                                     "scale": [1, 1, round(float(muzzle[2] - breech[2]), 5)]}])
-
-
 def cube(lo, hi):
     lo, hi = np.asarray(lo, float), np.asarray(hi, float)
     size = np.maximum(hi - lo, 0.05)
@@ -218,7 +199,6 @@ def main():
     os.makedirs(textures, exist_ok=True)
     shutil.copyfile(os.path.join(SRC, "textures", "tanks", "humvee_mk19.png"), os.path.join(textures, "humvee.png"))
     turret(src, display(src))
-    mk19(src)
     dims = structure(src)
     clips()
     for k, v in dims.items():

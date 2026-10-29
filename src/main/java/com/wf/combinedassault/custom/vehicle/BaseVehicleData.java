@@ -26,6 +26,7 @@ import com.wf.combinedassault.vehicle.pojo.LoadoutInfo;
 import com.wf.combinedassault.vehicle.pojo.DefenseStats;
 import com.wf.combinedassault.vehicle.pojo.EnergyInfo;
 import com.wf.combinedassault.vehicle.pojo.PhysicsInfo;
+import com.wf.combinedassault.screen.ScreenInfo;
 import com.wf.combinedassault.tow.TowInfo;
 import com.wf.combinedassault.vehicle.pojo.MountPointInfo;
 import com.wf.combinedassault.vehicle.pojo.CargoInfo;
@@ -63,6 +64,7 @@ public class BaseVehicleData<T extends AbstractVehicle> {
     protected List<MountPointInfo> mountPoints = List.of();
     protected MountableInfo mountable = new MountableInfo();
     protected TowInfo towing = TowInfo.NONE;
+    protected Map<String, ScreenInfo> screens = Map.of();
     protected CargoInfo cargo = CargoInfo.NONE;
     protected ArmorProfile armor;
     protected List<AddonMount> addonMounts = List.of();
@@ -149,6 +151,8 @@ public class BaseVehicleData<T extends AbstractVehicle> {
         this.mountPoints = pojo.mountPoints == null ? List.of() : List.copyOf(pojo.mountPoints);
         this.mountable = pojo.mountable == null ? new MountableInfo() : pojo.mountable;
         this.towing = pojo.towing == null ? TowInfo.NONE : pojo.towing;
+        pojo.screens.forEach((id, screen) -> screen.validate(id));
+        this.screens = pojo.screens;
         this.cargo = pojo.cargo == null ? CargoInfo.NONE : pojo.cargo;
         this.armor = pojo.armor;
         this.uav = pojo.uav;
@@ -348,6 +352,11 @@ public class BaseVehicleData<T extends AbstractVehicle> {
         }
     }
 
+    /** Type-level group per model frame. */
+    public List<VehicleCubeGroup> getFrameGroups() {
+        return frameGroups;
+    }
+
     /** Null: no clips. */
     @org.jetbrains.annotations.Nullable
     public ClipRig getClipRig() {
@@ -514,6 +523,10 @@ public class BaseVehicleData<T extends AbstractVehicle> {
 
     public MountableInfo getMountable() {
         return mountable;
+    }
+
+    public Map<String, ScreenInfo> getScreens() {
+        return screens;
     }
 
     public TowInfo getTowing() {

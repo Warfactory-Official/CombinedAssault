@@ -78,15 +78,20 @@ public final class CrewRules {
     }
 
     public static boolean loaderAboard(AbstractVehicle vehicle) {
+        return loadersAboard(vehicle) > 0;
+    }
+
+    public static int loadersAboard(AbstractVehicle vehicle) {
         if (!enabled()) {
-            return false;
+            return 0;
         }
+        int count = 0;
         for (AbstractVehicle.Seat seat : vehicle.seats) {
             if (seat.passengerId != -1 && roles(seat).contains(CrewRole.LOADER)) {
-                return true;
+                count++;
             }
         }
-        return false;
+        return count;
     }
 
     public static WeaponLoading loading(WeaponUnit unit) {
@@ -98,8 +103,15 @@ public final class CrewRules {
         return loading(unit) != WeaponLoading.MANUAL || loaderAboard(unit.getVehicle());
     }
 
+    /** Autoloader: a loader speeds it up. Manual: a second loader does. */
     public static int reloadTicks(WeaponUnit unit, int base) {
-        return loading(unit) == WeaponLoading.AUTOLOADER && loaderAboard(unit.getVehicle())
+        int loaders = loadersAboard(unit.getVehicle());
+        boolean faster = switch (loading(unit)) {
+            case AUTOLOADER -> loaders >= 1;
+            case MANUAL -> loaders >= 2;
+            case SELF -> false;
+        };
+        return faster
                 ? Math.max(1, Math.round(base * AllConfigs.server.crewLoaderReloadMultiplier.get().floatValue()))
                 : base;
     }

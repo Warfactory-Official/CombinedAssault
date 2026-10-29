@@ -4,9 +4,10 @@ Code: GPLv3 (`LICENSE.txt`). Assets below; paths under `src/main/resources/`.
 
 | Assets | Author | Terms |
 |---|---|---|
-| `combinedassault_packs/combinedassault/.../{models,textures}/{aircraft/mq9,aircraft/mavic,ground/m983,ground/mim104,ground/m142,emplacement/m252a1,emplacement/spg9,ships/*}`, slot icons, `assets/combinedassault/textures/{entity/addon_armor,entity/tow_cable,item/*}.png` | MrNorwood | CC BY-NC 4.0 (`LICENSE-CC-BY-NC-4.0.txt`) |
+| `combinedassault_packs/combinedassault/.../{models,textures}/{aircraft/mq9,aircraft/mavic,ground/m983,ground/mim104,ground/m142,ground/m777,emplacement/m252a1,emplacement/spg9,ships/*}`, slot icons, `assets/combinedassault/textures/{entity/addon_armor,entity/tow_cable,item/*}.png` | MrNorwood | CC BY-NC 4.0 (`LICENSE-CC-BY-NC-4.0.txt`) |
 | `combinedassault_packs/combinedassault/.../{models,textures}/{ground/m1a2,ground/t84,aircraft/b2a,aircraft/ah64d,aircraft/ah_6,aircraft/mh60l,aircraft/mi24,aircraft/ka52,aircraft/ch47}`, `models/effect/{m1a2,t84}_track_link.gltf`, their slot icons | EMB4 (MCHeli 1.0.3 `tanks/{m1a2,t84}`, `planes/b-2a`, `helicopters/{ah-64,ah-6,mh-60l_dap,mi-24,ka52,ch47}`) | Third-party; see below |
-| `combinedassault_packs/combinedassault/.../{models,textures}/{ground/humvee,weapon/mk19}`, humvee slot icon | EMB4 (McHeliCE addon `tanks/humvee_mk19`) | Third-party; see below |
+| `combinedassault_packs/combinedassault/.../{models,textures}/ground/humvee`, humvee slot icon | EMB4 (McHeliCE addon `tanks/humvee_mk19`) | Third-party; see below |
+| `combinedassault_packs/combinedassault/.../{models,textures}/weapon/mk19` | "MK19 (Low-Poly)" (`mk19-low-poly.zip`, MK19.blend 2018), staged by `tools/internal/stage_mk19.py` | TODO: author / terms unrecorded |
 | `combinedassault_packs/combinedassault/.../{models,textures}/weapon/m2` | GoldbergR, "M2 Browning (Low-Poly)" (sketchfab.com/3d-models/b3ccf9641d474e7fa928cce6dcfc30ae), staged by `tools/internal/stage_m2.py` | CC BY 4.0 |
 | `combinedassault_packs/combinedassault/.../{models,textures}/{aircraft/w3,emplacement/oto127,emplacement/krupp_c34}`, their slot icons | EMB4 (McHeliCE jar stock `helicopters/w3`, `vehicles/{oto127mm,krupp_c_34}`; absent from MCHeli 1.0.3) | Third-party; see below |
 | `combinedassault_packs/combinedassault/.../{models,textures}/emplacement/flak36`, its slot icon | EMB4 (MCHeli 1.1.4 `vehicles/flak36`) | Third-party; see below |

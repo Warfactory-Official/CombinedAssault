@@ -71,6 +71,7 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
     protected List<PartUnit<?>> attPartUnits = new ArrayList<>();
     protected T data;
     protected PartUnitSyncData syncData;
+    private SwitchableUnit<?> needsOn;
 
     public PartUnit(int index, AbstractVehicle vehicle, T data) {
         this.index = index;
@@ -104,6 +105,13 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
 
     /** Per part, after all parts of the vehicle exist; vehicle not yet attached to parts or added to the world. */
     public void combineAndInit(@UnmodifiableView Map<String, PartUnit<?>> partUnitsView, AbstractVehicle vehicle) {
+        String needsOn = data.getNeedsOn();
+        if (needsOn != null) {
+            if (!(partUnitsView.get(needsOn) instanceof SwitchableUnit<?> switchable)) {
+                throw new IllegalArgumentException("part " + id + ": needs_on " + needsOn + " is not a switchable part");
+            }
+            this.needsOn = switchable;
+        }
         for (String subPartUnitId : data.getSubPartUnitIds()) {
             PartUnit<?> subPartUnit = partUnitsView.get(subPartUnitId);
             if (subPartUnit != null) {
@@ -117,6 +125,11 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
                 partUnit.basePartUnit = this;
             }
         }
+    }
+
+    /** False while the {@code needs_on} part is off. */
+    public boolean supported() {
+        return needsOn == null || needsOn.isOn();
     }
 
     public void onRemoved() {}

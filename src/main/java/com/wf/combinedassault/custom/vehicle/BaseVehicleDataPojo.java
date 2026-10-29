@@ -11,6 +11,7 @@ import com.wf.combinedassault.vehicle.pojo.LoadoutInfo;
 import com.wf.combinedassault.vehicle.pojo.DefenseStats;
 import com.wf.combinedassault.vehicle.pojo.EnergyInfo;
 import com.wf.combinedassault.vehicle.pojo.PhysicsInfo;
+import com.wf.combinedassault.screen.ScreenInfo;
 import com.wf.combinedassault.tow.TowInfo;
 import com.wf.combinedassault.vehicle.pojo.MountPointInfo;
 import com.wf.combinedassault.vehicle.pojo.CargoInfo;
@@ -19,6 +20,7 @@ import com.wf.combinedassault.vehicle.pojo.StorageInfo;
 import com.wf.combinedassault.vehicle.pojo.ViewInfo;
 
 import java.util.List;
+import java.util.Map;
 
 public class BaseVehicleDataPojo {
 
@@ -58,6 +60,10 @@ public class BaseVehicleDataPojo {
     /** What this vehicle can tow and what can tow it. */
     @SerializedName("towing")
     public TowInfo towing = new TowInfo();
+
+    /** Model screen id => binding ({@link ScreenInfo}). */
+    @SerializedName("screens")
+    public Map<String, ScreenInfo> screens = Map.of();
 
     @SerializedName("cargo")
     public CargoInfo cargo = CargoInfo.NONE;

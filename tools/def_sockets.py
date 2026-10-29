@@ -390,7 +390,7 @@ SIGHT_EYE_BACK = 0.12
 SIGHT_TARGETS = {
     "combinedassault:models/weapon/m2/m2.gltf": [""],
     "combinedassault:models/weapon/kord/kord.gltf": [""],
-    "combinedassault:models/weapon/mk19/mk19.gltf": [("", {"x": -0.06, "y": 0.233, "z": -0.4})],
+    "combinedassault:models/weapon/mk19/mk19.gltf": [""],
     # PGO-9 eyepiece: LENSES centre - relief
     "combinedassault:models/weapon/spg9/spg9.gltf": [("", {"x": -0.149, "y": 0.048, "z": 0.885})],
     "combinedassault:models/aircraft/ch47/ch47.gltf": ["door_gun_r", "door_gun_l", "ramp_gun"],

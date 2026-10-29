@@ -10,6 +10,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
 
 import java.util.ArrayList;
@@ -199,6 +200,7 @@ public final class TowLinks {
         NOT_TOWABLE,
         WRONG_MODE,
         NOT_ACCEPTED,
+        NOT_STOWED,
         TOO_HEAVY,
         OCCUPIED,
         ALREADY_TOWED,
@@ -219,6 +221,9 @@ public final class TowLinks {
         if (!hitch.accepts(towed.getVehicleId().toString(), towable.tags)) {
             return Refusal.NOT_ACCEPTED;
         }
+        if (!stowed(towed)) {
+            return Refusal.NOT_STOWED;
+        }
         if (hitch.maxMass > 0 && towed.physicsEngine.mass + loadBehind(towed) > hitch.maxMass) {
             return Refusal.TOO_HEAVY;
         }
@@ -238,6 +243,12 @@ public final class TowLinks {
             }
         }
         return Refusal.NONE;
+    }
+
+    /** {@code stowed_by} part off (or none). */
+    public static boolean stowed(AbstractVehicle towed) {
+        String id = towed.towing.towable.stowedBy;
+        return id == null || towed.getPartUnit(id).map(p -> p instanceof SwitchableUnit<?> s && !s.isOn()).orElse(true);
     }
 
     @Nullable

@@ -30,6 +30,7 @@ public final class CaHudSource {
     public static void register() {
         HudSignals.register();
         IndirectView.register();
+        com.wf.combinedassault.screen.client.GunComputer.register();
         CaHudPresets.registerWidgets();
         UiHud.addSource(UiHud.Layer.MAIN, CaHudSource::main);
         UiHud.addSource(UiHud.Layer.BACK, CaHudSource::back);

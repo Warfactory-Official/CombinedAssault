@@ -262,7 +262,7 @@ public class AllConfigs {
             crewRequired = builder.comment("Seats keep their pack crew_roles: only a driver drives, only a gunner aims and fires,",
                             "a commander only watches, a manually loaded gun needs a loader aboard. Takes effect on the next seat change.")
                     .define("required", false);
-            crewLoaderReloadMultiplier = builder.comment("Reload time multiplier for an autoloaded gun while a loader is aboard.")
+            crewLoaderReloadMultiplier = builder.comment("Reload time multiplier for an autoloaded gun while a loader is aboard, and for a manually loaded gun with two loaders.")
                     .defineInRange("loaderReloadMultiplier", 0.6, 0.05, 1.0);
             builder.pop();
             builder.push("thirdPerson");

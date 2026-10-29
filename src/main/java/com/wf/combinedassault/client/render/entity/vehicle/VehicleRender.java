@@ -1,6 +1,7 @@
 package com.wf.combinedassault.client.render.entity.vehicle;
 
 import com.wf.combinedassault.client.render.part.RoundStations;
+import com.wf.combinedassault.compat.gemrender.GemScreens;
 
 import com.maydaymemory.mae.basic.Pose;
 
@@ -126,6 +127,7 @@ public class VehicleRender<T extends AbstractVehicle> extends EntityRenderer<T> 
                 decoration.render(pPoseStack, bufferSource, pPackedLight, pPartialTick);
             }
             RoundStations.render(vehicle, modelInstance, pPoseStack, bufferSource, modelLight);
+            GemScreens.draw(vehicle, modelInstance, pPoseStack.last().pose(), modelLight, pPartialTick);
             CargoRenderer.render(vehicle, pPoseStack, modelLight);
             VehicleCamoRenderer.enqueue(vehicle, pPoseStack, bufferSource, pPackedLight, pPartialTick);
             AddonArmorRenderer.enqueue(vehicle, pPoseStack, bufferSource, pPackedLight, pPartialTick);

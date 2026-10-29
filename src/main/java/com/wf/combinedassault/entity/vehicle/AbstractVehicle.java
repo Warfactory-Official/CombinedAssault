@@ -103,6 +103,7 @@ import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
 import com.wf.combinedassault.entity.ContainerCraft;
 import com.wf.combinedassault.storage.CargoMass;
 import com.wf.combinedassault.item.VehicleSpawnItem;
+import com.wf.combinedassault.screen.ScreenInfo;
 import com.wf.combinedassault.tow.TowInfo;
 import com.wf.combinedassault.tow.TowLink;
 import com.wf.combinedassault.tow.TowLinks;
@@ -136,6 +137,7 @@ import com.wf.combinedassault.vehicle.pojo.CamoAction;
 import com.wf.combinedassault.vehicle.part.DecorationUnit;
 import com.wf.combinedassault.vehicle.part.DoorUnit;
 import com.wf.combinedassault.vehicle.part.MissileHolderUnit;
+import com.wf.combinedassault.vehicle.part.ClipFrames;
 import com.wf.combinedassault.vehicle.part.PartClipTracks;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.RotatableUnit;
@@ -285,6 +287,7 @@ public abstract class AbstractVehicle extends ContainerCraft
     private VehicleMounts.Pending pendingMount;
     /** What this vehicle can pull and what can pull it. Empty for everything that declares none. */
     public TowInfo towing = TowInfo.NONE;
+    public Map<String, ScreenInfo> screens = Map.of();
     @Nullable
     private CargoHold cargoHold;
     /** Saved hold of a def that no longer declares {@code cargo}: written back unread, never dropped. */
@@ -361,6 +364,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     private VehicleHits hits;
     @Nullable
     private PartClipTracks clipTracks;
+    @Nullable
+    private ClipFrames clipFrames;
     private int[] cubeGroupIndex = new int[0];
     /** Owning part unit per entry of allCubeOBBs, or -1 for body cubes. */
     private int[] cubePartIndex = new int[0];
@@ -908,6 +913,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         this.mountPoints = vehicleData.getMountPoints();
         this.mountable = vehicleData.getMountable();
         this.towing = vehicleData.getTowing();
+        this.screens = vehicleData.getScreens();
         if (vehicleData.getCargo().enabled()) {
             CargoHold hold = new CargoHold(this, vehicleData.getCargo());
             if (cargoHold != null) {
@@ -978,9 +984,11 @@ public abstract class AbstractVehicle extends ContainerCraft
         ClipRig clipRig = vehicleData.getClipRig();
         this.clipTracks = clipRig == null ? null
                 : PartClipTracks.bind(clipRig, map, String.valueOf(vehicleData.getVehicleId()), String.valueOf(getDisplayId()));
+        this.clipFrames = ClipFrames.bind(clipTracks, vehicleData.getModel().rig().frames(), vehicleData.getFrameGroups(),
+                partUnitsAndSeats.groups(), map);
         HitModel hitModel = vehicleData.getHitModel();
         this.hits = hitModel == null ? null
-                : new VehicleHits(this, hitModel, partUnitsAndSeats.groups(), map, clipTracks);
+                : new VehicleHits(this, hitModel, partUnitsAndSeats.groups(), map, clipTracks, clipFrames);
         vehicleData.inject(this);
         if (vehicleData.getAutonomy() == null) {
             this.drone = null;
@@ -1191,6 +1199,9 @@ public abstract class AbstractVehicle extends ContainerCraft
         tickParts();
         if (clipTracks != null) {
             clipTracks.tick();
+            if (clipFrames != null) {
+                clipFrames.refresh();
+            }
             if (hits != null) {
                 hits.refreshClips();
             }

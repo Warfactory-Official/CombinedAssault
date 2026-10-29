@@ -32,7 +32,7 @@ public final class ModelDataManager {
     private static final Set<String> HIT_KEYS = Set.of("system", "side", "unit", "spin", "health", "swept", "skip",
             "index", "road_wheel");
     /** Frame-only: fill the part's {@code rot_info} ({@link MountDefaults}). */
-    private static final Set<String> FRAME_KEYS = Set.of("x_rot_min", "x_rot_max", "y_rot_min", "y_rot_max");
+    private static final Set<String> FRAME_KEYS = Set.of("x_rot_min", "x_rot_max", "y_rot_min", "y_rot_max", "follows_clips");
     /** A rotor disc thinner than this is padded to it: a shot must be able to find it. */
     private static final float DISC_THICKNESS = 0.3f;
     /** Disc height from vertices past this share of the radius: blades, not mast, hub or mast radar. */

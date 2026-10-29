@@ -1,0 +1,55 @@
+{
+  "scaling": "absolute",
+  "size": [192, 120],
+  "use": ["combinedassault:hud"],
+  "constants": {
+    "back": "#ff07110a",
+    "state_color": "computer.state == computer.state.ready ? $green : computer.state == computer.state.loading ? $amber : computer.state == computer.state.stowed ? $gray : $red",
+    "cant": "max(abs(computer.hull_pitch), abs(computer.hull_roll))",
+    "cant_color": "$cant > 3 ? $amber : $label"
+  },
+  "root": {"type": "stack", "children": [
+    {"type": "rect", "w": 192, "h": 120, "color": "$back"},
+    {"type": "rect", "w": 192, "h": 1, "color": "$label"},
+    {"type": "place", "y": 119, "child": {"type": "rect", "w": 192, "h": 1, "color": "$label"}},
+    {"type": "rect", "w": 1, "h": 120, "color": "$label"},
+    {"type": "place", "x": 191, "child": {"type": "rect", "w": 1, "h": 120, "color": "$label"}},
+
+    {"type": "place", "x": 6, "y": 5, "child": {"type": "text", "text": "{tr:ui.computer.title}", "color": "$green", "shadow": true}},
+    {"type": "place", "x": 186, "y": 3, "pivot": "top_right",
+      "child": {"type": "box", "background": "alpha($state_color, 0.2)", "border_width": 0, "pad_x": 3, "pad_y": 2,
+        "child": {"type": "text", "text": "{computer.state|tr:ui.computer.state.}", "color": "$state_color", "shadow": true}}},
+
+    {"type": "place", "x": 4, "y": 74, "child": {"type": "dial", "radius": 54, "from": -10, "to": 90,
+      "minor_step": 5, "minor_color": "$scale", "major_step": 15, "major_length": 4, "major_color": "$scale",
+      "accent_step": 45, "accent_color": "$label",
+      "band_from": "computer.stop_low", "band_to": "computer.stop_high", "band_offset": 4, "band_size": 3, "band_color": "#99117733",
+      "needles": [{"value": "computer.elevation", "inner": 4, "outer": 50, "size": 2, "color": "$green"}]}},
+
+    {"type": "place", "x": 104, "y": 20, "child": {"type": "column", "gap": 3, "children": [
+      {"type": "combinedassault:gun_computer_row", "key": "ui.computer.elevation", "value": "{computer.elevation|.1}"},
+      {"type": "combinedassault:gun_computer_row", "key": "ui.computer.bearing", "value": "{mod(round(computer.bearing), 360)|03}"},
+      {"type": "when", "if": "computer.has_round", "then": {"type": "column", "gap": 3, "children": [
+        {"type": "combinedassault:gun_computer_row", "key": "ui.computer.range", "value": "{tr:ui.indirect.metres(round(computer.range))}"},
+        {"type": "combinedassault:gun_computer_row", "key": "ui.computer.flight", "value": "{computer.flight|.1}s"}]}}
+    ]}},
+
+    {"type": "place", "x": 104, "y": 70, "child": {"type": "sized", "w": 82, "h": 22, "child": {"type": "stack", "children": [
+      {"type": "when", "if": "computer.state == computer.state.loading", "then": {"type": "stack", "children": [
+        {"type": "text", "text": "{tr:ui.computer.loading(computer.load_seconds|.1)}", "color": "$amber"},
+        {"type": "place", "y": 11, "child": {"type": "bar", "w": 82, "h": 4, "value": "computer.load_progress", "fill": "$amber", "back": "#dd0f2210"}},
+        {"type": "when", "if": "!computer.crewed", "then": {"type": "place", "y": 17, "child": {"type": "text", "text": "{tr:ui.computer.no_loader}", "color": "blink(0.8) ? $red : $amber"}}}]},
+      "else": {"type": "text", "text": "{computer.round}", "color": "$label", "max_width": 82}}
+    ]}}},
+
+    {"type": "place", "x": 6, "y": 99, "child": {"type": "text", "text": "{tr:ui.computer.cant(computer.hull_pitch|+.1, computer.hull_roll|+.1)}", "color": "$cant_color"}},
+    {"type": "place", "x": 186, "y": 99, "pivot": "top_right", "child": {"type": "text", "text": "{tr:ui.computer.stops(computer.stop_low|.0, computer.stop_high|.0)}", "color": "$label"}},
+
+    {"type": "place", "x": 4, "y": 108, "child": {"type": "sized", "w": 184, "h": 10, "clip": true, "child": {"type": "stack", "children": [
+      {"type": "rect", "w": 184, "h": 10, "color": "$track"},
+      {"type": "tape", "value": "computer.bearing", "ppu": 2, "step": 5, "major_every": 2, "extent": 92, "minor_length": 3,
+        "major_length": 5, "labels": true, "label_offset": 5, "wrap": [0, 360], "names": {"0": "N", "90": "E", "180": "S", "270": "W"},
+        "color": "$scale", "label_color": "$label", "label_scale": 0.1, "label_pad": 2, "name_color": "$label", "major_color": "$label"},
+      {"type": "place", "x": 92, "child": {"type": "rect", "w": 1, "h": 10, "color": "$green"}}]}}}
+  ]}
+}

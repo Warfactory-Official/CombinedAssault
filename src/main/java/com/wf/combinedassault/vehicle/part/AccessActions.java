@@ -10,6 +10,7 @@ import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.all.AllItems;
 import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
 import com.wf.combinedassault.item.VehicleSpawnItem;
+import com.wf.combinedassault.tow.TowLinks;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 
@@ -81,6 +82,10 @@ public final class AccessActions {
             return false;
         }
         if (vehicle.cargoHold() != null && !vehicle.cargoHold().mayClose(door, player)) {
+            return false;
+        }
+        if (!door.isOn() && door.getId().equals(vehicle.towing.towable.stowedBy) && TowLinks.isTowed(vehicle)) {
+            player.displayClientMessage(Component.translatable("door.combinedassault.deploy.towed"), true);
             return false;
         }
         door.setOn(!door.isOn());
