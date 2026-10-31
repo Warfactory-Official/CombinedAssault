@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -15,9 +16,11 @@ import java.util.Set;
  *
  * @param weapons part {@code weapons} entries the kit brings
  * @param station weapon part keys ({@link HardwareKits#STATION_KEYS}) over the hardpoint part's own
+ * @param shoulderGun item id of the hand-held gun a carrier with a powered shoulder rig holds instead (wflib
+ *                    {@code Shoulder}); null = kit cannot be shouldered
  */
 public record HardwareKit(ResourceLocation id, ResourceLocation model, JsonArray weapons, Set<String> fits,
-                          int installTicks, JsonObject station) {
+                          int installTicks, JsonObject station, @Nullable ResourceLocation shoulderGun) {
 
     public static HardwareKit parse(ResourceLocation id, JsonObject json) {
         JsonArray weapons = GsonHelper.getAsJsonArray(json, "weapons");
@@ -34,7 +37,8 @@ public record HardwareKit(ResourceLocation id, ResourceLocation model, JsonArray
         JsonObject station = GsonHelper.getAsJsonObject(json, "station", new JsonObject());
         HardwareKits.checkStation(station, "station");
         return new HardwareKit(id, ResourceLocation.parse(GsonHelper.getAsString(json, "model")), weapons,
-                Set.copyOf(fits), GsonHelper.getAsInt(json, "install_ticks", 100), station);
+                Set.copyOf(fits), GsonHelper.getAsInt(json, "install_ticks", 100), station,
+                json.has("shoulder_gun") ? ResourceLocation.parse(GsonHelper.getAsString(json, "shoulder_gun")) : null);
     }
 
     public String nameKey() {

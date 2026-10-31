@@ -78,6 +78,20 @@ public final class WeaponSystem implements CombinedAssaultSystem {
             registrar.playToServer(BarrelPacket.TYPE, BarrelPacket.STREAM_CODEC, BarrelPacket::handle);
         });
         NeoForge.EVENT_BUS.addListener(VehicleFireEvent.Post.class, WeaponSystem::onFire);
+        com.wf.wflib.carry.api.Shoulder.WEAPONS.register(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(CombinedAssault.MOD_ID, "hardware"), 0,
+                new com.wf.wflib.carry.api.Shoulder.Weapon() {
+                    @Override
+                    public boolean matches(net.minecraft.world.item.ItemStack carried) {
+                        return com.wf.combinedassault.weapon.kit.HardwareItem.kit(carried) != null;
+                    }
+
+                    @Override
+                    public net.minecraft.resources.ResourceLocation gun(net.minecraft.world.item.ItemStack carried) {
+                        var kit = com.wf.combinedassault.weapon.kit.HardwareItem.kit(carried);
+                        return kit == null ? null : kit.shoulderGun();
+                    }
+                });
         NeoForge.EVENT_BUS.register(BarrelCharge.class);
         NeoForge.EVENT_BUS.register(RoundMarks.class);
         NeoForge.EVENT_BUS.register(GuidedRounds.class);
