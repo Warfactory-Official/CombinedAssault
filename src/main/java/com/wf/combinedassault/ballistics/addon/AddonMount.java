@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import com.wf.combinedassault.vehicle.structure.VehicleCubeGroup;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
 
 /**
  * A mount point resolved into its bone's rest frame.

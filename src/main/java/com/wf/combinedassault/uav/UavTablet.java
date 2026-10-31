@@ -1,16 +1,17 @@
 package com.wf.combinedassault.uav;
 
+import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.combinedassault.vehicle.weapon.AbstractVehicleWeapon;
-import com.wf.wflib.drone.cam.CameraChannels;
-import com.wf.wflib.drone.cam.FeedTarget;
-import com.wf.wflib.pda.Pda;
-import com.wf.wflib.pda.alerts.PdaAlert;
-import com.wf.wflib.pda.drone.PdaDrones;
-import com.wf.wflib.pda.drone.RemoteBody;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.wflib.cam.api.CameraChannels;
+import com.wf.wflib.cam.api.FeedTarget;
+import com.wf.wflib.pda.api.Pda;
+import com.wf.wflib.pda.api.PdaAlert;
+import com.wf.wflib.drone.api.PdaDrones;
+import com.wf.wflib.drone.api.RemoteBody;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -47,7 +48,7 @@ public final class UavTablet {
     /** Common setup. */
     public static void register() {
         NeoForge.EVENT_BUS.addListener(UavTablet::onTick);
-        RemoteBody.register(e -> e instanceof AbstractVehicle vehicle && vehicle.uav ? new Uav(vehicle) : null);
+        RemoteBody.PROVIDERS.register(CombinedAssault.modLocation("uav"), 0, e -> e instanceof AbstractVehicle vehicle && vehicle.uav ? new Uav(vehicle) : null);
     }
 
     public static CameraChannels channels(ItemStack stack) {

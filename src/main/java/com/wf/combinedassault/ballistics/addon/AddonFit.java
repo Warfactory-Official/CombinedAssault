@@ -2,9 +2,9 @@ package com.wf.combinedassault.ballistics.addon;
 
 import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.all.AllItems;
 
 import java.util.Locale;
+import com.wf.combinedassault.ballistics.BallisticsContent;
 
 /** What is installed on a mount point. Ordinal is the save/sync id. */
 public enum AddonFit {
@@ -35,9 +35,9 @@ public enum AddonFit {
     /** The item one unit of this fit is installed from and removed as. */
     public Item item() {
         return switch (this) {
-            case ERA_LIGHT -> AllItems.ERA_BRICK.get();
-            case ERA_HEAVY -> AllItems.HEAVY_ERA_BRICK.get();
-            case SLAT -> AllItems.SLAT_PANEL.get();
+            case ERA_LIGHT -> BallisticsContent.ERA_BRICK.get();
+            case ERA_HEAVY -> BallisticsContent.HEAVY_ERA_BRICK.get();
+            case SLAT -> BallisticsContent.SLAT_PANEL.get();
             case NONE -> throw new IllegalStateException("nothing installed");
         };
     }

@@ -13,12 +13,12 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import org.joml.Vector3f;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.vehicle.structure.ConvexHull;
-import com.wf.combinedassault.vehicle.part.SuspensionUnit;
-import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.physics.api.ConvexHull;
+import com.wf.combinedassault.dynamics.part.SuspensionUnit;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 
 import java.util.ArrayList;
 import java.util.List;

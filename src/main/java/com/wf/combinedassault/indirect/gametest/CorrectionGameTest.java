@@ -3,17 +3,15 @@ package com.wf.combinedassault.indirect.gametest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.indirect.BallisticSolver;
 import com.wf.combinedassault.indirect.FireArc;
 import com.wf.combinedassault.indirect.GunLaying;
 import com.wf.combinedassault.indirect.RoundSpec;
-import com.wf.combinedassault.vehicle.PhysicsEngine;
+import com.wf.combinedassault.dynamics.PhysicsEngine;
 
 /** Only promise checked: round moves by the blocks asked for, staying on the arc it was already on. */
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class CorrectionGameTest {
 
@@ -26,7 +24,7 @@ public class CorrectionGameTest {
     /** Blocks. */
     private static final double TOLERANCE = 0.05;
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void aBlockOfCorrectionMovesTheImpactOneBlock(GameTestHelper helper) {
         for (RoundSpec round : new RoundSpec[]{MORTAR, ASSISTED}) {
             GunLaying laying = laid(round, 62.0, 5);
@@ -47,7 +45,7 @@ public class CorrectionGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void aCorrectionStaysOnTheArcItStartedOn(GameTestHelper helper) {
         double best = BallisticSolver.bestElevation(MORTAR);
         // both arcs, both directions: elevation moves opposite ways on each. Peaks ~28 deg; 20 is most of the low arc.
@@ -74,7 +72,7 @@ public class CorrectionGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void correctionsAreRelativeAndAddUp(GameTestHelper helper) {
         GunLaying laying = laid(MORTAR, 62.0, 3);
         double from = BallisticSolver.groundRange(MORTAR, laying.elevation());
@@ -92,7 +90,7 @@ public class CorrectionGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void acorrectionOffTheEndOfTheReachIsRefusedAndMovesNothing(GameTestHelper helper) {
         GunLaying laying = laid(MORTAR, BallisticSolver.bestElevation(MORTAR), 3);
         double was = laying.elevation();
@@ -107,7 +105,7 @@ public class CorrectionGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void aLineCorrectionTurnsTheGunByTheAngleTheOffsetSubtends(GameTestHelper helper) {
         GunLaying laying = laid(MORTAR, 62.0, 3);
         laying.setAzimuth(0);
@@ -130,7 +128,7 @@ public class CorrectionGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void correctingAGunLaidOnAPointMovesThePoint(GameTestHelper helper) {
         GunLaying laying = new GunLaying();
         laying.setMode(com.wf.combinedassault.indirect.LayingMode.MANUAL);

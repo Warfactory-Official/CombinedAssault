@@ -1,0 +1,5 @@
+{
+  "use": ["combinedassault:hud"],
+  "root": {"type": "when", "if": "indirect.present",
+    "then": {"type": "place", "x": 6, "y": 6, "child": {"type": "combinedassault:hud/indirect_board"}}}
+}

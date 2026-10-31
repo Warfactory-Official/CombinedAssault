@@ -1,10 +1,13 @@
 package com.wf.combinedassault.vehicle;
 
 import net.minecraft.world.entity.Entity;
+import com.wf.wflib.physics.api.event.PhysicsLevelUnloadEvent;
 import net.minecraft.world.level.Level;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.phys.AABB;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,6 +23,7 @@ import java.util.function.Predicate;
  * {@code Level.getEntities} appends what is registered here; list copy-on-write, nearly always empty => one field
  * read per query.
  */
+@EventBusSubscriber
 public final class OversizedVehicles {
 
     /** Structure length past which a vehicle registers. Below it the two-block margin covers the miss. */
@@ -56,8 +60,9 @@ public final class OversizedVehicles {
         }
     }
 
-    public static void forget(Level level) {
-        BY_LEVEL.remove(level);
+    @SubscribeEvent
+    static void onLevelUnload(PhysicsLevelUnloadEvent event) {
+        BY_LEVEL.remove(event.level());
     }
 
     public static List<AbstractVehicle> in(Level level) {

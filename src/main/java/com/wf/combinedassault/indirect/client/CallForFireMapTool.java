@@ -1,10 +1,10 @@
 package com.wf.combinedassault.indirect.client;
 
 import com.wf.combinedassault.indirect.net.CallForFirePacket;
-import com.wf.wflib.client.map.MapMenu;
-import com.wf.wflib.client.map.MapTool;
-import com.wf.wflib.client.map.MapView;
-import com.wf.wflib.pda.client.PdaClient;
+import com.wf.wflib.map.api.client.MapMenu;
+import com.wf.wflib.map.api.client.MapTool;
+import com.wf.wflib.map.api.client.MapView;
+import com.wf.wflib.pda.api.client.PdaClient;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 

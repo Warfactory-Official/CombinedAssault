@@ -2,7 +2,6 @@ package com.wf.combinedassault.indirect.gametest;
 
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.indirect.BallisticSolver;
@@ -10,10 +9,9 @@ import com.wf.combinedassault.indirect.FireArc;
 import com.wf.combinedassault.indirect.FireSolution;
 import com.wf.combinedassault.indirect.ReachBand;
 import com.wf.combinedassault.indirect.RoundSpec;
-import com.wf.combinedassault.vehicle.PhysicsEngine;
+import com.wf.combinedassault.dynamics.PhysicsEngine;
 
 /** Range scale's window is a promise: a range inside it must lay without hitting a stop. */
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class ReachBandGameTest {
 
@@ -27,7 +25,7 @@ public class ReachBandGameTest {
     /** Degrees. */
     private static final double TOLERANCE = 0.01;
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void theBipodLeavesOneWindowAndItIsOnTheHighArc(GameTestHelper helper) {
         ReachBand high = ReachBand.of(MORTAR, FLOOR, CEILING, FireArc.HIGH);
         if (!high.covered()) {
@@ -49,7 +47,7 @@ public class ReachBandGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void everyRangeInTheWindowLaysWithoutHittingAStop(GameTestHelper helper) {
         ReachBand window = ReachBand.of(MORTAR, FLOOR, CEILING, FireArc.HIGH);
         double span = window.farthest() - window.nearest();
@@ -72,7 +70,7 @@ public class ReachBandGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void aWindowNeverClaimsMoreThanTheRoundCanReach(GameTestHelper helper) {
         double[][] bands = {{FLOOR, CEILING}, {0, 89}, {-20, 40}, {70, 89}, {0, 15}};
         RoundSpec[] rounds = {MORTAR, new RoundSpec(15.0, 0.01, PhysicsEngine.G, 1200),
@@ -94,7 +92,7 @@ public class ReachBandGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void aMountThatStraddlesTheBestElevationGetsTheWholeReachOnBothArcs(GameTestHelper helper) {
         ReachBand high = ReachBand.of(MORTAR, 0, 89, FireArc.HIGH);
         ReachBand low = ReachBand.of(MORTAR, 0, 89, FireArc.LOW);

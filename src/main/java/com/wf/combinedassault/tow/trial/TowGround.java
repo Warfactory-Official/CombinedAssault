@@ -8,7 +8,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
-import com.wf.combinedassault.vehicle.collision.ChunkCollisionCache;
+import com.wf.wflib.physics.api.ChunkCollisionCache;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -199,7 +199,7 @@ public final class TowGround {
     /** Hull-to-ground gap at the axle point; negative = hull inside ground. Possible because the
      * tow constraint runs after the contact solve, so a coupling can force a pose the ground
      * wouldn't otherwise allow. */
-    public static double clearance(ServerLevel level, com.wf.combinedassault.entity.vehicle.AbstractVehicle vehicle) {
+    public static double clearance(ServerLevel level, com.wf.combinedassault.vehicle.entity.AbstractVehicle vehicle) {
         Vec3 axle = vehicle.towing.towable.axle;
         Vec3 at = com.wf.combinedassault.tow.TowLinks.worldPoint(vehicle, new Vec3(axle.x, 0, axle.z));
         return at.y - groundAt(level, at.x, at.z);

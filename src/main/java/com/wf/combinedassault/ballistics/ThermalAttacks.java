@@ -1,25 +1,21 @@
 package com.wf.combinedassault.ballistics;
 
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.all.AllDamageTypes;
+import com.wf.combinedassault.vehicle.VehicleDamageTypes;
 import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.vehicle.VehicleBlast;
-import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
-import com.wf.wflib.api.ThermalAttackEvent;
-import com.wf.wflib.util.OBB;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.wflib.damage.api.event.ThermalAttackEvent;
+import com.wf.wflib.geom.api.OBB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import org.joml.Vector3f;
 
 /**
  * Incendiary heat on a hull: {@code vehicle.hurt(thermite)} at the hull point nearest the charge => armour region wear
- * ({@link ArmorRegions.Kind#THERMAL}), hull, struck system. Charge in the running-gear band under a track => that
+ * ({@link com.wf.wflib.armor.api.hull.HullWear.Kind#THERMAL}), hull, struck system. Charge in the running-gear band under a track => that
  * track also takes {@link #TRACK_SHARE}.
  */
-@EventBusSubscriber(modid = CombinedAssault.MOD_ID)
 public final class ThermalAttacks {
 
     /** Heat => vehicle damage. */
@@ -39,7 +35,7 @@ public final class ThermalAttacks {
         }
         Vec3 at = VehicleBlast.nearestHullPoint(vehicle, event.at());
         float damage = event.heat() * HEAT_DAMAGE;
-        vehicle.hurt(AllDamageTypes.Sources.thermite(vehicle.level().registryAccess(), event.charge(),
+        vehicle.hurt(VehicleDamageTypes.Sources.thermite(vehicle.level().registryAccess(), event.charge(),
                 event.attacker(), at), damage);
         VehicleSystems.Side side = underTrack(vehicle, event.at());
         if (side != null) {

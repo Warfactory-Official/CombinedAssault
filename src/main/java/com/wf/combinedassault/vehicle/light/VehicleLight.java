@@ -2,9 +2,9 @@ package com.wf.combinedassault.vehicle.light;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.vehicle.hit.ModelData;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.ballistics.hit.ModelData;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 

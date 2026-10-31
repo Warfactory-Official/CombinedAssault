@@ -1,10 +1,10 @@
 package com.wf.combinedassault.ballistics.addon.gametest;
 
-import com.wf.wflib.util.ForcedChunks;
-import com.wf.wflib.aef.ExplosionAEF;
-import com.wf.wflib.api.ProjectileStrikeEvent;
-import com.wf.wflib.api.Threat;
-import com.wf.wflib.api.ThreatKind;
+import com.wf.wflib.testkit.api.ForcedChunks;
+import com.wf.wflib.explosion.api.ExplosionAEF;
+import com.wf.wflib.damage.api.event.ProjectileStrikeEvent;
+import com.wf.wflib.damage.api.Threat;
+import com.wf.wflib.damage.api.ThreatKind;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.all.AllItems;
 import com.wf.combinedassault.ballistics.addon.AddonActions;
 import com.wf.combinedassault.ballistics.addon.AddonArmorLayer;
 import com.wf.combinedassault.ballistics.addon.AddonCommand;
@@ -41,19 +40,20 @@ import com.wf.combinedassault.ballistics.addon.AddonMount;
 import com.wf.combinedassault.ballistics.addon.AddonMountInfo;
 import com.wf.combinedassault.ballistics.addon.AddonMountState;
 import com.wf.combinedassault.ballistics.addon.AddonPhysics;
-import com.wf.combinedassault.ballistics.ArmorProfile;
+import com.wf.wflib.armor.api.hull.HullProfile;
 import com.wf.combinedassault.ballistics.addon.AddonStrike;
 import com.wf.combinedassault.ballistics.addon.AddonStrikes;
 import com.wf.combinedassault.ballistics.addon.EraSpec;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.util.VectorUtil;
-import com.wf.combinedassault.vehicle.hit.VehicleHits;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.geom.api.OBB;
+import com.wf.combinedassault.ballistics.hit.VehicleHits;
 
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Consumer;
+import com.wf.combinedassault.ballistics.BallisticsContent;
 
 /** ERA and slat: the mechanism in isolation, then through a real hull, a real round, a save and the probe actions. */
 @GameTestHolder(CombinedAssault.MOD_ID)
@@ -310,33 +310,33 @@ public class AddonArmorGameTest {
             standBy(player, vehicle, skirt);
             // Held item first: setting the hand afterwards overwrites slot 0.
             player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.STICK));
-            player.getInventory().add(new ItemStack(AllItems.ERA_BRICK.get(), 5));
+            player.getInventory().add(new ItemStack(BallisticsContent.ERA_BRICK.get(), 5));
             if (AddonActions.install(player, vehicle, skirt, AddonFit.ERA_LIGHT)) {
                 helper.fail("fitted six bricks from five");
                 return;
             }
-            player.getInventory().add(new ItemStack(AllItems.ERA_BRICK.get(), 1));
+            player.getInventory().add(new ItemStack(BallisticsContent.ERA_BRICK.get(), 1));
             if (!AddonActions.install(player, vehicle, skirt, AddonFit.ERA_LIGHT)
-                    || player.getInventory().countItem(AllItems.ERA_BRICK.get()) != 0) {
+                    || player.getInventory().countItem(BallisticsContent.ERA_BRICK.get()) != 0) {
                 helper.fail("install: " + layer.state(skirt).fit + ", bricks left "
-                        + player.getInventory().countItem(AllItems.ERA_BRICK.get()));
+                        + player.getInventory().countItem(BallisticsContent.ERA_BRICK.get()));
                 return;
             }
             layer.state(skirt).live &= ~0b111L;
-            player.getInventory().add(new ItemStack(AllItems.ERA_BRICK.get(), 2));
+            player.getInventory().add(new ItemStack(BallisticsContent.ERA_BRICK.get(), 2));
             if (!AddonActions.replace(player, vehicle, skirt) || layer.state(skirt).liveCells() != 5) {
                 helper.fail("partial refill left " + layer.state(skirt).liveCells() + " live");
                 return;
             }
             if (!AddonActions.remove(player, vehicle, skirt) || !layer.state(skirt).isEmpty()
-                    || player.getInventory().countItem(AllItems.ERA_BRICK.get()) != 5) {
-                helper.fail("remove returned " + player.getInventory().countItem(AllItems.ERA_BRICK.get()) + ", want the 5 live");
+                    || player.getInventory().countItem(BallisticsContent.ERA_BRICK.get()) != 5) {
+                helper.fail("remove returned " + player.getInventory().countItem(BallisticsContent.ERA_BRICK.get()) + ", want the 5 live");
                 return;
             }
 
             standBy(player, vehicle, side);
             int cost = layer.mounts().get(side).slatCost();
-            player.getInventory().add(new ItemStack(AllItems.SLAT_PANEL.get(), cost));
+            player.getInventory().add(new ItemStack(BallisticsContent.SLAT_PANEL.get(), cost));
             if (!AddonActions.install(player, vehicle, side, AddonFit.SLAT)) {
                 helper.fail("slat install with " + cost + " panels refused");
                 return;
@@ -348,7 +348,7 @@ public class AddonArmorGameTest {
                 helper.fail("welded without a welder");
                 return;
             }
-            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(AllItems.REPAIR_TOOL.get()));
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BallisticsContent.REPAIR_TOOL.get()));
             if (!AddonActions.repair(player, vehicle, side) || slat.bars[2] != 1.0f || slat.bars[5] != 0.0f) {
                 helper.fail("weld with no stock: bent " + slat.bars[2] + " broken " + slat.bars[5]);
                 return;
@@ -484,7 +484,7 @@ public class AddonArmorGameTest {
     @GameTest(template = TEMPLATE, timeoutTicks = 400)
     public static void hullGlancesKineticRoundsPastTheRicochetAngle(GameTestHelper helper) {
         onLane(helper, 8, M1A2, vehicle -> {
-            ArmorProfile profile = new ArmorProfile();
+            HullProfile profile = new HullProfile();
             profile.front = profile.side = profile.rear = profile.top = profile.bottom = 50;
             vehicle.armorProfile = profile;
             Vec3 centre = vehicle.getBoundingBox().getCenter();
@@ -520,8 +520,8 @@ public class AddonArmorGameTest {
             VehicleHits.Hit h = vehicle.hits().surface(from, to);
             return new Vec3[]{h.point(), new Vec3(h.normal())};
         }
-        VectorUtil.HitOBB h = VectorUtil.hitOBB(vehicle.getOBBs(), from, to);
-        return new Vec3[]{h.hitPos(), new Vec3(VectorUtil.faceNormal(h.obb(), h.hitPos()))};
+        OBB.SegmentHit h = OBB.first(vehicle.getOBBs(), from, to);
+        return new Vec3[]{h.point(), new Vec3(h.obb().faceNormal(h.point()))};
     }
 
     private static int mount(GameTestHelper helper, AbstractVehicle vehicle, String id) {

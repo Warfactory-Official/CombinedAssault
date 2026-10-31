@@ -61,7 +61,7 @@ test('vocabularies equal tools/blender', () => {
 });
 
 test('socket fields equal NodeRole SOCKET constants', () => {
-	const java = fs.readFileSync(path.join(repo, 'src/main/java/com/wf/combinedassault/vehicle/hit/NodeRole.java'), 'utf8');
+	const java = fs.readFileSync(path.join(repo, 'src/main/java/com/wf/combinedassault/ballistics/hit/NodeRole.java'), 'utf8');
 	const sockets = [...java.matchAll(/^\s+([A-Z_]+)\(Kind\.SOCKET\)/gm)].map(m => m[1].toLowerCase());
 	assert.deepEqual(ca.SOCKET_FIELDS, sockets);
 });

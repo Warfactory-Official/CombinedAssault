@@ -1,17 +1,16 @@
 package com.wf.combinedassault.airdefense;
 
-import com.wf.combinedassault.compat.wflib.WfLibCompat;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.util.VectorUtil;
-import com.wf.combinedassault.vehicle.part.MissileHolderUnit;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.combinedassault.vehicle.weapon.VehicleLaser;
-import com.wf.combinedassault.vehicle.weapon.VehicleMissile;
-import com.wf.wflib.entity.InterceptTarget;
-import com.wf.wflib.intercept.InterceptBattery;
-import com.wf.wflib.item.MissileItem;
-import com.wf.wflib.recon.ReconNet;
-import com.wf.wflib.recon.ReconOwners;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
+import com.wf.combinedassault.weapon.part.MissileHolderUnit;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.weapon.VehicleLaser;
+import com.wf.combinedassault.weapon.VehicleMissile;
+import com.wf.wflib.missile.api.InterceptTarget;
+import com.wf.wflib.missile.api.InterceptBattery;
+import com.wf.wflib.missile.api.MissileItem;
+import com.wf.wflib.recon.api.ReconNet;
+import com.wf.wflib.recon.api.ReconOwners;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -20,6 +19,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
+import com.wf.combinedassault.weapon.ordnance.Ordnance;
 
 /** A station's {@code air_defense}: probe settings, and the WFLib battery that runs them while nobody operates it. */
 public final class AirDefense implements InterceptBattery.Mount {
@@ -134,7 +134,7 @@ public final class AirDefense implements InterceptBattery.Mount {
         }
         VehicleMissile launcher = this.launcher();
         MissileHolderUnit holder = launcher == null ? null : launcher.missileHolder();
-        int slot = holder == null ? -1 : holder.nextLoaded(WfLibCompat::isInterceptor);
+        int slot = holder == null ? -1 : holder.nextLoaded(Ordnance::isInterceptor);
         return slot < 0 ? Double.NaN : ((MissileItem) holder.round(slot).getItem()).preset().cruiseSpeed();
     }
 
@@ -159,7 +159,7 @@ public final class AirDefense implements InterceptBattery.Mount {
             return laser.burn(target.interceptEntity(), null);
         }
         VehicleMissile launcher = this.launcher();
-        return launcher != null && launcher.fireRound(WfLibCompat::isInterceptor, target.interceptEntity());
+        return launcher != null && launcher.fireRound(Ordnance::isInterceptor, target.interceptEntity());
     }
 
     @Override
@@ -226,7 +226,7 @@ public final class AirDefense implements InterceptBattery.Mount {
         int n = 0;
         for (int i = 0; i < holder.getCapacity(); i++) {
             ItemStack round = holder.round(i);
-            if (!round.isEmpty() && WfLibCompat.isInterceptor(round)) {
+            if (!round.isEmpty() && Ordnance.isInterceptor(round)) {
                 n++;
             }
         }

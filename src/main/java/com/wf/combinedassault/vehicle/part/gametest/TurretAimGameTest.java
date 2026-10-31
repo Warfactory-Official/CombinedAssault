@@ -11,10 +11,10 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 
 import java.util.Optional;
 

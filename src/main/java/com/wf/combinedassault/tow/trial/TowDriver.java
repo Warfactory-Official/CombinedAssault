@@ -2,7 +2,7 @@ package com.wf.combinedassault.tow.trial;
 
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.control.ControlUnit;
 
 /** Scripted driver, not AI: lap-over-lap comparisons need identical inputs. Holds target SPEED, not

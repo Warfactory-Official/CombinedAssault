@@ -7,20 +7,19 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.indirect.GunLaying;
 import com.wf.combinedassault.indirect.IndirectFire;
 import com.wf.combinedassault.indirect.RoundSpec;
 import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.combinedassault.vehicle.pojo.AimContext;
-import com.wf.combinedassault.vehicle.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.weapon.pojo.AimContext;
+import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 
 import java.util.Optional;
 
@@ -30,7 +29,6 @@ import java.util.Optional;
  * out ~53 deg, so the pack declares 55 and the display is staged to match; a change to one not mirrored
  * in the other is what these catch.
  */
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class MortarEmplacementGameTest {
 
@@ -47,7 +45,7 @@ public class MortarEmplacementGameTest {
 
     private static final double TOLERANCE = 0.02;
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void theEmplacementStandsAtItsRestingLay(GameTestHelper helper) {
         AbstractVehicle mortar = spawn(helper);
         if (mortar == null) {
@@ -73,7 +71,7 @@ public class MortarEmplacementGameTest {
     }
 
     /** Unsprung => recoil never tips the base plate (it stacked into hops). */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void recoilLeavesTheBasePlateLevel(GameTestHelper helper) {
         AbstractVehicle mortar = spawn(helper);
         if (mortar == null) {
@@ -113,7 +111,7 @@ public class MortarEmplacementGameTest {
      * Muzzle = bone pivot + {@code barrel_length}; structure model's pivot and vehicle file's length
      * must agree with the picture, or shells leave the baseplate pointing correctly and nothing says so.
      */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void theMuzzleIsAtTheEndOfTheTubeAtEveryLay(GameTestHelper helper) {
         AbstractVehicle mortar = spawn(helper);
         if (mortar == null) {
@@ -159,7 +157,7 @@ public class MortarEmplacementGameTest {
      * WFLib is compile-only here (shells absent): checks the gun is pointed at the artillery tag, not
      * one item id, since an id-pointed gun can't load anything added after the gun was written.
      */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void theMortarLoadsFromTheArtilleryTag(GameTestHelper helper) {
         AbstractVehicle mortar = spawn(helper);
         if (mortar == null) {
@@ -174,7 +172,7 @@ public class MortarEmplacementGameTest {
             helper.fail("the emplacement has a mount with no gun on it");
             return;
         }
-        if (!gun.isAmmoForWeapon(com.wf.wflib.ammo.AmmoItems.stack(
+        if (!gun.isAmmoForWeapon(com.wf.wflib.ammo.api.AmmoItems.stack(
                 net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("wflib", "81mm/he"), 1))) {
             helper.fail("the mortar will not take WFLib 81 mm rounds");
             return;
@@ -191,7 +189,7 @@ public class MortarEmplacementGameTest {
      * Elevation stops = range limits (ceiling => dead zone floor; floor => max range), set independently
      * of each other (bipod vs shell ballistics): must still describe one continuous reach window.
      */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void theStopsGiveOneContinuousReach(GameTestHelper helper) {
         AbstractVehicle mortar = spawn(helper);
         if (mortar == null) {
@@ -249,7 +247,7 @@ public class MortarEmplacementGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void theEmplacementMountsWhereAnEmplacementGoes(GameTestHelper helper) {
         Optional<BaseVehicleData> data = CommonAssetsManager.vehicleDataManager().getVehicleData(MORTAR);
         if (data.isEmpty()) {

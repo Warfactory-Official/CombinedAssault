@@ -1,0 +1,55 @@
+package com.wf.combinedassault.naval.data;
+
+import net.minecraft.world.level.Level;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.naval.VesselVehicle;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.naval.NavalContent;
+
+public class VesselVehicleData extends BaseVehicleData<VesselVehicle> {
+
+    public float brakeForce;
+    public float forwardForce;
+    public float backwardForce;
+    public float maxSpeedForward;
+    public float maxSpeedBackward;
+    public float turnStep;
+    public float maxTurn;
+
+    @Override
+    public AbstractVehicle fromCustom(Level level) {
+        return new VesselVehicle(NavalContent.VESSEL_VEHICLE.get(), level);
+    }
+
+    public void build(VesselVehicleDataPojo pojo) {
+        super.build(pojo);
+        this.canWade = true;
+        this.brakeForce = pojo.attributes.brakeForce;
+        this.forwardForce = pojo.attributes.forwardForce;
+        this.backwardForce = pojo.attributes.backwardForce;
+        this.maxSpeedForward = pojo.attributes.maxSpeedForward;
+        this.maxSpeedBackward = pojo.attributes.maxSpeedBackward;
+        this.turnStep = pojo.attributes.turnStep;
+        this.maxTurn = pojo.attributes.maxTurn;
+    }
+
+    @Override
+    public void inject(VesselVehicle vehicle) {
+        vehicle.brakeForce = this.brakeForce;
+        vehicle.forwardForce = this.forwardForce;
+        vehicle.backwardForce = this.backwardForce;
+        vehicle.maxSpeedForward = this.maxSpeedForward;
+        vehicle.maxSpeedBackward = this.maxSpeedBackward;
+        vehicle.turnStep = this.turnStep;
+        vehicle.maxTurn = this.maxTurn;
+        if (vehicle.physicsEngine.density > 1) {
+            vehicle.physicsEngine.density = 0.3f;
+        }
+    }
+
+    @Override
+    public boolean canWade() {
+        return true;
+    }
+
+}

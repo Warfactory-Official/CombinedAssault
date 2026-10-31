@@ -1,16 +1,16 @@
 package com.wf.combinedassault.ballistics.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.api.event.HitVehicleEvent;
-import com.wf.combinedassault.ballistics.ArmorFace;
-import com.wf.combinedassault.ballistics.ArmorRegions;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.gametest.TestLanes;
-import com.wf.combinedassault.vehicle.hit.VehicleHits;
-import com.wf.wflib.kinetic.KineticPreset;
-import com.wf.wflib.kinetic.KineticPresetRegistry;
-import com.wf.wflib.round.RocketEntity;
-import com.wf.wflib.round.Rounds;
+import com.wf.combinedassault.ballistics.event.HitVehicleEvent;
+import com.wf.wflib.armor.api.hull.HullFace;
+import com.wf.wflib.armor.api.hull.HullWear;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.gametest.TestLanes;
+import com.wf.combinedassault.ballistics.hit.VehicleHits;
+import com.wf.wflib.round.api.KineticPreset;
+import com.wf.wflib.round.api.KineticPresets;
+import com.wf.wflib.round.api.RocketEntity;
+import com.wf.wflib.round.api.Rounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -51,24 +51,23 @@ public class SmallArmsArmorGameTest {
     /** Grazed rounds leave along z, ~45 blocks/tick: pitch > 2 ticks' reach. */
     private static final int LANE_Z = -700, LANE_PITCH = -128;
     private static final int FLOOR_X = 5, FLOOR_Z = 8;
+    /** Ricochet exit scatter ({@code AddonStrikes.glance}) is drawn from the vehicle's random. */
+    private static final long RICOCHET_SEED = 1L;
     private static final List<HitVehicleEvent> HITS = new ArrayList<>();
+    private static boolean listening;
     private static final List<ArmorStand> SHOOTERS = new ArrayList<>();
     /** Vehicle id -> its last {@link #fire}. */
     private static final Map<Integer, Shot> LAST = new HashMap<>();
-
-    static {
-        NeoForge.EVENT_BUS.addListener(HitVehicleEvent.class, HITS::add);
-    }
 
     /** Humvee side 10 mm: 5.56 (5) stopped, 7.62 (8) partly through, .50 (20) overmatch. */
     @GameTest(template = TEMPLATE, timeoutTicks = 200)
     public static void calibreDecidesAgainstHumveeSide(GameTestHelper helper) {
         onLane(helper, 0, HUMVEE, (seq, v) -> seq
-                .thenExecute(() -> fire(helper, v.get(), R556, 1, 0, ArmorFace.SIDE, 1.0))
+                .thenExecute(() -> fire(helper, v.get(), R556, 1, 0, HullFace.SIDE, 1.0))
                 .thenIdle(3).thenExecute(() -> expect(helper, v.get(), "absorbed"))
-                .thenExecute(() -> fire(helper, v.get(), R762, 1, 0, ArmorFace.SIDE, 1.0))
+                .thenExecute(() -> fire(helper, v.get(), R762, 1, 0, HullFace.SIDE, 1.0))
                 .thenIdle(3).thenExecute(() -> expect(helper, v.get(), "partial", "penetration"))
-                .thenExecute(() -> fire(helper, v.get(), R50, 1, 0, ArmorFace.SIDE, 1.0))
+                .thenExecute(() -> fire(helper, v.get(), R50, 1, 0, HullFace.SIDE, 1.0))
                 .thenIdle(3).thenExecute(() -> expect(helper, v.get(), "overmatch")));
     }
 
@@ -81,7 +80,7 @@ public class SmallArmsArmorGameTest {
         onLane(helper, 1, HUMVEE, (seq, v) -> {
             for (int k = 0; k < 4; k++) {
                 int i = k;
-                seq.thenExecute(() -> fire(helper, v.get(), R50, f[i], 0, ArmorFace.SIDE, 1.0))
+                seq.thenExecute(() -> fire(helper, v.get(), R50, f[i], 0, HullFace.SIDE, 1.0))
                         .thenIdle(3)
                         .thenExecute(() -> damage[i] = expect(helper, v.get(), want[i]));
             }
@@ -98,7 +97,7 @@ public class SmallArmsArmorGameTest {
     @GameTest(template = TEMPLATE, timeoutTicks = 200)
     public static void heavyMachineGunDoesNothingToTankFront(GameTestHelper helper) {
         onLane(helper, 2, M1A2, (seq, v) -> seq
-                .thenExecute(() -> fire(helper, v.get(), R50, 1, 0, ArmorFace.FRONT, 2.2))
+                .thenExecute(() -> fire(helper, v.get(), R50, 1, 0, HullFace.FRONT, 2.2))
                 .thenIdle(3)
                 .thenExecute(() -> {
                     float lost = expect(helper, v.get(), "absorbed");
@@ -115,7 +114,8 @@ public class SmallArmsArmorGameTest {
         onLane(helper, 3, HUMVEE, (seq, v) -> seq
                 .thenExecute(() -> {
                     health[0] = v.get().getHealth();
-                    Shot s = fire(helper, v.get(), R556, 1, 80, ArmorFace.SIDE, 1.0);
+                    v.get().getRandom().setSeed(RICOCHET_SEED);
+                    Shot s = fire(helper, v.get(), R556, 1, 80, HullFace.SIDE, 1.0);
                     key[0] = s.key;
                     normal[0] = s.normal;
                 })
@@ -130,7 +130,7 @@ public class SmallArmsArmorGameTest {
                     Vec3 out = Rounds.velocity(level, key[0]);
                     helper.assertTrue(out != null && out.dot(normal[0]) > 0, "deflected into the hull: " + out);
                 })
-                .thenExecute(() -> fire(helper, v.get(), R556, 1, 60, ArmorFace.SIDE, 1.0))
+                .thenExecute(() -> fire(helper, v.get(), R556, 1, 60, HullFace.SIDE, 1.0))
                 .thenIdle(3)
                 .thenExecute(() -> expect(helper, v.get(), "absorbed")));
     }
@@ -139,9 +139,9 @@ public class SmallArmsArmorGameTest {
     @GameTest(template = TEMPLATE, timeoutTicks = 240)
     public static void rpgDefeatsTankSideNotFront(GameTestHelper helper) {
         onLane(helper, 4, M1A2, (seq, v) -> seq
-                .thenExecute(() -> fire(helper, v.get(), PG7V, 1, 0, ArmorFace.SIDE, 1.2))
+                .thenExecute(() -> fire(helper, v.get(), PG7V, 1, 0, HullFace.SIDE, 1.2))
                 .thenIdle(6).thenExecute(() -> expect(helper, v.get(), "overmatch"))
-                .thenExecute(() -> fire(helper, v.get(), PG7V, 1, 0, ArmorFace.FRONT, 2.2))
+                .thenExecute(() -> fire(helper, v.get(), PG7V, 1, 0, HullFace.FRONT, 2.2))
                 .thenIdle(6).thenExecute(() -> expect(helper, v.get(), "absorbed")));
     }
 
@@ -155,27 +155,27 @@ public class SmallArmsArmorGameTest {
      * first: every shot meets fresh plate.
      */
     private static Shot fire(GameTestHelper helper, AbstractVehicle vehicle, ResourceLocation round, double speedFactor,
-                             double incidence, ArmorFace face, double height) {
+                             double incidence, HullFace face, double height) {
         ServerLevel level = helper.getLevel();
         vehicle.setHealth(vehicle.getMaxHealth());
-        for (ArmorRegions.Face f : ArmorRegions.Face.VALUES) {
-            vehicle.armorRegions().repair(f, 1);
+        for (HullWear.Face f : HullWear.Face.VALUES) {
+            vehicle.hullWear().repair(f, 1);
         }
         HITS.removeIf(h -> h.entityId == vehicle.getId());
         Quaternionf rot = new Quaternionf(vehicle.rotYXZ());
-        Vector3f out = rot.transform(face == ArmorFace.FRONT ? new Vector3f(0, 0, 1) : new Vector3f(1, 0, 0));
+        Vector3f out = rot.transform(face == HullFace.FRONT ? new Vector3f(0, 0, 1) : new Vector3f(1, 0, 0));
         Vec3 centre = vehicle.position().add(0, height, 0);
         Vec3 probe = centre.add(out.x * 8, out.y * 8, out.z * 8);
         VehicleHits.Hit hit = vehicle.hits().surface(probe, centre);
         helper.assertTrue(hit != null, "no hull along " + face + " at height " + height);
         Vec3 n = new Vec3(hit.normal());
-        ArmorFace struck = ArmorFace.of(new Quaternionf(rot).conjugate().transform(new Vector3f(hit.normal())));
+        HullFace struck = HullFace.of(new Quaternionf(rot).conjugate().transform(new Vector3f(hit.normal())));
         helper.assertTrue(struck == face, "probe met " + struck + " normal " + n + ", not " + face);
         Vec3 tangent = n.cross(new Vec3(0, 1, 0)).normalize();
         double a = Math.toRadians(incidence);
         Vec3 dir = n.scale(-Math.cos(a)).add(tangent.scale(Math.sin(a))).normalize();
         Vec3 from = hit.point().subtract(dir.scale(3));
-        KineticPreset preset = KineticPresetRegistry.get(round);
+        KineticPreset preset = KineticPresets.get(round);
         // Rounds resolve their shooter by id from the level: a FakePlayer reads as null (no readout).
         // Last shot's stand sits on this launch point: discard (its round has landed).
         SHOOTERS.removeIf(stand -> {
@@ -222,6 +222,10 @@ public class SmallArmsArmorGameTest {
     }
 
     private static void onLane(GameTestHelper helper, int lane, ResourceLocation id, TestLanes.Body body) {
+        if (!listening) {
+            listening = true;
+            NeoForge.EVENT_BUS.addListener(HitVehicleEvent.class, HITS::add);
+        }
         TestLanes.run(helper, LANE_Z + lane * LANE_PITCH, FLOOR_X, FLOOR_Z, id, body,
                 at -> SHOOTERS.removeIf(a -> {
                     if (a.level() == helper.getLevel() && a.blockPosition().closerThan(at, 32)) {

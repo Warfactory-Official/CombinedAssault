@@ -1,10 +1,10 @@
 package com.wf.combinedassault.vehicle.light;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.custom.part.data.WeaponUnitData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.wflib.drone.cam.CameraMode;
+import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.wflib.cam.api.CameraMode;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;

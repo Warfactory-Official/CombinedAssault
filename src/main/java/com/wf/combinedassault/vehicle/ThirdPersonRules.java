@@ -1,11 +1,10 @@
 package com.wf.combinedassault.vehicle;
 
-import com.wf.combinedassault.all.AllConfigs;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.entity.vehicle.FixedWingVehicle;
-import com.wf.combinedassault.entity.vehicle.RotaryWingVehicle;
-import com.wf.combinedassault.entity.vehicle.ShipVehicle;
-import com.wf.combinedassault.entity.vehicle.VesselVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.aircraft.FixedWingVehicle;
+import com.wf.combinedassault.aircraft.RotaryWingVehicle;
+import com.wf.combinedassault.naval.ShipVehicle;
+import com.wf.combinedassault.naval.VesselVehicle;
 
 import java.util.Set;
 
@@ -29,10 +28,10 @@ public final class ThirdPersonRules {
 
     public static boolean allows(AbstractVehicle vehicle) {
         String id = vehicle.getVehicleId().toString();
-        if (AllConfigs.server.thirdPersonDeny.get().contains(id)) {
+        if (VehicleConfig.server().thirdPersonDeny().contains(id)) {
             return false;
         }
-        return AllConfigs.server.thirdPersonAllow.get().contains(id)
-                || AllConfigs.server.thirdPersonClasses.get().contains(classOf(vehicle));
+        return VehicleConfig.server().thirdPersonAllow().contains(id)
+                || VehicleConfig.server().thirdPersonClasses().contains(classOf(vehicle));
     }
 }

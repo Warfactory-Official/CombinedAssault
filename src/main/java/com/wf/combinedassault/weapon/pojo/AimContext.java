@@ -1,0 +1,12 @@
+package com.wf.combinedassault.weapon.pojo;
+
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
+
+public class AimContext {
+
+    public Vec3 from;
+    public Vec2 direction;
+    public Vec3 position;
+
+}

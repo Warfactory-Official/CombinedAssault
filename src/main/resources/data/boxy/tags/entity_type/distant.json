@@ -3,13 +3,13 @@
     "combinedassault:none_vehicle",
     "combinedassault:wheeled_vehicle",
     "combinedassault:tracked_vehicle",
-    "combinedassault:vessel_vehicle",
-    "combinedassault:rotary_wing_vehicle",
-    "combinedassault:fixed_wing_vehicle",
-    "combinedassault:ship",
+    { "id": "combinedassault:vessel_vehicle", "required": false },
+    { "id": "combinedassault:rotary_wing_vehicle", "required": false },
+    { "id": "combinedassault:fixed_wing_vehicle", "required": false },
+    { "id": "combinedassault:ship", "required": false },
     "combinedassault:m1a2",
-    "combinedassault:ah64d",
+    { "id": "combinedassault:ah64d", "required": false },
     "combinedassault:vehicle_part",
-    "combinedassault:paraglider_canopy"
+    { "id": "combinedassault:paraglider_canopy", "required": false }
   ]
 }

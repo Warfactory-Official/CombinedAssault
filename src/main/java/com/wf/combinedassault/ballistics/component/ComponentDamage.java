@@ -2,7 +2,7 @@ package com.wf.combinedassault.ballistics.component;
 
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.custom.part.data.PartUnitData;
+import com.wf.combinedassault.vehicle.part.data.PartUnitData;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 
 /** Part kind, damage band, effectiveness: computed from health each call, never cached. */

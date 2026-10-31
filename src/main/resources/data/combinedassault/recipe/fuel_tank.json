@@ -1,4 +1,7 @@
 {
+  "neoforge:conditions": [
+    { "type": "wflib:system", "system": "combinedassault:energy" }
+  ],
   "type": "minecraft:crafting_shapeless",
   "ingredients": [
     { "item": "minecraft:bucket" },

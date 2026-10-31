@@ -199,7 +199,7 @@ Zone: `name`, `min` / `max` (glTF model coords, part at rest), `ke` (> 0), `ce` 
 
 Shipped values: open-source estimates (fprado armorsite M1A2 SEP KE 940 / CE 1320-1620 turret, hull 560-650 / 510-1050; Wikipedia T-90 / T-90A with Kontakt-5 800-910 / 1150-1450; Stryker 14.5 mm front, 7.62 mm all round; Centauro 25 mm front, 14.5 mm all round; M1151 armour kit vs 7.62 mm). Merkava 4 and T-84 Oplot: extrapolated, no consistent public figures.
 
-- Wear per region (6 faces of the main collider x 3x3 cells, `ArmorRegions`); thickness `nominal x lerp(1 - wear, wear_floor, 1)`. Hull health no longer thins armour.
+- Wear per region (6 faces of the main collider x 3x3 cells, `HullWear`); thickness `nominal x lerp(1 - wear, wear_floor, 1)`. Hull health no longer thins armour.
 - Region durability `4 x nominal mm` points; every positioned hit adds `damage x share`: rounds 0.3, blasts 0.2 (+50% to same-face neighbours), thermite 1.2 (+35%), collisions 0.05 (+50%), other 0.2.
 - Probe: node per worn face (lowest cell %); "Patch armour" = one 25% band off the face, hull tool, 3 s.
 - Thermite (WFLib `ThermalAttackEvent`): hull point nearest the charge takes `heat` as `combinedassault:thermite` (no threshold, no armour answer, struck system); charge low and outboard under a track => that track x1.5.
@@ -554,7 +554,7 @@ Muzzle light peak `clamp(6 caliber, 30, 900)`, `1.5 + caliber/40` ticks; caliber
 | `wflib:missile_*`, `combinedassault:missile_*`, `combinedassault:bomb_gbu_*` | WFLib missile to the aim point / lock; beam riders + SAR guided by the firing unit |
 | `wflib:flare_cartridge`, `smoke_grenade`, `aps_grenade` | WFLib countermeasure entity |
 
-- WFLib catalogue rounds exist only once requested: every `wflib:` item / `#wflib:` tag named in a pack def and every size tag a `missile_holder` accepts is requested at mod construction (`compat/wflib/Ordnance.java`); a tag requests the members of WFLib's own tag file.
+- WFLib catalogue rounds exist only once requested: every `wflib:` item / `#wflib:` tag named in a pack def and every size tag a `missile_holder` accepts is requested at mod construction (`weapon/ordnance/Ordnance.java`); a tag requests the members of WFLib's own tag file.
 - Same calibre, any variant: `"ammo": "wflib:cartridge_20x102"` takes HEI, API and every pack-registered 20x102 load.
 - Size/calibre tags = mount compatibility: `#wflib:missile/<small|medium|large|huge|pod>`, `#wflib:bomb/<small|medium|large>`, `#wflib:rocket/<70mm|80mm>`, `#wflib:artillery_shells`. Third-party round tagged => loadable.
 - Loose: one kind per load: reload takes the picked kind, else the first accepted stack (=> new pick); then only same item + components (variant).
@@ -972,7 +972,7 @@ Top left, `MANUAL`/`AUTO` only: quadrant (stops, barrel, laid mark), ELEV vs GUN
 
 - Operator of a `map` station, on a map host (wflib `client/map`: JourneyMap, Xaero's World Map): toolbar "Fire mission" armed => click designates; right-click menu => round kind (loaded count) -> 1 / 2 / 4 / all (Xaero: second menu at the cursor).
 - Mission: `AUTO` laying, round selected, each round fired once laid (missile 1°, gun 0.1°) and ready; ends at the count or when the kind runs out.
-- Call for fire (wflib PDA carrier, any map host incl. the PDA's embedded map): menu "PDA: call for fire here" -> `CallForFirePacket` -> server: PDA + uplink (`Uplink.of != NONE`) else refused -> `FireRequestPacket` to same-side (`MarkerStore.side`) players seated at a `map` station, same dimension. Operator: request cross + observer name on the map, menu "Fire request <obs>: designate", PDA alert; firing stays the operator's order. Requests live 120 s, 8 kept.
+- Call for fire (wflib PDA carrier, any map host incl. the PDA's embedded map): menu "PDA: call for fire here" -> `CallForFirePacket` -> server: PDA + uplink (`Uplink.of != NONE`) else refused -> `FireRequestPacket` to same-side (`MarkerData.side`) players seated at a `map` station, same dimension. Operator: request cross + observer name on the map, menu "Fire request <obs>: designate", PDA alert; firing stays the operator's order. Requests live 120 s, 8 kept.
 - Target height: rack rounds from an `indirect_fire` station take the surface server-side once the target chunk loads (map heights over unexplored ground read 64).
 - Default key clashes, rebind one of each: JourneyMap fullscreen `J` = leave-vehicle `J`; Xaero map `M` = tow-couple `M` (and wflib TV view); Xaero minimap settings `Y` = indirect mode `Y`.
 - Xaero minimap default top left = indirect panel: move one.

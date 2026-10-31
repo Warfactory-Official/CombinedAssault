@@ -14,15 +14,15 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.entity.vehicle.ShipVehicle;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.naval.ShipVehicle;
 
 import java.util.List;
 import java.util.Optional;
 
-/** One command: course, ship, crew, run - in order. {@code tools/carrier_trial.py} drives it over RCON. */
+/** One command: course, ship, crew, run - in order. */
 public final class TrialCommand {
 
     private TrialCommand() {

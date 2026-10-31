@@ -1,4 +1,7 @@
 {
+  "neoforge:conditions": [
+    { "type": "wflib:system", "system": "combinedassault:props" }
+  ],
   "type": "minecraft:crafting_shapeless",
   "ingredients": [
     { "tag": "minecraft:wool" },

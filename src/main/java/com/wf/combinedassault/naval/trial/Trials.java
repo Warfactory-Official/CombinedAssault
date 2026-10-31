@@ -10,12 +10,10 @@ import net.minecraft.util.Unit;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.entity.vehicle.ShipVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.naval.ShipVehicle;
 
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -27,7 +25,6 @@ import java.util.Locale;
  * One trial, server-wide. Setup is a state machine, not a sleep: hull settles to its waterline,
  * plant reaches full power, only then does row 1 get written. Passages must start alike to compare.
  */
-@EventBusSubscriber(modid = CombinedAssault.MOD_ID)
 public final class Trials {
 
     private enum Phase { SPAWNED, BUILT, SETTLING, WARMING, RUNNING, DONE }

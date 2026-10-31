@@ -10,8 +10,6 @@
     {"type": "combinedassault:hud/weapon_card"},
     {"type": "place", "x": "ui.width / 2 + 128", "y": "ui.height - 80", "child": {"type": "combinedassault:radar_scopes"}},
     {"type": "when", "if": "vehicle.rwr",
-      "then": {"type": "place", "x": "ui.width - 40", "y": "ui.height - 180", "child": {"type": "combinedassault:rwr"}}},
-    {"type": "when", "if": "indirect.present",
-      "then": {"type": "place", "x": 6, "y": 6, "child": {"type": "combinedassault:hud/indirect_board"}}}
+      "then": {"type": "place", "x": "ui.width - 40", "y": "ui.height - 180", "child": {"type": "combinedassault:rwr"}}}
   ]}
 }

@@ -2,7 +2,7 @@ package com.wf.combinedassault.indirect;
 
 /**
  * @param elevationDegrees above horizon, positive up: opposite sign to Minecraft's xRot
- * @param azimuthDegrees   world yaw per {@link com.wf.combinedassault.util.VectorUtil#rotToVec}: 0 = +Z
+ * @param azimuthDegrees   world yaw per {@link com.wf.combinedassault.vehicle.util.VectorUtil#rotToVec}: 0 = +Z
  * @param flightTicks      muzzle to target
  * @param apexHeight       blocks above muzzle at arc top
  * @param impactSpeed      b/t on arrival; what the armour model sees

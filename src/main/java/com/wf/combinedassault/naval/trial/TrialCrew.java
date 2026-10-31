@@ -8,11 +8,11 @@ import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.vehicle.parenting.DeckSnapshot;
-import com.wf.combinedassault.vehicle.parenting.VehicleParenting;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.physics.api.DeckSnapshot;
+import com.wf.wflib.physics.api.VehicleParenting;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -7,7 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.tow.TowCoupler;
 
 /**

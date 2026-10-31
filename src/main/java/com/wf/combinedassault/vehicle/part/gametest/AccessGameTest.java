@@ -11,17 +11,16 @@ import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.util.VectorUtil;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
 import com.wf.combinedassault.vehicle.part.AccessActions;
 import com.wf.combinedassault.vehicle.part.DoorUnit;
-import com.wf.combinedassault.vehicle.part.PartClipTracks;
+import com.wf.combinedassault.dynamics.part.PartClipTracks;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 
@@ -30,13 +29,12 @@ import java.util.OptionalInt;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class AccessGameTest {
 
     private static final String TEMPLATE = "empty";
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void aTailgateOpensAndCloses(GameTestHelper helper) {
         AbstractVehicle humvee = spawn(helper, "humvee");
         if (humvee == null) {
@@ -53,7 +51,7 @@ public class AccessGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void aHatchIsADoor(GameTestHelper helper) {
         AbstractVehicle tank = spawn(helper, "m1a2");
         if (tank == null) {
@@ -70,7 +68,7 @@ public class AccessGameTest {
     }
 
     /** Storage node on foot opens the hold; ride-inventory from a remote UAV link is refused. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void storageOpensOnFootNotOverAUavLink(GameTestHelper helper) {
         AbstractVehicle humvee = spawn(helper, "humvee");
         AbstractVehicle ciws = spawn(helper, "mk15");
@@ -101,7 +99,7 @@ public class AccessGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void landingGearIsNotADoor(GameTestHelper helper) {
         AbstractVehicle jet = spawn(helper, "a10");
         if (jet == null) {
@@ -120,7 +118,7 @@ public class AccessGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void aDestroyedDoorIsJammed(GameTestHelper helper) {
         AbstractVehicle humvee = spawn(helper, "humvee");
         if (humvee == null) {
@@ -139,7 +137,7 @@ public class AccessGameTest {
     }
 
     /** Port (+X) side: eye on door_fl => door_fl; nearest fallback door_fl; aimed at the centre => never starboard. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void aPortClickOpensThePortDoor(GameTestHelper helper) {
         AbstractVehicle humvee = spawn(helper, "humvee");
         if (humvee == null) {
@@ -171,7 +169,7 @@ public class AccessGameTest {
     }
 
     /** Clip-driven hit node follows its part: C5 visor (clip cargo_doors) swings up with the doors. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void aClipMovesItsHitGeometry(GameTestHelper helper) {
         AbstractVehicle c5 = spawn(helper, "c5");
         if (c5 == null) {
@@ -200,7 +198,7 @@ public class AccessGameTest {
     }
 
     /** Seat node: rear_right boarded though driver free; taken seat refused. Armour stands: FakePlayer fails the mount gate. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void aSeatNodeBoardsThatSeat(GameTestHelper helper) {
         AbstractVehicle humvee = spawn(helper, "humvee");
         if (humvee == null) {

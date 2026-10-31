@@ -1,6 +1,6 @@
 package com.wf.combinedassault.airdefense;
 
-import com.wf.combinedassault.custom.part.data.AirDefensePojo;
+import com.wf.combinedassault.weapon.part.data.AirDefensePojo;
 
 /** Station's pack {@code air_defense}. */
 public record AirDefenseSpec(double range, double mast, float minElevation, float maxElevation, int salvoSpacing,

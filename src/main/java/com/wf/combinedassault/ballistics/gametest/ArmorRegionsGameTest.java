@@ -1,24 +1,24 @@
 package com.wf.combinedassault.ballistics.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.ballistics.ArmorRegions;
+import com.wf.wflib.armor.api.hull.HullWear;
 import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.gametest.TestLanes;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.gametest.TestLanes;
 import com.wf.combinedassault.vehicle.crew.CrewRole;
 import com.wf.combinedassault.vehicle.crew.CrewRules;
-import com.wf.combinedassault.vehicle.part.BarrelCharge;
+import com.wf.combinedassault.weapon.part.BarrelCharge;
 import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
-import com.wf.wflib.api.ChargeSpec;
-import com.wf.wflib.grenade.GrenadeWarheads;
-import com.wf.wflib.grenade.ThrownCharge;
-import com.wf.wflib.kinetic.KineticPreset;
-import com.wf.wflib.kinetic.KineticPresetRegistry;
-import com.wf.wflib.round.RocketEntity;
-import com.wf.wflib.util.OBB;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.wflib.grenade.api.ChargeSpec;
+import com.wf.wflib.grenade.api.GrenadeWarheads;
+import com.wf.wflib.grenade.api.ThrownCharge;
+import com.wf.wflib.round.api.KineticPreset;
+import com.wf.wflib.round.api.KineticPresets;
+import com.wf.wflib.round.api.RocketEntity;
+import com.wf.wflib.geom.api.OBB;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -54,8 +54,8 @@ public class ArmorRegionsGameTest {
                 .add(new Vec3(axes[2]).scale(z * e.z));
     }
 
-    private static float faceWear(AbstractVehicle v, ArmorRegions.Face face) {
-        return 1 - v.armorRegions().integrity(face);
+    private static float faceWear(AbstractVehicle v, HullWear.Face face) {
+        return 1 - v.hullWear().integrity(face);
     }
 
     private static float track(AbstractVehicle v, VehicleSystems.Side side) {
@@ -77,20 +77,20 @@ public class ArmorRegionsGameTest {
                     Vec3 aim = local(tank, 1.0, 0.0, 0.0);
                     Vec3 out = aim.subtract(tank.getMainCubeOBB().obb().centerVec()).normalize();
                     Vec3 from = aim.add(out.scale(4));
-                    KineticPreset rpg = KineticPresetRegistry.get(PG7V);
+                    KineticPreset rpg = KineticPresets.get(PG7V);
                     RocketEntity.fire(helper.getLevel(), rpg, from, out.reverse(), 0, Vec3.ZERO, null, null, null);
                 })
                 .thenIdle(10)
                 .thenExecute(() -> {
                     AbstractVehicle tank = v.get();
-                    float left = faceWear(tank, ArmorRegions.Face.LEFT);
-                    float right = faceWear(tank, ArmorRegions.Face.RIGHT);
-                    float front = faceWear(tank, ArmorRegions.Face.FRONT);
-                    int struck = ArmorRegions.region(tank, local(tank, 1.0, 0.0, 0.0), null);
-                    int corner = ArmorRegions.index(ArmorRegions.Face.LEFT, 0, 0);
+                    float left = faceWear(tank, HullWear.Face.LEFT);
+                    float right = faceWear(tank, HullWear.Face.RIGHT);
+                    float front = faceWear(tank, HullWear.Face.FRONT);
+                    int struck = HullWear.region(tank.mainBox(), local(tank, 1.0, 0.0, 0.0), null);
+                    int corner = HullWear.index(HullWear.Face.LEFT, 0, 0);
                     float wf = tank.armorProfile.wearFloor;
-                    float hit = tank.armorRegions().thicknessScale(struck, wf);
-                    float clean = tank.armorRegions().thicknessScale(corner, wf);
+                    float hit = tank.hullWear().thicknessScale(struck, wf);
+                    float clean = tank.hullWear().thicknessScale(corner, wf);
                     helper.assertTrue(left > 0 && right == 0 && front == 0 && hit < clean,
                             String.format(Locale.ROOT, "wear L %.4f R %.4f F %.4f; scale struck %.4f corner %.4f",
                                     left, right, front, hit, clean));
@@ -114,8 +114,8 @@ public class ArmorRegionsGameTest {
                     .thenIdle(70)
                     .thenExecute(() -> {
                         AbstractVehicle tank = v.get();
-                        float belly = faceWear(tank, ArmorRegions.Face.BOTTOM);
-                        float top = faceWear(tank, ArmorRegions.Face.TOP);
+                        float belly = faceWear(tank, HullWear.Face.BOTTOM);
+                        float top = faceWear(tank, HullWear.Face.TOP);
                         float port = track(tank, VehicleSystems.Side.LEFT);
                         float starboard = track(tank, VehicleSystems.Side.RIGHT);
                         helper.assertTrue(belly > 0 && top == 0 && port < before[0] && starboard >= before[1],
@@ -138,8 +138,8 @@ public class ArmorRegionsGameTest {
                 .thenIdle(70)
                 .thenExecute(() -> {
                     AbstractVehicle tank = v.get();
-                    float top = faceWear(tank, ArmorRegions.Face.TOP);
-                    float belly = faceWear(tank, ArmorRegions.Face.BOTTOM);
+                    float top = faceWear(tank, HullWear.Face.TOP);
+                    float belly = faceWear(tank, HullWear.Face.BOTTOM);
                     helper.assertTrue(top > 0 && belly == 0,
                             String.format(Locale.ROOT, "top %.4f belly %.4f", top, belly));
                 }), at -> { });

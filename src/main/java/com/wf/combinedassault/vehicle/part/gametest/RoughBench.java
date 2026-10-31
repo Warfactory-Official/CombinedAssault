@@ -1,5 +1,6 @@
 package com.wf.combinedassault.vehicle.part.gametest;
 
+import com.wf.wflib.physics.api.PhysicsSettings;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -12,9 +13,9 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import org.joml.Vector3f;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -105,7 +106,7 @@ public class RoughBench {
 
     private static void run(GameTestHelper helper, String vehicleId, int seed, boolean weave, int lane) {
         String name = String.format(Locale.ROOT, "%s_%d_%s", vehicleId, seed, weave ? "weave" : "straight");
-        com.wf.combinedassault.all.AllConfigs.Cached.asyncVehiclePhysics = System.getProperty("combinedassault.bench.filter", "").contains("async");
+        PhysicsSettings.override(PhysicsSettings.current().withAsync(System.getProperty("combinedassault.bench.filter", "").contains("async")));
         ServerLevel level = helper.getLevel();
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(CombinedAssault.MOD_ID, vehicleId);
         Optional<BaseVehicleData> data = CommonAssetsManager.vehicleDataManager().getVehicleData(id);

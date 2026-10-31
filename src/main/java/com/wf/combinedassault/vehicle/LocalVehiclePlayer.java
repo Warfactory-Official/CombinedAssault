@@ -1,9 +1,10 @@
 package com.wf.combinedassault.vehicle;
 
-import com.wf.wflib.client.cam.DroneCamHud;
-import com.wf.wflib.client.cam.ScreenSensor;
-import com.wf.wflib.pda.client.PdaClient;
-import com.wf.wflib.drone.cam.CameraMode;
+import com.wf.combinedassault.radar.RadarConfig;
+import com.wf.wflib.cam.api.client.DroneCamHud;
+import com.wf.wflib.cam.api.client.ScreenSensor;
+import com.wf.wflib.pda.api.client.PdaClient;
+import com.wf.wflib.cam.api.CameraMode;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Options;
@@ -22,34 +23,34 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.all.AllConfigs;
-import com.wf.combinedassault.all.AllKeys;
-import com.wf.combinedassault.api.entity.RemoteTickEntity;
-import com.wf.combinedassault.client.screen.CoordinateInputScreen;
-import com.wf.combinedassault.client.shader.OverloadHandler;
-import com.wf.combinedassault.custom.part.data.WeaponUnitData;
-import com.wf.combinedassault.fpv.FpvFlight;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.entity.vehicle.FixedWingVehicle;
-import com.wf.combinedassault.entity.vehicle.RotaryWingVehicle;
-import com.wf.wflib.MissileEntity;
-import com.wf.combinedassault.network.message.ClientVehicleAction;
-import com.wf.combinedassault.util.VectorUtil;
+import com.wf.combinedassault.vehicle.client.VehicleKeys;
+import com.wf.combinedassault.vehicle.entity.RemoteTickEntity;
+import com.wf.combinedassault.weapon.client.CoordinateInputScreen;
+import com.wf.combinedassault.render.shader.OverloadHandler;
+import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
+import com.wf.combinedassault.uav.fpv.FpvFlight;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.aircraft.FixedWingVehicle;
+import com.wf.combinedassault.aircraft.RotaryWingVehicle;
+import com.wf.wflib.missile.api.MissileEntity;
+import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
 import com.wf.combinedassault.vehicle.control.ControlUnit;
 import com.wf.combinedassault.vehicle.control.InputHandler;
 import com.wf.combinedassault.vehicle.light.IrSightMessage;
 import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.ads.StationAds;
-import com.wf.combinedassault.recoil.StationRecoil;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.combinedassault.vehicle.pojo.AimContext;
+import com.wf.combinedassault.weapon.client.StationAds;
+import com.wf.combinedassault.weapon.client.StationRecoil;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.weapon.pojo.AimContext;
 
 import java.util.concurrent.ConcurrentHashMap;
+import com.wf.combinedassault.dynamics.PhysicsEngine;
 
 @OnlyIn(Dist.CLIENT)
 public class LocalVehiclePlayer {
 
-    public static LocalVehiclePlayer instance;
+    private static final LocalVehiclePlayer instance;
     public static final float CAMERA_UPWARD_ANGLE = 10;
     /** Stick deflection per mouse turn unit (vanilla turn delta; x0.15 = deg). */
     private static final float STICK_GAIN = 0.01F;
@@ -111,6 +112,10 @@ public class LocalVehiclePlayer {
         instance = new LocalVehiclePlayer();
     }
 
+    public static LocalVehiclePlayer instance() {
+        return instance;
+    }
+
     public enum ViewType {
         THIRD_PERSON, SCOPE, OPERATOR
     }
@@ -164,7 +169,7 @@ public class LocalVehiclePlayer {
     }
 
     private void tickOverload() {
-        if (!AllConfigs.common.overload.get()) {
+        if (!VehicleConfig.common().overload()) {
             stamina = 100;
             lostControl = false;
             endureTick = 0;
@@ -214,7 +219,7 @@ public class LocalVehiclePlayer {
                 endureTick -= 1;
             }
             float endureG = currentG - 1;
-            float overloadCapacityMultiplier = AllConfigs.common.overloadCapacityMultiplier.get().floatValue();
+            float overloadCapacityMultiplier = (float) VehicleConfig.common().overloadCapacityMultiplier();
             float positiveGLimit = 100 - 100 * overloadCapacityMultiplier;
             float negativeGLimit = 100 + 60 * overloadCapacityMultiplier;
             stamina = Mth.clamp(stamina - endureG * 0.8f, positiveGLimit, negativeGLimit);
@@ -279,7 +284,7 @@ public class LocalVehiclePlayer {
         } else if (viewType == ViewType.THIRD_PERSON || viewType == ViewType.OPERATOR) {
             try {
                 if (partUnit instanceof WeaponUnit weaponUnit) {
-                    if ((!(InputHandler.freeCamera || playerLerpSteps > 0) || vehicle instanceof RotaryWingVehicle || vehicle.uav)
+                    if ((!(InputHandler.freeCamera() || playerLerpSteps > 0) || vehicle instanceof RotaryWingVehicle || vehicle.uav)
                             && !weaponUnit.spottedBy(player)) {
                         weaponUnit.aim(freeAimPos());
                     }
@@ -291,7 +296,7 @@ public class LocalVehiclePlayer {
                     Quaternionf vehicleRot = vehicle.rotYXZ();
                     if (aircraftCockpit()) {
                         // Head fixed in the airframe; free look released => recentres on the nose. Gunner: head = gun.
-                        if (!InputHandler.freeCamera && (cockpitPilot() || !(partUnit instanceof WeaponUnit))) {
+                        if (!InputHandler.freeCamera() && (cockpitPilot() || !(partUnit instanceof WeaponUnit))) {
                             playerLocalXRot *= HEAD_RECENTRE;
                             playerLocalYRot *= HEAD_RECENTRE;
                         }
@@ -573,7 +578,7 @@ public class LocalVehiclePlayer {
             fpvTurnY += (float) (pYRot * 0.15F);
             return true;
         }
-        if (cockpitPilot() && !InputHandler.freeCamera) {
+        if (cockpitPilot() && !InputHandler.freeCamera()) {
             if (vehicle instanceof FixedWingVehicle) {
                 stickX = Mth.clamp(stickX + (float) pYRot * STICK_GAIN, -1, 1);
                 stickY = Mth.clamp(stickY + (float) pXRot * STICK_GAIN, -1, 1);
@@ -818,7 +823,7 @@ public class LocalVehiclePlayer {
         boolean ir = false;
         float link = vehicle != null && vehicle.uav ? vehicle.link() : 1.0f;
         if (vehicle != null && vehicle.uav) {
-            DroneCamHud.pilot(link, AllKeys.LEAVE_VEHICLE, InputHandler.uavFreeLook);
+            DroneCamHud.pilot(link, VehicleKeys.LEAVE_VEHICLE, InputHandler.uavFreeLook());
         }
         if (sighted() && weaponUnit != null
                 && weaponUnit.getOpticalSightType() == WeaponUnitData.OpticalSightType.CRT) {
@@ -838,7 +843,7 @@ public class LocalVehiclePlayer {
                 OverloadHandler.setActive(false);
             }
         }
-        serverEntities.values().removeIf(serverEntity -> serverEntity.updateTick + AllConfigs.server.serverBroadcastEntitiesInterval.get() * 5 < player.tickCount);
+        serverEntities.values().removeIf(serverEntity -> serverEntity.updateTick + RadarConfig.get().broadcastInterval() * 5 < player.tickCount);
         for (MissileEntity missile : player.level().getEntitiesOfClass(MissileEntity.class,
                 player.getBoundingBox().inflate(OWN_MISSILE_RANGE), m -> m.getOwner() == player)) {
             missiles.put(missile, player.tickCount);

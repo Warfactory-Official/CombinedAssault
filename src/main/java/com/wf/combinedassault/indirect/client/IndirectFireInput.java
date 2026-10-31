@@ -6,9 +6,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.InputEvent;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -17,10 +15,9 @@ import com.wf.combinedassault.indirect.IndirectFire;
 import com.wf.combinedassault.indirect.LayingMode;
 import com.wf.combinedassault.indirect.RoundSpec;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 
 /** Repeats honoured, not just presses: a held key moves the mount many steps. */
-@EventBusSubscriber(value = Dist.CLIENT)
 public final class IndirectFireInput {
 
     private IndirectFireInput() {
@@ -93,13 +90,13 @@ public final class IndirectFireInput {
         switch (next) {
             case MANUAL -> say(player, "tips.indirect.indirect");
             case AUTO -> player.displayClientMessage(Component.translatable("tips.indirect.auto",
-                    com.wf.combinedassault.all.AllKeys.PRESET_COORDINATE_INPUT.getTranslatedKeyMessage()), true);
+                    com.wf.combinedassault.vehicle.client.VehicleKeys.PRESET_COORDINATE_INPUT.getTranslatedKeyMessage()), true);
             case DIRECT -> {
                 laying.clearTarget();
                 FireMissions.cancel(unit);
                 unit.getCurrentWeapon().ifPresent(weapon -> {
                     if (unit.getFireControlSensorType()
-                            != com.wf.combinedassault.custom.part.data.WeaponUnitData.FireControlSensorType.LOC) {
+                            != com.wf.combinedassault.weapon.part.data.WeaponUnitData.FireControlSensorType.LOC) {
                         weapon.setTargetLocation(null);
                     }
                 });
@@ -123,7 +120,7 @@ public final class IndirectFireInput {
     /** The weapon station the local player is actually manning, or null. */
     @Nullable
     private static WeaponUnit gunnerUnit() {
-        LocalVehiclePlayer instance = LocalVehiclePlayer.instance;
+        LocalVehiclePlayer instance = LocalVehiclePlayer.instance();
         if (!instance.onVehicle()) {
             return null;
         }

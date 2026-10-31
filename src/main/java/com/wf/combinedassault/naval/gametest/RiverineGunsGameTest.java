@@ -1,19 +1,18 @@
 package com.wf.combinedassault.naval.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.combinedassault.util.VectorUtil;
-import com.wf.combinedassault.vehicle.pojo.AimContext;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
+import com.wf.combinedassault.weapon.pojo.AimContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +20,6 @@ import java.util.List;
 import java.util.Optional;
 
 /** Riverine stations on the hull's MOUNT_*_YAW nodes (RIVERINE_ROOT yaw 90 cancelled per station; stern faces aft). */
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class RiverineGunsGameTest {
 
@@ -33,7 +31,7 @@ public class RiverineGunsGameTest {
             new Object[]{"gun_bow_starboard", 1, new Vec3(-12, 1.5, 14)},
             new Object[]{"gun_stern", -1, new Vec3(-8, 1.5, -16)});
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void eachStationRestsOnItsBearingAndLaysOnATarget(GameTestHelper helper) {
         AbstractVehicle boat = spawn(helper);
         if (boat == null) {

@@ -2,13 +2,9 @@ package com.wf.combinedassault.indirect;
 
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.custom.weapon.data.BaseVehicleWeaponData;
-import com.wf.combinedassault.custom.weapon.data.VehicleCannonWeaponData;
-import com.wf.combinedassault.compat.wflib.WfLibCompat;
-import com.wf.combinedassault.vehicle.PhysicsEngine;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.combinedassault.vehicle.pojo.AimContext;
-import com.wf.combinedassault.vehicle.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.weapon.pojo.AimContext;
+import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 
 /** Package boundary: world-facing calls in, pure arithmetic out. */
 public final class IndirectFire {
@@ -53,7 +49,7 @@ public final class IndirectFire {
 
     /** Round flies its own guidance to the point: nothing to solve. */
     public static boolean selfGuided(WeaponUnit unit) {
-        return unit.getCurrentWeapon().orElse(null) instanceof com.wf.combinedassault.vehicle.weapon.VehicleMissile;
+        return unit.getCurrentWeapon().orElse(null) instanceof com.wf.combinedassault.weapon.VehicleMissile;
     }
 
     /** Null if the current weapon's round isn't one the solver understands. */
@@ -63,7 +59,7 @@ public final class IndirectFire {
         if (weapon == null) {
             return null;
         }
-        return com.wf.combinedassault.compat.wflib.Munitions.spec(weapon.solutionRound());
+        return com.wf.combinedassault.weapon.ordnance.Munitions.spec(weapon.solutionRound());
     }
 
     public static Vec3 muzzleOf(WeaponUnit unit) {

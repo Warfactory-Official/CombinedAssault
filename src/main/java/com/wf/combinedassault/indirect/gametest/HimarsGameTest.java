@@ -1,23 +1,23 @@
 package com.wf.combinedassault.indirect.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.indirect.IndirectFireSpec;
 import com.wf.combinedassault.vehicle.part.AccessActions;
-import com.wf.combinedassault.vehicle.part.MissileHolderUnit;
+import com.wf.combinedassault.weapon.part.MissileHolderUnit;
 import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.vehicle.part.WeaponBayUnit;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.combinedassault.vehicle.pojo.AimContext;
-import com.wf.combinedassault.vehicle.pojo.MissileSize;
-import com.wf.combinedassault.vehicle.weapon.VehicleMissile;
-import com.wf.combinedassault.vehicle.pojo.Station;
-import com.wf.wflib.MissileEntity;
-import com.wf.wflib.magazine.MagazineItems;
-import com.wf.wflib.magazine.PodItem;
-import com.wf.wflib.magazine.PodTubes;
+import com.wf.combinedassault.weapon.part.WeaponBayUnit;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.weapon.pojo.AimContext;
+import com.wf.combinedassault.weapon.pojo.MissileSize;
+import com.wf.combinedassault.weapon.VehicleMissile;
+import com.wf.combinedassault.weapon.pojo.Station;
+import com.wf.wflib.missile.api.MissileEntity;
+import com.wf.wflib.magazine.api.MagazineItems;
+import com.wf.wflib.magazine.api.PodItem;
+import com.wf.wflib.magazine.api.PodTubes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.core.BlockPos;
@@ -32,7 +32,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
@@ -44,7 +43,6 @@ import java.util.Locale;
 import java.util.Optional;
 
 /** M142: six GMLRS cells on the elevating pod, mixed-pod round selection, indirect fire on artillery only; M1129 hatches. */
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class HimarsGameTest {
 
@@ -56,7 +54,7 @@ public class HimarsGameTest {
     private static final Item ATACMS = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("wflib", "missile_atacms"));
     private static final Item CRUISE = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("wflib", "missile_cruise"));
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 40)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 40)
     public static void thePodTakesSixGmlrsAndNothingElse(GameTestHelper helper) {
         AbstractVehicle vehicle = spawn(helper, M142);
         MissileHolderUnit pod = vehicle == null ? null : pod(helper, vehicle);
@@ -94,7 +92,7 @@ public class HimarsGameTest {
     }
 
     /** GMLRS pod tubes = the model's six stations; a dry pod swaps for a stored ATACMS pod, one tube at their centre. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 40)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 40)
     public static void aDryPodSwapsForAStoredAtacmsPodAndAPodSeatsByHand(GameTestHelper helper) {
         AbstractVehicle vehicle = spawn(helper, M142);
         MissileHolderUnit pod = vehicle == null ? null : pod(helper, vehicle);
@@ -136,7 +134,7 @@ public class HimarsGameTest {
     }
 
     /** The pod frame rides the launcher's pitch frame: elevating the launcher tilts every station. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void thePodElevatesWithTheLauncher(GameTestHelper helper) {
         AbstractVehicle vehicle = spawn(helper, M142);
         MissileHolderUnit pod = vehicle == null ? null : pod(helper, vehicle);
@@ -162,7 +160,7 @@ public class HimarsGameTest {
     }
 
     /** A round leaves along its tube: level pod => flat flight, laid pod => climbs at the lay, not vertical. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 300)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 300)
     public static void aRocketLeavesAlongItsTube(GameTestHelper helper) {
         AbstractVehicle vehicle = spawn(helper, M142);
         MissileHolderUnit pod = vehicle == null ? null : pod(helper, vehicle);
@@ -219,7 +217,7 @@ public class HimarsGameTest {
     }
 
     /** Mixed pod: the selected kind leaves, the others stay; a kind no longer loaded fires nothing. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 140)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 140)
     public static void theOperatorPicksTheRoundFromAMixedPod(GameTestHelper helper) {
         AbstractVehicle vehicle = spawn(helper, M142);
         MissileHolderUnit pod = vehicle == null ? null : pod(helper, vehicle);
@@ -275,7 +273,7 @@ public class HimarsGameTest {
         return (VehicleMissile) launcher.getIndexedWeapons().get(0);
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 40)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 40)
     public static void indirectFireIsArtilleryOnly(GameTestHelper helper) {
         List<String> wrong = new ArrayList<>();
         expect(helper, wrong, "m142", "launcher", true, true);
@@ -289,7 +287,7 @@ public class HimarsGameTest {
         }
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 40)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 40)
     public static void theMortarHatchesOpenWithTheEngineOff(GameTestHelper helper) {
         AbstractVehicle vehicle = spawn(helper, CombinedAssault.modLocation("m1129"));
         if (vehicle == null) {

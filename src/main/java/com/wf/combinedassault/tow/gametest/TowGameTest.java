@@ -1,6 +1,6 @@
 package com.wf.combinedassault.tow.gametest;
 
-import com.wf.wflib.util.ForcedChunks;
+import com.wf.wflib.testkit.api.ForcedChunks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -14,13 +14,12 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.tow.HitchInfo;
 import com.wf.combinedassault.tow.TowLink;
 import com.wf.combinedassault.tow.TowLinks;
@@ -35,7 +34,6 @@ import java.util.function.Consumer;
  * Shipped M983/MIM-104, not invented points: most coupling bugs are pack JSON (signed kingpin offset, axle offset).
  * Couplings are joint rows in the rigid step => driven trains on stone lanes far from the arena grid.
  */
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class TowGameTest {
 
@@ -51,7 +49,7 @@ public class TowGameTest {
     /** Soft joint: open by load / stiffness, not by error. */
     private static final double HELD = 0.15;
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void aTrailerFollowsTheTractorRoundATurn(GameTestHelper helper) {
         Lane lane = lane(helper, 0);
         Train train = couple(helper, lane, TowMode.HITCH);
@@ -82,7 +80,7 @@ public class TowGameTest {
     }
 
     /** Howitzer on the M983's lunette: tows nose first round a turn with the barrel as the drawbar. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void aHowitzerFollowsTheTractorOnTheLunette(GameTestHelper helper) {
         Lane lane = lane(helper, 11);
         Train train = couple(helper, lane, TowMode.HITCH, "lunette", CombinedAssault.modLocation("m777"));
@@ -112,7 +110,7 @@ public class TowGameTest {
     }
 
     /** Reversing on full lock is how a real rig jackknifes. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void aJackknifeIsHeldAtTheStops(GameTestHelper helper) {
         Lane lane = lane(helper, 1);
         Train train = couple(helper, lane, TowMode.HITCH);
@@ -132,7 +130,7 @@ public class TowGameTest {
         });
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void aCableOnlyPullsWhenItIsTight(GameTestHelper helper) {
         Lane lane = lane(helper, 2);
         AbstractVehicle tractor = spawn(helper, lane, TRACTOR, 0);
@@ -167,7 +165,7 @@ public class TowGameTest {
         });
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void aCouplingPartsWhenItIsTornOff(GameTestHelper helper) {
         Lane lane = lane(helper, 3);
         Train train = couple(helper, lane, TowMode.HITCH);
@@ -185,7 +183,7 @@ public class TowGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void aChainHoldsTogether(GameTestHelper helper) {
         Lane lane = lane(helper, 4);
         AbstractVehicle lead = spawn(helper, lane, TRACTOR, 0);
@@ -233,7 +231,7 @@ public class TowGameTest {
     }
 
     /** Same throttle, same lane: the one with the trailer is slower. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 300)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 300)
     public static void aLoadCostsTheTractorAcceleration(GameTestHelper helper) {
         Lane lane = lane(helper, 5);
         Train train = couple(helper, lane, TowMode.HITCH);
@@ -256,7 +254,7 @@ public class TowGameTest {
     }
 
     /** Tow ring's whole-block noise (heights -1..1) from z 10 on: the train keeps going (~0.1 b/t; M983 solo ~0.2). */
-    @GameTest(template = TEMPLATE, timeoutTicks = 500)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 500)
     public static void aTrainCrossesRoughGround(GameTestHelper helper) {
         Lane lane = lane(helper, 10);
         for (int x = -HALF_WIDTH; x <= HALF_WIDTH; x++) {
@@ -303,7 +301,7 @@ public class TowGameTest {
     }
 
     /** Ball joint: the kingpin rides the fifth wheel up; the trailer pitches about its axle. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void aTrailerPitchesUpToAHitchAboveIt(GameTestHelper helper) {
         Lane lane = lane(helper, 6);
         for (int x = -6; x <= 6; x++) {
@@ -334,7 +332,7 @@ public class TowGameTest {
                 .thenSucceed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void aHitchRefusesWhatItWasNotBuiltFor(GameTestHelper helper) {
         Lane lane = lane(helper, 7);
         AbstractVehicle tractor = spawn(helper, lane, TRACTOR, 0);
@@ -376,7 +374,7 @@ public class TowGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 300)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 300)
     public static void aSavedCouplingFindsItsTractorAgain(GameTestHelper helper) {
         Lane lane = lane(helper, 8);
         Train train = couple(helper, lane, TowMode.HITCH);
@@ -411,7 +409,7 @@ public class TowGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 300)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 300)
     public static void aTractorUnloadingFirstLeavesTheCouplingWaiting(GameTestHelper helper) {
         Lane lane = lane(helper, 9);
         Train train = couple(helper, lane, TowMode.HITCH);

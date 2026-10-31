@@ -1,8 +1,8 @@
 {
   "replace": false,
   "values": [
-    "combinedassault:fuel",
-    "combinedassault:fuel_flowing",
+    { "id": "combinedassault:fuel", "required": false },
+    { "id": "combinedassault:fuel_flowing", "required": false },
     { "id": "#c:diesel", "required": false },
     { "id": "#c:gasoline", "required": false },
     { "id": "#c:fuel", "required": false },

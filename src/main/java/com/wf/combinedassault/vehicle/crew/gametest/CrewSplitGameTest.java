@@ -1,9 +1,9 @@
 package com.wf.combinedassault.vehicle.crew.gametest;
 
+import com.wf.combinedassault.vehicle.VehicleConfig;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.all.AllConfigs;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -22,19 +22,19 @@ public class CrewSplitGameTest {
 
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void theSightSeatOwnsTheSpg9AimOnlyUnderCrewRules(GameTestHelper helper) {
-        boolean crew = AllConfigs.server.crewRequired.get();
+        boolean crew = VehicleConfig.crewRequired().get();
         AbstractVehicle spg = spawn(helper, "spg9");
         AbstractVehicle flak = spawn(helper, "flak36");
         try {
-            AllConfigs.server.crewRequired.set(true);
+            VehicleConfig.crewRequired().set(true);
             boolean spgSplit = gun(spg).aimedFromSensorSeat();
             boolean flakSplit = gun(flak).aimedFromSensorSeat();
-            AllConfigs.server.crewRequired.set(false);
+            VehicleConfig.crewRequired().set(false);
             boolean spgSolo = gun(spg).aimedFromSensorSeat();
             helper.assertTrue(spgSplit && !flakSplit && !spgSolo,
                     "split: spg9 crew " + spgSplit + ", flak36 crew " + flakSplit + ", spg9 solo " + spgSolo);
         } finally {
-            AllConfigs.server.crewRequired.set(crew);
+            VehicleConfig.crewRequired().set(crew);
             spg.discard();
             flak.discard();
         }

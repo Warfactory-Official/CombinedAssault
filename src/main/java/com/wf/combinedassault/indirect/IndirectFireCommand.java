@@ -1,6 +1,6 @@
 package com.wf.combinedassault.indirect;
 
-import com.wf.wflib.round.Rounds;
+import com.wf.wflib.round.api.Rounds;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.ChatFormatting;
@@ -10,7 +10,7 @@ import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
-import com.wf.combinedassault.vehicle.PhysicsEngine;
+import com.wf.combinedassault.dynamics.PhysicsEngine;
 
 import java.util.Locale;
 

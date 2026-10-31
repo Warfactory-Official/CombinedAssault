@@ -2,15 +2,15 @@ package com.wf.combinedassault.vehicle.part.gametest;
 
 import com.mojang.authlib.GameProfile;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.fpv.gametest.KamikazeKit;
-import com.wf.combinedassault.fpv.payload.PayloadUnit;
-import com.wf.combinedassault.gametest.TestLanes;
-import com.wf.combinedassault.item.VehicleSpawnItem;
-import com.wf.combinedassault.vehicle.loadout.Loadouts;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.uav.fpv.gametest.KamikazeKit;
+import com.wf.combinedassault.uav.fpv.payload.PayloadUnit;
+import com.wf.combinedassault.vehicle.gametest.TestLanes;
+import com.wf.combinedassault.vehicle.item.VehicleSpawnItem;
+import com.wf.combinedassault.weapon.kit.Loadouts;
 import com.wf.combinedassault.vehicle.part.AccessActions;
-import com.wf.wflib.ammo.AmmoItems;
+import com.wf.wflib.ammo.api.AmmoItems;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -23,14 +23,12 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.List;
 import java.util.UUID;
 
 /** `pickup` vehicles: probe pick up -> spawn item with save state -> placed back with it; others refused. */
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class PickupGameTest {
 
@@ -45,7 +43,7 @@ public class PickupGameTest {
         return player;
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void aPickedUpMavicComesBackAsItWas(GameTestHelper helper) {
         AbstractVehicle drone = TestLanes.spawn(helper, CombinedAssault.modLocation("mavic"),
                 helper.absoluteVec(new Vec3(1.5, 2, 1.5)));
@@ -90,7 +88,7 @@ public class PickupGameTest {
         });
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void onlyPickupVehiclesAndOnlyEmpty(GameTestHelper helper) {
         AbstractVehicle humvee = TestLanes.spawn(helper, CombinedAssault.modLocation("humvee"),
                 helper.absoluteVec(new Vec3(2.5, 2, 2.5)));

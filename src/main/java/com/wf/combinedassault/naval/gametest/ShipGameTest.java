@@ -13,26 +13,24 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.all.AllItems;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.entity.vehicle.ShipVehicle;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.naval.ShipVehicle;
 import com.wf.combinedassault.naval.trial.TrialCrew;
-import com.wf.combinedassault.vehicle.parenting.VehicleHarness;
+import com.wf.combinedassault.deck.VehicleHarness;
 
 import java.util.List;
 import java.util.Optional;
+import com.wf.combinedassault.vehicle.VehicleContent;
 
 /**
  * Ships in a stone basin of still water. Pool template = the arena; nothing here writes outside it.
  * Hull sits at the template's centre, in the arena's own ticking chunk.
  */
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class ShipGameTest {
 
@@ -50,7 +48,7 @@ public class ShipGameTest {
     private static final double TRENCH_SURFACE = 37 + 8.0 / 9.0;
 
     /** The hull's waterline mark settles on the surface, and stays there. */
-    @GameTest(batch = "naval", template = POOL, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = POOL, timeoutTicks = 400)
     public static void aBoatFloatsAtItsWaterline(GameTestHelper helper) {
         ShipVehicle boat = spawn(helper, BOAT, 24, 13, 24, 0);
         if (boat == null) {
@@ -82,7 +80,7 @@ public class ShipGameTest {
     }
 
     /** Full ahead moves the hull along its heading; astern brings it back toward a stop. */
-    @GameTest(batch = "naval", template = POOL, timeoutTicks = 600)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = POOL, timeoutTicks = 600)
     public static void aBoatAnswersTheTelegraph(GameTestHelper helper) {
         ShipVehicle boat = spawn(helper, BOAT, 24, 13, 10, 0);
         if (boat == null) {
@@ -122,7 +120,7 @@ public class ShipGameTest {
     }
 
     /** Rudder over changes heading; stops changing once rudder is amidships and way is off. */
-    @GameTest(batch = "naval", template = POOL, timeoutTicks = 600)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = POOL, timeoutTicks = 600)
     public static void aBoatAnswersTheRudder(GameTestHelper helper) {
         ShipVehicle boat = spawn(helper, BOAT, 24, 13, 24, 0);
         if (boat == null) {
@@ -150,7 +148,7 @@ public class ShipGameTest {
     }
 
     /** A bank at the waterline stops the hull dead; it neither climbs it nor reads as beached. */
-    @GameTest(batch = "naval", template = POOL, timeoutTicks = 600)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = POOL, timeoutTicks = 600)
     public static void aBoatStopsAtTheBank(GameTestHelper helper) {
         // Stone from the floor to above the surface across the far end of the pool: a river bank.
         for (int x = 1; x < 47; x++) {
@@ -197,7 +195,7 @@ public class ShipGameTest {
     }
 
     /** A shoal under the surface grounds the hull: it stops on the shelf face and the readout says so. */
-    @GameTest(batch = "naval", template = TRENCH, timeoutTicks = 800)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = TRENCH, timeoutTicks = 800)
     public static void aSubmarineGroundsOnAShoal(GameTestHelper helper) {
         // Stone up to y 33 at the far end: four blocks of water over it, against a keel 7.6 under the line.
         for (int x = 78; x < 95; x++) {
@@ -241,7 +239,7 @@ public class ShipGameTest {
     }
 
     /** A submarine dives to its setting, holds it, and comes back up. */
-    @GameTest(batch = "naval", template = TRENCH, timeoutTicks = 1400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = TRENCH, timeoutTicks = 1400)
     public static void aSubmarineDivesAndSurfaces(GameTestHelper helper) {
         ShipVehicle sub = spawn(helper, SUB, 48, 38, 12, 90);
         if (sub == null) {
@@ -282,7 +280,7 @@ public class ShipGameTest {
     }
 
     /** The depth setting is clamped to the water there is. */
-    @GameTest(batch = "naval", template = TRENCH, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = TRENCH, timeoutTicks = 200)
     public static void aSubmarineCannotDiveThroughTheSeabed(GameTestHelper helper) {
         ShipVehicle sub = spawn(helper, SUB, 48, 38, 12, 90);
         if (sub == null) {
@@ -334,12 +332,12 @@ public class ShipGameTest {
      * Spawn item places a hull on water the player looks at, clear of the player, floating at its
      * waterline. Crosshair ignores fluids => over water this is the only placement path.
      */
-    @GameTest(batch = "naval", template = POOL, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = POOL, timeoutTicks = 100)
     public static void theSpawnItemLaunchesOnWater(GameTestHelper helper) {
         Player player = helper.makeMockPlayer(GameType.CREATIVE);
         BlockPos at = helper.absolutePos(new BlockPos(24, 16, 6));
         player.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0.0F, 30.0F);
-        ItemStack stack = AllItems.VEHICLE_SPAWN_ITEM.get().createInstance(BOAT);
+        ItemStack stack = VehicleContent.VEHICLE_SPAWN_ITEM.get().createInstance(BOAT);
         player.setItemInHand(InteractionHand.MAIN_HAND, stack);
         if (!stack.use(helper.getLevel(), player, InteractionHand.MAIN_HAND).getResult().consumesAction()) {
             helper.fail("the item found no water in front of the player");
@@ -377,7 +375,7 @@ public class ShipGameTest {
      * throttle with nothing: harnessed vehicles skip their own physics, and the engine has to be able
      * to end that.
      */
-    @GameTest(batch = "naval", template = POOL, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = POOL, timeoutTicks = 400)
     public static void anEngineWakesAParkedVehicle(GameTestHelper helper) {
         ShipVehicle boat = spawn(helper, BOAT, 24, 13, 8, 0);
         AbstractVehicle rider = spawnRider(helper, RIDER, 24, 15, 8, 0);
@@ -434,7 +432,7 @@ public class ShipGameTest {
      * it never settles: the path that used to leave a car standing still in world space while the deck
      * slid out from under it.
      */
-    @GameTest(batch = "naval", template = POOL, timeoutTicks = 600)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = POOL, timeoutTicks = 600)
     public static void aLooseVehicleRidesTheDeck(GameTestHelper helper) {
         ShipVehicle boat = spawn(helper, BOAT, 24, 13, 8, 0);
         AbstractVehicle rider = spawnRider(helper, RIDER, 24, 15, 8, 0);
@@ -494,7 +492,7 @@ public class ShipGameTest {
      * walks at 1 tick of acceleration instead of terminal speed; player also stops sprinting. 1 degree
      * of trim crosses the threshold.
      */
-    @GameTest(batch = "naval", template = POOL, timeoutTicks = 600)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = POOL, timeoutTicks = 600)
     public static void aHandKeepsItsPaceWhenTheDeckIsUnderWay(GameTestHelper helper) {
         ShipVehicle boat = spawn(helper, BOAT, 24, 13, 4, 0);
         if (boat == null) {

@@ -1,0 +1,98 @@
+package com.wf.combinedassault.pack;
+
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.wflib.core.api.WFSystems;
+import com.wf.combinedassault.radar.RadarConfig;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.neoforged.fml.loading.FMLLoader;
+import org.apache.commons.lang3.time.StopWatch;
+import com.wf.combinedassault.pack.client.ClientAssetsManager;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+public class ReloadCommand {
+
+    private static final String RELOAD_NAME = "reload";
+
+    public static LiteralArgumentBuilder<CommandSourceStack> get() {
+        LiteralArgumentBuilder<CommandSourceStack> reloadCommand = Commands.literal(RELOAD_NAME);
+        reloadCommand.executes(ReloadCommand::reload);
+        return reloadCommand;
+    }
+
+    private static int reload(CommandContext<CommandSourceStack> context) {
+        StopWatch watch = StopWatch.createStarted();
+        {
+            if (FMLLoader.getDist().isClient()) {
+                LocalPlayer player = Minecraft.getInstance().player;
+                ClientAssetsManager.INSTANCE.reload(Minecraft.getInstance().getResourceManager());
+                CreativeModeTabs.tryRebuildTabContents(player.connection.enabledFeatures(), true, player.level().registryAccess());
+            }
+            CommonAssetsManager.reload();
+            reloadAllVehicles(context.getSource());
+        }
+        watch.stop();
+        double time = watch.getTime(TimeUnit.MICROSECONDS) / 1000.0;
+        context.getSource().sendSystemMessage(Component.translatable("commands.vehicle.reload.success", time));
+        if (WFSystems.enabled(CombinedAssault.MOD_ID + ":radar")) {
+            RadarConfig.loadExternal();
+        }
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static void reloadAllVehicles(CommandSourceStack source) {
+        MinecraftServer server = source.getServer();
+        record VehicleSnapshot(
+                ResourceLocation type,
+                CompoundTag nbt,
+                ServerLevel level
+        ) {}
+        List<VehicleSnapshot> snapshots = new ArrayList<>();
+        for (ServerLevel level : server.getAllLevels()) {
+            for (Entity entity : level.getAllEntities()) {
+                if (!(entity instanceof AbstractVehicle vehicle)) {
+                    continue;
+                }
+                CompoundTag nbt = new CompoundTag();
+                vehicle.saveWithoutId(nbt);
+                snapshots.add(new VehicleSnapshot(
+                        EntityType.getKey(vehicle.getType()),
+                        nbt,
+                        level
+                ));
+                vehicle.discard();
+            }
+        }
+        for (VehicleSnapshot snapshot : snapshots) {
+            EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(snapshot.type());
+            if (type == null) {
+                continue;
+            }
+            Entity entity = type.create(snapshot.level());
+            if (entity == null) {
+                continue;
+            }
+            entity.load(snapshot.nbt());
+            snapshot.level().addFreshEntity(entity);
+        }
+    }
+
+}

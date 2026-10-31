@@ -9,7 +9,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.tow.HitchInfo;
 import com.wf.combinedassault.tow.TowLinks;
 import com.wf.combinedassault.tow.TowMode;

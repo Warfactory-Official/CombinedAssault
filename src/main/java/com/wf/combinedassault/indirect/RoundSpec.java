@@ -1,6 +1,6 @@
 package com.wf.combinedassault.indirect;
 
-import com.wf.combinedassault.vehicle.PhysicsEngine;
+import com.wf.combinedassault.dynamics.PhysicsEngine;
 
 /**
  * Not an entity/weapon/registry object: decouples solver from world, lets WFLib feed its own round to it.

@@ -1,6 +1,7 @@
 package com.wf.combinedassault.vehicle.control;
 
-import com.wf.combinedassault.ads.StationAds;
+import com.wf.combinedassault.aircraft.AircraftConfig;
+import com.wf.combinedassault.weapon.client.StationAds;
 import com.wf.combinedassault.vehicle.crew.CrewRole;
 import com.wf.combinedassault.vehicle.crew.CrewRules;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -15,35 +16,47 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
-import com.wf.combinedassault.all.AllConfigs;
-import com.wf.combinedassault.custom.part.data.WeaponUnitData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.entity.vehicle.FixedWingVehicle;
-import com.wf.combinedassault.entity.vehicle.RotaryWingVehicle;
-import com.wf.combinedassault.fpv.FpvFlight;
-import com.wf.combinedassault.item.ParachutePackItem;
-import com.wf.combinedassault.network.message.*;
-import com.wf.combinedassault.util.VectorUtil;
+import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.aircraft.FixedWingVehicle;
+import com.wf.combinedassault.aircraft.RotaryWingVehicle;
+import com.wf.combinedassault.uav.fpv.FpvFlight;
+import com.wf.combinedassault.cargo.ParachutePackItem;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.combinedassault.vehicle.part.RadarUnit;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.combinedassault.vehicle.weapon.AbstractVehicleWeapon;
-import com.wf.combinedassault.vehicle.weapon.VehicleDecoyFlare;
-import com.wf.combinedassault.vehicle.weapon.VehicleGrenade;
+import com.wf.combinedassault.radar.RadarUnit;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.VehicleDecoyFlare;
+import com.wf.combinedassault.weapon.VehicleGrenade;
+import com.wf.combinedassault.cargo.message.ClientOpenParachute;
+import com.wf.combinedassault.weapon.client.AmmoSelect;
+import com.wf.combinedassault.weapon.message.ClientVehicleSwitchWeapon;
+import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
+import com.wf.combinedassault.vehicle.message.ClientVehicleChangeSeat;
+import com.wf.combinedassault.vehicle.message.ClientVehicleMoveControl;
 
-import static com.wf.combinedassault.all.AllKeys.*;
+import static com.wf.combinedassault.vehicle.client.VehicleKeys.*;
 
 @EventBusSubscriber(value = Dist.CLIENT)
 public class InputHandler {
 
-    public static boolean freeCamera;
+    private static boolean freeCamera;
     /** UAV: FREE_CAMERA toggles (mouse turns the camera, heading held); other vehicles: held. */
-    public static boolean uavFreeLook;
-    public static float playerXRotO;
-    public static float playerYRotO;
-    public static float controlXRotO;
-    public static float controlYRotO;
+    private static boolean uavFreeLook;
+    private static float playerXRotO;
+    private static float playerYRotO;
+    private static float controlXRotO;
+    private static float controlYRotO;
     private static long waitSwitchSeatTime;
+
+    public static boolean freeCamera() {
+        return freeCamera;
+    }
+
+    public static boolean uavFreeLook() {
+        return uavFreeLook;
+    }
 
     @SubscribeEvent
     public static void onKey(InputEvent.Key event) {
@@ -75,7 +88,7 @@ public class InputHandler {
             }
             return;
         }
-        LocalVehiclePlayer instance = LocalVehiclePlayer.instance;
+        LocalVehiclePlayer instance = LocalVehiclePlayer.instance();
         if (action == GLFW.GLFW_PRESS) {
             if (instance.onVehicle()) {
                 AbstractVehicle vehicle = instance.vehicle;
@@ -138,7 +151,7 @@ public class InputHandler {
                         weaponUnit.independentWeapons.stream()
                                 .filter(vehicleWeapon -> vehicleWeapon instanceof VehicleGrenade grenade
                                         && grenade.isAmmoForWeapon(new net.minecraft.world.item.ItemStack(
-                                        com.wf.wflib.countermeasure.Countermeasures.SMOKE_GRENADE_ITEM.get())))
+                                        com.wf.wflib.countermeasure.api.Countermeasures.SMOKE_GRENADE_ITEM.get())))
                                 .forEach(AbstractVehicleWeapon::doClientShoot);
                     }
                 } else if (matchesKey(TOGGLE_SEEKER, key, scanCode)) {
@@ -188,7 +201,7 @@ public class InputHandler {
         if (player == null || player.isSpectator() || mc.gameMode == null || mc.screen != null) {
             return;
         }
-        LocalVehiclePlayer instance = LocalVehiclePlayer.instance;
+        LocalVehiclePlayer instance = LocalVehiclePlayer.instance();
         if (instance.onVehicle() && MAGNIFICATION_CHANGE.isDown() && instance.onVehicleTickCount > 5
                 && !StationAds.capable(instance.getWeaponUnit())) {
             AbstractVehicle vehicle = instance.vehicle;
@@ -214,7 +227,7 @@ public class InputHandler {
         if (player == null || player.isSpectator() || mc.gameMode == null || mc.screen != null) {
             return;
         }
-        LocalVehiclePlayer instance = LocalVehiclePlayer.instance;
+        LocalVehiclePlayer instance = LocalVehiclePlayer.instance();
         if (!(player.getVehicle() instanceof AbstractVehicle ridden && ridden.uav)) {
             uavFreeLook = false;
         }
@@ -351,8 +364,8 @@ public class InputHandler {
             event.setCanceled(true);
             return;
         }
-        if (LocalVehiclePlayer.instance.onVehicle()) {
-            AbstractVehicle vehicle = LocalVehiclePlayer.instance.vehicle;
+        if (LocalVehiclePlayer.instance().onVehicle()) {
+            AbstractVehicle vehicle = LocalVehiclePlayer.instance().vehicle;
             boolean previous = event.getScrollDeltaY() < 0;
             if (vehicle.getOwnOperatorUnit(player) instanceof WeaponUnit) {
                 PacketDistributor.sendToServer(new ClientVehicleSwitchWeapon(vehicle.getId(), ClientVehicleSwitchWeapon.WeaponSwitchType.PRIMARY, previous));
@@ -365,13 +378,13 @@ public class InputHandler {
     private static void handleShoot(AbstractVehicle vehicle, LocalPlayer player) {
         if ((MAIN_WEAPON_SHOOT.isDown() || SECONDARY_WEAPON_SHOOT.isDown())
                 && vehicle.getOwnOperatorUnit(player) instanceof WeaponUnit own && !CrewRules.mayOperate(player, own)) {
-            LocalVehiclePlayer.instance.sendMessage("tips.crew.gunner_only");
+            LocalVehiclePlayer.instance().sendMessage("tips.crew.gunner_only");
             return;
         }
         if (MAIN_WEAPON_SHOOT.isDown()) {
             if (vehicle.getOwnOperatorUnit(player) instanceof WeaponUnit weaponUnit) {
                 if (!CrewRules.canLoad(weaponUnit) && weaponUnit.getCurrentWeapon().map(w -> w.getRemainAmmo() == 0).orElse(false)) {
-                    LocalVehiclePlayer.instance.sendMessage("tips.crew.needs_loader");
+                    LocalVehiclePlayer.instance().sendMessage("tips.crew.needs_loader");
                 }
                 if (weaponUnit.getFiringMode() == WeaponUnitData.FiringMode.FULL_SALVO) {
                     for (AbstractVehicleWeapon<?> weapon : weaponUnit.fullSalvoWeapons) {
@@ -381,14 +394,14 @@ public class InputHandler {
                     weaponUnit.getCurrentWeapon().ifPresent(AbstractVehicleWeapon::doClientShoot);
                 }
             } else {
-                LocalVehiclePlayer.instance.sendMessage("tips.spotter");
+                LocalVehiclePlayer.instance().sendMessage("tips.spotter");
             }
         }
         if (SECONDARY_WEAPON_SHOOT.isDown()) {
             if (vehicle.getOwnOperatorUnit(player) instanceof WeaponUnit weaponUnit) {
                 weaponUnit.getCurrentSecondaryWeapon().ifPresent(AbstractVehicleWeapon::doClientShoot);
             } else {
-                LocalVehiclePlayer.instance.sendMessage("tips.spotter");
+                LocalVehiclePlayer.instance().sendMessage("tips.spotter");
             }
         }
     }
@@ -485,10 +498,9 @@ public class InputHandler {
         ClientVehicleAction action = new ClientVehicleAction();
         action.vehicleEntityId = vehicle.getId();
         action.toggleAerobaticSmoke = true;
-        AllConfigs.CommonConfig common = AllConfigs.common;
-        action.aerobaticSmokeR = common.aerobaticSmokeR.get();
-        action.aerobaticSmokeG = common.aerobaticSmokeG.get();
-        action.aerobaticSmokeB = common.aerobaticSmokeB.get();
+        action.aerobaticSmokeR = AircraftConfig.smokeR().get();
+        action.aerobaticSmokeG = AircraftConfig.smokeG().get();
+        action.aerobaticSmokeB = AircraftConfig.smokeB().get();
         PacketDistributor.sendToServer(action);
     }
 

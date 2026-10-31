@@ -3,20 +3,20 @@ package com.wf.combinedassault.airdefense.gametest;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.airdefense.AirDefense;
 import com.wf.combinedassault.airdefense.AirDefenseActions;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.gametest.TestLanes;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.gametest.TestLanes;
 import com.wf.combinedassault.indirect.gametest.HimarsGameTest;
-import com.wf.combinedassault.vehicle.part.MissileHolderUnit;
-import com.wf.combinedassault.vehicle.part.StationActions;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.combinedassault.vehicle.pojo.AimContext;
-import com.wf.combinedassault.vehicle.weapon.VehicleMissile;
-import com.wf.wflib.MissileEntity;
-import com.wf.wflib.intercept.InterceptBattery;
-import com.wf.wflib.item.MissilePresetRegistry;
-import com.wf.wflib.probe.ProbeActions;
-import com.wf.wflib.recon.ReconNet;
-import com.wf.wflib.recon.ReconOwners;
+import com.wf.combinedassault.weapon.part.MissileHolderUnit;
+import com.wf.combinedassault.weapon.part.StationActions;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.weapon.pojo.AimContext;
+import com.wf.combinedassault.weapon.VehicleMissile;
+import com.wf.wflib.missile.api.MissileEntity;
+import com.wf.wflib.missile.api.InterceptBattery;
+import com.wf.wflib.missile.api.MissilePresets;
+import com.wf.wflib.probe.api.ProbeActions;
+import com.wf.wflib.recon.api.ReconNet;
+import com.wf.wflib.recon.api.ReconOwners;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -30,7 +30,6 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
@@ -41,7 +40,6 @@ import java.util.Locale;
 import java.util.UUID;
 
 /** MIM-104: large rounds in four canisters; unmanned interception through the WFLib battery; manual lock; probe; station load. */
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class AirDefenseGameTest {
 
@@ -68,7 +66,7 @@ public class AirDefenseGameTest {
         });
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void theCanistersTakeFourLargeRounds(GameTestHelper helper) {
         onLane(helper, 0, (seq, v) -> seq.thenExecute(() -> {
             AbstractVehicle vehicle = v.get();
@@ -98,7 +96,7 @@ public class AirDefenseGameTest {
     }
 
     /** AUTO + own radar: lays inside the elevation window and fires an interceptor locked on the threat. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void unmannedItInterceptsAHostileMissile(GameTestHelper helper) {
         MissileEntity[] threat = new MissileEntity[1];
         int[] ticks = {0};
@@ -134,7 +132,7 @@ public class AirDefenseGameTest {
     }
 
     /** A UAV is an air-defence target: AUTO + own radar locks an interceptor on a hostile quadcopter. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void unmannedItInterceptsAHostileUav(GameTestHelper helper) {
         AbstractVehicle[] uav = new AbstractVehicle[1];
         int[] ticks = {0};
@@ -163,7 +161,7 @@ public class AirDefenseGameTest {
     }
 
     /** AUTO on the network picture with no radar on the side's net: holds fire. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 300)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 300)
     public static void networkSourceWithoutCoverageHolds(GameTestHelper helper) {
         MissileEntity[] threat = new MissileEntity[1];
         onLane(helper, 2, (seq, v) -> seq.thenExecute(() -> {
@@ -182,7 +180,7 @@ public class AirDefenseGameTest {
     }
 
     /** Operator's lock: the racked interceptor homes on it and leaves along its canister. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 300)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 300)
     public static void aLockedInterceptorLeavesAlongItsCanister(GameTestHelper helper) {
         MissileEntity[] threat = new MissileEntity[1];
         onLane(helper, 3, (seq, v) -> seq.thenExecute(() -> {
@@ -219,7 +217,7 @@ public class AirDefenseGameTest {
     }
 
     /** Probe: claim stamps the player's side on the launcher; another side may not change settings. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void theProbeClaimsForTheSideAndLocksOthersOut(GameTestHelper helper) {
         onLane(helper, 4, (seq, v) -> seq.thenExecute(() -> {
             AbstractVehicle vehicle = v.get();
@@ -248,7 +246,7 @@ public class AirDefenseGameTest {
     }
 
     /** Probe on foot: carried round -> that canister only; unload hands it back; a pod round does not fit. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void theProbeLoadsAndEmptiesOneCanister(GameTestHelper helper) {
         onLane(helper, 6, (seq, v) -> seq.thenExecute(() -> {
             AbstractVehicle vehicle = v.get();
@@ -278,7 +276,7 @@ public class AirDefenseGameTest {
 
     private static MissileEntity threat(GameTestHelper helper, AbstractVehicle vehicle) {
         Vec3 from = vehicle.position().add(THREAT_FROM);
-        MissileEntity threat = MissilePresetRegistry.get(MissilePresetRegistry.rl("cruise"))
+        MissileEntity threat = MissilePresets.get(MissilePresets.rl("cruise"))
                 .build(helper.getLevel(), vehicle.position().add(THREAT_TO));
         threat.moveTo(from.x, from.y, from.z, 0.0f, 0.0f);
         helper.getLevel().addFreshEntity(threat);

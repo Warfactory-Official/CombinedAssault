@@ -2,16 +2,13 @@ package com.wf.combinedassault.indirect.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.client.settings.KeyModifier;
 import org.lwjgl.glfw.GLFW;
 
 /** Bindings a tank gunner's controls don't need: laying mode, elevate/traverse, step size, arc; rack round. */
-@EventBusSubscriber(value = Dist.CLIENT)
 public final class IndirectFireKeys {
 
     public static final KeyMapping TOGGLE_INDIRECT = key("indirect_mode", GLFW.GLFW_KEY_Y);

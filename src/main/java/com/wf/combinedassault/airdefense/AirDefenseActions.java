@@ -1,13 +1,13 @@
 package com.wf.combinedassault.airdefense;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.wflib.compat.WarforgeCompat;
-import com.wf.wflib.probe.ProbeActions;
-import com.wf.wflib.probe.ProbeRegistry;
-import com.wf.wflib.recon.ReconOwners;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.wflib.compat.api.WarforgeCompat;
+import com.wf.wflib.probe.api.ProbeActions;
+import com.wf.wflib.probe.api.ProbeProviders;
+import com.wf.wflib.recon.api.ReconOwners;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -42,8 +42,8 @@ public final class AirDefenseActions {
                     }
                 }));
         ProbeActions.registerEntity(CLAIM, AirDefenseActions::claim);
-        ProbeRegistry.addEntityData(entity -> entity instanceof AbstractVehicle vehicle && defended(vehicle),
-                AirDefenseActions::data, ProbeRegistry.CAPABILITY_PRIORITY);
+        ProbeProviders.addEntityData(CombinedAssault.modLocation("air_defense"), entity -> entity instanceof AbstractVehicle vehicle && defended(vehicle),
+                AirDefenseActions::data, ProbeProviders.CAPABILITY_PRIORITY);
     }
 
     public static int arg(int part, int value) {

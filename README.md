@@ -40,7 +40,6 @@ NeoForge ModDevGradle project:
 ./gradlew build            # produces the mod jar in build/libs
 ./gradlew runClient        # launch a dev client
 ./gradlew runServer        # launch a dev server
-./gradlew runData          # run data generators
 ```
 
 A push to `main` builds a nightly jar via GitHub Actions (`.github/workflows/nightly.yml`), uploaded as a

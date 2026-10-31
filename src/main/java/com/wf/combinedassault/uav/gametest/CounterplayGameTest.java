@@ -1,29 +1,26 @@
 package com.wf.combinedassault.uav.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.gametest.TestLanes;
-import com.wf.wflib.api.ChargeSpec;
-import com.wf.wflib.block.DroneNetBlock;
-import com.wf.wflib.block.ModBlocks;
-import com.wf.wflib.drone.cam.Datalink;
-import com.wf.wflib.grenade.GrenadeWarheads;
-import com.wf.wflib.grenade.ThrownCharge;
-import com.wf.wflib.item.ModDataComponents;
-import com.wf.wflib.item.ModItems;
-import com.wf.wflib.recon.Band;
-import com.wf.wflib.recon.ContactClass;
-import com.wf.wflib.recon.ReconTargets;
-import com.wf.wflib.recon.Signature;
-import com.wf.wflib.recon.SourceIds;
-import com.wf.wflib.recon.SensorSpec;
-import com.wf.wflib.recon.env.Atmosphere;
-import com.wf.wflib.recon.env.Interference;
-import com.wf.wflib.recon.event.SeismicEvents;
-import com.wf.wflib.recon.snapshot.SensorSnapshot;
-import com.wf.wflib.recon.snapshot.TargetSnapshot;
-import com.wf.wflib.warhead.EMPWarhead;
-import com.wf.wflib.warhead.WarheadCarrier;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.gametest.TestLanes;
+import com.wf.wflib.grenade.api.ChargeSpec;
+import com.wf.wflib.drone.api.DroneNetBlock;
+import com.wf.wflib.cam.api.Datalink;
+import com.wf.wflib.grenade.api.GrenadeWarheads;
+import com.wf.wflib.grenade.api.ThrownCharge;
+import com.wf.wflib.recon.api.Band;
+import com.wf.wflib.recon.api.ContactClass;
+import com.wf.wflib.recon.api.ReconTargets;
+import com.wf.wflib.recon.api.Signature;
+import com.wf.wflib.recon.api.SourceIds;
+import com.wf.wflib.recon.api.SensorSpec;
+import com.wf.wflib.recon.api.Atmosphere;
+import com.wf.wflib.recon.api.Interference;
+import com.wf.wflib.recon.api.SeismicEvents;
+import com.wf.wflib.recon.api.SensorSnapshot;
+import com.wf.wflib.recon.api.TargetSnapshot;
+import com.wf.wflib.warhead.api.EMPWarhead;
+import com.wf.wflib.warhead.api.WarheadCarrier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -36,13 +33,13 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.List;
+import com.wf.wflib.drone.api.DroneContent;
+import com.wf.wflib.recon.api.ReconContent;
 
 /** Attacker counterplay against drones and the passive picture: net, EMP, jammer, thermite glare, blast noise. */
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class CounterplayGameTest {
     private static final String TEMPLATE = "empty";
@@ -71,7 +68,7 @@ public class CounterplayGameTest {
     }
 
     /** Net wall across a Mavic's path: pinned in the strands; a stand's collision there is empty. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void aDroneNetHoldsAMavicNotAWalker(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos base = helper.absolutePos(new BlockPos(1, 30, 1));
@@ -79,7 +76,7 @@ public class CounterplayGameTest {
         for (int x = -2; x <= 2; x++) {
             for (int y = -2; y <= 2; y++) {
                 level.setBlockAndUpdate(new BlockPos(base.getX() + x, base.getY() + y, netZ),
-                        ModBlocks.DRONE_NET.get().defaultBlockState());
+                        DroneContent.DRONE_NET.get().defaultBlockState());
             }
         }
         AbstractVehicle quad = hoveringMavic(helper, Vec3.atBottomCenterOf(base));
@@ -113,7 +110,7 @@ public class CounterplayGameTest {
     }
 
     /** EMP over a piloted Mavic: link dead, inputs dropped. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 300)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 300)
     public static void anEmpCutsAUavLink(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         ArmorStand[] pilot = new ArmorStand[1];
@@ -136,11 +133,11 @@ public class CounterplayGameTest {
     }
 
     /** A switched-on jammer carried beside the pilot's body: the link drops. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 300)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 300)
     public static void aCarriedJammerCutsTheLink(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
-        ItemStack jammer = new ItemStack(ModItems.PORTABLE_JAMMER.get());
-        jammer.set(ModDataComponents.ACTIVE.get(), true);
+        ItemStack jammer = new ItemStack(ReconContent.PORTABLE_JAMMER.get());
+        jammer.set(ReconContent.ACTIVE.get(), true);
         ArmorStand[] pilot = new ArmorStand[1];
         TestLanes.run(helper, JAMMER_LANE, 4, 4, MAVIC, (seq, v) -> seq
                 .thenExecute(() -> pilot[0] = pilot(helper, powered(v.get())))
@@ -159,7 +156,7 @@ public class CounterplayGameTest {
     }
 
     /** Burning thermite: targets beside it present x glare on thermal; the burn itself is a heat contact. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 300)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 300)
     public static void thermiteGlaresAndShowsAHeatContact(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         ThrownCharge[] charge = new ThrownCharge[1];
@@ -187,7 +184,7 @@ public class CounterplayGameTest {
     }
 
     /** A blast rings the ground: a geophone near it hears a far target x NOISE_FACTOR; one far away is unaffected. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void aBlastDeafensNearbyGeophones(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Vec3 blast = helper.absoluteVec(new Vec3(2.5, 1, 2.5));

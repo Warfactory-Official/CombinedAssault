@@ -1,4 +1,7 @@
 {
+  "neoforge:conditions": [
+    { "type": "wflib:system", "system": "combinedassault:cargo" }
+  ],
   "type": "minecraft:crafting_shapeless",
   "ingredients": [
     {

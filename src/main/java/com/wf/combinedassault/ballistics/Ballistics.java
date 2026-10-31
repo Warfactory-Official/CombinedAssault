@@ -3,13 +3,14 @@ package com.wf.combinedassault.ballistics;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.wflib.api.StrikeContext;
-import com.wf.wflib.api.ThreatKind;
-import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.damage.api.StrikeContext;
+import com.wf.wflib.damage.api.ThreatKind;
+import com.wf.wflib.armor.api.hull.HullOutcome;
+import com.wf.wflib.armor.api.hull.HullResult;
 
 /**
- * Only entry point stock damage calls into; see {@link com.wf.combinedassault.vehicle.DamageSystem}.
+ * Only entry point stock damage calls into; see {@link com.wf.combinedassault.ballistics.DamageSystem}.
  * Nothing else in the mod references this package.
  */
 public final class Ballistics {
@@ -26,9 +27,8 @@ public final class Ballistics {
 
     /** @param penetrationScale what ERA/slat left of the round's penetration */
     @Nullable
-    public static BallisticResult resolve(AbstractVehicle vehicle, DamageSource damageSource, float amount,
-                                          @Nullable Vec3 hitPos, @Nullable PartUnit<?> hitPart,
-                                          float penetrationScale) {
+    public static HullResult resolve(AbstractVehicle vehicle, DamageSource damageSource, float amount,
+                                          @Nullable Vec3 hitPos, float penetrationScale) {
         if (hitPos == null) {
             return null;
         }
@@ -41,7 +41,7 @@ public final class Ballistics {
         if (direction.lengthSqr() == 0) {
             return null;
         }
-        return resolver.resolve(vehicle, round.position(), direction, hitPos, hitPart, penetration, amount,
+        return resolver.resolve(vehicle, round.position(), direction, hitPos, penetration, amount,
                 round.threat().kind());
     }
 
@@ -51,8 +51,8 @@ public final class Ballistics {
         if (penetration <= 0 || velocity.lengthSqr() == 0) {
             return null;
         }
-        BallisticResult r = resolver.resolve(vehicle, start, velocity, hitPos, null, penetration, 0, ThreatKind.KINETIC);
-        return r != null && r.outcome() == HitOutcome.RICOCHET ? r.normal() : null;
+        HullResult r = resolver.resolve(vehicle, start, velocity, hitPos, penetration, 0, ThreatKind.KINETIC);
+        return r != null && r.outcome() == HullOutcome.RICOCHET ? r.normal() : null;
     }
 
 }

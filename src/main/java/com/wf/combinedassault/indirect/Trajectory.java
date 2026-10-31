@@ -3,7 +3,7 @@ package com.wf.combinedassault.indirect;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Closed form of {@code com.wf.wflib.round.Rounds} flight (KineticPreset contract): recurrence
+ * Closed form of {@code com.wf.wflib.round.api.Rounds} flight (KineticPreset contract): recurrence
  * {@code pos += v; v *= 1-drag; v.y -= gravity} solved exactly, not stepped. Ticks + blocks throughout.
  * Quadratic drag => {@link SteppedTrajectory}.
  */

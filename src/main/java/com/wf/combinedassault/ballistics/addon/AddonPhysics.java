@@ -1,7 +1,7 @@
 package com.wf.combinedassault.ballistics.addon;
 
-import com.wf.wflib.api.Threat;
-import com.wf.wflib.api.ThreatKind;
+import com.wf.wflib.damage.api.Threat;
+import com.wf.wflib.damage.api.ThreatKind;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 

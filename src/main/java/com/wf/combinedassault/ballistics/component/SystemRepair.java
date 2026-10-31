@@ -1,7 +1,7 @@
 package com.wf.combinedassault.ballistics.component;
 
-import com.wf.wflib.probe.ProbeActions;
-import com.wf.wflib.probe.ProbeInventory;
+import com.wf.wflib.probe.api.ProbeActions;
+import com.wf.wflib.probe.api.ProbeInventory;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -14,7 +14,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 /**
  * Probe action "repair one system one band", {@code arg} = {@link VehicleSystems.Cell#key()}. Timed

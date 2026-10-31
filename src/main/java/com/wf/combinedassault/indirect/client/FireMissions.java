@@ -5,11 +5,11 @@ import com.wf.combinedassault.indirect.GunLaying;
 import com.wf.combinedassault.indirect.IndirectFire;
 import com.wf.combinedassault.indirect.IndirectFireSpec;
 import com.wf.combinedassault.indirect.LayingMode;
-import com.wf.combinedassault.network.message.ClientSelectRound;
-import com.wf.combinedassault.vehicle.part.MissileHolderUnit;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.combinedassault.vehicle.weapon.AbstractVehicleWeapon;
-import com.wf.combinedassault.vehicle.weapon.VehicleMissile;
+import com.wf.combinedassault.weapon.message.ClientSelectRound;
+import com.wf.combinedassault.weapon.part.MissileHolderUnit;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.VehicleMissile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -108,7 +108,7 @@ public final class FireMissions {
         AbstractVehicleWeapon<?> weapon = unit.getCurrentWeapon().orElse(null);
         MissileHolderUnit rack = weapon == null ? null : rack(weapon);
         return rack == null ? java.util.List.of(Items.AIR) : rack.kinds().stream()
-                .filter(kind -> !com.wf.combinedassault.compat.wflib.WfLibCompat.isInterceptor(kind.getDefaultInstance()))
+                .filter(kind -> !com.wf.combinedassault.weapon.ordnance.Ordnance.isInterceptor(kind.getDefaultInstance()))
                 .toList();
     }
 

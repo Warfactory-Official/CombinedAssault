@@ -2,9 +2,9 @@ package com.wf.combinedassault.ballistics;
 
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.wf.wflib.ammo.Ammo;
-import com.wf.wflib.ammo.AmmoVariant;
-import com.wf.wflib.api.ThreatKind;
+import com.wf.wflib.ammo.api.Ammo;
+import com.wf.wflib.ammo.api.AmmoVariant;
+import com.wf.wflib.damage.api.ThreatKind;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.resources.ResourceLocation;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -17,25 +17,28 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.ballistics.component.ComponentDamage;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.custom.weapon.data.BaseVehicleWeaponData;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.weapon.data.BaseVehicleWeaponData;
 import com.wf.combinedassault.ballistics.component.VehicleMobility;
 import com.wf.combinedassault.ballistics.addon.AddonCommand;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.util.VectorUtil;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
+import com.wf.wflib.geom.api.OBB;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 
 import java.util.Locale;
 import java.util.List;
 import java.util.ArrayList;
-import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
-import com.wf.combinedassault.vehicle.structure.HullTag;
-import com.wf.combinedassault.vehicle.hit.HitMesh;
-import com.wf.combinedassault.vehicle.hit.HitModel;
-import com.wf.combinedassault.vehicle.hit.VehicleHits;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.wflib.physics.api.HullTag;
+import com.wf.combinedassault.ballistics.hit.HitMesh;
+import com.wf.combinedassault.ballistics.hit.HitModel;
+import com.wf.combinedassault.ballistics.hit.VehicleHits;
 import com.wf.combinedassault.ballistics.component.HullComponents;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
+import com.wf.wflib.armor.api.hull.HullProfile;
+import com.wf.wflib.armor.api.hull.HullResult;
 
 /**
  * Debug readout for the armour model on the looked-at vehicle.
@@ -140,14 +143,14 @@ public final class BallisticsCommand {
             VehicleHits.Hit hit = vehicle.hits().surface(start, end);
             hitPos = hit == null ? null : hit.point();
         } else {
-            VectorUtil.HitOBB hit = VectorUtil.hitOBB(vehicle.getOBBs(), start, end);
-            hitPos = hit == null ? null : hit.hitPos();
+            OBB.SegmentHit hit = OBB.first(vehicle.getOBBs(), start, end);
+            hitPos = hit == null ? null : hit.point();
         }
         if (hitPos == null) {
             source.sendFailure(Component.literal("ray misses ").append(vehicle.getDisplayName()));
             return 0;
         }
-        ArmorProfile profile = vehicle.armorProfile;
+        HullProfile profile = vehicle.armorProfile;
         if (profile == null || !profile.isDefined()) {
             source.sendSuccess(() -> Component.empty().append(vehicle.getDisplayName())
                     .append(" has no armour profile; every hit on it resolves with the stock damage model")
@@ -155,7 +158,7 @@ public final class BallisticsCommand {
             return 1;
         }
         PartUnit<?> part = VectorUtil.hitPartUnit(vehicle, start, end, false);
-        BallisticResult result = new ArmorResolver().resolve(vehicle, start, look, hitPos, part,
+        HullResult result = new ArmorResolver().resolve(vehicle, start, look, hitPos,
                 penetration, PROBE_DAMAGE, ThreatKind.KINETIC);
         if (result == null) {
             source.sendFailure(Component.literal("no answer: the face hit has no armour set"));
@@ -183,7 +186,7 @@ public final class BallisticsCommand {
             return 0;
         }
         var round = data.getReload() == null ? null
-                : com.wf.combinedassault.compat.wflib.Munitions.kinetic(data.getReload().defaultRound());
+                : com.wf.combinedassault.weapon.ordnance.Munitions.kinetic(data.getReload().defaultRound());
         if (round == null) {
             source.sendFailure(Component.literal(weaponId + ": default round is not a WFLib kinetic round"));
             return 0;

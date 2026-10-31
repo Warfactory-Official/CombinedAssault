@@ -1,12 +1,12 @@
 package com.wf.combinedassault.indirect;
 
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.indirect.net.FireRequestPacket;
 import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.wflib.pda.Pda;
-import com.wf.wflib.pda.markers.MarkerStore;
-import com.wf.wflib.pda.uplink.Uplink;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.wflib.pda.api.Pda;
+import com.wf.wflib.map.api.MarkerData;
+import com.wf.wflib.pda.api.Uplink;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
@@ -29,11 +29,11 @@ public final class CallForFire {
             observer.displayClientMessage(Component.translatable("tips.call_for_fire.no_uplink"), true);
             return -1;
         }
-        UUID side = MarkerStore.side(observer);
+        UUID side = MarkerData.side(observer);
         int sent = 0;
         for (ServerPlayer operator : observer.server.getPlayerList().getPlayers()) {
             if (operator != observer && operator.level() == observer.level() && station(operator) != null
-                    && side.equals(MarkerStore.side(operator))) {
+                    && side.equals(MarkerData.side(operator))) {
                 PacketDistributor.sendToPlayer(operator, new FireRequestPacket(observer.getGameProfile().getName(),
                         target));
                 sent++;

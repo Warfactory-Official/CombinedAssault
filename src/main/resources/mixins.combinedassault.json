@@ -1,35 +1,32 @@
 {
   "required": true,
-  "plugin": "com.wf.combinedassault.mixin.plugin.MixinPlugin",
+  "plugin": "com.wf.combinedassault.mixin.vehicle.MixinPlugin",
   "package": "com.wf.combinedassault.mixin",
   "compatibilityLevel": "JAVA_21",
   "minVersion": "0.8",
   "client": [
-    "client.CameraMixin",
-    "client.ClientPacketListenerMixin",
-    "client.EntityRenderDispatcherMixin",
-    "client.LevelRendererMixin",
-    "client.LivingEntityRendererMixin",
-    "client.MinecraftMixin",
-    "client.MouseHandlerMixin",
-    "client.PlayerRendererMixin",
-    "client.PostChainMixin"
+    "render.EntityRenderDispatcherMixin",
+    "render.LevelRendererMixin",
+    "render.LivingEntityRendererMixin",
+    "render.PlayerRendererMixin",
+    "render.PostChainMixin",
+    "vehicle.ClientPacketListenerMixin",
+    "vehicle.MinecraftMixin",
+    "vehicle.MouseHandlerMixin",
+    "weapon.CameraMixin"
   ],
   "injectors": {
     "defaultRequire": 1
   },
   "mixins": [
-    "common.ChunkMapViewMixin",
-    "common.EntityMixin",
-    "common.ExplosionAccessor",
-    "common.GameTestServerMixin",
-    "common.LevelChunkCollisionMixin",
-    "common.LevelMixin",
-    "common.LivingEntityMixin",
-    "common.PlayerMixin",
-    "common.ServerGamePacketListenerImplMixin",
-    "create.ContraptionColliderMixin",
-    "sable.AbstractVehicleSableMixin",
-    "sable.SubLevelEntityCollisionMixin"
+    "ballistics.ExplosionAccessor",
+    "vehicle.ChunkMapViewMixin",
+    "vehicle.GameTestServerMixin",
+    "vehicle.LevelMixin",
+    "vehicle.LivingEntityMixin",
+    "vehicle.PlayerMixin",
+    "vehicle.create.ContraptionColliderMixin",
+    "vehicle.sable.AbstractVehicleSableMixin",
+    "vehicle.sable.SubLevelEntityCollisionMixin"
   ]
 }

@@ -1,9 +1,9 @@
 package com.wf.combinedassault.vehicle.part.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.wflib.util.ForcedChunks;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.testkit.api.ForcedChunks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;

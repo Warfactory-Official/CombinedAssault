@@ -43,10 +43,10 @@ def vocabulary():
     kinds = re.findall(r'^\s*([A-Z_]+)\("([a-z_]+)"', java("ballistics/component/ComponentKind.java"), re.M)
     systems = {name.lower() for name, code in kinds if name not in ("CREW", "GENERIC")}
     check("systems == ComponentKind names", systems == set(T.SYSTEMS), str(systems ^ set(T.SYSTEMS)))
-    roles = re.findall(r'^\s*([A-Z_]+)\(Kind\.SOCKET\)', java("vehicle/hit/NodeRole.java"), re.M)
+    roles = re.findall(r'^\s*([A-Z_]+)\(Kind\.SOCKET\)', java("ballistics/hit/NodeRole.java"), re.M)
     fields = {r.lower() for r in roles}
     check("socket fields == NodeRole sockets", fields == set(T.SOCKET_FIELDS), str(fields ^ set(T.SOCKET_FIELDS)))
-    armor = re.search(r'ARMOR = Pattern.compile\("(.*?)"\)', java("vehicle/hit/ModelDataManager.java")).group(1)
+    armor = re.search(r'ARMOR = Pattern.compile\("(.*?)"\)', java("ballistics/hit/ModelDataManager.java")).group(1)
     check("armour pattern == ModelDataManager.ARMOR", armor.replace("\\\\", "\\") == T.ARMOR.pattern, armor)
 
 

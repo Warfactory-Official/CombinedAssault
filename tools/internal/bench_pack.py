@@ -102,7 +102,7 @@ def main(out):
     # Generated tests are filtered by template namespace => template must be combinedassaultbench:empty.
     structure = os.path.join(out, "data", NS, "structure")
     os.makedirs(structure)
-    shutil.copy(os.path.join(os.path.dirname(__file__), "..", "src", "main", "resources", "data", "combinedassault",
+    shutil.copy(os.path.join(os.path.dirname(__file__), "..", "..", "src", "main", "resources", "data", "combinedassault",
                              "structure", "empty.nbt"), os.path.join(structure, "empty.nbt"))
     with open(os.path.join(out, "pack.mcmeta"), "w") as f:
         json.dump({"pack": {"pack_format": 34, "description": "[CA] bench"}, "combinedassault": {"id": "bench"}}, f)

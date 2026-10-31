@@ -6,8 +6,8 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.vehicle.part.TrackUnit;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
+import com.wf.combinedassault.dynamics.part.TrackUnit;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 
 import java.util.Locale;
 

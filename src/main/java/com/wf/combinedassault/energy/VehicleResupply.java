@@ -10,9 +10,7 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.all.AllConfigs;
-import com.wf.combinedassault.compat.gtceu.GregTechCompat;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 /**
  * Refuelling and charging from the block a vehicle is parked on.
@@ -35,7 +33,7 @@ public final class VehicleResupply {
         if (vehicle.level().isClientSide() || vehicle.tickCount % INTERVAL != 0) {
             return;
         }
-        if (AllConfigs.common != null && !AllConfigs.common.parkedResupply.get()) {
+        if (!EnergyConfig.get().parkedResupply()) {
             return;
         }
         if (vehicle.rawEnergy() >= vehicle.energyInfo.capacityUnits()) {

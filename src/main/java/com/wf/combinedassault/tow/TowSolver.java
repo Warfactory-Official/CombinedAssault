@@ -3,8 +3,8 @@ package com.wf.combinedassault.tow;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.vehicle.cargo.VehicleParachute;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.cargo.VehicleParachute;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;

@@ -2,13 +2,13 @@ package com.wf.combinedassault.airdefense.client;
 
 import com.wf.combinedassault.airdefense.AirDefense;
 import com.wf.combinedassault.airdefense.AirDefenseActions;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.vehicle.part.client.PartNames;
-import com.wf.wflib.probe.ProbeAction;
-import com.wf.wflib.probe.ProbeContext;
-import com.wf.wflib.probe.ProbeInfo;
+import com.wf.wflib.probe.api.ProbeAction;
+import com.wf.wflib.probe.api.ProbeContext;
+import com.wf.wflib.probe.api.ProbeInfo;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 

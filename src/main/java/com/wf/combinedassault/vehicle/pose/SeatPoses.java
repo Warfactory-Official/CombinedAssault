@@ -9,7 +9,7 @@ import com.norwood.ahf.rig.HumanoidRig;
 import com.norwood.ahf.stance.AhfStances;
 import com.norwood.ahf.stance.Stance;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.ThirdPersonRules;
 import com.wf.combinedassault.vehicle.crew.CrewRole;
 import com.wf.combinedassault.vehicle.crew.CrewRules;
@@ -27,7 +27,10 @@ import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Rider pose = AHF {@link PoseLibrary} set per seat ({@code ride_lower} + {@code hold_upper}): server rig and client
@@ -36,12 +39,28 @@ import java.util.Map;
  */
 public final class SeatPoses {
 
-    public static final Map<String, ResourceLocation> SETS = new LinkedHashMap<>();
+    private static final Map<String, ResourceLocation> SETS = new LinkedHashMap<>();
 
     static {
         for (String name : new String[]{"sit", "drive", "pilot", "stand", "kneel"}) {
             SETS.put(name, CombinedAssault.modLocation("seat_" + name));
         }
+    }
+
+    public static Collection<ResourceLocation> setIds() {
+        return Collections.unmodifiableCollection(SETS.values());
+    }
+
+    public static ResourceLocation set(String name) {
+        return SETS.get(name);
+    }
+
+    public static boolean hasSet(String name) {
+        return SETS.containsKey(name);
+    }
+
+    public static Set<String> setNames() {
+        return Collections.unmodifiableSet(SETS.keySet());
     }
 
     private SeatPoses() {

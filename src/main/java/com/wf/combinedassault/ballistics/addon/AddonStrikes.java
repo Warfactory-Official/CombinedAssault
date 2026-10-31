@@ -1,20 +1,19 @@
 package com.wf.combinedassault.ballistics.addon;
 
-import com.wf.wflib.api.ProjectileStrikeEvent;
-import com.wf.wflib.api.ThreatKind;
-import com.wf.wflib.round.pen.Ricochet;
+import com.wf.combinedassault.ballistics.HitOutcomes;
+import com.wf.wflib.damage.api.event.ProjectileStrikeEvent;
+import com.wf.wflib.damage.api.ThreatKind;
+import com.wf.wflib.round.api.Ricochet;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.api.event.HitVehicleEvent;
+import com.wf.combinedassault.ballistics.event.HitVehicleEvent;
 import com.wf.combinedassault.ballistics.Ballistics;
-import com.wf.combinedassault.ballistics.HitOutcome;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.wflib.armor.api.hull.HullOutcome;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +22,6 @@ import java.util.Map;
  * Strike results waiting for the projectile's own {@code hurt} call, which {@code DamageSystem} reads.
  * Server thread only; anything not taken dies at the end of the tick.
  */
-@EventBusSubscriber(modid = CombinedAssault.MOD_ID)
 public final class AddonStrikes {
 
     /** Key = {@code StrikeContext.key()}: projectile entity (identity equals) or round key (boxed long). */
@@ -87,7 +85,7 @@ public final class AddonStrikes {
         event.ricochet(Ricochet.off(event.velocity(), n, vehicle.getRandom().nextLong()));
         if (event.shooter() != null) {
             NeoForge.EVENT_BUS.post(new HitVehicleEvent(event.shooter().getUUID(), vehicle.getId(), at, event.velocity(),
-                    event.threat().caliberMm(), 0, Component.translatable(HitOutcome.RICOCHET.translationKey())));
+                    event.threat().caliberMm(), 0, Component.translatable(HitOutcomes.translationKey(HullOutcome.RICOCHET))));
         }
         return true;
     }

@@ -3,8 +3,8 @@ package com.wf.combinedassault.vehicle.pose.gametest;
 import com.mojang.authlib.GameProfile;
 import com.norwood.ahf.rig.HumanoidRig;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.pose.SeatPoses;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -12,20 +12,18 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.UUID;
 
 /** Server rig (AHF {@code computeServer}) of a riverine rider: seat pose set per seat, hull pitch carried. */
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class SeatPoseGameTest {
 
     private static final String TEMPLATE = "empty";
     private static final ResourceLocation BOAT = CombinedAssault.modLocation("riverine");
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void aRiderTakesItsSeatPoseAndTheHullPitch(GameTestHelper helper) {
         BlockPos at = helper.absolutePos(new BlockPos(1, 2, 1));
         AbstractVehicle boat = CommonAssetsManager.vehicleDataManager().getVehicleData(BOAT).orElseThrow()
@@ -63,7 +61,7 @@ public class SeatPoseGameTest {
     }
 
     private static String check(AbstractVehicle boat, Player rider) {
-        if (!SeatPoses.SETS.get("drive").equals(SeatPoses.of(rider))) {
+        if (!SeatPoses.set("drive").equals(SeatPoses.of(rider))) {
             return "helm rider pose set " + SeatPoses.of(rider) + ", expected drive";
         }
         HumanoidRig.LocalRig seated = HumanoidRig.computeServer(rider);
@@ -80,7 +78,7 @@ public class SeatPoseGameTest {
         if (stern < 0 || !boat.changeSeat(rider, stern)) {
             return "no stern gun seat to move to (" + stern + ")";
         }
-        if (!SeatPoses.SETS.get("stand").equals(SeatPoses.of(rider))) {
+        if (!SeatPoses.set("stand").equals(SeatPoses.of(rider))) {
             return "stern gunner pose set " + SeatPoses.of(rider) + ", expected stand";
         }
         HumanoidRig.LocalRig standing = HumanoidRig.computeServer(rider);

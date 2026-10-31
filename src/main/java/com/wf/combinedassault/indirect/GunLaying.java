@@ -3,7 +3,7 @@ package com.wf.combinedassault.indirect;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.util.VectorUtil;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
 
 /**
  * Elevation/azimuth as numbers, not derived from a camera: the mount is laid to a repeatable figure.

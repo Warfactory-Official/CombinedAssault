@@ -1,11 +1,11 @@
 package com.wf.combinedassault.vehicle.crew;
 
+import com.wf.combinedassault.vehicle.VehicleConfig;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.all.AllConfigs;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -18,7 +18,7 @@ public final class CrewRules {
     }
 
     public static boolean enabled() {
-        return AllConfigs.server.crewRequired.get();
+        return VehicleConfig.crewRequired().get();
     }
 
     /** Pack {@code crew_roles}, else seat 0 = driver (+ gunner on a weapon seat), weapon seat = gunner, other = commander. */
@@ -112,7 +112,7 @@ public final class CrewRules {
             case SELF -> false;
         };
         return faster
-                ? Math.max(1, Math.round(base * AllConfigs.server.crewLoaderReloadMultiplier.get().floatValue()))
+                ? Math.max(1, Math.round(base * (float) VehicleConfig.server().crewLoaderReloadMultiplier()))
                 : base;
     }
 

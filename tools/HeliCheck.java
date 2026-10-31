@@ -1,5 +1,5 @@
 import org.joml.Vector3f;
-import com.wf.combinedassault.vehicle.solver.AircraftAerodynamics;
+import com.wf.combinedassault.aircraft.AircraftAerodynamics;
 
 /**
  * Standalone verification of rotary-wing flight envelope.
@@ -9,7 +9,7 @@ import com.wf.combinedassault.vehicle.solver.AircraftAerodynamics;
  * Run:
  *   JOML=$(find ~/.gradle ~/.local/share/gradle -name 'joml-*.jar' ! -name '*sources*' | head -1)
  *   javac -d /tmp/helicheck -cp "$JOML" \
- *       src/main/java/com/wf/combinedassault/vehicle/solver/AircraftAerodynamics.java tools/HeliCheck.java
+ *       src/main/java/com/wf/combinedassault/aircraft/AircraftAerodynamics.java tools/HeliCheck.java
  *   java -cp "/tmp/helicheck:$JOML" HeliCheck
  */
 public class HeliCheck {

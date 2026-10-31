@@ -1,7 +1,7 @@
 package com.wf.combinedassault.ballistics.addon;
 
-import com.wf.wflib.probe.ProbeActions;
-import com.wf.wflib.probe.ProbeInventory;
+import com.wf.wflib.probe.api.ProbeActions;
+import com.wf.wflib.probe.api.ProbeInventory;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -15,7 +15,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.ballistics.component.SystemRepair;
 

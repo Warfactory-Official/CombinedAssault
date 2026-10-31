@@ -7,10 +7,8 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.all.AllConfigs;
-import com.wf.combinedassault.all.AllFluids;
-import com.wf.combinedassault.vehicle.pojo.EnergyInfo;
-import com.wf.combinedassault.vehicle.pojo.FuelEntry;
+import com.wf.combinedassault.energy.pojo.EnergyInfo;
+import com.wf.combinedassault.energy.pojo.FuelEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,7 +88,7 @@ public final class FuelSpec {
                 return entry.fluid;
             }
         }
-        return AllFluids.FUEL_SOURCE.get();
+        return EnergyFluids.FUEL_SOURCE.get();
     }
 
     /** Fluid ids and tags this vehicle takes, for a refusal message. */
@@ -124,10 +122,7 @@ public final class FuelSpec {
     }
 
     private static List<? extends String> configWhitelist() {
-        if (AllConfigs.common == null) {
-            return List.of("fuel");
-        }
-        return AllConfigs.common.fuelNameWhiteList.get();
+        return EnergyConfig.get().fuelNameWhiteList();
     }
 
     @Nullable

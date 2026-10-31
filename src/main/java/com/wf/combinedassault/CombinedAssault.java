@@ -1,83 +1,64 @@
 package com.wf.combinedassault;
 
-import com.wf.combinedassault.ballistics.addon.AddonActions;
+import com.wf.wflib.core.api.WFSystems;
+import com.wf.wflib.packs.api.PackHost;
+import com.wf.wflib.packs.api.PackHosts;
+import com.wf.wflib.packs.api.PackSpec;
+import com.wf.combinedassault.camo.CamoSystem;
+import com.wf.combinedassault.cargo.CargoSystem;
+import com.wf.combinedassault.energy.EnergySystem;
+import com.wf.combinedassault.props.PropsSystem;
+import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.wf.combinedassault.all.*;
-import com.wf.combinedassault.compat.CreateCompat;
-import com.wf.combinedassault.compat.sable.SableCompat;
-import com.wf.combinedassault.compat.gtceu.GregTechCompat;
-import com.wf.combinedassault.compat.ultimateweight.UltimateWeightCompat;
-import com.wf.combinedassault.compat.wflib.WfLibCompat;
-import com.wf.combinedassault.network.Channel;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.pack.CombinedPacks;
-import com.wf.combinedassault.pack.PackHandshake;
-import com.wf.combinedassault.uav.UavCamera;
-import com.wf.combinedassault.uav.UavTablet;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.neoforge.event.AddPackFindersEvent;
 
 @Mod(CombinedAssault.MOD_ID)
 public class CombinedAssault {
 
     public static final String MOD_ID = "combinedassault";
-    public static final String PROTOCOL = "1.0";
     public static final Logger LOGGER = LogManager.getLogger(CombinedAssault.class);
+    public static final List<CombinedAssaultSystem> SYSTEMS = List.of(
+            new CamoSystem(),
+            new EnergySystem(),
+            new CargoSystem(),
+            new PropsSystem(),
+            new com.wf.combinedassault.render.RenderSystem(),
+            new com.wf.combinedassault.hud.HudSystem(),
+            new com.wf.combinedassault.indirect.IndirectSystem(),
+            new com.wf.combinedassault.uav.UavSystem(),
+            new com.wf.combinedassault.weapon.WeaponSystem(),
+            new com.wf.combinedassault.ballistics.BallisticsSystem(),
+            new com.wf.combinedassault.radar.RadarSystem(),
+            new com.wf.combinedassault.airdefense.AirDefenseSystem(),
+            new com.wf.combinedassault.tow.TowSystem(),
+            new com.wf.combinedassault.naval.NavalSystem(),
+            new com.wf.combinedassault.aircraft.AircraftSystem(),
+            new com.wf.combinedassault.deck.DeckSystem(),
+            new com.wf.combinedassault.dynamics.DynamicsSystem(),
+            new com.wf.combinedassault.vehicle.VehicleSystem(),
+            new com.wf.combinedassault.pack.PackSystem());
 
-    public CombinedAssault(IEventBus modEventBus) {
-        CombinedPacks.discover();
-        modEventBus.addListener(PackHandshake::onRegisterPayloads);
-        modEventBus.addListener(PackHandshake::onRegisterTasks);
-        modEventBus.addListener(AddPackFindersEvent.class, CombinedPacks::onAddPackFinders);
-        modEventBus.addListener(FMLCommonSetupEvent.class, event -> event.enqueueWork(CommonAssetsManager::ensureLoaded));
-        modEventBus.addListener(FMLCommonSetupEvent.class, event -> event.enqueueWork(UavCamera::register));
-        modEventBus.addListener(FMLCommonSetupEvent.class, event -> event.enqueueWork(UavTablet::register));
-        AllConfigs.register(ModLoadingContext.get(), modEventBus);
-        AllBlocks.register(modEventBus);
-        AllBlockEntities.register(modEventBus);
-        AllItems.register(modEventBus);
-        AllEntities.register(modEventBus);
-        AllFluids.register(modEventBus);
-        AllSounds.register(modEventBus);
-        AllPartUnitType.register(modEventBus);
-        AllVehicleWeaponTypes.register(modEventBus);
-        AllVehicleDataTypes.register(modEventBus);
-        AllParticleTypes.register(modEventBus);
-        AllDisplayTypes.register(modEventBus);
-        AllTabs.register(modEventBus);
-        AllRecipe.register(modEventBus);
-        AllMenus.register(modEventBus);
-        AllDataComponents.register(modEventBus);
-        initCompat();
-        AddonActions.register();
-        com.wf.combinedassault.vehicle.loadout.Loadouts.register();
-        com.wf.combinedassault.vehicle.hardware.Hardpoints.register();
-        com.wf.combinedassault.vehicle.part.AccessActions.register();
-        com.wf.combinedassault.vehicle.part.WeaponActions.register();
-        com.wf.combinedassault.vehicle.part.StationActions.register();
-        com.wf.combinedassault.vehicle.part.BatteryActions.register();
-        com.wf.combinedassault.airdefense.AirDefenseActions.register();
-        com.wf.combinedassault.vehicle.pose.SeatPoses.register();
-        com.wf.combinedassault.ballistics.component.SystemRepair.register();
-        com.wf.combinedassault.ballistics.component.ArmorRepair.register();
-        com.wf.combinedassault.vehicle.part.BarrelCharge.register();
-        com.wf.combinedassault.barrel.BarrelActions.register();
-        modEventBus.register(Channel.class);
+    private static PackHost packs;
+
+    public static PackHost packs() {
+        return packs;
     }
 
-    public void initCompat() {
-        SableCompat.init();
-        CreateCompat.init();
-        WfLibCompat.init();
-        UltimateWeightCompat.init();
-        com.wf.combinedassault.storage.ItemMass.init();
-        GregTechCompat.init();
-        com.wf.combinedassault.compat.rail.RailCompat.init();
+    /** Hash set: everything under {@code combinedassault/}, model files under {@code assets/}. */
+    static boolean hashed(String path) {
+        return path.startsWith(MOD_ID + "/") || path.startsWith("assets/")
+                && (path.endsWith(".gltf") || path.endsWith(".glb") || path.endsWith(".bin"));
+    }
+
+    public CombinedAssault(IEventBus modEventBus, ModContainer modContainer) {
+        packs = PackHosts.register(PackSpec.builder(MOD_ID, "CombinedAssault").keys("license", "authors")
+                .hashed(CombinedAssault::hashed).holdArchives().createGameDir().clientResources().serverData().build());
+        packs.rescan();
+        WFSystems.define(MOD_ID, modEventBus, modContainer, SYSTEMS);
     }
 
     public static ResourceLocation modLocation(String name) {

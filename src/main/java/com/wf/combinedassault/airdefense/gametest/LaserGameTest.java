@@ -2,24 +2,22 @@ package com.wf.combinedassault.airdefense.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.airdefense.AirDefense;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.gametest.TestLanes;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.wflib.intercept.InterceptBattery;
-import com.wf.wflib.item.PortableJammerItem;
-import com.wf.wflib.recon.Band;
-import com.wf.wflib.recon.env.Interference;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.gametest.TestLanes;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.wflib.missile.api.InterceptBattery;
+import com.wf.wflib.recon.api.PortableJammerItem;
+import com.wf.wflib.recon.api.Band;
+import com.wf.wflib.recon.api.Interference;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /** Laser trailer, AUTO + own radar: mass/armour formula => a Mavic burns, an MQ-9 shrugs. */
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class LaserGameTest {
     private static final String TEMPLATE = "empty";
@@ -30,7 +28,7 @@ public class LaserGameTest {
     private static final int MAVIC_DEADLINE = 120;
     private static final int MQ9_DWELL = 100;
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void laserBurnsDownAHostileMavic(GameTestHelper helper) {
         AbstractVehicle[] target = new AbstractVehicle[1];
         int[] ticks = {0};
@@ -51,7 +49,7 @@ public class LaserGameTest {
         });
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void laserBarelyMarksAnMq9(GameTestHelper helper) {
         AbstractVehicle[] target = new AbstractVehicle[1];
         boolean[] fired = {false};
@@ -74,7 +72,7 @@ public class LaserGameTest {
     }
 
     /** Same Mavic with a portable jammer's area on it: the organic radar never holds it, the beam never fires. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void aJammedMavicIsNeverEngaged(GameTestHelper helper) {
         AbstractVehicle[] target = new AbstractVehicle[1];
         java.util.Set<String> others = new java.util.TreeSet<>();

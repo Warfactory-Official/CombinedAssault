@@ -44,7 +44,7 @@ public final class SeatPoseAnim {
 
     /** Client setup (main thread). */
     public static void register() {
-        for (ResourceLocation id : SeatPoses.SETS.values()) {
+        for (ResourceLocation id : SeatPoses.setIds()) {
             Map<String, KeyframeAnimation> clips = new HashMap<>();
             for (KeyframeAnimation a : GeckoLibSerializer.deserialize(SeatPoses.file(id))) {
                 clips.put(((String) a.extraData.get("name")).toLowerCase(Locale.ENGLISH), a);

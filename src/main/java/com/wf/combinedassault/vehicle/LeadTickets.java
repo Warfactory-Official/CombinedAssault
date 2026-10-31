@@ -1,7 +1,6 @@
 package com.wf.combinedassault.vehicle;
 
-import com.wf.combinedassault.all.AllConfigs;
-import com.wf.wflib.api.WFLibAPI;
+import com.wf.wflib.missile.api.WFLibAPI;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ChunkTrackingView;
@@ -19,7 +18,7 @@ import java.util.Map;
  * Fast player (root entity: ridden vehicle, elytra): chunks the view disc will reach within {@code leadLoadTicks} are
  * loaded to FULL before the disc arrives; vanilla then sends them on entry. Covers view disc shifted by
  * {@code v * leadLoadTicks}, capped at one view radius, minus the own disc.
- * Sender idle at speed, readiness lags (`ca_chunkstream`, docs/chunk-streaming.md): tickets only, no extra sends.
+ * Sender idle at speed, readiness lags (`ca_chunkstream`): tickets only, no extra sends.
  */
 public final class LeadTickets {
 
@@ -40,7 +39,7 @@ public final class LeadTickets {
     }
 
     public static void tick(MinecraftServer server) {
-        int leadTicks = AllConfigs.server.leadLoadTicks.get();
+        int leadTicks = VehicleConfig.server().leadLoadTicks();
         long now = server.getTickCount();
         if (leadTicks <= 0) {
             STAMPS.clear();

@@ -1,9 +1,9 @@
 package com.wf.combinedassault.ballistics.addon;
 
-import com.wf.wflib.kinetic.KineticPreset;
-import com.wf.wflib.kinetic.KineticPresetRegistry;
-import com.wf.wflib.round.RocketEntity;
-import com.wf.wflib.round.Rounds;
+import com.wf.wflib.round.api.KineticPreset;
+import com.wf.wflib.round.api.KineticPresets;
+import com.wf.wflib.round.api.RocketEntity;
+import com.wf.wflib.round.api.Rounds;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -14,7 +14,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.util.Locale;
 
@@ -166,7 +166,7 @@ public final class AddonCommand {
         Vec3 target = pose.toWorld(x, y, 0);
         Vec3 from = target.add(out.x * RANGE, out.y * RANGE, out.z * RANGE);
         Vec3 direction = target.subtract(from).normalize();
-        KineticPreset preset = KineticPresetRegistry.exists(round) ? KineticPresetRegistry.get(round) : null;
+        KineticPreset preset = KineticPresets.exists(round) ? KineticPresets.get(round) : null;
         if (preset == null) {
             return null;
         }

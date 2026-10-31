@@ -2,7 +2,6 @@ package com.wf.combinedassault.naval;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
-import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -12,20 +11,15 @@ import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.entity.vehicle.ShipVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.util.Locale;
-import java.util.Optional;
 
-/** {@code /combinedassault naval ...}: spawn, read, drive any vehicle without a player; what RCON needs, nothing else. */
+/** {@code /combinedassault naval ...}: read and drive ships without a player; what RCON needs, nothing else. */
 public final class NavalCommand {
 
     private static final double SEARCH_RADIUS = 256.0;
@@ -36,13 +30,6 @@ public final class NavalCommand {
     public static LiteralArgumentBuilder<CommandSourceStack> get() {
         return Commands.literal("naval")
                 .requires(stack -> stack.hasPermission(2))
-                .then(Commands.literal("spawn")
-                        .then(Commands.argument("vehicle_id", ResourceLocationArgument.id())
-                                .then(Commands.argument("pos", Vec3Argument.vec3())
-                                        .executes(context -> spawn(context, 0))
-                                        .then(Commands.argument("yaw", FloatArgumentType.floatArg())
-                                                .executes(context -> spawn(context,
-                                                        FloatArgumentType.getFloat(context, "yaw")))))))
                 .then(Commands.literal("status").executes(NavalCommand::status)
                         .then(Commands.argument("id", IntegerArgumentType.integer(0)).executes(NavalCommand::status)))
                 .then(Commands.literal("helm")
@@ -71,28 +58,6 @@ public final class NavalCommand {
                         .then(Commands.literal("off").executes(context -> engine(context, false))
                                 .then(Commands.argument("id", IntegerArgumentType.integer(0))
                                         .executes(context -> engine(context, false)))));
-    }
-
-    private static int spawn(CommandContext<CommandSourceStack> context, float yaw) {
-        ResourceLocation id = context.getArgument("vehicle_id", ResourceLocation.class);
-        Vec3 pos = Vec3Argument.getVec3(context, "pos");
-        Optional<BaseVehicleData> data = CommonAssetsManager.vehicleDataManager().getVehicleData(id);
-        if (data.isEmpty()) {
-            context.getSource().sendFailure(Component.literal("no vehicle " + id));
-            return 0;
-        }
-        ServerLevel level = context.getSource().getLevel();
-        AbstractVehicle vehicle = data.get().construct(level, pos, 0, yaw);
-        vehicle.setDisplayId(id);
-        if (!level.addFreshEntity(vehicle)) {
-            context.getSource().sendFailure(Component.literal("could not add " + id));
-            return 0;
-        }
-        // Test spawn arrives fuelled. Pack energy_info lands in onAddedToLevel; before it => default 80.
-        vehicle.setEnergy(vehicle.energyInfo.capacityUnits());
-        context.getSource().sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
-                "spawned %s id=%d at %.1f %.1f %.1f yaw %.1f", id, vehicle.getId(), pos.x, pos.y, pos.z, yaw)), true);
-        return Command.SINGLE_SUCCESS;
     }
 
     private static int status(CommandContext<CommandSourceStack> context) {
@@ -145,7 +110,7 @@ public final class NavalCommand {
         ResourceLocation preset = context.getArgument("preset", ResourceLocation.class);
         Vec3 from = Vec3Argument.getVec3(context, "from");
         Vec3 target = Vec3Argument.getVec3(context, "target");
-        if (!com.wf.combinedassault.compat.wflib.WfLibCompat.launchMissile(
+        if (!com.wf.combinedassault.weapon.ordnance.BallisticsMissiles.launch(
                 context.getSource().getLevel(), preset, from, target)) {
             context.getSource().sendFailure(Component.literal("could not launch " + preset + " (WFLib absent, or no such preset)"));
             return 0;

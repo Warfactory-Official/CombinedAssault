@@ -1,0 +1,119 @@
+package com.wf.combinedassault.vehicle.message;
+
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.vehicle.control.ControlUnit;
+
+public class ClientVehicleMoveControl implements CustomPacketPayload {
+
+    public static final StreamCodec<FriendlyByteBuf, ClientVehicleMoveControl> STREAM_CODEC = StreamCodec.of((buf, msg) -> msg.encode(buf), ClientVehicleMoveControl::decode);
+    public static final CustomPacketPayload.Type<ClientVehicleMoveControl> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(CombinedAssault.MOD_ID, "vehicle_move_control"));
+    public int vehicleEntityId;
+    /** Client tick input sequence. */
+    public int seq;
+    public boolean forward;
+    public boolean backward;
+    public boolean left;
+    public boolean right;
+    public boolean up;
+    public boolean down;
+    public boolean leftYaw;
+    public boolean rightYaw;
+    public boolean functionalUp;
+    public boolean functionalDown;
+    public boolean functionalLeft;
+    public boolean functionalRight;
+    public float xRot;
+    public boolean xRotKeep;
+    public float yRot;
+    public boolean yRotKeep;
+    public boolean stick;
+    public float stickX;
+    public float stickY;
+    public boolean reported;
+    public float reportedXRot;
+    public float reportedYRot;
+    public float reportedZRot;
+
+    public ClientVehicleMoveControl() {}
+
+    public static ClientVehicleMoveControl decode(FriendlyByteBuf buf) {
+        ClientVehicleMoveControl control = new ClientVehicleMoveControl();
+        control.vehicleEntityId = buf.readInt();
+        control.seq = buf.readInt();
+        control.forward = buf.readBoolean();
+        control.backward = buf.readBoolean();
+        control.left = buf.readBoolean();
+        control.right = buf.readBoolean();
+        control.up = buf.readBoolean();
+        control.down = buf.readBoolean();
+        control.leftYaw = buf.readBoolean();
+        control.rightYaw = buf.readBoolean();
+        control.functionalUp = buf.readBoolean();
+        control.functionalDown = buf.readBoolean();
+        control.functionalLeft = buf.readBoolean();
+        control.functionalRight = buf.readBoolean();
+        control.xRot = buf.readFloat();
+        control.xRotKeep = buf.readBoolean();
+        control.yRot = buf.readFloat();
+        control.yRotKeep = buf.readBoolean();
+        control.stick = buf.readBoolean();
+        if (control.stick) {
+            control.stickX = buf.readFloat();
+            control.stickY = buf.readFloat();
+        }
+        control.reported = buf.readBoolean();
+        if (control.reported) {
+            control.reportedXRot = buf.readFloat();
+            control.reportedYRot = buf.readFloat();
+            control.reportedZRot = buf.readFloat();
+        }
+        return control;
+    }
+
+    public void encode(FriendlyByteBuf buf) {
+        buf.writeInt(vehicleEntityId);
+        buf.writeInt(seq);
+        buf.writeBoolean(forward);
+        buf.writeBoolean(backward);
+        buf.writeBoolean(left);
+        buf.writeBoolean(right);
+        buf.writeBoolean(up);
+        buf.writeBoolean(down);
+        buf.writeBoolean(leftYaw);
+        buf.writeBoolean(rightYaw);
+        buf.writeBoolean(functionalUp);
+        buf.writeBoolean(functionalDown);
+        buf.writeBoolean(functionalLeft);
+        buf.writeBoolean(functionalRight);
+        buf.writeFloat(xRot);
+        buf.writeBoolean(xRotKeep);
+        buf.writeFloat(yRot);
+        buf.writeBoolean(yRotKeep);
+        buf.writeBoolean(stick);
+        if (stick) {
+            buf.writeFloat(stickX);
+            buf.writeFloat(stickY);
+        }
+        buf.writeBoolean(reported);
+        if (reported) {
+            buf.writeFloat(reportedXRot);
+            buf.writeFloat(reportedYRot);
+            buf.writeFloat(reportedZRot);
+        }
+    }
+
+    public static void handle(ClientVehicleMoveControl message, IPayloadContext ctx) {
+        ctx.enqueueWork(() -> ControlUnit.onClientMessageReceived(message, ctx));
+    }
+
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+        return TYPE;
+    }
+
+}

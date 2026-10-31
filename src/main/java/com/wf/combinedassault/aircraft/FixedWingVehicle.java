@@ -1,0 +1,689 @@
+package com.wf.combinedassault.aircraft;
+
+import net.minecraft.network.FriendlyByteBuf;
+import com.wf.wflib.audio.api.AudioCategory;
+import com.wf.wflib.audio.api.EngineSound;
+import com.wf.combinedassault.vehicle.audio.VehicleSounds;
+import com.wf.combinedassault.vehicle.audio.HullLoop;
+import com.wf.combinedassault.ballistics.component.VehicleRotors;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
+import com.wf.combinedassault.vehicle.VehicleDamageTypes;
+import com.wf.combinedassault.pack.IAnimationEntity;
+import com.wf.combinedassault.pack.IAnimationInstance;
+import com.wf.combinedassault.aircraft.client.FixedWingVehicleContext;
+import com.wf.combinedassault.aircraft.client.FixedWingVehicleDisplay;
+import com.wf.combinedassault.pack.client.vehicle.VehicleDisplay;
+import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
+import com.wf.combinedassault.vehicle.util.ParticleUtil;
+import com.wf.combinedassault.dynamics.PhysicsHelper;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
+import com.wf.combinedassault.aircraft.part.data.FlapUnitData;
+import com.wf.combinedassault.vehicle.part.*;
+import com.wf.combinedassault.weapon.pojo.AimContext;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+
+import java.util.List;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.aircraft.part.AfterburnerUnit;
+import com.wf.combinedassault.aircraft.part.AirbrakeUnit;
+import com.wf.combinedassault.aircraft.part.FlapUnit;
+import com.wf.combinedassault.aircraft.part.ThrustUnit;
+import com.wf.combinedassault.dynamics.part.LandingGearUnit;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+
+public class FixedWingVehicle extends AbstractVehicle
+        implements IAnimationEntity<FixedWingVehicle, FixedWingVehicleContext> {
+
+    public static final EntityDataAccessor<Float> THROTTLE_LEVEL = SynchedEntityData.defineId(FixedWingVehicle.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Float> PITCH_INPUT = SynchedEntityData.defineId(FixedWingVehicle.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Float> YAW_INPUT = SynchedEntityData.defineId(FixedWingVehicle.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Float> ROLL_INPUT = SynchedEntityData.defineId(FixedWingVehicle.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Boolean> AEROBATIC_SMOKE_ON = SynchedEntityData.defineId(FixedWingVehicle.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Integer> AEROBATIC_SMOKE_R = SynchedEntityData.defineId(FixedWingVehicle.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Integer> AEROBATIC_SMOKE_G = SynchedEntityData.defineId(FixedWingVehicle.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Integer> AEROBATIC_SMOKE_B = SynchedEntityData.defineId(FixedWingVehicle.class, EntityDataSerializers.INT);
+    @OnlyIn(Dist.CLIENT)
+    private HullLoop landing;
+    @OnlyIn(Dist.CLIENT)
+    private HullLoop smoke;
+    public VehicleCubeOBB aerodynamicCubeOBB;
+    public float thrust = 8000f;
+    public float thrustK = 1.5f;
+    public float ceiling = 512;
+    public float xRotInputStep = 0.2f;
+    public float yRotInputStep = 0.5f;
+    public float zRotInputStep = 0.2f;
+    public float airDragKMin = 2f;
+    public float airDragKMax = 8f;
+    public float liftToDragK = 6;
+    public float angleOfAttackMin = -10f;
+    public float angleOfAttackMax = 25f;
+    public float xRotInputDragK = 1f;
+    public float yRotInputDragK = 1f / 4;
+    public float zRotInputDragK = 1f / 8;
+    public float turnRateBySpeed = 1f / 2.5f;
+    public float xTurnRate = 2;
+    public float yTurnRate = 3;
+    public float zTurnRate = 8;
+    public float vtolTurnRate = 0;
+    public List<Vec3> vortexOffsets;
+    public List<Vec3> aerobaticSmokeOffsets;
+    public List<AfterburnerUnit> afterburnerUnits;
+    public float throttleLevelO;
+    public float throttleLevel;
+    public float pitchInput;
+    public float pitchInputO;
+    public float yawInput;
+    public float yawInputO;
+    public float rollInput;
+    public float rollInputO;
+    public LandingGearUnit landingGear;
+    public AirbrakeUnit airbrakeUnit;
+    public List<FlapUnit> flapUnits = List.of();
+    public ThrustUnit thrustUnit;
+    private IAnimationInstance<FixedWingVehicleContext> animationInstance;
+
+    /** Arcade flight response. Fixed-wing uses only its sideslip term; the rest is its own. */
+    protected final AircraftAerodynamics aerodynamics = new AircraftAerodynamics();
+
+    public FixedWingVehicle(EntityType<? extends AbstractVehicle> pEntityType, Level pLevel) {
+        super(pEntityType, pLevel);
+        this.driverXYRotControl = true;
+        this.physicsEngine.lockCenterRot = true;
+    }
+
+
+    @Override
+    public IAnimationInstance<FixedWingVehicleContext> getAnimationInstance() {
+        return animationInstance;
+    }
+
+    @Override
+    public void initDisplayData(VehicleDisplay<?, ?> display) {
+        super.initDisplayData(display);
+        if (display instanceof FixedWingVehicleDisplay fixedWingVehicleDisplay) {
+            this.animationInstance = fixedWingVehicleDisplay.createAnimationInstance(this);
+        }
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(THROTTLE_LEVEL, 0f);
+        builder.define(PITCH_INPUT, 0f);
+        builder.define(YAW_INPUT, 0f);
+        builder.define(ROLL_INPUT, 0f);
+        builder.define(AEROBATIC_SMOKE_ON, false);
+        builder.define(AEROBATIC_SMOKE_R, 179);
+        builder.define(AEROBATIC_SMOKE_G, 179);
+        builder.define(AEROBATIC_SMOKE_B, 179);
+    }
+
+    @Override
+    public void addAdditionalSaveData(@NotNull CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putFloat("ThrottleLevel", getThrottleLevel());
+    }
+
+    @Override
+    public void readAdditionalSaveData(@NotNull CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        if (compound.contains("ThrottleLevel")) {
+            setThrottleLevel(Mth.clamp(compound.getFloat("ThrottleLevel"), 0, 100));
+        }
+        if (landingGear != null) {
+            landingGear.setOn(isLandingGearUp());
+        }
+    }
+
+    @Override
+    public void writeSpawnData(RegistryFriendlyByteBuf buffer) {
+        super.writeSpawnData(buffer);
+        buffer.writeBoolean(isLandingGearUp());
+    }
+
+    @Override
+    public void readSpawnData(RegistryFriendlyByteBuf buffer) {
+        super.readSpawnData(buffer);
+        if (landingGear != null) {
+            landingGear.setOn(isLandingGearUp());
+        }
+    }
+
+    @Override
+    public void onClientVehicleAction(ClientVehicleAction message, Player player) {
+        if (message.toggleLandingGear) {
+            if (landingGear == null) {
+                player.displayClientMessage(Component.translatable("tips.no_landing_gear"), true);
+            } else if (hasPower()) {
+                landingGear.setOn(!isLandingGearUp());
+            }
+        }
+        if (message.toggleAirbrake) {
+            if (airbrakeUnit == null) {
+                player.displayClientMessage(Component.translatable("tips.no_airbrake"), true);
+            } else if (hasPower()) {
+                airbrakeUnit.setOn(!airbrakeUnit.isOn());
+            }
+        }
+        if (message.flapStep != 0) {
+            if (flapUnits.isEmpty()) {
+                player.displayClientMessage(Component.translatable("tips.no_flaps"), true);
+            } else if (hasPower()) {
+                boolean moved = false;
+                for (FlapUnit flap : flapUnits) {
+                    moved |= flap.step(message.flapStep);
+                }
+                if (moved) {
+                    FlapUnit flap = flapUnits.get(0);
+                    player.displayClientMessage(Component.translatable("tips.flaps", flap.getStage(),
+                            flap.stageCount() - 1), true);
+                }
+            }
+        }
+        if (message.toggleAerobaticSmoke) {
+            setAerobaticSmokeOn(!isAerobaticSmokeOn());
+            setAerobaticSmokeR(message.aerobaticSmokeR);
+            setAerobaticSmokeG(message.aerobaticSmokeG);
+            setAerobaticSmokeB(message.aerobaticSmokeB);
+            if (isAerobaticSmokeOn()) {
+                VehicleSounds.at(this, position(), VehicleSounds.SMOKE_START, AudioCategory.VEHICLES);
+            }
+        }
+        super.onClientVehicleAction(message, player);
+    }
+
+    @Override
+    public void shoot(int partUnitIndex, int weaponIndex, List<AimContext> aimContexts, @Nullable LivingEntity operator) {
+        if (partUnits.get(partUnitIndex) instanceof WeaponUnit weaponUnit) {
+            weaponUnit.shoot(weaponIndex, aimContexts, operator);
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (level().isClientSide()) {
+            tickInput();
+        } else {
+            tickAfterburner();
+        }
+    }
+
+    @Override
+    public void updateOBBs() {
+        super.updateOBBs();
+        aerodynamicCubeOBB.update(this);
+    }
+
+    @Override
+    protected void tickEnergy() {
+        float energy = getEnergy();
+        energy = org.joml.Math.max(0, energy - burnPerTick() * getPower() / 100 * getThrottleLevel() / 100);
+        setEnergy(energy);
+    }
+
+    private void tickInput() {
+        throttleLevelO = throttleLevel;
+        pitchInputO = pitchInput;
+        yawInputO = yawInput;
+        rollInputO = rollInput;
+        if (level().isClientSide()) {
+            throttleLevel = getThrottleLevel();
+            pitchInput = getPitchInput();
+            yawInput = getYawInput();
+            rollInput = getRollInput();
+        }
+    }
+
+    private void tickAfterburner() {
+        for (PartUnit<?> partUnit : partUnits) {
+            if (partUnit instanceof AfterburnerUnit afterburner) {
+                afterburner.setOn(hasPower() && getThrottleLevel() > 100);
+            }
+        }
+    }
+
+    @Override
+    protected Vec3 tickMove() {
+        // Wreck: rigid body only. Locked rotation + flight writes => wedged at impact attitude.
+        physicsEngine.lockCenterRot = !isDestroyed();
+        if (isDestroyed()) {
+            return Vec3.ZERO;
+        }
+        Vector3f[] axes;
+        boolean onGround = groundedOrOnDeck();
+        if (onGround) {
+            axes = getMainCubeOBB().obb().getAxes();
+        } else {
+            axes = aerodynamicCubeOBB.obb().getAxes();
+        }
+        Vec3 forwardDirection = new Vec3(axes[2]);
+        Vec3 upDirection = new Vec3(axes[1]);
+        Vec3 leftDirection = new Vec3(axes[0]);
+        float throttleLevel = getThrottleLevel();
+        if (controlUnit.forward || controlUnit.backward) {
+            if (thrustK > 1) {
+                if (controlUnit.forward && throttleLevel + 5 > 100) {
+                    throttleLevel = 100 * thrustK;
+                } else if (controlUnit.backward && throttleLevel > 100) {
+                    throttleLevel = 100;
+                } else {
+                    throttleLevel = Mth.clamp(throttleLevel + (controlUnit.forward ? 5 : -5), 0, 100);
+                }
+            } else {
+                throttleLevel = Mth.clamp(throttleLevel + (controlUnit.forward ? 5 : -5), 0, 100);
+            }
+        }
+        setThrottleLevel(Math.max(0f, throttleLevel));
+        if (thrustUnit != null) {
+            if ((controlUnit.functionalUp || controlUnit.functionalDown)) {
+                if (controlUnit.functionalUp) {
+                    thrustUnit.setXAimRot(Math.max(thrustUnit.getXAimRot() - 5, thrustUnit.getXRotMin()));
+                } else {
+                    thrustUnit.setXAimRot(Math.min(thrustUnit.getXAimRot() + 5, thrustUnit.getXRotMax()));
+                }
+                if (controlUnit.getOperator() instanceof Player player) {
+                    player.displayClientMessage(Component.translatable("tips.thrust_vector", thrustUnit.getXAimRot()), true);
+                }
+            }
+        }
+        tickInput();
+        float xRotInput = pitchInput;
+        float yRotInput = yawInput;
+        float zRotInput = rollInput;
+        if (controlUnit.up || controlUnit.down) {
+            xRotInput += (controlUnit.up ? -1 : 1) * xRotInputStep;
+            xRotInput = Math.signum(xRotInput) * Math.min(1, Math.abs(xRotInput));
+        }
+        if (controlUnit.leftYaw || controlUnit.rightYaw) {
+            yRotInput += (controlUnit.leftYaw ? 1 : -1) * yRotInputStep;
+            yRotInput = Math.signum(yRotInput) * Math.min(1, Math.abs(yRotInput));
+        }
+        if (controlUnit.left || controlUnit.right) {
+            zRotInput += (controlUnit.left ? -1 : 1) * zRotInputStep;
+            zRotInput = Math.signum(zRotInput) * Math.min(1, Math.abs(zRotInput));
+        }
+        if (getDriver() == null && !autopilotControl) {
+            controlUnit.xRot = 0;
+            controlUnit.yRot = getYRot();
+        }
+        if (controlUnit.stick) {
+            // Cockpit stick: pitch/roll straight from the mouse; yaw keys only, else weathercock.
+            if (!(controlUnit.up || controlUnit.down)) {
+                xRotInput = controlUnit.stickY;
+            }
+            if (!(controlUnit.left || controlUnit.right)) {
+                zRotInput = controlUnit.stickX;
+            }
+            if (!(controlUnit.leftYaw || controlUnit.rightYaw)) {
+                yRotInput = 0;
+            }
+        } else {
+            Vec3 aimVec = VectorUtil.rotToVec(controlUnit.xRotKeep ? getXRot() : controlUnit.xRot, controlUnit.yRotKeep ? getYRot() : controlUnit.yRot);
+            if (!(controlUnit.up || controlUnit.down)) {
+                double xDiff = aimVec.dot(upDirection);
+                xRotInput = (float) (Math.signum(-xDiff) * Math.min(1, Math.abs(xDiff) * xRotInputStep * 40));
+            }
+            if (!(controlUnit.leftYaw || controlUnit.rightYaw)) {
+                double yDiff = aimVec.dot(leftDirection);
+                yRotInput = (float) (Math.signum(yDiff) * Math.min(1, Math.abs(yDiff) * yRotInputStep * 40));
+            }
+            if (!(controlUnit.left || controlUnit.right)) {
+                float yRotDiff = VectorUtil.vecToRot(forwardDirection).y - controlUnit.yRot;
+                double yDiff = aimVec.dot(leftDirection);
+                float zRot = getZRot();
+                if (Math.abs(yRotDiff) > 5) {
+                    if (Math.abs(yDiff) <= 0.05) {
+                        zRotInput = zRotInput / 4;
+                    } else {
+                        zRotInput = (float) (Math.signum(-yDiff) * Math.min(1, Math.abs(yDiff) * zRotInputStep * 4));
+                    }
+                } else {
+                    float toZRotInput = -Math.signum(zRot) * Math.min(1, Math.abs(zRot) / 128);
+                    float zRotInputDiff = toZRotInput - zRotInput;
+                    if (Math.abs(zRotInputDiff) < zRotInputStep) {
+                        zRotInput = toZRotInput;
+                    } else {
+                        zRotInput += Math.signum(zRotInputDiff) * zRotInputStep;
+                    }
+                }
+            }
+        }
+        double mass = physicsEngine.mass;
+        Vec3 airSpeed = getDeltaMovement();
+        if (onGround) {
+            double al = airSpeed.length();
+            if (controlUnit.leftYaw || controlUnit.rightYaw) {
+                float k = (float) (al / 1.4);
+                turnBy(controlUnit.leftYaw ? -k : k);
+                forwardDirection = getLookAngle();
+                airSpeed = forwardDirection.scale(Math.max(0, al - 0.0001));
+            }
+            if (isLandingGearUp() && airSpeed.length() > 0.1) {
+                airSpeed = airSpeed.normalize().scale(Math.max(0, al - 0.001));
+                hurt(VehicleDamageTypes.Sources.vehicleCollision(level().registryAccess(), this, this.getDriver(), null), 1);
+            } else if (controlUnit.backward) {
+                airSpeed = airSpeed.normalize().scale(Math.max(0, al - 0.0001));
+            }
+        }
+        float power = (float) (throttleLevel / 100 * getPower() / 100 * strain());
+        // Props / proprotors (rotor systems) carry the thrust.
+        float thrust = this.thrust * power * VehicleRotors.of(this).lift();
+        double a = PhysicsHelper.accelerationPerTick(thrust, mass);
+        Vec3 thrustDirection = onGround ? new Vec3(forwardDirection.x, 0, forwardDirection.z).normalize() : forwardDirection;
+        if (thrustUnit != null) {
+            thrustDirection = thrustUnit.worldVec();
+        }
+        airSpeed = airSpeed.add(thrustDirection.scale(a));
+        // angle of attack
+        double angelX = VectorUtil.angleBetween(airSpeed, upDirection) - Math.PI / 2;
+        // air drag
+        float scaleAir = position().y < 64 ? 1 : (float) (Math.pow(Math.max(0, ceiling - position().y), 0.5) / Math.pow(ceiling - 64, 0.5));
+        scaleAir = (float) Math.max(0.001, scaleAir);
+        double liftToDragK = this.liftToDragK * scaleAir;
+        double k = ((airDragKMax - airDragKMin) * Math.abs(Math.sin(angelX)) + airDragKMin);
+        double al = airSpeed.length();
+        double speedSquared = al * al * PhysicsHelper.TICKS_PER_SECOND_SQUARED;
+        double f = speedSquared * k;
+        airSpeed = airSpeed.normalize().scale(al - PhysicsHelper.accelerationPerTick(f, mass));
+        if (AircraftConfig.get().arcadeFlightModel()) {
+            // Sideslip drag prevents the plane from drifting sideways as cheaply as it flies forward.
+            Vec3 right = relativeRotDirection(new Vec3(1, 0, 0), false);
+            double lateral = airSpeed.dot(right);
+            airSpeed = airSpeed.subtract(right.scale(aerodynamics.sideslipBleed((float) lateral)));
+        }
+        double aRaw = airSpeed.length();
+        double degreeX = Math.toDegrees(angelX);
+        double fl = lift(f, degreeX, liftToDragK, scaleAir);
+        Vec3 force = upDirection.scale(fl);
+        if (fl != 0) {
+            airSpeed = airSpeed.add(upDirection.scale(PhysicsHelper.accelerationPerTick(fl, mass)));
+        }
+        // tail/rudder force
+        double angelY = VectorUtil.angleBetween(airSpeed, leftDirection) - Math.PI / 2;
+        double at = airSpeed.dot(forwardDirection);
+        double ft = at * at * PhysicsHelper.TICKS_PER_SECOND_SQUARED * 8 * k * Math.sin(angelY);
+        airSpeed = airSpeed.add(leftDirection.scale(PhysicsHelper.accelerationPerTick(ft, mass)));
+        double controlDrag = (Math.abs(xRotInput) * xRotInputDragK
+                + Math.abs(yRotInput) * yRotInputDragK
+                + Math.abs(zRotInput) * zRotInputDragK
+                + (landingGear != null ? landingGear.level() * landingGear.getDragK() : 0)
+                + (airbrakeUnit != null ? airbrakeUnit.level() * airbrakeUnit.getDragK() : 0)
+                + flaps(Flap.DRAG)
+        ) * airDragKMin;
+        double fc = speedSquared * controlDrag;
+        aRaw -= PhysicsHelper.accelerationPerTick(fc, mass);
+        airSpeed = airSpeed.normalize().scale(aRaw);
+        al = airSpeed.length();
+        Quaternionf q = rotYXZ();
+        double ke = scaleAir * al * turnRateBySpeed;
+        double rcs = thrustUnit == null ? 0
+                : vtolTurnRate * power * Math.abs(Math.sin(Math.toRadians(thrustUnit.getXRot())));
+        // Commanded rates are unladen: cargo inertia divides them.
+        double inertia = 1 / load();
+        if (zRotInput != 0) {
+            double d = Math.max(Math.min(zTurnRate, ke * zTurnRate), rcs * zTurnRate);
+            q.rotateZ((float) Math.toRadians(zRotInput * d * inertia));
+        }
+        if (xRotInput != 0) {
+            double d = Math.max(Math.min(xTurnRate, ke * xTurnRate), rcs * xTurnRate);
+            q.rotateX((float) Math.toRadians(xRotInput * d * inertia));
+        }
+        if (yRotInput != 0) {
+            double d0 = Math.min(yTurnRate, ke * yTurnRate);
+            double d1 = yRotInput * d0;
+            double d2 = Math.toDegrees(VectorUtil.angleBetween(airSpeed, leftDirection) - Math.PI / 2);
+            double d3 = Math.min(1, 2 / Math.abs(d2));
+            double r1 = d1 * d3;
+            if (thrustUnit != null) {
+                r1 += yRotInput * yTurnRate / 2f * power * Math.abs(thrustUnit.worldRot().x - getXRot()) / 90;
+            }
+            q.rotateY((float) Math.toRadians(r1 * inertia));
+        } else {
+            // No yaw input: weathercocks back toward the airspeed heading.
+            double d = VectorUtil.angleBetween(airSpeed, leftDirection) - Math.PI / 2;
+            q.rotateY((float) (ke * -d / 5));
+        }
+        // Stall spin: nose-down airspeed yaws further into the stall.
+        Vec3 downDirection = upDirection.scale(-1);
+        if (VectorUtil.angleBetween(airSpeed, downDirection) < Math.PI / 4) {
+            double vd = airSpeed.dot(downDirection);
+            double kvd = Math.min(1.5, vd);
+            q.rotateY((float) (Math.PI / 72 * kvd));
+        }
+        Vector3f rot = new Vector3f();
+        q.getEulerAnglesYXZ(rot);
+        if (onGround && !isLandingGearUp()) {
+            // lockCenterRot => contacts never rotate the hull: look-up 10 deg sat an A-10 on its tail at 0.07 b/t,
+            // landed one parked at -10. Gear stance eases level (pre-rewrite AUTO_LEVEL_EASE), released as lift at
+            // the stall angle reaches weight (current lift: ease held AoA down, never flew). TODO: ease toward the ground slope.
+            double stallLift = lift(f, angleOfAttackMax - flaps(Flap.STALL_SHIFT), liftToDragK, scaleAir);
+            float keep = GEAR_LEVEL_EASE + (1 - GEAR_LEVEL_EASE) * Mth.clamp((float) (stallLift / (mass * PhysicsHelper.GRAVITY)), 0, 1);
+            rot.x *= keep;
+            rot.z *= keep;
+        }
+        setXRot((float) Math.toDegrees(rot.x));
+        setYRot((float) Math.toDegrees(-rot.y));
+        setZRot((float) Math.toDegrees(rot.z));
+        setDeltaMovement(airSpeed);
+        setPitchInput(xRotInput);
+        setYawInput(yRotInput);
+        setRollInput(zRotInput);
+        return force;
+    }
+
+    /** Lift force at angle of attack {@code degreeX}: linear to the (flap-lowered) stall angle, decaying past it. */
+    public double lift(double f, double degreeX, double liftToDragK, float scaleAir) {
+        double stall = angleOfAttackMax - flaps(Flap.STALL_SHIFT);
+        if (degreeX >= angleOfAttackMin && degreeX <= stall) {
+            return f * (liftToDragK * (1 + flaps(Flap.LIFT_GAIN)) + 2 * scaleAir * degreeX / stall);
+        }
+        double exceed = degreeX > stall ? degreeX - stall : angleOfAttackMin - degreeX;
+        return f * liftToDragK * Math.exp(-1 * exceed);
+    }
+
+    private enum Flap { LIFT_GAIN, STALL_SHIFT, DRAG }
+
+    /** Mean over flap parts of deployed level x that part's coefficient. */
+    private double flaps(Flap term) {
+        if (flapUnits.isEmpty()) {
+            return 0;
+        }
+        double sum = 0;
+        for (FlapUnit flap : flapUnits) {
+            FlapUnitData data = flap.getData();
+            sum += flap.level() * switch (term) {
+                case LIFT_GAIN -> data.liftGain();
+                case STALL_SHIFT -> data.stallShift();
+                case DRAG -> data.dragK();
+            };
+        }
+        return sum / flapUnits.size();
+    }
+
+    /** THROTTLE > 1 = afterburner; SPEED over 300 m/s. */
+    @Override
+    public float audioInput(EngineSound.Input input) {
+        return switch (input) {
+            case RPM -> getPower() / 100;
+            case THROTTLE -> getThrottleLevel() / 100;
+            case SPEED -> (float) (getDeltaMovement().length() * 20 / 300);
+            default -> super.audioInput(input);
+        };
+    }
+
+    @Override
+    @OnlyIn(Dist.CLIENT)
+    protected void tickSound() {
+        super.tickSound();
+        if (landing == null) {
+            landing = new HullLoop(VehicleSounds.LANDING, AudioCategory.VEHICLES, 0.02F);
+            smoke = new HullLoop(VehicleSounds.SMOKE_LOOP, AudioCategory.VEHICLES, 0.02F);
+        }
+        landing.tick(this, Vec3.ZERO, groundedOrOnDeck() && getDeltaMovement().length() > 0.05, 1);
+        smoke.tick(this, Vec3.ZERO, isAerobaticSmokeOn(), 1);
+    }
+
+    @Override
+    @OnlyIn(Dist.CLIENT)
+    protected void tickParticle() {
+        super.tickParticle();
+        Vec3 airSpeed = getDeltaMovement();
+        if (airSpeed.length() > 1) {
+            Vector3f[] axes = mainCubeOBB.obb().getAxes();
+            double angleX = VectorUtil.angleBetween(airSpeed, new Vec3(axes[1])) - Math.PI / 2;
+            double degreesX = Math.toDegrees(angleX);
+            if (degreesX < angleOfAttackMin * 3f || degreesX > angleOfAttackMax * 0.9f) {
+                ParticleUtil.spawnWingVortices(level(), vortexOffsets, position(), pos -> relativeRotPos(pos, false));
+            }
+        }
+        if (hasPower()) {
+            float engineSpeed = getPower();
+            float throttlelevel = getThrottleLevel();
+            if ((engineSpeed > 0 && engineParticleTick > Mth.clamp(10 - throttlelevel / 10, 3, 10))) {
+                ParticleUtil.spawnEngineSmoke(level(), energyInfo.engineParticleOffsets, position(), new Vec3(xo, yo, zo),
+                        pos -> relativeRotPos(pos, false), getLookAngle().normalize().scale(-0.3),
+                        1, 20, 0.3f, 0.4f);
+                engineParticleTick = 0;
+            } else {
+                engineParticleTick += 1;
+            }
+        }
+        if (level().isClientSide() && isAerobaticSmokeOn() && aerobaticSmokeOffsets != null) {
+            ParticleUtil.spawnAerobaticSmoke(level(), random, aerobaticSmokeOffsets,
+                    position(), new Vec3(xo, yo, zo), getDeltaMovement(),
+                    pos -> relativeRotPos(pos, false),
+                    getAerobaticSmokeR() / 255f,
+                    getAerobaticSmokeG() / 255f,
+                    getAerobaticSmokeB() / 255f);
+        }
+    }
+
+    /** Thrust vectoring: nozzle aim is part state turning over ticks, not in the snapshot. */
+    @Override
+    protected boolean predictable() {
+        return thrustUnit == null;
+    }
+
+    @Override
+    protected void writePrediction(FriendlyByteBuf buf) {
+        super.writePrediction(buf);
+        buf.writeFloat(getThrottleLevel());
+        buf.writeFloat(getPitchInput());
+        buf.writeFloat(getYawInput());
+        buf.writeFloat(getRollInput());
+        aerodynamics.writePrediction(buf);
+    }
+
+    @Override
+    protected void readPrediction(FriendlyByteBuf buf) {
+        super.readPrediction(buf);
+        setThrottleLevel(buf.readFloat());
+        setPitchInput(buf.readFloat());
+        setYawInput(buf.readFloat());
+        setRollInput(buf.readFloat());
+        aerodynamics.readPrediction(buf);
+    }
+
+    public float getThrottleLevel() {
+        return this.entityData.get(THROTTLE_LEVEL);
+    }
+
+    public void setThrottleLevel(float value) {
+        throttleLevel = value;
+        this.entityData.set(THROTTLE_LEVEL, value);
+    }
+
+    public float getPitchInput() {
+        return this.entityData.get(PITCH_INPUT);
+    }
+
+    public void setPitchInput(float value) {
+        pitchInput = value;
+        this.entityData.set(PITCH_INPUT, value);
+    }
+
+    public float getYawInput() {
+        return this.entityData.get(YAW_INPUT);
+    }
+
+    public void setYawInput(float value) {
+        yawInput = value;
+        this.entityData.set(YAW_INPUT, value);
+    }
+
+    public float getRollInput() {
+        return this.entityData.get(ROLL_INPUT);
+    }
+
+    public void setRollInput(float value) {
+        rollInput = value;
+        this.entityData.set(ROLL_INPUT, value);
+    }
+
+    public boolean isLandingGearUp() {
+        return landingGear != null && landingGear.isOn();
+    }
+
+    private static final float GEAR_LEVEL_EASE = 0.7f;
+
+    @Override
+    public boolean rollsOnGear() {
+        return !isLandingGearUp();
+    }
+
+    public boolean isAirbrakeOn() {
+        return airbrakeUnit != null && airbrakeUnit.isOn();
+    }
+
+    public boolean isAerobaticSmokeOn() {
+        return this.entityData.get(AEROBATIC_SMOKE_ON);
+    }
+
+    public void setAerobaticSmokeOn(boolean value) {
+        this.entityData.set(AEROBATIC_SMOKE_ON, value);
+    }
+
+    public int getAerobaticSmokeR() {
+        return this.entityData.get(AEROBATIC_SMOKE_R);
+    }
+
+    public void setAerobaticSmokeR(int value) {
+        this.entityData.set(AEROBATIC_SMOKE_R, value);
+    }
+
+    public int getAerobaticSmokeG() {
+        return this.entityData.get(AEROBATIC_SMOKE_G);
+    }
+
+    public void setAerobaticSmokeG(int value) {
+        this.entityData.set(AEROBATIC_SMOKE_G, value);
+    }
+
+    public int getAerobaticSmokeB() {
+        return this.entityData.get(AEROBATIC_SMOKE_B);
+    }
+
+    public void setAerobaticSmokeB(int value) {
+        this.entityData.set(AEROBATIC_SMOKE_B, value);
+    }
+
+}

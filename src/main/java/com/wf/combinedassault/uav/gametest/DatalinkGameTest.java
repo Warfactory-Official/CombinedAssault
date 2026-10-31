@@ -1,23 +1,21 @@
 package com.wf.combinedassault.uav.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.gametest.TestLanes;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.gametest.TestLanes;
 import com.wf.combinedassault.uav.UavCamera;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class DatalinkGameTest {
     private static final String TEMPLATE = "empty";
 
     /** Operator's body past the datalink range: inputs dropped, the hovering Mavic holds where it was. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 600)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 600)
     public static void lostLinkDropsInputsAndHolds(GameTestHelper helper) {
         AbstractVehicle quad = TestLanes.spawn(helper, CombinedAssault.modLocation("mavic"),
                 helper.absoluteVec(new Vec3(1.5, 30, 1.5)));

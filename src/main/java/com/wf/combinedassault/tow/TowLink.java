@@ -2,11 +2,11 @@ package com.wf.combinedassault.tow;
 
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.vehicle.rigid.RigidSolver;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.physics.api.Coupling;
 
 /** Towed vehicle holds the coupling (not tractor: many hitches, one trailer-side link) => train = chain. */
-public final class TowLink {
+public final class TowLink implements Coupling {
 
     private final AbstractVehicle tractor;
     private final String hitchId;
@@ -32,6 +32,7 @@ public final class TowLink {
         this.cable = cable;
     }
 
+    @Override
     public AbstractVehicle tractor() {
         return tractor;
     }
@@ -62,18 +63,36 @@ public final class TowLink {
     }
 
     /** Step task: one island holds both ends. */
-    public void warm(RigidSolver.Joint joint) {
-        joint.impulse.set(impulse);
-        joint.yawImpulse = yawImpulse;
-        joint.axleImpulse = axleImpulse;
-        joint.rollImpulse = rollImpulse;
+    @Override
+    public boolean axle() {
+        return mode != TowMode.SLING;
     }
 
-    public void store(RigidSolver.Joint joint) {
-        impulse.set(joint.impulse);
-        yawImpulse = joint.yawImpulse;
-        axleImpulse = joint.axleImpulse;
-        rollImpulse = joint.rollImpulse;
+    @Override
+    public Vector3f impulse() {
+        return impulse;
+    }
+
+    @Override
+    public float yawImpulse() {
+        return yawImpulse;
+    }
+
+    @Override
+    public float axleImpulse() {
+        return axleImpulse;
+    }
+
+    @Override
+    public float rollImpulse() {
+        return rollImpulse;
+    }
+
+    @Override
+    public void impulses(float yaw, float axle, float roll) {
+        yawImpulse = yaw;
+        axleImpulse = axle;
+        rollImpulse = roll;
     }
 
     void recordStrain(double distance, boolean straining) {

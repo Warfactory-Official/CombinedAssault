@@ -16,9 +16,7 @@ import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import org.jetbrains.annotations.Nullable;
@@ -31,11 +29,11 @@ import com.wf.combinedassault.ballistics.addon.AddonKind;
 import com.wf.combinedassault.ballistics.addon.AddonMount;
 import com.wf.combinedassault.ballistics.addon.AddonMountState;
 import com.wf.combinedassault.ballistics.addon.AddonTargeting;
-import com.wf.combinedassault.client.render.util.CamoMesh;
-import com.wf.combinedassault.compat.IrisCompat;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.item.AddonArmorItem;
-import com.wf.combinedassault.vehicle.structure.VehicleCubeGroup;
+import com.wf.combinedassault.camo.client.CamoMesh;
+import com.wf.combinedassault.vehicle.compat.IrisCompat;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.ballistics.addon.AddonArmorItem;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,7 +46,6 @@ import java.util.Map;
  * ERA and slat: one dynamic VertexBuffer and one draw per installed panel. A panel's buffer is rebuilt
  * only when its own state or quantised light changes. Light/normal handling as {@code VehicleCamoRenderer}.
  */
-@EventBusSubscriber(value = Dist.CLIENT)
 public final class AddonArmorRenderer {
 
     private static final int LIGHT_QUANTUM = 16;

@@ -9,11 +9,11 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
-import com.wf.combinedassault.all.AllItems;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.combinedassault.vehicle.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.WeaponContent;
 
 /** {@code crew <vehicle>}: seats, roles, driver, per-station ammo/reload. {@code crew arm <vehicle>}: creative ammo. */
 public final class CrewCommand {
@@ -63,7 +63,7 @@ public final class CrewCommand {
         AbstractVehicle vehicle = vehicle(ctx);
         for (int i = 0; i < vehicle.getItemStacks().size(); i++) {
             if (vehicle.getItemStacks().get(i).isEmpty()) {
-                vehicle.getItemStacks().set(i, new ItemStack(AllItems.AMMO_CREATIVE.get()));
+                vehicle.getItemStacks().set(i, new ItemStack(WeaponContent.AMMO_CREATIVE.get()));
                 ctx.getSource().sendSuccess(() -> Component.literal("armed"), false);
                 return 1;
             }

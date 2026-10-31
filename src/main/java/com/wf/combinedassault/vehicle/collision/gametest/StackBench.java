@@ -1,15 +1,14 @@
 package com.wf.combinedassault.vehicle.collision.gametest;
 
+import com.wf.wflib.physics.api.PhysicsSettings;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.all.AllConfigs;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.entity.vehicle.RigidStep;
-import com.wf.combinedassault.vehicle.PhysicsTrace;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.dynamics.PhysicsTrace;
 import com.wf.combinedassault.vehicle.part.gametest.ClimbBench;
-import com.wf.wflib.util.ForcedChunks;
-import com.wf.wflib.util.OBB;
+import com.wf.wflib.testkit.api.ForcedChunks;
+import com.wf.wflib.geom.api.OBB;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -31,10 +30,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import com.wf.wflib.physics.api.PhysicsStep;
 
 /**
  * Resting-contact scenes, {@code [stack]} rows every {@link #ROW} ticks + one {@code SUMMARY} per case, {@code STATS}
- * ({@link RigidStep#drainStats}) per row; one case per batch. {@code -Pbench=stack} sync, {@code stack_async} async,
+ * ({@link PhysicsStep#drainStats}) per row; one case per batch. {@code -Pbench=stack} sync, {@code stack_async} async,
  * {@code stack_trace} per-vehicle {@link PhysicsTrace} (sync) -> run/gametest/stack-traces/&lt;case&gt;.
  * <ul>
  * <li>{@code tower_*}: three hulls dropped onto each other.</li>
@@ -94,8 +94,8 @@ public class StackBench {
         // Own batch => cases run one at a time => STATS per case.
         return new TestFunction("stackbench_" + name, name, ClimbBench.NAMESPACE + ":empty", ticks + 100, 0, false, helper -> {
             current = name;
-            AllConfigs.Cached.asyncVehiclePhysics = System.getProperty("combinedassault.bench.filter", "").contains("async");
-            RigidStep.stats = true;
+            PhysicsSettings.override(PhysicsSettings.current().withAsync(System.getProperty("combinedassault.bench.filter", "").contains("async")));
+            PhysicsStep.setStats(true);
             body.accept(helper);
         });
     }
@@ -104,7 +104,7 @@ public class StackBench {
     private static String current;
 
     private static String mode() {
-        return AllConfigs.Cached.asyncVehiclePhysics ? "async" : "sync";
+        return PhysicsSettings.current().asyncStep() ? "async" : "sync";
     }
 
     /** One hull released 0.2 above the floor: every tick to 40, then every 20. */
@@ -301,7 +301,7 @@ public class StackBench {
 
     private static void row(String name, long t, String body) {
         log(String.format(Locale.ROOT, "%s %s t %d %s", name, mode(), t, body));
-        log(String.format(Locale.ROOT, "%s %s t %d STATS %s", name, mode(), t, RigidStep.drainStats()));
+        log(String.format(Locale.ROOT, "%s %s t %d STATS %s", name, mode(), t, PhysicsStep.drainStats()));
     }
 
     private static void log(String line) {

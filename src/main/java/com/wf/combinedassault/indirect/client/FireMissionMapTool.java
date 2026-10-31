@@ -4,13 +4,13 @@ import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.indirect.FireMission;
 import com.wf.combinedassault.indirect.IndirectFireSpec;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.wflib.client.map.MapButton;
-import com.wf.wflib.client.map.MapDraw;
-import com.wf.wflib.client.map.MapMenu;
-import com.wf.wflib.client.map.MapPointer;
-import com.wf.wflib.client.map.MapTool;
-import com.wf.wflib.client.map.MapView;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.wflib.map.api.client.MapButton;
+import com.wf.wflib.map.api.client.MapDraw;
+import com.wf.wflib.map.api.client.MapMenu;
+import com.wf.wflib.map.api.client.MapPointer;
+import com.wf.wflib.map.api.client.MapTool;
+import com.wf.wflib.map.api.client.MapView;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import com.wf.gemrender.ui.Canvas;
@@ -52,7 +52,7 @@ public final class FireMissionMapTool implements MapTool {
 
     @Nullable
     private static WeaponUnit station() {
-        LocalVehiclePlayer local = LocalVehiclePlayer.instance;
+        LocalVehiclePlayer local = LocalVehiclePlayer.instance();
         if (local == null || !local.onVehicle()) {
             return null;
         }

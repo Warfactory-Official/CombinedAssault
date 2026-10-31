@@ -1,15 +1,14 @@
 package com.wf.combinedassault.vehicle.collision.gametest;
 
+import com.wf.wflib.physics.api.PhysicsSettings;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.all.AllConfigs;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.entity.vehicle.RigidStep;
-import com.wf.combinedassault.vehicle.PhysicsTrace;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.dynamics.PhysicsTrace;
 import com.wf.combinedassault.vehicle.part.gametest.ClimbBench;
-import com.wf.wflib.util.ForcedChunks;
-import com.wf.wflib.util.OBB;
+import com.wf.wflib.testkit.api.ForcedChunks;
+import com.wf.wflib.geom.api.OBB;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -31,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import com.wf.wflib.physics.api.PhysicsStep;
 
 /**
  * Mixed vehicles thrown into a walled pit, one per {@link #STAGGER} ticks; {@code [pit]} rows every {@link #ROW}
@@ -86,8 +86,8 @@ public class PitBench {
 
     private static void run(GameTestHelper helper, int seed) {
         String filter = System.getProperty("combinedassault.bench.filter", "");
-        AllConfigs.Cached.asyncVehiclePhysics = filter.contains("async");
-        RigidStep.stats = true;
+        PhysicsSettings.override(PhysicsSettings.current().withAsync(filter.contains("async")));
+        PhysicsStep.setStats(true);
         ServerLevel level = helper.getLevel();
         BlockPos centre = helper.absolutePos(BlockPos.ZERO).offset(LANE_X - seed * LANE_PITCH, 0, 0);
         force(level, centre, true);
@@ -105,7 +105,7 @@ public class PitBench {
         boolean[] out = new boolean[VEHICLES.length];
         boolean[] walled = new boolean[VEHICLES.length];
         Vec3[] last = new Vec3[VEHICLES.length];
-        String mode = AllConfigs.Cached.asyncVehiclePhysics ? "async" : "sync";
+        String mode = PhysicsSettings.current().asyncStep() ? "async" : "sync";
         int end = VEHICLES.length * STAGGER + SETTLE;
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(level.isPositionEntityTicking(centre), "pit not ticking"))
@@ -206,7 +206,7 @@ public class PitBench {
                                 mode, seed, t, speed, spin, kick, rise, depth[0], depth[1], pair(depth), wall, escaped));
                         if (seed == 0) {
                             CombinedAssault.LOGGER.info(String.format(Locale.ROOT, "[pit] STATS %s t %d %s", mode, t,
-                                    RigidStep.drainStats()));
+                                    PhysicsStep.drainStats()));
                         }
                         if (depth[1] > SINK) {
                             int a = (int) depth[2];

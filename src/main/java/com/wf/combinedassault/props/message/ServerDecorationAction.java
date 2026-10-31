@@ -1,0 +1,97 @@
+package com.wf.combinedassault.props.message;
+
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.vehicle.part.data.PartUnitData;
+import com.wf.combinedassault.vehicle.part.data.PartUnitPojo;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.props.part.DecorationUnit;
+import com.wf.combinedassault.props.pojo.DecorationAction;
+
+public class ServerDecorationAction extends DecorationAction implements CustomPacketPayload {
+
+    public static final CustomPacketPayload.Type<ServerDecorationAction> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(CombinedAssault.MOD_ID, "server_decoration_action"));
+    public static final StreamCodec<FriendlyByteBuf, ServerDecorationAction> STREAM_CODEC = StreamCodec.of((buf, msg) -> msg.encode(buf), ServerDecorationAction::decode);
+
+    public ServerDecorationAction() {}
+
+    public ServerDecorationAction(DecorationAction decorationAction) {
+        this.action = decorationAction.action;
+        this.displayId = decorationAction.displayId;
+        this.vehicleId = decorationAction.vehicleId;
+        this.decorationUnitId = decorationAction.decorationUnitId;
+        this.baseBoneName = decorationAction.baseBoneName;
+        this.scale = decorationAction.scale;
+        this.selfXRot = decorationAction.selfXRot;
+        this.selfYRot = decorationAction.selfYRot;
+        this.selfZRot = decorationAction.selfZRot;
+        this.offsetFromBone = decorationAction.offsetFromBone;
+    }
+
+    public static ServerDecorationAction decode(FriendlyByteBuf buf) {
+        ServerDecorationAction serverDecorationAction = new ServerDecorationAction();
+        serverDecorationAction.action = buf.readEnum(Action.class);
+        serverDecorationAction.displayId = buf.readUtf();
+        serverDecorationAction.vehicleId = buf.readInt();
+        serverDecorationAction.decorationUnitId = buf.readUtf();
+        if (serverDecorationAction.action == Action.REMOVE) {
+            return serverDecorationAction;
+        }
+        serverDecorationAction.baseBoneName = buf.readUtf();
+        serverDecorationAction.scale = buf.readFloat();
+        serverDecorationAction.selfXRot = buf.readFloat();
+        serverDecorationAction.selfYRot = buf.readFloat();
+        serverDecorationAction.selfZRot = buf.readFloat();
+        serverDecorationAction.offsetFromBone = new Vec3(buf.readVector3f());
+        return serverDecorationAction;
+    }
+
+    public void encode(FriendlyByteBuf buf) {
+        buf.writeEnum(action);
+        buf.writeUtf(displayId);
+        buf.writeInt(vehicleId);
+        buf.writeUtf(decorationUnitId);
+        if (action == Action.REMOVE) {
+            return;
+        }
+        buf.writeUtf(baseBoneName);
+        buf.writeFloat(scale);
+        buf.writeFloat(selfXRot);
+        buf.writeFloat(selfYRot);
+        buf.writeFloat(selfZRot);
+        buf.writeVector3f(offsetFromBone.toVector3f());
+    }
+
+    public static void handle(ServerDecorationAction message, IPayloadContext ctx) {
+        Player player = LocalVehiclePlayer.instance().getPlayer();
+        if (player.level().getEntity(message.vehicleId) instanceof AbstractVehicle vehicle) {
+            if (message.action == Action.SET) {
+                DecorationUnit decorationUnit = vehicle.getDecorationUnits().get(message.decorationUnitId);
+                if (decorationUnit != null) {
+                    decorationUnit.update(message);
+                } else {
+                    PartUnitPojo pojo = new PartUnitPojo();
+                    pojo.id = message.decorationUnitId;
+                    decorationUnit = new DecorationUnit(pojo.id.hashCode(), vehicle, new PartUnitData(pojo));
+                    decorationUnit.update(message);
+                    vehicle.getDecorationUnits().put(message.decorationUnitId, decorationUnit);
+                }
+            } else if (message.action == Action.REMOVE) {
+                vehicle.getDecorationUnits().remove(message.decorationUnitId);
+            }
+        }
+    }
+
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+        return TYPE;
+    }
+
+}

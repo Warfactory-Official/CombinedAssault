@@ -3,7 +3,6 @@ package com.wf.combinedassault.indirect.gametest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.indirect.BallisticSolver;
@@ -12,13 +11,12 @@ import com.wf.combinedassault.indirect.FireSolution;
 import com.wf.combinedassault.indirect.GunLaying;
 import com.wf.combinedassault.indirect.RoundSpec;
 import com.wf.combinedassault.indirect.Trajectory;
-import com.wf.combinedassault.vehicle.PhysicsEngine;
+import com.wf.combinedassault.dynamics.PhysicsEngine;
 
 /**
  * Checked against {@link Trajectory}, which {@link TrajectoryGameTest} ties to the entity's own
  * arithmetic: agreement here is agreement with the round that actually fires.
  */
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class BallisticSolverGameTest {
 
@@ -27,7 +25,7 @@ public class BallisticSolverGameTest {
     /** Blocks. */
     private static final double MISS_TOLERANCE = 0.05;
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void solutionPassesThroughTheTarget(GameTestHelper helper) {
         double[][] cases = {
                 // speed, drag, range, rise; all within real ground reach.
@@ -67,7 +65,7 @@ public class BallisticSolverGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void highArcIsSteeperThanLow(GameTestHelper helper) {
         RoundSpec spec = new RoundSpec(15, 0.01, PhysicsEngine.G, 20 * 60 * 10);
         FireSolution low = BallisticSolver.solve(spec, 500, 0, FireArc.LOW);
@@ -91,7 +89,7 @@ public class BallisticSolverGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void unreachableTargetHasNoSolution(GameTestHelper helper) {
         RoundSpec spec = new RoundSpec(15, 0.01, PhysicsEngine.G, 20 * 60 * 10);
         double reach = BallisticSolver.maxRange(spec);
@@ -110,7 +108,7 @@ public class BallisticSolverGameTest {
     }
 
     /** Regression: unchecked bisection reported a solution missing by 743 blocks before the answer was verified. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void everySolutionReturnedActuallyHits(GameTestHelper helper) {
         RoundSpec spec = new RoundSpec(15, 0.01, PhysicsEngine.G, 20 * 60 * 10);
         for (double range = 20; range < 1600; range += 20) {
@@ -138,7 +136,7 @@ public class BallisticSolverGameTest {
      * maxRange is short of the drag asymptote (reaching it takes infinite time); a range just inside
      * it must still solve.
      */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void maxRangeIsReachable(GameTestHelper helper) {
         RoundSpec spec = new RoundSpec(15, 0.01, PhysicsEngine.G, 20 * 60 * 10);
         double reach = BallisticSolver.maxRange(spec);
@@ -155,7 +153,7 @@ public class BallisticSolverGameTest {
     }
 
     /** Core feature: at artillery range a tenth of a degree is a real distance; mount and solver must resolve one. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void tenthOfADegreeMovesTheImpact(GameTestHelper helper) {
         RoundSpec spec = new RoundSpec(25, 0.005, PhysicsEngine.G, 20 * 60 * 20);
         double range = 2000;
@@ -181,7 +179,7 @@ public class BallisticSolverGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void layingQuantisesToItsStep(GameTestHelper helper) {
         GunLaying laying = new GunLaying();
         while (laying.step().size() != 0.1 || laying.step().inBlocks()) {
@@ -216,7 +214,7 @@ public class BallisticSolverGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void layingSolvesAndPointsAtTheTarget(GameTestHelper helper) {
         RoundSpec spec = new RoundSpec(25, 0.005, PhysicsEngine.G, 20 * 60 * 20);
         GunLaying laying = new GunLaying();

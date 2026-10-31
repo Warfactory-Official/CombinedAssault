@@ -1,31 +1,31 @@
 package com.wf.combinedassault.indirect.gametest;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
+import com.wf.wflib.testkit.api.ForcedChunks;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.compat.wflib.Munitions;
-import com.wf.wflib.ammo.AmmoItems;
-import com.wf.wflib.kinetic.KineticPreset;
+import com.wf.combinedassault.weapon.ordnance.Munitions;
+import com.wf.wflib.ammo.api.AmmoItems;
+import com.wf.wflib.round.api.KineticPreset;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import com.wf.wflib.round.Rounds;
+import com.wf.wflib.round.api.Rounds;
 import net.minecraft.server.level.ServerLevel;
 import com.wf.combinedassault.indirect.BallisticSolver;
 import com.wf.combinedassault.indirect.FireArc;
 import com.wf.combinedassault.indirect.FireSolution;
 import com.wf.combinedassault.indirect.RoundSpec;
 import com.wf.combinedassault.indirect.Trajectory;
-import com.wf.combinedassault.vehicle.PhysicsEngine;
+import com.wf.combinedassault.dynamics.PhysicsEngine;
 
 /**
  * Everything else in this package assumes the closed form matches the round's actual flight. Checked
  * twice: against the recurrence written out longhand, and against a WFLib round stepped by {@code Rounds}.
  */
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class TrajectoryGameTest {
 
@@ -40,7 +40,7 @@ public class TrajectoryGameTest {
      */
     private static final double ENTITY_TOLERANCE = 1.0E-6;
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void closedFormMatchesRecurrence(GameTestHelper helper) {
         double[][] cases = {
                 // muzzle speed, drag, elevation
@@ -83,7 +83,7 @@ public class TrajectoryGameTest {
     }
 
     /** WFLib 81 mm (linear drag only) against the closed form. Stepped by hand: deterministic either way. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void closedFormMatchesTheRound(GameTestHelper helper) {
         ItemStack mortar = AmmoItems.stack(ResourceLocation.fromNamespaceAndPath("wflib", "81mm/he"), 1);
         KineticPreset preset = Munitions.kinetic(mortar);
@@ -96,28 +96,49 @@ public class TrajectoryGameTest {
         double radians = Math.toRadians(85);
         Vec3 velocity = new Vec3(0, Math.sin(radians), Math.cos(radians)).scale(spec.muzzleSpeed());
 
-        long round = Rounds.launch(level, preset, start, velocity, null, null);
-        // 81 mm at 85 deg lands ~tick 340.
-        for (int tick = 1; tick <= 250; tick++) {
-            if (!Rounds.step(level, round)) {
-                helper.fail("round ended at tick " + tick + "; it should have had clear air");
-                return;
+        // Rounds.step waits at an undecoded column instead of flying: load the whole path synchronously.
+        int first = Math.floorDiv(origin.getZ(), 16);
+        int last = Math.floorDiv(Mth.floor(Trajectory.positionAt(start, velocity, spec, 250).z), 16) + 2;
+        int column = Math.floorDiv(origin.getX(), 16);
+        int from = Math.min(first, last) - 2, to = Math.max(first, last);
+        for (int cz = from; cz <= to; cz++) {
+            ForcedChunks.set(level, column, cz, true);
+            level.getChunk(column, cz);
+        }
+        long round = 0;
+        boolean live = false;
+        try {
+            round = Rounds.launch(level, preset, start, velocity, null, null);
+            live = true;
+            // 81 mm at 85 deg lands ~tick 340.
+            for (int tick = 1; tick <= 250; tick++) {
+                if (!Rounds.step(level, round)) {
+                    live = false;
+                    helper.fail("round ended at tick " + tick + "; it should have had clear air");
+                    return;
+                }
+                Vec3 at = Rounds.position(level, round);
+                Vec3 predicted = Trajectory.positionAt(start, velocity, spec, tick);
+                double error = predicted.distanceTo(at);
+                if (error > ENTITY_TOLERANCE) {
+                    helper.fail("round is " + error + " blocks from the closed form at tick " + tick
+                            + " (round " + at + ", predicted " + predicted + ")");
+                    return;
+                }
             }
-            Vec3 at = Rounds.position(level, round);
-            Vec3 predicted = Trajectory.positionAt(start, velocity, spec, tick);
-            double error = predicted.distanceTo(at);
-            if (error > ENTITY_TOLERANCE) {
-                helper.fail("round is " + error + " blocks from the closed form at tick " + tick
-                        + " (round " + at + ", predicted " + predicted + ")");
-                return;
+        } finally {
+            if (live) {
+                Rounds.destroy(level, round);
+            }
+            for (int cz = from; cz <= to; cz++) {
+                ForcedChunks.set(level, column, cz, false);
             }
         }
-        Rounds.destroy(level, round);
         helper.succeed();
     }
 
     /** WFLib 12.7x99 (quadratic drag) against the stepped form, then a solution laid on it lands on target. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void steppedFormMatchesACartridge(GameTestHelper helper) {
         ItemStack cartridge = AmmoItems.stack(ResourceLocation.fromNamespaceAndPath("wflib", "12.7x99/ball"), 1);
         KineticPreset preset = Munitions.kinetic(cartridge);

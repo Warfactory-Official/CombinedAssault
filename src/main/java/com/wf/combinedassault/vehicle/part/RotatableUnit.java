@@ -1,8 +1,8 @@
 package com.wf.combinedassault.vehicle.part;
 
-import com.wf.wflib.audio.AudioCategory;
-import com.wf.combinedassault.audio.VehicleSounds;
-import com.wf.combinedassault.audio.HullLoop;
+import com.wf.wflib.audio.api.AudioCategory;
+import com.wf.combinedassault.vehicle.audio.VehicleSounds;
+import com.wf.combinedassault.vehicle.audio.HullLoop;
 import com.mojang.math.Axis;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -14,15 +14,15 @@ import net.neoforged.api.distmarker.OnlyIn;
 import org.joml.Math;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import com.wf.combinedassault.api.custom.sync.SyncDataSerializers;
-import com.wf.combinedassault.custom.part.data.RotatableUnitData;
+import com.wf.combinedassault.pack.sync.SyncDataSerializers;
+import com.wf.combinedassault.vehicle.part.data.RotatableUnitData;
 import com.wf.combinedassault.ballistics.component.ComponentDamage;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.util.ParticleUtil;
-import com.wf.combinedassault.util.VectorUtil;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.util.ParticleUtil;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.wflib.util.OBB;
-import com.wf.combinedassault.vehicle.structure.VehicleCubeGroup;
+import com.wf.wflib.geom.api.OBB;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
 
 import java.util.List;
 import java.util.Map;
@@ -46,7 +46,9 @@ public class RotatableUnit<T extends RotatableUnitData> extends PartUnit<T> {
     public float yRotMax = Float.MAX_VALUE;
     public float yRotMin = -Float.MAX_VALUE;
     public boolean needPower = true;
+    @OnlyIn(Dist.CLIENT)
     private HullLoop servoY;
+    @OnlyIn(Dist.CLIENT)
     private HullLoop servoX;
 
     public RotatableUnit(int index, AbstractVehicle vehicle, T data) {
@@ -103,7 +105,7 @@ public class RotatableUnit<T extends RotatableUnitData> extends PartUnit<T> {
 
     protected void tickRemoteRot() {
         if (vehicle.level().isClientSide()
-                && getOwner() != LocalVehiclePlayer.instance.getPlayer()) {
+                && getOwner() != LocalVehiclePlayer.instance().getPlayer()) {
             xAimRot = xRemoteAimRot;
             yAimRot = yRemoteAimRot;
         }

@@ -1,5 +1,6 @@
 package com.wf.combinedassault.vehicle.part.gametest;
 
+import com.wf.wflib.physics.api.PhysicsSettings;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -15,17 +16,17 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * Physics cost vs hull size; one {@code [perf]} row per (vehicle, drive/park, solver). Vehicles: {@code tools/internal/bench_pack.py}.
@@ -45,7 +46,6 @@ public class PhysicsBench {
     private static final int WARMUP_WINDOW = 20;
     private static final int LANE_Z = 12000;
     /** Ours only; absent upstream => that tree reports one solver. */
-    private static final Field ASYNC = asyncFlag();
     private static final ThreadMXBean THREADS = ManagementFactory.getThreadMXBean();
 
     private static boolean measuring;
@@ -64,7 +64,7 @@ public class PhysicsBench {
     @GameTestGenerator
     public static List<TestFunction> physicsBench() {
         List<Case> cases = new ArrayList<>();
-        List<Boolean> solvers = ASYNC == null ? java.util.Collections.singletonList(null) : List.of(true, false);
+        List<Boolean> solvers = List.of(true, false);
         for (Boolean async : solvers) {
             for (String mode : new String[]{"park", "drive", "push"}) {
                 for (int length : LENGTHS) {
@@ -85,20 +85,25 @@ public class PhysicsBench {
     }
 
     private static void run(GameTestHelper helper, List<Case> cases) {
-        NeoForge.EVENT_BUS.addListener(ServerTickEvent.Pre.class, event -> tickStart = System.nanoTime());
-        NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, event -> {
+        Consumer<ServerTickEvent.Pre> pre = event -> tickStart = System.nanoTime();
+        Consumer<ServerTickEvent.Post> post = event -> {
             if (measuring) {
                 tickTotal += System.nanoTime() - tickStart;
                 tickCount++;
             }
-        });
+        };
+        NeoForge.EVENT_BUS.addListener(ServerTickEvent.Pre.class, pre);
+        NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, post);
         GameTestSequence sequence = helper.startSequence();
         for (boolean warmup : new boolean[]{true, false}) {
             for (Case c : cases) {
                 sequence = step(helper, sequence, c, warmup ? WARMUP_WINDOW : WINDOW, !warmup);
             }
         }
-        sequence.thenSucceed();
+        sequence.thenExecute(() -> {
+            NeoForge.EVENT_BUS.unregister(pre);
+            NeoForge.EVENT_BUS.unregister(post);
+        }).thenSucceed();
     }
 
     private static GameTestSequence step(GameTestHelper helper, GameTestSequence sequence, Case c, int window, boolean log) {
@@ -182,7 +187,7 @@ public class PhysicsBench {
                                 c.name, with[0], with[1], tickTotal / ticks, (allThreadsCpu() - cpu[0]) / ticks,
                                 vehicles.size(), speed[0]));
                     }
-                    setAsync(true);
+                    PhysicsSettings.override(null);
                     setFloor(level, origin, laneWidth, floorLength, false);
                 })
                 .thenIdle(5);
@@ -199,22 +204,9 @@ public class PhysicsBench {
         return total;
     }
 
-    private static Field asyncFlag() {
-        try {
-            return Class.forName("com.wf.combinedassault.all.AllConfigs$Cached").getField("asyncVehiclePhysics");
-        } catch (ReflectiveOperationException e) {
-            return null;
-        }
-    }
-
     private static void setAsync(Boolean async) {
-        if (ASYNC == null || async == null) {
-            return;
-        }
-        try {
-            ASYNC.setBoolean(null, async);
-        } catch (IllegalAccessException e) {
-            throw new IllegalStateException(e);
+        if (async != null) {
+            PhysicsSettings.override(PhysicsSettings.current().withAsync(async));
         }
     }
 

@@ -1,6 +1,5 @@
 package com.wf.combinedassault.vehicle;
 
-import com.wf.combinedassault.all.AllConfigs;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -26,7 +25,7 @@ public final class AltitudeView {
     }
 
     public static int view(ServerPlayer player, int view) {
-        int floor = AllConfigs.server.altitudeViewFloor.get();
+        int floor = VehicleConfig.server().altitudeViewFloor();
         if (!LOD || floor <= 0 || floor >= view) {
             return view;
         }

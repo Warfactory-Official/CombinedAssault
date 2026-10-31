@@ -1,8 +1,8 @@
 package com.wf.combinedassault.vehicle.part;
 
 import org.jetbrains.annotations.UnmodifiableView;
-import com.wf.combinedassault.custom.part.data.LinkedHingeUnitData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.data.LinkedHingeUnitData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.util.Map;
 

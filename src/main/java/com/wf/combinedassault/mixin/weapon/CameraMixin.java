@@ -1,0 +1,91 @@
+package com.wf.combinedassault.mixin.weapon;
+
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import com.wf.combinedassault.hud.FirstPersonHandler;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.weapon.client.StationRecoil;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+
+@Mixin(Camera.class)
+public abstract class CameraMixin {
+    @Unique
+    private static final float[] JOLT = new float[3];
+
+    @Shadow
+    protected abstract void setPosition(double pX, double pY, double pZ);
+
+    @Shadow
+    protected abstract void move(float pDistanceOffset, float pVerticalOffset, float pHorizontalOffset);
+
+    @Shadow
+    protected abstract float getMaxZoom(float pStartingDistance);
+
+    @Shadow
+    public abstract float getXRot();
+
+    @Shadow
+    protected abstract void setRotation(float yRot, float xRot, float zRot);
+
+    @Shadow
+    private Entity entity;
+
+    @Inject(method = "setup", at = @At("TAIL"))
+    public void setupVehicleCamera(BlockGetter pLevel, Entity pEntity, boolean pDetached, boolean pThirdPersonReverse, float pPartialTick, CallbackInfo ci) {
+        if (!Minecraft.getInstance().options.getCameraType().isFirstPerson()) {
+            return;
+        }
+        LocalVehiclePlayer instance = LocalVehiclePlayer.instance();
+        Player player = instance.getPlayer();
+        if (pEntity != player && pEntity.getVehicle() instanceof AbstractVehicle vehicle) {
+            Vec3 pos = vehicle.thirdPersonPosition(pPartialTick);
+            this.setPosition(pos.x, pos.y, pos.z);
+            zoomThirdPerson(vehicle);
+            return;
+        }
+        AbstractVehicle vehicle = instance.vehicle;
+        if (vehicle != null) {
+            PartUnit<?> operatorUnit = instance.seat.partUnit;
+            if (operatorUnit == null) {
+                return;
+            }
+            Vec3 position = instance.cameraPosition(operatorUnit, pPartialTick);
+            this.setPosition(position.x, position.y, position.z);
+            Vector3f euler = instance.frameCameraRotation(pPartialTick).getEulerAnglesYXZ(new Vector3f());
+            float[] jolt = StationRecoil.jolt(pPartialTick, JOLT);
+            this.setRotation((float) Math.toDegrees(-euler.y) + (float) FirstPersonHandler.getCurrentYawShake() + jolt[0],
+                    (float) Math.toDegrees(euler.x) + (float) FirstPersonHandler.getCurrentPitchShake() + jolt[1],
+                    (float) Math.toDegrees(euler.z) + (float) FirstPersonHandler.getCurrentRollShake() + jolt[2]);
+            if (instance.viewType == LocalVehiclePlayer.ViewType.THIRD_PERSON) {
+                zoomThirdPerson(vehicle);
+            }
+        }
+    }
+
+    private void zoomThirdPerson(AbstractVehicle vehicle) {
+        move(-getMaxZoom((float) vehicle.thirdPersonDistance(getXRot())), 0, 0);
+    }
+
+    @Inject(method = "isDetached", at = @At("HEAD"), cancellable = true)
+    public void isDetached(CallbackInfoReturnable<Boolean> cir) {
+        if (entity != null
+                && entity.getVehicle() instanceof AbstractVehicle
+                && LocalVehiclePlayer.instance().viewType == LocalVehiclePlayer.ViewType.THIRD_PERSON) {
+            cir.setReturnValue(true);
+        }
+    }
+
+}

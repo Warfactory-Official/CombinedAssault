@@ -27,16 +27,12 @@ public final class TrialProfile {
         RIDERS,
         /** Parked-vehicle harness + deck carry. */
         HARNESS,
-        /** Rider-vs-hull move clip; charged to the rider's own tick, not the hull's. */
-        CLIP,
         /** {@code Entity.tick} + position/rotation bookkeeping. */
         BASE,
         /** Resupply, cargo mass, pending mounts; pre-solve. */
         UPKEEP,
         /** Travel planning: prepares every section the swept hull covers. */
         PLAN,
-        /** Nested in {@link #PLAN}: chunk lookup per section column. */
-        CHUNKS,
         /** Nested in {@link #PLAN}: the section sweep itself, excludes pose capture. */
         PREPARE,
         /** Deck link + swept broadphase + in-reach gate. */
@@ -56,16 +52,12 @@ public final class TrialProfile {
     /** What the tick's work ran over, counted not timed: distinguishes a cost that follows the hull
      *  from one that follows the terrain under it. */
     public enum Work {
-        /** Sections covered by hull bounds (incl. snapshot): the solve's broadphase. */
-        SECTIONS,
         /** Collision boxes those sections held. */
         BOXES,
         /** Hull sample points carried into contact resolution. */
         POINTS,
         /** Travel substeps; each a full sweep. */
-        SUBSTEPS,
-        /** Sections whose snapshot was built, not read from cache. */
-        BUILDS
+        SUBSTEPS
     }
 
     private static final Stage[] STAGES = Stage.values();

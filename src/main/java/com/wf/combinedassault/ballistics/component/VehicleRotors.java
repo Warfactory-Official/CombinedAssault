@@ -1,6 +1,6 @@
 package com.wf.combinedassault.ballistics.component;
 
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 
 /**

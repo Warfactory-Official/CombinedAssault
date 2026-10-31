@@ -1,0 +1,921 @@
+package com.wf.combinedassault.aircraft;
+
+import net.minecraft.network.FriendlyByteBuf;
+import com.wf.wflib.audio.api.EngineSound;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.pack.IAnimationEntity;
+import com.wf.combinedassault.pack.IAnimationInstance;
+import com.wf.combinedassault.aircraft.client.RotaryWingVehicleContext;
+import com.wf.combinedassault.aircraft.client.RotaryWingVehicleDisplay;
+import com.wf.combinedassault.pack.client.vehicle.VehicleDisplay;
+import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
+import com.wf.combinedassault.vehicle.util.ParticleUtil;
+import com.wf.combinedassault.uav.fpv.FpvFlight;
+import com.wf.combinedassault.uav.multirotor.MultirotorFlight;
+import com.wf.combinedassault.uav.multirotor.RotorLayout;
+import com.wf.combinedassault.dynamics.PhysicsHelper;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
+import com.wf.combinedassault.ballistics.component.VehicleRotors;
+import com.wf.combinedassault.vehicle.part.DoorUnit;
+import com.wf.combinedassault.dynamics.part.LandingGearUnit;
+import com.wf.combinedassault.vehicle.part.RopeUnit;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.weapon.pojo.AimContext;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+
+public class RotaryWingVehicle extends AbstractVehicle
+        implements IAnimationEntity<RotaryWingVehicle, RotaryWingVehicleContext> {
+
+    public static final EntityDataAccessor<Float> COLLECTIVE_PITCH = SynchedEntityData.defineId(RotaryWingVehicle.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Float> PITCH_INPUT = SynchedEntityData.defineId(RotaryWingVehicle.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Float> ROLL_INPUT = SynchedEntityData.defineId(RotaryWingVehicle.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Boolean> MULTIROTOR_FPV = SynchedEntityData.defineId(RotaryWingVehicle.class, EntityDataSerializers.BOOLEAN);
+    /** Deg/tick of torque yaw at full power and collective with no anti-torque; nose right (US rotor sense). */
+    private static final float TORQUE_YAW = 8;
+    /** Deg/tick^2 every rotation rate loses per tick. */
+    public static final float ROT_FRICTION = 0.1f;
+    public float mainRotorForce = 1.4f * PhysicsHelper.GRAVITY * physicsEngine.mass;
+    public float ceiling = 256;
+    public float xRotSpeedAcceleration = 1f;
+    public float xRotSpeedMax = 4;
+    public float yRotSpeedAcceleration = 1;
+    public float yRotSpeedMax = 4;
+    public float zRotSpeedAcceleration = 1;
+    public float zRotSpeedMax = 4;
+    public float maxAirSpeed = 1f;
+    public float xRotSpeed;
+    public float yRotSpeed;
+    public float zRotSpeed;
+    public Vec3 airSpeed = new Vec3(0, 0, 0);
+    /** Arcade flight response. Per-vehicle so its control-authority ramp has somewhere to live. */
+    protected final AircraftAerodynamics aerodynamics = new AircraftAerodynamics();
+
+    public AircraftAerodynamics aerodynamics() {
+        return aerodynamics;
+    }
+    public boolean hoverMode;
+    /** Hover hold point; null until slowed below {@link AircraftAerodynamics#hoverCaptureSpeed} or while translating. */
+    @Nullable
+    private Vec3 hoverAnchor;
+    private float hoverRoll;
+    /** Autopilot velocity setpoint for this tick's hover loop (blocks/tick), consumed; null = stick/anchor. */
+    @Nullable
+    public Vec3 autopilotVelocity;
+    private double hoverVyO = Double.NaN;
+    /** Direct attitude control, or null for the stock rate-limited model. */
+    public FpvFlight fpvFlight;
+    /** Multirotor force law, or null for the helicopter model. */
+    public MultirotorFlight multirotor;
+    @Nullable
+    private RotorLayout rotorLayout;
+    private boolean rotorLayoutBound;
+    public boolean fastRoping;
+    public String fastRopingDoorId;
+    public HashMap<UUID, FastRopingContext> fastRopingContexts = new HashMap<>();
+    public RopeUnit fastRopingRope;
+    public Entity cargo;
+    public RopeUnit cargoRope;
+    private int hookCooldown;
+    public float collectivePitch;
+    public float collectivePitchO;
+    public float pitchInput;
+    public float pitchInputO;
+    public float rollInput;
+    public float rollInputO;
+    public String landingGearPartId;
+    public LandingGearUnit landingGear;
+    private IAnimationInstance<RotaryWingVehicleContext> animationInstance;
+
+    public RotaryWingVehicle(EntityType<? extends AbstractVehicle> pEntityType, Level pLevel) {
+        super(pEntityType, pLevel);
+        this.driverXYRotControl = true;
+        this.physicsEngine.lockCenterRot = true;
+    }
+
+
+    @Override
+    public IAnimationInstance<RotaryWingVehicleContext> getAnimationInstance() {
+        return animationInstance;
+    }
+
+    @Override
+    public void initDisplayData(VehicleDisplay<?, ?> display) {
+        super.initDisplayData(display);
+        if (display instanceof RotaryWingVehicleDisplay rotaryWingVehicleDisplay) {
+            this.animationInstance = rotaryWingVehicleDisplay.createAnimationInstance(this);
+        }
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(COLLECTIVE_PITCH, 0f);
+        builder.define(PITCH_INPUT, 0f);
+        builder.define(ROLL_INPUT, 0f);
+        builder.define(MULTIROTOR_FPV, false);
+    }
+
+    @Override
+    public void addAdditionalSaveData(@NotNull CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putFloat("CollectivePitch", getCollectivePitch());
+        if (multirotor != null) {
+            multirotor.save(compound);
+        }
+    }
+
+    @Override
+    public void readAdditionalSaveData(@NotNull CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        if (compound.contains("CollectivePitch")) {
+            setCollectivePitch(Mth.clamp(compound.getFloat("CollectivePitch"), 0, 100));
+        }
+        if (multirotor != null) {
+            multirotor.load(compound);
+        }
+        if (landingGear != null) {
+            landingGear.setOn(isLandingGearUp());
+        }
+    }
+
+    @Override
+    public void writeSpawnData(RegistryFriendlyByteBuf buffer) {
+        super.writeSpawnData(buffer);
+        buffer.writeBoolean(isLandingGearUp());
+    }
+
+    @Override
+    public void readSpawnData(RegistryFriendlyByteBuf buffer) {
+        super.readSpawnData(buffer);
+        if (landingGear != null) {
+            landingGear.setOn(isLandingGearUp());
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (!level().isClientSide()) {
+            if (fastRoping) {
+                tickFastRoping();
+            }
+            tickCargo();
+            if (multirotor != null) {
+                entityData.set(MULTIROTOR_FPV, multirotor.fpv());
+            }
+        }
+        tickInput();
+    }
+
+    /** Acro model in effect, either side; null => stock or STABILIZED. */
+    @Nullable
+    public FpvFlight fpvAttitude() {
+        if (multirotor != null) {
+            return entityData.get(MULTIROTOR_FPV) ? multirotor.fpvAttitude() : null;
+        }
+        return fpvFlight;
+    }
+
+    /** Operator's own FPV drone: stepped at input sample ({@link FpvFlight#clientStep}); server adopts the report. */
+    @Override
+    protected boolean clientOwnsAttitude() {
+        return level().isClientSide() && LocalVehiclePlayer.instance().vehicle == this
+                && LocalVehiclePlayer.instance().fpvFlight() != null && fpvAuthority() > 0;
+    }
+
+    /** Rotor output factor for FPV steering; 0 => nothing to steer with. */
+    public double fpvAuthority() {
+        return getPower() / 100.0 * strain() * rotorShare();
+    }
+
+    /** Multirotor with rotor units; null before hits load or for a lumped / single rotor. */
+    @Nullable
+    public RotorLayout rotorLayout() {
+        if (!rotorLayoutBound && multirotor != null && hits() != null) {
+            rotorLayout = RotorLayout.of(this);
+            rotorLayoutBound = true;
+        }
+        if (rotorLayout != null) {
+            rotorLayout.update(hullComponents());
+        }
+        return rotorLayout;
+    }
+
+    /** Rotor output holdable level, 0..1: balanced share over rotor units, else lumped {@link VehicleRotors#lift}. */
+    public double rotorShare() {
+        RotorLayout layout = rotorLayout();
+        return layout != null ? layout.balanced() : VehicleRotors.of(this).lift();
+    }
+
+    /** Own FPV drone: extrapolated by the input not yet ticked, so lens and hull answer the mouse per frame. */
+    @Override
+    public Quaternionf rotYXZ(float partialTick) {
+        if (!clientOwnsAttitude()) {
+            return super.rotYXZ(partialTick);
+        }
+        return fpvAttitude().lead(this, LocalVehiclePlayer.instance().fpvTurnX, LocalVehiclePlayer.instance().fpvTurnY, partialTick);
+    }
+
+    private void tickInput() {
+        collectivePitchO = collectivePitch;
+        pitchInputO = pitchInput;
+        rollInputO = rollInput;
+        if (level().isClientSide()) {
+            collectivePitch = getCollectivePitch();
+            pitchInput = getPitchInput();
+            rollInput = getRollInput();
+        } else {
+            if (controlUnit.left || controlUnit.right) {
+                setRollInput(controlUnit.left ? -1 : 1);
+            } else {
+                setRollInput(0);
+            }
+            if (controlUnit.forward || controlUnit.backward) {
+                setPitchInput(controlUnit.forward ? -1 : 1);
+            } else {
+                setPitchInput(Mth.clamp((getXRot() - controlUnit.xRot) / 30, -1f, 1f));
+            }
+        }
+    }
+
+    protected void tickFastRoping() {
+        fastRopingContexts.values().removeIf(context -> {
+            if (context.isTouchGround() || context.livingEntity.isShiftKeyDown()) {
+                return true;
+            }
+            context.tickDescending();
+            return false;
+        });
+        if (fastRopingContexts.isEmpty() && fastRopingRope != null) {
+            fastRopingRope.retract();
+        }
+    }
+
+    @Override
+    protected Vec3 tickMove() {
+        // Wreck: rigid body only; airborne spin as upstream.
+        physicsEngine.lockCenterRot = !isDestroyed();
+        if (isDestroyed()) {
+            if (!onGround()) {
+                setYRot(getYRot() + 10);
+            }
+            return Vec3.ZERO;
+        }
+        float collectivePitch = getCollectivePitch();
+        if (controlUnit.up) {
+            collectivePitch += 5;
+        } else if (controlUnit.down) {
+            collectivePitch -= 5;
+        }
+        setCollectivePitch(Mth.clamp(collectivePitch, 0f, 100f));
+
+        airSpeed = getDeltaMovement();
+        // Rotor power coefficient: power x collective x blade lift.
+        VehicleRotors rotors = VehicleRotors.of(this);
+        if (multirotor != null) {
+            RotorLayout layout = rotorLayout();
+            double power = getPower() / 100.0 * strain();
+            double share = layout != null ? layout.balanced() : rotors.lift();
+            multirotor.tick(this, power * share,
+                    layout != null && share <= 0 && power > 0 && layout.meanOutput(1) > 0 ? layout : null, power);
+            airSpeed = getDeltaMovement();
+            return Vec3.ZERO;
+        }
+        double scale = ((double) getPower() / 100) * strain() * ((double) getCollectivePitch() / 100) * rotors.lift();
+        // dVV: climb(+)/descend(-) speed along rotor axis; climb cuts the coefficient, descent raises it
+        // (vortex-ring/translational-lift effect).
+        Vec3 vP = relativeRotDirection(new Vec3(0, 1, 0), false);
+        double dVV = VectorUtil.project(airSpeed, vP).length() * Math.signum(airSpeed.dot(vP));
+        if (dVV > 0) {
+            scale *= Math.min(1, 8 / (dVV * 20));
+        } else if (dVV < 0) {
+            scale *= Math.min(2, Math.max(1, -dVV / 0.05));
+        }
+        // Air thins above y=64: engine + blade efficiency taper from there to ceiling.
+        double scaleAir = position().y < 64 ? 1 : Math.pow(Math.max(0, ceiling - position().y), 0.2) / Math.pow(ceiling - 64, 0.2);
+        boolean arcade = AircraftConfig.get().arcadeFlightModel();
+        double tiltCompensation = arcade ? aerodynamics.liftTiltCompensation((float) vP.y) : 1.0;
+        Vec3 force = vP.scale(scale * scaleAir * mainRotorForce * tiltCompensation);
+        // dVH: horizontal airspeed lift bonus (translational lift).
+        double dVH = Math.sqrt(Math.max(0, airSpeed.lengthSqr() - dVV * dVV));
+        force = force.add(vP.scale(dVH * scaleAir * rotors.lift() * 0.005f * curbWeight * PhysicsHelper.TICKS_PER_SECOND_SQUARED));
+        if (arcade) {
+            float gain = aerodynamics.discTiltGain;
+            force = new Vec3(force.x * gain, force.y, force.z * gain);
+        }
+        airSpeed = airSpeed.add(force.scale(PhysicsHelper.accelerationPerTick(1, physicsEngine.mass)));
+        if (arcade) {
+            Vector3f v = airSpeed.toVector3f();
+            aerodynamics.applyToVelocity(v, maxAirSpeed, physicsEngine.G,
+                    (float) (getPower() / 100f * strain()) * (float) rotors.lift());
+            airSpeed = new Vec3(v);
+        } else {
+            double al = airSpeed.length();
+            airSpeed = airSpeed.normalize().scale(al - al * PhysicsHelper.accelerationPerTick(physicsEngine.friction, physicsEngine.mass));
+        }
+        if (airSpeed.length() >= maxAirSpeed) {
+            airSpeed = airSpeed.normalize().scale(maxAirSpeed);
+        }
+        this.setDeltaMovement(airSpeed);
+
+        if (hoverMode) {
+            tickHover();
+        } else if (arcade && !controlUnit.up && !controlUnit.down && !onGround()) {
+            // Hands off collective: trim to hold height. PhysicsEngine subtracts one tick of gravity
+            // after tickMove, so airSpeed.y here is velocity before the fall; trimming it to zero
+            // prevents a permanent sink of one tick of gravity.
+            float delta = aerodynamics.altitudeHoldDelta((float) (airSpeed.y - physicsEngine.G));
+            if (delta != 0) {
+                setCollectivePitch(Mth.clamp(getCollectivePitch() + delta * 100f, 0f, 100f));
+            }
+        }
+
+        if (fpvFlight != null && fpvFlight.tickAttitude(this, scale)) {
+            return force;
+        }
+
+        double inertia = scale / load();
+        float xRotSpeedAcceleration = (float) (this.xRotSpeedAcceleration * inertia);
+        float yRotSpeedAcceleration = (float) (this.yRotSpeedAcceleration * inertia);
+        float zRotSpeedAcceleration = (float) (this.zRotSpeedAcceleration * inertia);
+        boolean yawAimControl = !(controlUnit.leftYaw || controlUnit.rightYaw) && !controlUnit.yRotKeep && scale > 0;
+        applyYawStability();
+        float yDiff = yawAimControl ? Mth.wrapDegrees(controlUnit.yRot - this.getYRot()) : 0;
+        float yRotSpeedMax = this.yRotSpeedMax * yawSpeedFactor() * rotors.antiTorque();
+        if (rotors.antiTorque() < 1 && !onGround()) {
+            setYRot(getYRot() + (float) ((1 - rotors.antiTorque()) * TORQUE_YAW * scale));
+        }
+        if (yawAimControl) {
+            float shrink = Math.min(1, Math.abs(yDiff) / yRotSpeedAcceleration);
+            if (yDiff > 0) {
+                yRotSpeed = Math.min(yRotSpeedMax, yRotSpeed + yRotSpeedAcceleration * shrink);
+            } else if (yDiff < 0) {
+                yRotSpeed = Math.max(-yRotSpeedMax, yRotSpeed - yRotSpeedAcceleration * shrink);
+            }
+            if (yRotSpeed != 0) {
+                if (Math.abs(yDiff) > 3) {
+                    if (Math.abs(yDiff) <= Math.abs(yRotSpeed)) {
+                        yRotSpeed = (float) Mth.lerp(0.3, yRotSpeed, yDiff);
+                    }
+                    yRotSpeed = Mth.clamp(yRotSpeed, -yRotSpeedMax, yRotSpeedMax);
+                    float yRotStep = Mth.clamp(yDiff, -Math.abs(yRotSpeed), Math.abs(yRotSpeed));
+                    applyYawStep(yRotStep);
+                } else {
+                    float yRotStep = Mth.clamp(yDiff, -yRotSpeedMax, yRotSpeedMax);
+                    float appliedStep = applyYawStep(yRotStep);
+                    if (appliedStep == yRotStep && yRotStep == yDiff) {
+                        yRotSpeed = 0;
+                    }
+                }
+            }
+        } else {
+            if (controlUnit.rightYaw) {
+                yRotSpeed = Math.min(yRotSpeedMax, yRotSpeed + yRotSpeedAcceleration);
+            }
+            if (controlUnit.leftYaw) {
+                yRotSpeed = Math.max(-yRotSpeedMax, yRotSpeed - yRotSpeedAcceleration);
+            }
+            if (yRotSpeed != 0) {
+                yRotSpeed = Mth.clamp(yRotSpeed, -yRotSpeedMax, yRotSpeedMax);
+                applyYawStep(yRotSpeed);
+            }
+        }
+
+        if (!(controlUnit.forward || controlUnit.backward) && !controlUnit.xRotKeep) {
+            float xDiff = Mth.wrapDegrees(controlUnit.xRot - this.getXRot());
+            float shrink = Math.min(1, Math.abs(xDiff) / xRotSpeedAcceleration);
+            if (xDiff > 0) {
+                xRotSpeed = Math.min(xRotSpeedMax, xRotSpeed + xRotSpeedAcceleration * shrink);
+            } else if (xDiff < 0) {
+                xRotSpeed = Math.max(-xRotSpeedMax, xRotSpeed - xRotSpeedAcceleration * shrink);
+            }
+            if (xRotSpeed != 0) {
+                if (Math.abs(xDiff) > 3) {
+                    this.setXRot(this.getXRot() + xRotSpeed);
+                } else {
+                    xRotSpeed = 0;
+                    this.setXRot(controlUnit.xRot);
+                }
+            }
+        } else {
+            if (controlUnit.forward) {
+                xRotSpeed = Math.min(xRotSpeedMax, xRotSpeed + xRotSpeedAcceleration);
+            }
+            if (controlUnit.backward) {
+                xRotSpeed = Math.max(-xRotSpeedMax, xRotSpeed - xRotSpeedAcceleration);
+            }
+            if (xRotSpeed != 0) {
+                this.setXRot(this.getXRot() + xRotSpeed);
+            }
+        }
+
+        float targetZRot = hoverMode ? hoverRoll
+                : !yawAimControl ? 0
+                : arcade ? yawAssistRoll(trackDiff(controlUnit.yRot, yDiff), aerodynamics.maxTurnBank)
+                : yawAssistRoll(yDiff, 60);
+        if (!(controlUnit.left || controlUnit.right) && arcade && targetZRot == 0) {
+            // Bleed bank off slowly; snapping level instantly prevents holding a turn.
+            this.setZRot(aerodynamics.settleRoll(this.getZRot(), false, onGround()));
+            zRotSpeed = 0;
+        } else if (!(controlUnit.left || controlUnit.right)) {
+            float zDiff = Mth.wrapDegrees(targetZRot - this.getZRot());
+            float shrink = Math.min(1, Math.abs(zDiff) / zRotSpeedAcceleration);
+            if (zDiff > 0) {
+                zRotSpeed = Math.min(zRotSpeedMax, zRotSpeed + zRotSpeedAcceleration * shrink);
+            } else if (zDiff < 0) {
+                zRotSpeed = Math.max(-zRotSpeedMax, zRotSpeed - zRotSpeedAcceleration * shrink);
+            }
+            if (zRotSpeed != 0) {
+                if (Math.abs(zDiff) > 3) {
+                    this.setZRot(this.getZRot() + zRotSpeed);
+                } else {
+                    zRotSpeed = 0;
+                    this.setZRot(targetZRot);
+                }
+            }
+        } else {
+            if (controlUnit.right) {
+                zRotSpeed = Math.min(zRotSpeedMax, zRotSpeed + zRotSpeedAcceleration);
+            }
+            if (controlUnit.left) {
+                zRotSpeed = Math.max(-zRotSpeedMax, zRotSpeed - zRotSpeedAcceleration);
+            }
+            if (zRotSpeed != 0) {
+                this.setZRot(this.getZRot() + zRotSpeed);
+            }
+        }
+        yRotSpeed = Math.signum(yRotSpeed) * (Math.max(0, Math.abs(yRotSpeed) - ROT_FRICTION));
+        xRotSpeed = Math.signum(xRotSpeed) * (Math.max(0, Math.abs(xRotSpeed) - ROT_FRICTION));
+        zRotSpeed = Math.signum(zRotSpeed) * (Math.max(0, Math.abs(zRotSpeed) - ROT_FRICTION));
+
+        return force;
+    }
+
+    protected void tickCargo() {
+        if (cargoRope == null) {
+            return;
+        }
+        float cableLength = cargoRope.getLength();
+        if (controlUnit.functionalDown) {
+            cableLength = Mth.clamp(cableLength + 1, 0, cargoRope.getMaxLength());
+        } else if (controlUnit.functionalUp) {
+            cableLength = Mth.clamp(cableLength - 1, 0, cargoRope.getMaxLength());
+        }
+        cargoRope.setLength(cableLength);
+        if (cableLength == 0) {
+            if (cargo != null) {
+                cargo.fallDistance = 0;
+                cargo = null;
+            }
+            return;
+        }
+        Vec3 hookPos = cargoRope.getEndPosition();
+        while (level().getBlockState(BlockPos.containing(hookPos)).isSolid() && cableLength > 0) {
+            cableLength = Mth.clamp(cableLength - 1, 0, cargoRope.getMaxLength());
+            cargoRope.setLength(cableLength);
+            hookPos = cargoRope.getEndPosition();
+        }
+        hookCooldown = Math.max(0, hookCooldown - 1);
+        if (controlUnit.functionalLeft && cargo != null) {
+            cargo.fallDistance = 0;
+            cargo = null;
+            hookCooldown = 20;
+            return;
+        }
+        if (hookCooldown == 0 && cargo == null && getDriver() != null) {
+            List<Entity> entities = level().getEntities(this, AABB.ofSize(hookPos, 2, 4, 2),
+                    entity -> !hasPassenger(entity));
+            if (!entities.isEmpty()) {
+                cargo = entities.get(0);
+                this.playSound(SoundEvents.IRON_TRAPDOOR_OPEN);
+            }
+        }
+        if (cargo != null) {
+            cargo.fallDistance = 0;
+            cargo.setDeltaMovement(Vec3.ZERO);
+            if (!cargo.isAlive()) {
+                cargo = null;
+            } else {
+                hookPos = hookPos.subtract(0, cargo.getEyeHeight(), 0);
+                if (cargo.onGround()) {
+                    hookPos = new Vec3(hookPos.x, Math.max(cargo.position().y, hookPos.y), hookPos.z);
+                }
+                cargo.teleportTo(hookPos.x, hookPos.y, hookPos.z);
+                cargo.hasImpulse = true;
+            }
+        }
+    }
+
+    @Override
+    public float audioInput(EngineSound.Input input) {
+        return switch (input) {
+            case RPM -> getPower() / 100;
+            case THROTTLE -> getCollectivePitch() / 100;
+            default -> super.audioInput(input);
+        };
+    }
+
+    @Override
+    @OnlyIn(Dist.CLIENT)
+    protected void tickParticle() {
+        super.tickParticle();
+        if (bodyDepth > 2) {
+            if (getPower() > 30 && tickCount % 2 == 0) {
+                double radius = (double) tickCount % 20 / 20 * 10;
+                if (radius > 0 && radius < bodyDepth / 2 * 1.5) {
+                    ParticleUtil.spawnRotorDownwash(level(), random, blockPosition(), radius);
+                }
+            }
+        }
+        if (hasPower()) {
+            float engineSpeed = getPower();
+            float collectivePitch = getCollectivePitch();
+            if ((engineSpeed > 0 && engineParticleTick > Mth.clamp(10 - collectivePitch / 10, 3, 10))) {
+                ParticleUtil.spawnEngineSmoke(level(), energyInfo.engineParticleOffsets, position(), new Vec3(xo, yo, zo),
+                        pos -> relativeRotPos(pos, false), getLookAngle().normalize().scale(-0.3),
+                        1, 20, 0.3f, 0.4f);
+                engineParticleTick = 0;
+            } else {
+                engineParticleTick += 1;
+            }
+        }
+    }
+
+    @NotNull
+    @Override
+    public Vec3 getDismountLocationForPassenger(@NotNull LivingEntity pPassenger) {
+        if (fastRoping) {
+            FastRopingContext fastRopingContext = fastRopingContexts.get(pPassenger.getUUID());
+            if (fastRopingContext != null) {
+                return fastRopingContext.rope.getAnchorPosition();
+            }
+        }
+        return super.getDismountLocationForPassenger(pPassenger);
+    }
+
+    @Override
+    public void onLeaveVehicle(LivingEntity pPassenger) {
+        super.onLeaveVehicle(pPassenger);
+        if (!level().isClientSide() && fastRoping) {
+            if (position().y - EntityUtil.getGroundY(level(), position()) < 8) {
+                return;
+            }
+            Vec3 dismountLocation;
+            if (fastRopingDoorId != null && partUnitMap.get(fastRopingDoorId) instanceof DoorUnit doorUnit) {
+                dismountLocation = doorUnit.worldPosition(doorUnit.getPivotOffset()).subtract(0, pPassenger.getEyeHeight() / 2, 0);
+                doorUnit.setOn(true);
+            } else {
+                dismountLocation = getDismountLocationForPassenger(pPassenger);
+            }
+            if (fastRopingRope == null) {
+                return;
+            }
+            RopeUnit rope = fastRopingRope;
+            rope.setPivotOffset(relativeRotPos(dismountLocation, true).subtract(position()));
+            rope.deploy();
+            FastRopingContext fastRopingContext = new FastRopingContext();
+            fastRopingContext.rope = rope;
+            fastRopingContext.livingEntity = pPassenger;
+            fastRopingContexts.put(pPassenger.getUUID(), fastRopingContext);
+        }
+    }
+
+    @Override
+    public void onClientVehicleAction(ClientVehicleAction message, Player player) {
+        if (message.toggleLandingGear) {
+            if (landingGear == null) {
+                player.displayClientMessage(Component.translatable("tips.no_landing_gear"), true);
+            } else if (hasPower()) {
+                landingGear.setOn(!isLandingGearUp());
+            }
+        }
+        if (message.toggleHoverMode && multirotor != null) {
+            multirotor.setFpv(!multirotor.fpv());
+            player.displayClientMessage(Component.translatable(multirotor.fpv()
+                    ? "tips.multirotor_fpv" : "tips.multirotor_stabilized"), true);
+        } else if (message.toggleHoverMode) {
+            hoverAnchor = null;
+            hoverRoll = 0;
+            hoverVyO = Double.NaN;
+            if (!hoverMode) {
+                hoverMode = true;
+                player.displayClientMessage(Component.translatable("tips.hover_mode_on"), true);
+            } else {
+                hoverMode = false;
+                player.displayClientMessage(Component.translatable("tips.hover_mode_off"), true);
+            }
+        }
+        super.onClientVehicleAction(message, player);
+    }
+
+    @Override
+    public void shoot(int partUnitIndex, int weaponIndex, List<AimContext> aimContexts, @Nullable LivingEntity operator) {
+        if (partUnits.get(partUnitIndex) instanceof WeaponUnit weaponUnit) {
+            weaponUnit.shoot(weaponIndex, aimContexts, operator);
+        }
+    }
+
+    @Override
+    public void impact(Entity entity) {
+        if (entity == cargo) {
+            return;
+        }
+        super.impact(entity);
+    }
+
+    @Override
+    public double thirdPersonDistance(float cameraXRot) {
+        double distance = isViewZoomed()
+                ? getViewInfo().thirdPersonDistanceZoomed
+                : getViewInfo().thirdPersonDistance;
+        distance = distance + cargoRope.getLength() * 1.5f;
+        if (!isViewZoomed()) {
+            distance = Math.max(0, distance - cameraXRot / 90 * getViewInfo().thirdPersonCenterOffset.y);
+        }
+        return distance;
+    }
+
+    private float applyYawStep(float yRotStep) {
+        float sideslipLimit = yawSideslipLimit();
+        if (sideslipLimit >= 180) {
+            setYRot(getYRot() + yRotStep);
+            return yRotStep;
+        }
+        Vec3 horizontalAirSpeed = new Vec3(airSpeed.x, 0, airSpeed.z);
+        if (horizontalAirSpeed.lengthSqr() < 1.0E-6) {
+            setYRot(getYRot() + yRotStep);
+            return yRotStep;
+        }
+        float airSpeedYRot = VectorUtil.vecToRot(horizontalAirSpeed).y;
+        float currentSideslip = Mth.wrapDegrees(getYRot() - airSpeedYRot);
+        float targetSideslip = Mth.wrapDegrees(currentSideslip + yRotStep);
+        if (Math.abs(currentSideslip) > sideslipLimit) {
+            if (Math.abs(targetSideslip) >= Math.abs(currentSideslip)) {
+                return 0;
+            }
+            setYRot(getYRot() + yRotStep);
+            return yRotStep;
+        }
+        float limitedSideslip = Mth.clamp(targetSideslip, -sideslipLimit, sideslipLimit);
+        float appliedStep = Mth.wrapDegrees(limitedSideslip - currentSideslip);
+        setYRot(getYRot() + appliedStep);
+        return appliedStep;
+    }
+
+    private float yawSideslipLimit() {
+        float speedFactor = linearSpeedFactor(horizontalForwardSpeed(), 0.5f, 1f);
+        if (speedFactor == 0) {
+            return 180;
+        }
+        return Mth.lerp(speedFactor, 180, 15);
+    }
+
+    private void applyYawStability() {
+        float speedFactor = linearSpeedFactor(horizontalForwardSpeed(), 0.25f, 1f);
+        if (speedFactor == 0) {
+            return;
+        }
+        Vec3 horizontalAirSpeed = new Vec3(airSpeed.x, 0, airSpeed.z);
+        if (horizontalAirSpeed.lengthSqr() < 1.0E-6) {
+            return;
+        }
+        float airSpeedYRot = VectorUtil.vecToRot(horizontalAirSpeed).y;
+        float sideslip = Mth.wrapDegrees(getYRot() - airSpeedYRot);
+        float maxCorrection = speedFactor;
+        float correction = Mth.clamp(sideslip * 0.08f * speedFactor, -maxCorrection, maxCorrection);
+        setYRot(getYRot() - correction);
+    }
+
+    private float yawSpeedFactor() {
+        float speedFactor = linearSpeedFactor(horizontalForwardSpeed(), 0.25f, 1f);
+        return Mth.lerp(speedFactor, 1, 0.35f);
+    }
+
+    private float yawAssistRoll(float yRotDiff, float maxBank) {
+        float speedFactor = linearSpeedFactor(forwardSpeed(), 0.25f, 0.75f);
+        float yawFactor = Mth.clamp(yRotDiff / 60, -1, 1);
+        Vec3 forwardDirection = relativeRotDirection(new Vec3(0, 0, 1), false);
+        double horizontalFactor = Math.sqrt(forwardDirection.x * forwardDirection.x + forwardDirection.z * forwardDirection.z);
+        return maxBank * speedFactor * (float) horizontalFactor * yawFactor;
+    }
+
+    /** Arcade bank error: target vs velocity track, not heading; heading error => settles crabbing at the sideslip limit. */
+    private float trackDiff(float targetYaw, float headingDiff) {
+        Vec3 horizontalAirSpeed = new Vec3(airSpeed.x, 0, airSpeed.z);
+        if (horizontalAirSpeed.lengthSqr() < 1.0E-6) {
+            return headingDiff;
+        }
+        return Mth.wrapDegrees(targetYaw - VectorUtil.vecToRot(horizontalAirSpeed).y);
+    }
+
+    /** Holds yaw, height and position; flies attitude through the stock pitch/roll paths. */
+    private void tickHover() {
+        Vec3 target = autopilotVelocity;
+        autopilotVelocity = null;
+        if (target == null) {
+            controlUnit.yRot = getYRot();
+        }
+        Vec3 pos = position();
+        boolean translating = controlUnit.forward || controlUnit.backward || controlUnit.left || controlUnit.right
+                || controlUnit.up || controlUnit.down;
+        double hSpeed = Math.sqrt(airSpeed.x * airSpeed.x + airSpeed.z * airSpeed.z);
+        if (translating || onGround() || target != null) {
+            hoverAnchor = null;
+        } else if (hoverAnchor == null && hSpeed < aerodynamics.hoverCaptureSpeed) {
+            hoverAnchor = pos;
+        }
+        float w = aerodynamics.hoverBandwidth;
+        double ax = -2 * w * airSpeed.x, az = -2 * w * airSpeed.z;
+        double vyTarget = 0;
+        if (target != null) {
+            ax = -2 * w * (airSpeed.x - target.x);
+            az = -2 * w * (airSpeed.z - target.z);
+            vyTarget = Mth.clamp(target.y, -aerodynamics.hoverClimbRate, aerodynamics.hoverClimbRate);
+        } else if (hoverAnchor != null) {
+            ax += w * w * (hoverAnchor.x - pos.x);
+            az += w * w * (hoverAnchor.z - pos.z);
+            vyTarget = Mth.clamp(w * (hoverAnchor.y - pos.y), -aerodynamics.hoverClimbRate, aerodynamics.hoverClimbRate);
+        }
+        float yaw = getYRot() * Mth.DEG_TO_RAD;
+        // MC yaw: forward = (-sin, cos); +yaw turns right => right = (-cos, -sin).
+        double forward = -Mth.sin(yaw) * ax + Mth.cos(yaw) * az;
+        double right = -Mth.cos(yaw) * ax - Mth.sin(yaw) * az;
+        double authority = physicsEngine.G * aerodynamics.discTiltGain;
+        float maxTilt = aerodynamics.hoverMaxTilt;
+        if (!controlUnit.forward && !controlUnit.backward) {
+            controlUnit.xRot = Mth.clamp((float) Math.toDegrees(Math.atan(forward / authority)), -maxTilt, maxTilt);
+        }
+        hoverRoll = controlUnit.left || controlUnit.right ? 0
+                : Mth.clamp((float) Math.toDegrees(Math.atan(right / authority)), -maxTilt, maxTilt);
+        double vy = airSpeed.y - physicsEngine.G;
+        double climbAccel = Double.isNaN(hoverVyO) ? 0 : vy - hoverVyO;
+        hoverVyO = vy;
+        if (!controlUnit.up && !controlUnit.down) {
+            // Collective sets acceleration: velocity-only error => undamped (+-1 block, 5 s period measured).
+            float error = (float) (vy - vyTarget + aerodynamics.hoverClimbLead * climbAccel);
+            float delta = aerodynamics.altitudeHoldDelta(error, aerodynamics.hoverHoldRate);
+            setCollectivePitch(Mth.clamp(getCollectivePitch() + delta * 100f, 0f, 100f));
+        }
+    }
+
+    private float forwardSpeed() {
+        Vec3 forwardDirection = relativeRotDirection(new Vec3(0, 0, 1), false);
+        return (float) Math.max(0, airSpeed.dot(forwardDirection));
+    }
+
+    private float horizontalForwardSpeed() {
+        Vec3 forwardDirection = relativeRotDirection(new Vec3(0, 0, 1), false);
+        Vec3 horizontalAirSpeed = new Vec3(airSpeed.x, 0, airSpeed.z);
+        Vec3 horizontalForwardDirection = new Vec3(forwardDirection.x, 0, forwardDirection.z);
+        if (horizontalForwardDirection.lengthSqr() < 1.0E-6
+                || horizontalAirSpeed.dot(horizontalForwardDirection) <= 0) {
+            return 0;
+        }
+        return (float) (horizontalAirSpeed.length() * pitchYawControlFactor());
+    }
+
+    private float pitchYawControlFactor() {
+        return Mth.clamp((60 - Math.abs(Mth.wrapDegrees(getXRot()))) / 45, 0, 1);
+    }
+
+    private float linearSpeedFactor(float speed, float startSpeed, float fullSpeed) {
+        if (fullSpeed <= startSpeed) {
+            return speed >= fullSpeed ? 1 : 0;
+        }
+        return Mth.clamp((speed - startSpeed) / (fullSpeed - startSpeed), 0, 1);
+    }
+
+    /** FPV/multirotor: attitude owned outside the snapshot. */
+    @Override
+    protected boolean predictable() {
+        return fpvFlight == null && multirotor == null;
+    }
+
+    @Override
+    protected void writePrediction(FriendlyByteBuf buf) {
+        super.writePrediction(buf);
+        buf.writeFloat(getCollectivePitch());
+        buf.writeFloat(xRotSpeed);
+        buf.writeFloat(yRotSpeed);
+        buf.writeFloat(zRotSpeed);
+        buf.writeBoolean(hoverMode);
+        buf.writeBoolean(hoverAnchor != null);
+        if (hoverAnchor != null) {
+            buf.writeDouble(hoverAnchor.x);
+            buf.writeDouble(hoverAnchor.y);
+            buf.writeDouble(hoverAnchor.z);
+        }
+        buf.writeFloat(hoverRoll);
+        buf.writeDouble(hoverVyO);
+        aerodynamics.writePrediction(buf);
+    }
+
+    @Override
+    protected void readPrediction(FriendlyByteBuf buf) {
+        super.readPrediction(buf);
+        setCollectivePitch(buf.readFloat());
+        xRotSpeed = buf.readFloat();
+        yRotSpeed = buf.readFloat();
+        zRotSpeed = buf.readFloat();
+        hoverMode = buf.readBoolean();
+        hoverAnchor = buf.readBoolean() ? new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble()) : null;
+        hoverRoll = buf.readFloat();
+        hoverVyO = buf.readDouble();
+        aerodynamics.readPrediction(buf);
+    }
+
+    public float getCollectivePitch() {
+        return entityData.get(COLLECTIVE_PITCH);
+    }
+
+    public void setCollectivePitch(float value) {
+        collectivePitch = value;
+        this.entityData.set(COLLECTIVE_PITCH, value);
+    }
+
+    public float getPitchInput() {
+        return this.entityData.get(PITCH_INPUT);
+    }
+
+    public void setPitchInput(float value) {
+        this.entityData.set(PITCH_INPUT, value);
+    }
+
+    public float getRollInput() {
+        return this.entityData.get(ROLL_INPUT);
+    }
+
+    public void setRollInput(float value) {
+        this.entityData.set(ROLL_INPUT, value);
+    }
+
+    public boolean isLandingGearUp() {
+        return landingGear != null && landingGear.isOn();
+    }
+
+    public static class FastRopingContext {
+
+        public LivingEntity livingEntity;
+        public RopeUnit rope;
+
+        public boolean isTouchGround() {
+            return livingEntity.level().getBlockState(livingEntity.blockPosition().below()).isSolid() || livingEntity.getVehicle() != null;
+        }
+
+        public void tickDescending() {
+            List<RopeUnit.RopeNode> ropeNodes = rope.getRopeNodes();
+            if (!ropeNodes.isEmpty()) {
+                RopeUnit.RopeNode lastNode = ropeNodes.get(ropeNodes.size() - 1);
+                if (livingEntity.position().y <= lastNode.pos.y) {
+                    applyMovement(lastNode.pos, true);
+                    return;
+                }
+            }
+            for (RopeUnit.RopeNode node : ropeNodes) {
+                if (livingEntity.position().y < node.pos.y) {
+                    applyMovement(node.pos, false);
+                    break;
+                }
+            }
+        }
+
+        private void applyMovement(Vec3 nodePos, boolean lastNode) {
+            Vec3 targetPos = new Vec3(nodePos.x, lastNode ? nodePos.y : livingEntity.position().y - 0.2, nodePos.z);
+            if (livingEntity instanceof ServerPlayer serverPlayer) {
+                serverPlayer.teleportTo(targetPos.x, targetPos.y, targetPos.z);
+            } else {
+                livingEntity.moveTo(targetPos.subtract(livingEntity.getDeltaMovement()));
+            }
+            livingEntity.fallDistance = 0;
+        }
+
+    }
+
+}

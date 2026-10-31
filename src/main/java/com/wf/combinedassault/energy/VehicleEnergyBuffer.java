@@ -1,7 +1,7 @@
 package com.wf.combinedassault.energy;
 
 import net.neoforged.neoforge.energy.IEnergyStorage;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 /**
  * An electric vehicle's battery as Forge Energy.

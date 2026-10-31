@@ -1,9 +1,9 @@
 package com.wf.combinedassault.ballistics.addon.client;
 
-import com.wf.wflib.probe.ProbeAction;
-import com.wf.wflib.probe.ProbeContext;
-import com.wf.wflib.probe.ProbeElement;
-import com.wf.wflib.probe.ProbeInfo;
+import com.wf.wflib.probe.api.ProbeAction;
+import com.wf.wflib.probe.api.ProbeContext;
+import com.wf.wflib.probe.api.ProbeElement;
+import com.wf.wflib.probe.api.ProbeInfo;
 import net.minecraft.ChatFormatting;
 import com.wf.gemrender.ui.Canvas;
 import net.minecraft.network.chat.Component;
@@ -15,7 +15,7 @@ import com.wf.combinedassault.ballistics.addon.AddonFit;
 import com.wf.combinedassault.ballistics.addon.AddonKind;
 import com.wf.combinedassault.ballistics.addon.AddonMount;
 import com.wf.combinedassault.ballistics.addon.AddonMountState;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.ballistics.component.SystemRepair;
 

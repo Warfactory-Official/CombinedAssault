@@ -1,8 +1,8 @@
 package com.wf.combinedassault.indirect.client;
 
 import com.wf.combinedassault.indirect.net.FireRequestPacket;
-import com.wf.wflib.pda.alerts.PdaAlert;
-import com.wf.wflib.pda.client.PdaAlerts;
+import com.wf.wflib.pda.api.PdaAlert;
+import com.wf.wflib.pda.api.client.PdaAlerts;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;

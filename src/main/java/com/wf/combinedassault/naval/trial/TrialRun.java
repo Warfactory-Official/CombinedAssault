@@ -4,7 +4,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.fml.loading.FMLPaths;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.entity.vehicle.ShipVehicle;
+import com.wf.combinedassault.naval.ShipVehicle;
 import com.wf.combinedassault.naval.ShipHydrodynamics;
 
 import java.io.IOException;
@@ -292,12 +292,12 @@ public final class TrialRun {
                     stage.name().toLowerCase(Locale.ROOT),
                     ticks == 0 ? 0 : stageTotals[stage.ordinal()] / 1000.0 / ticks));
         }
-        // SEA (nested in MOVE) and CLIP (charged to the rider) excluded from the sum. Remaining
+        // SEA (nested in MOVE) excluded from the sum. Remaining
         // stages partition a vehicle tick, but counters are level-wide: parked vehicles' own ticks
         // land here too, so only an empty-deck run compares straight to the hull's own tick.
         double probed = 0;
         for (TrialProfile.Stage stage : TrialProfile.Stage.values()) {
-            if (stage == TrialProfile.Stage.SEA || stage == TrialProfile.Stage.CLIP) {
+            if (stage == TrialProfile.Stage.SEA) {
                 continue;
             }
             probed += ticks == 0 ? 0 : stageTotals[stage.ordinal()] / 1000.0 / ticks;

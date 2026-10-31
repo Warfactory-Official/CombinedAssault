@@ -1,4 +1,8 @@
 {
+  "neoforge:conditions": [
+    { "type": "wflib:system", "system": "combinedassault:aircraft" },
+    { "type": "wflib:system", "system": "combinedassault:uav" }
+  ],
   "type": "combinedassault:vehicle_printing",
   "materials": [
     {

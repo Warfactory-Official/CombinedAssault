@@ -1,23 +1,20 @@
 package com.wf.combinedassault.indirect.client;
 
 import net.minecraft.world.level.Level;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import com.wf.combinedassault.api.event.VehicleFireEvent;
+import com.wf.combinedassault.vehicle.event.VehicleFireEvent;
 import com.wf.combinedassault.indirect.GunLaying;
 import com.wf.combinedassault.indirect.IndirectFire;
 import com.wf.combinedassault.indirect.RoundSpec;
 import com.wf.combinedassault.indirect.Trajectory;
 import com.wf.combinedassault.indirect.FireSolution;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 
 /**
  * ETA of fired rounds landing, captured from the laying at the moment of firing, not read live later:
  * re-laying the gun behind a shot must not change its ETA. Game ticks, not millis: pauses with the world.
  */
-@EventBusSubscriber(value = Dist.CLIENT)
 public final class ShotClock {
 
     /** Ticks the board keeps showing an impact after it's due. */
@@ -37,7 +34,7 @@ public final class ShotClock {
             return;
         }
         WeaponUnit unit = event.getWeapon().getWeaponUnit();
-        LocalVehiclePlayer local = LocalVehiclePlayer.instance;
+        LocalVehiclePlayer local = LocalVehiclePlayer.instance();
         if (unit == null || local == null || unit.getOwner() != local.getPlayer()) {
             return;
         }

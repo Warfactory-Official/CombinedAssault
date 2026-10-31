@@ -17,9 +17,9 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.api.custom.sync.SyncDataSerializers;
-import com.wf.combinedassault.custom.part.data.RopeUnitData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.pack.sync.SyncDataSerializers;
+import com.wf.combinedassault.vehicle.part.data.RopeUnitData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.util.ArrayList;
 import java.util.Collections;

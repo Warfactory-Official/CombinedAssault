@@ -17,20 +17,19 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.all.AllFluids;
-import com.wf.combinedassault.compat.gtceu.GregTechCompat;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
+import com.wf.combinedassault.energy.EnergyFluids;
+import com.wf.combinedassault.energy.GregTechCompat;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.combinedassault.energy.VehicleFuelTank;
 import com.wf.combinedassault.energy.VehicleResupply;
-import com.wf.combinedassault.entity.misc.VehiclePart;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.vehicle.pojo.EnergyInfo;
-import com.wf.combinedassault.vehicle.pojo.FuelEntry;
+import com.wf.combinedassault.vehicle.entity.VehiclePart;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.energy.pojo.EnergyInfo;
+import com.wf.combinedassault.energy.pojo.FuelEntry;
 
 import java.util.Optional;
 
@@ -43,7 +42,6 @@ import java.util.Optional;
  * {@link FluidTank} and {@link EnergyStorage} rather than a modded block, because what is being tested is
  * this side of the handshake.
  */
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class VehicleEnergyGameTest {
 
@@ -55,7 +53,7 @@ public class VehicleEnergyGameTest {
     private static final int WINDOW_TICKS = 40;
 
     /** One fluid at a time, and the tank only forgets when it is empty. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void aTankHoldsOneFluidAtATime(GameTestHelper helper) {
         AbstractVehicle vehicle = spawn(helper, 2, fuelInfo(1000f, entry(FUEL_ID, 1f), entry(LAVA_ID, 0.5f)));
         if (vehicle == null) {
@@ -91,7 +89,7 @@ public class VehicleEnergyGameTest {
     }
 
     /** A fluid the pack never listed is not fuel, however much of it you pour. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void anUnlistedFluidIsNotFuel(GameTestHelper helper) {
         AbstractVehicle vehicle = spawn(helper, 2, fuelInfo(1000f, entry(FUEL_ID, 1f)));
         if (vehicle == null) {
@@ -116,7 +114,7 @@ public class VehicleEnergyGameTest {
     }
 
     /** Efficiency is fuel economy: half as efficient burns twice as fast for the same power. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void efficiencyBuysRangeNotPower(GameTestHelper helper) {
         AbstractVehicle vehicle = spawn(helper, 2, fuelInfo(1000f, entry(FUEL_ID, 1f), entry(LAVA_ID, 0.5f)));
         if (vehicle == null) {
@@ -152,7 +150,7 @@ public class VehicleEnergyGameTest {
      * <p>Power is pinned at 100 rather than left to ramp, so the two windows are the same length in
      * engine-tick terms as well as in ticks: {@code tickPower} clamps, so writing 100 holds.
      */
-    @GameTest(template = TEMPLATE, timeoutTicks = 300)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 300)
     public static void aWorseFuelRunsOutSooner(GameTestHelper helper) {
         EnergyInfo info = fuelInfo(1000f, entry(FUEL_ID, 1f), entry(LAVA_ID, 0.5f));
         info.energyConsumptionPerTick = 0.001f;
@@ -215,7 +213,7 @@ public class VehicleEnergyGameTest {
     }
 
     /** An empty tank forgets its fuel, which is the only way to switch without a drain. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 300)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 300)
     public static void runningDryClearsTheFuel(GameTestHelper helper) {
         EnergyInfo info = fuelInfo(1000f, entry(FUEL_ID, 1f), entry(LAVA_ID, 0.5f));
         info.energyConsumptionPerTick = 50f;
@@ -244,7 +242,7 @@ public class VehicleEnergyGameTest {
     }
 
     /** What is in the tank is part of the vehicle, not of the session. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void aTankSurvivesSaveAndReload(GameTestHelper helper) {
         AbstractVehicle vehicle = spawn(helper, 2, fuelInfo(1000f, entry(FUEL_ID, 1f), entry(LAVA_ID, 0.5f)));
         if (vehicle == null) {
@@ -273,7 +271,7 @@ public class VehicleEnergyGameTest {
     }
 
     /** A save from before tanks had a fluid still has fuel in it afterwards. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void aLegacySaveKeepsItsFuel(GameTestHelper helper) {
         AbstractVehicle vehicle = spawn(helper, 2, null);
         if (vehicle == null) {
@@ -303,7 +301,7 @@ public class VehicleEnergyGameTest {
     }
 
     /** Any tank size the pack asks for, in mB, and the gauge is that tank. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void aTankCanBeAnySize(GameTestHelper helper) {
         for (int capacity : new int[]{250, 1000, 40000, 1_000_000}) {
             EnergyInfo info = fuelInfo(1000f, entry(FUEL_ID, 1f));
@@ -334,7 +332,7 @@ public class VehicleEnergyGameTest {
     }
 
     /** Electric vehicles take a charge, at the rate they declared, and refuse a jerry can. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void anElectricVehicleTakesChargeNotFuel(GameTestHelper helper) {
         AbstractVehicle vehicle = spawn(helper, 2, electricInfo(1f, 20000, 1000));
         if (vehicle == null) {
@@ -372,7 +370,7 @@ public class VehicleEnergyGameTest {
     }
 
     /** Parked over a tank, a fuel vehicle fills itself, but never with the wrong fluid. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void parkingOverATankRefuels(GameTestHelper helper) {
         AbstractVehicle vehicle = spawn(helper, 2, fuelInfo(4000f, entry(FUEL_ID, 1f), entry(LAVA_ID, 0.5f)));
         if (vehicle == null) {
@@ -409,7 +407,7 @@ public class VehicleEnergyGameTest {
     }
 
     /** Parked over a charger, an electric vehicle fills itself, and stops when it is full. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void parkingOverAChargerCharges(GameTestHelper helper) {
         AbstractVehicle vehicle = spawn(helper, 2, electricInfo(1f, 20000, 1000));
         if (vehicle == null) {
@@ -441,7 +439,7 @@ public class VehicleEnergyGameTest {
     }
 
     /** A fuel vehicle is not a battery, and an electric one is not a fuel tank. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void eachTypeOffersOnlyItsOwnHandler(GameTestHelper helper) {
         AbstractVehicle burner = spawn(helper, 2, fuelInfo(1000f, entry(FUEL_ID, 1f)));
         AbstractVehicle battery = spawn(helper, 2, 6, electricInfo(1f, 20000, 1000));
@@ -464,7 +462,7 @@ public class VehicleEnergyGameTest {
     }
 
     /** Without GregTech the EU bridge answers nothing rather than exploding. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void gregTechAbsentIsSilent(GameTestHelper helper) {
         AbstractVehicle vehicle = spawn(helper, 2, electricInfo(1f, 20000, 1000));
         if (vehicle == null) {
@@ -493,7 +491,7 @@ public class VehicleEnergyGameTest {
     }
 
     /** Fuel is weight the vehicle burns off; charge is weight it carries the whole way. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void chargeWeighsTheSameFullOrEmpty(GameTestHelper helper) {
         AbstractVehicle burner = spawn(helper, 2, fuelInfo(4000f, entry(FUEL_ID, 1f)));
         AbstractVehicle battery = spawn(helper, 2, 6, electricInfo(4f, 20000, 100000));
@@ -520,7 +518,7 @@ public class VehicleEnergyGameTest {
     }
 
     /** The tank and the battery are capabilities on the entity, not something only this mod can see. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void theTankIsVisibleAsACapability(GameTestHelper helper) {
         AbstractVehicle burner = spawn(helper, 2, fuelInfo(1000f, entry(FUEL_ID, 1f)));
         AbstractVehicle battery = spawn(helper, 2, 6, electricInfo(1f, 20000, 1000));
@@ -559,7 +557,7 @@ public class VehicleEnergyGameTest {
     }
 
     /** Capabilities register per type => vehicle type missing from {@code AllEntities.vehicleTypes} answers none. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 20)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 20)
     public static void everyVehicleTypeOffersATank(GameTestHelper helper) {
         for (EntityType<?> type : BuiltInRegistries.ENTITY_TYPE) {
             if (!BuiltInRegistries.ENTITY_TYPE.getKey(type).getNamespace().equals(CombinedAssault.MOD_ID)
@@ -598,7 +596,7 @@ public class VehicleEnergyGameTest {
     }
 
     private static FluidStack fuel(int amount) {
-        return new FluidStack(AllFluids.FUEL_SOURCE.get(), amount);
+        return new FluidStack(EnergyFluids.FUEL_SOURCE.get(), amount);
     }
 
     private static FluidStack lava(int amount) {

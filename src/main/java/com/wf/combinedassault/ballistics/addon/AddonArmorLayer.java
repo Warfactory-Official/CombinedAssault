@@ -7,10 +7,10 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.util.VectorUtil;
-import com.wf.combinedassault.vehicle.structure.VehicleCubeGroup;
-import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 
 import java.util.ArrayList;
 import java.util.HashMap;

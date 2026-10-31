@@ -1,6 +1,6 @@
 package com.wf.combinedassault.indirect.client;
 
-import com.wf.combinedassault.client.hud.HudCache;
+import com.wf.combinedassault.hud.HudCache;
 import com.wf.combinedassault.indirect.BallisticSolver;
 import com.wf.combinedassault.indirect.FireArc;
 import com.wf.combinedassault.indirect.FireMission;
@@ -10,9 +10,9 @@ import com.wf.combinedassault.indirect.IndirectFire;
 import com.wf.combinedassault.indirect.LayingMode;
 import com.wf.combinedassault.indirect.ReachBand;
 import com.wf.combinedassault.indirect.RoundSpec;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.wflib.ui.Signals;
-import com.wf.wflib.ui.Subject;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.wflib.ui.api.Signals;
+import com.wf.wflib.ui.api.Subject;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;

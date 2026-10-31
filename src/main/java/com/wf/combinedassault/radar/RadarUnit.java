@@ -1,0 +1,313 @@
+package com.wf.combinedassault.radar;
+
+import com.wf.wflib.missile.api.client.SimGhostEntities;
+import com.wf.wflib.sim.api.SimTargets;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.network.PacketDistributor;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.radar.message.ClientRadarAction;
+import com.wf.combinedassault.ballistics.message.ServerVehicleWarn;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.pojo.ReconRole;
+import com.wf.combinedassault.vehicle.pojo.WarnType;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
+import com.wf.combinedassault.weapon.seeker.Radar;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import com.wf.combinedassault.vehicle.part.RotatableUnit;
+
+public class RadarUnit extends RotatableUnit<RadarUnitData> {
+
+    private Vec3 radarOffset = Vec3.ZERO;
+    private String radarType;
+    private float scanSectorAngle;
+    private float maxScanDistance;
+    private final HashMap<Integer, DetectedObject> detectedObjects = new HashMap<>();
+    private Entity lockedEntity;
+    private boolean yRotAdd = true;
+    private boolean xRotAdd = true;
+    private boolean on;
+    private final ThreadPoolExecutor radarExecutor = new ThreadPoolExecutor(
+            4,
+            4,
+            60,
+            TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(100),
+            Executors.defaultThreadFactory(),
+            new ThreadPoolExecutor.AbortPolicy()
+    );
+
+    public RadarUnit(int index, AbstractVehicle vehicle, RadarUnitData data) {
+        super(index, vehicle, data);
+        this.radarType = data.getRadarType();
+        this.scanSectorAngle = data.getScanSectorAngle();
+        this.maxScanDistance = data.getMaxScanDistance();
+        this.on = true;
+    }
+
+    @Override
+    public void buildStructure(Map<VehicleCubeGroup, VehicleCubeGroup> vehicleCubeGroupCopy) {
+        super.buildStructure(vehicleCubeGroupCopy);
+        if (structureGroup != null) {
+            this.radarOffset = structureGroup.pivotOffset;
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        tickTargets();
+        tickLock();
+        if (vehicle.hasPower() && on) {
+            if (vehicle.level().isClientSide()) {
+                tickDetect();
+            } else {
+                tickScan();
+            }
+        } else {
+            detectedObjects.clear();
+            // Stop/no-power: drop off the sensor net now, don't wait on its own timeout eviction.
+            ReconBridge.dropSensor(this);
+        }
+    }
+
+    protected void tickRot() {
+        if (!vehicle.level().isClientSide()) {
+            if (lockedEntity != null) {
+                Vec3 radarPos = worldPosition(radarOffset);
+                Vec2 rot = worldVecToLocalRot(lockedEntity.position().subtract(radarPos));
+                if (yRotAdd) {
+                    yAimRot = rot.y + yRotSpeed / 2;
+                } else {
+                    yAimRot = rot.y - yRotSpeed / 2;
+                }
+                if (Math.abs(yAimRot - yRot) < yRotSpeed) {
+                    yRotAdd = !yRotAdd;
+                }
+            } else {
+                if (yAimRot >= yRotMax || yAimRot <= yRotMin) {
+                    yRotAdd = !yRotAdd;
+                }
+                if (xAimRot >= xRotMax || xAimRot <= xRotMin) {
+                    xRotAdd = !xRotAdd;
+                }
+                yAimRot = Mth.clamp(Mth.wrapDegrees(yAimRot + (yRotAdd ? yRotSpeed : -yRotSpeed)), yRotMin, yRotMax);
+                xAimRot = Mth.clamp(Mth.wrapDegrees(xAimRot + (xRotAdd ? xRotSpeed : -xRotSpeed)), xRotMin, xRotMax);
+            }
+        }
+        super.tickRot();
+    }
+
+    public void tickTargets() {
+        long timeNow = System.currentTimeMillis();
+        float range = Math.min(360, yRotMax - yRotMin);
+        long life = Math.max((long) (range / yRotSpeed / 20 * 1000L) * 2, 100);
+        detectedObjects.values().removeIf(detectedObject -> detectedObject.detectedTime + life < timeNow);
+    }
+
+    public void tickScan() {
+        // WFLib sensor net joined: shared track picture supersedes this unit's own scan.
+        if (ReconBridge.tickSensor(this)) {
+            return;
+        }
+        if (vehicle.tickCount % 20 == 0) {
+            radarExecutor.execute(() -> {
+                List<Entity> scannedEntities = Radar.scanTargets(vehicle, worldRadarPosition(), maxScanDistance, entityPos -> {
+                    Vec2 aimRot = aimRot(entityPos);
+                    return !(aimRot.y < yRotMin) && !(aimRot.y > yRotMax);
+                });
+                scannedEntities.forEach(scannedEntity -> {
+                    if (scannedEntity instanceof AbstractVehicle toVehicle) {
+                        ServerVehicleWarn serverVehicleWarn = new ServerVehicleWarn();
+                        serverVehicleWarn.fromEntityId = this.vehicle.getId();
+                        serverVehicleWarn.toEntityId = toVehicle.getId();
+                        serverVehicleWarn.warnType = WarnType.RADAR_SEARCH;
+                        serverVehicleWarn.info = getRadarType();
+                        for (Entity entity : toVehicle.getPassengers()) {
+                            if (entity instanceof ServerPlayer player) {
+                                PacketDistributor.sendToPlayer(player, serverVehicleWarn);
+                            }
+                        }
+                    }
+                });
+            });
+        }
+    }
+
+    public void tickDetect() {
+        if (parentPartUnit == null) {
+            return;
+        }
+        if (LocalVehiclePlayer.instance().getPlayer() != parentPartUnit.getOwner()) {
+            return;
+        }
+        List<Entity> entities = Radar.detectTargets(vehicle, worldRadarPosition(), maxScanDistance, isAntiGround(), entityPos -> {
+            Vec2 aimRot = aimRot(entityPos);
+            return !(aimRot.y < yRotMin) && !(aimRot.y > yRotMax)
+                    && !(Math.abs(aimRot.y - yRot) > yRotSpeed / 2)
+                    && !(Math.abs(aimRot.x - xRot) > scanSectorAngle / 2);
+        });
+        entities.forEach(this::detect);
+        for (DetectedObject detectedObject : detectedObjects.values()) {
+            ClientRadarAction clientRadarAction = new ClientRadarAction();
+            clientRadarAction.action = ClientRadarAction.Action.DETECT;
+            clientRadarAction.toEntityId = detectedObject.entity.getId();
+            PacketDistributor.sendToServer(clientRadarAction);
+        }
+    }
+
+    public void detect(Entity entity) {
+        DetectedObject detectedObject = detectedObjects.get(entity.getId());
+        if (detectedObject != null) {
+            detectedObject.entity = entity;
+        }
+        AABB aabb = entity.getBoundingBox();
+        Vec3 detectedPosition = aabb.getCenter();
+        long timeNow = System.currentTimeMillis();
+        if (detectedObject == null) {
+            detectedObject = new DetectedObject();
+            detectedObject.entity = entity;
+            detectedObject.detectedPosition = detectedPosition;
+            detectedObject.detectedTime = timeNow;
+            detectedObjects.put(entity.getId(), detectedObject);
+        } else {
+            detectedObject.detectedPosition = detectedPosition;
+            detectedObject.detectedTime = timeNow;
+        }
+    }
+
+    public void tickLock() {
+        if (vehicle.level().isClientSide()) {
+            if (lockedEntity != null && SimGhostEntities.current(lockedEntity) != lockedEntity) {
+                setLockedEntity(SimGhostEntities.current(lockedEntity));
+            }
+            if (lockedEntity != null) {
+                // Decoys can spoof the lock here.
+                Entity checkEntity = Radar.checkTarget(vehicle, detectedObjects.values().stream()
+                        .map(detectedObject -> detectedObject.entity).toList(), lockedEntity);
+                if (checkEntity != lockedEntity) {
+                    setLockedEntity(checkEntity);
+                }
+                // Id match, instance mismatch (entity re-created on reload): follow the current instance.
+                if (lockedEntity != null) {
+                    RadarUnit.DetectedObject detectedObject = getDetectedEntities().get(lockedEntity.getId());
+                    if (detectedObject != null && detectedObject.entity != lockedEntity) {
+                        setLockedEntity(detectedObject.entity);
+                    }
+                }
+            }
+        } else {
+            if (lockedEntity != null && !lockedEntity.isAlive()) {
+                setLockedEntity(null);
+            }
+            if (lockedEntity != null) {
+                SimTargets.keep(lockedEntity);
+            }
+        }
+    }
+
+    public void toggle(Boolean on) {
+        if (on == null) {
+            this.on = !this.on;
+        } else {
+            this.on = on;
+        }
+        if (!this.on) {
+            setLockedEntity(null);
+        }
+    }
+
+    public HashMap<Integer, DetectedObject> getDetectedEntities() {
+        return detectedObjects;
+    }
+
+    public Vec3 worldRadarPosition() {
+        return worldPosition(radarOffset);
+    }
+
+    public String getRadarType() {
+        return radarType;
+    }
+
+    public float getScanSectorAngle() {
+        return scanSectorAngle;
+    }
+
+    public float getMaxScanDistance() {
+        return maxScanDistance;
+    }
+
+    public Entity getLockedEntity() {
+        return lockedEntity;
+    }
+
+    public void setLockedEntity(Entity lockedEntity) {
+        this.lockedEntity = lockedEntity;
+        if (lockedEntity == null) {
+            yRotAdd = true;
+            xRotAdd = true;
+        }
+        if (vehicle.level().isClientSide()) {
+            ClientRadarAction clientRadarAction = new ClientRadarAction();
+            clientRadarAction.action = ClientRadarAction.Action.LOCK;
+            clientRadarAction.toEntityId = lockedEntity == null ? -1 : lockedEntity.getId();
+            PacketDistributor.sendToServer(clientRadarAction);
+        }
+    }
+
+    public boolean isAntiGround() {
+        return data.isAntiGround();
+    }
+
+    public boolean isUiHide() {
+        return data.isUiHide();
+    }
+
+    /** Role on a shared WFLib sensor net; no net present => ignored, normal scan. */
+    public ReconRole getReconRole() {
+        return data.getReconRole();
+    }
+
+    public boolean isOn() {
+        return on;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    protected void tickSound() {}
+
+    public static class DetectedObject {
+
+        public Entity entity;
+        public Vec3 detectedPosition;
+        public Long detectedTime;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            DetectedObject that = (DetectedObject) o;
+            return Objects.equals(entity, that.entity);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(entity);
+        }
+
+    }
+
+}

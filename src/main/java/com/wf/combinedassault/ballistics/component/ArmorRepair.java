@@ -1,9 +1,9 @@
 package com.wf.combinedassault.ballistics.component;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.ballistics.ArmorRegions;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.wflib.probe.ProbeActions;
+import com.wf.wflib.armor.api.hull.HullWear;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.probe.api.ProbeActions;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -31,7 +31,7 @@ public final class ArmorRepair {
         ProbeActions.registerTimedEntity(ACTION, new ProbeActions.TimedEntity() {
             @Override
             public int ticks(ServerPlayer player, Entity entity, int arg) {
-                ArmorRegions.Face face = face(entity, arg);
+                HullWear.Face face = face(entity, arg);
                 if (face == null) {
                     return 0;
                 }
@@ -45,15 +45,15 @@ public final class ArmorRepair {
 
             @Override
             public boolean holds(ServerPlayer player, Entity entity, int arg) {
-                ArmorRegions.Face face = face(entity, arg);
+                HullWear.Face face = face(entity, arg);
                 return face != null && refusal(player, (AbstractVehicle) entity, face) == null;
             }
 
             @Override
             public boolean perform(ServerPlayer player, Entity entity, int arg) {
-                ArmorRegions.Face face = face(entity, arg);
+                HullWear.Face face = face(entity, arg);
                 if (face == null || refusal(player, (AbstractVehicle) entity, face) != null
-                        || !((AbstractVehicle) entity).armorRegions().repair(face, BAND)) {
+                        || !((AbstractVehicle) entity).hullWear().repair(face, BAND)) {
                     return false;
                 }
                 if (!player.getAbilities().instabuild) {
@@ -68,15 +68,15 @@ public final class ArmorRepair {
     }
 
     @Nullable
-    private static ArmorRegions.Face face(Entity entity, int arg) {
+    private static HullWear.Face face(Entity entity, int arg) {
         return entity instanceof AbstractVehicle vehicle && !vehicle.isDestroyed() && arg >= 0
-                && arg < ArmorRegions.Face.VALUES.length ? ArmorRegions.Face.VALUES[arg] : null;
+                && arg < HullWear.Face.VALUES.length ? HullWear.Face.VALUES[arg] : null;
     }
 
     /** Null = can start. Same answer for the probe row (client) and the handler (server). */
     @Nullable
-    public static Component refusal(Player player, AbstractVehicle vehicle, ArmorRegions.Face face) {
-        if (!vehicle.armorRegions().worn(face)) {
+    public static Component refusal(Player player, AbstractVehicle vehicle, HullWear.Face face) {
+        if (!vehicle.hullWear().worn(face)) {
             return Component.translatable(KEY + "intact");
         }
         if (!player.getAbilities().instabuild && SystemRepair.tool(player, ComponentKind.HULL).isEmpty()) {

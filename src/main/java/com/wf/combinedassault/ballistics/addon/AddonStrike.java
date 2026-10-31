@@ -1,8 +1,8 @@
 package com.wf.combinedassault.ballistics.addon;
 
-import com.wf.wflib.aef.ExplosionAEF;
-import com.wf.wflib.api.Threat;
-import com.wf.wflib.api.ThreatKind;
+import com.wf.wflib.explosion.api.ExplosionAEF;
+import com.wf.wflib.damage.api.Threat;
+import com.wf.wflib.damage.api.ThreatKind;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -14,9 +14,8 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.util.VectorUtil;
-import com.wf.wflib.util.OBB;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.geom.api.OBB;
 
 import java.util.List;
 
@@ -72,7 +71,7 @@ public final class AddonStrike {
         }
         Vec3 direction = velocity.scale(1 / speed);
         Vec3 end = start.add(direction.scale(speed + HULL_REACH));
-        VectorUtil.HitOBB hull = VectorUtil.hitOBB(vehicle.getOBBs(), start, end);
+        OBB.SegmentHit hull = OBB.first(vehicle.getOBBs(), start, end);
         double hullFraction = hull == null ? 1.0
                 : (hull.distance() + AddonArmorLayer.SKIN_INSET) / (speed + HULL_REACH);
         List<AddonArmorLayer.Hit> hits = layer.trace(vehicle, start, end, true);
@@ -155,7 +154,7 @@ public final class AddonStrike {
                     burst = hit.point();
                     scale *= slat.penetrationScale();
                     if (hull != null) {
-                        scale *= AddonPhysics.standoffScale(threat.kind(), hull.hitPos().distanceTo(burst));
+                        scale *= AddonPhysics.standoffScale(threat.kind(), hull.point().distanceTo(burst));
                     }
                 }
             }
@@ -164,7 +163,7 @@ public final class AddonStrike {
             }
         }
 
-        Vec3 hullPoint = hull == null ? null : hull.hitPos();
+        Vec3 hullPoint = hull == null ? null : hull.point();
         float damageScale = threat.penetrationMm() > 0 ? 1.0f : scale;
         Result result;
         if (burst != null) {
@@ -247,7 +246,7 @@ public final class AddonStrike {
                     || shape != null && !shape.inBlastShape(centre.add(dx, dy, dz))) {
                 continue;
             }
-            VectorUtil.HitOBB hull = VectorUtil.hitOBB(hullBoxes, centre, end);
+            OBB.SegmentHit hull = OBB.first(hullBoxes, centre, end);
             double hullFraction = hull == null ? 1.0 : (hull.distance() + AddonArmorLayer.SKIN_INSET) / reach;
             float power = 1;
             for (AddonArmorLayer.Hit hit : layer.trace(vehicle, centre, end, true, poses)) {

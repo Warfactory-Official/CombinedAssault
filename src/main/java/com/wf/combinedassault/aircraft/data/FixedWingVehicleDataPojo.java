@@ -1,0 +1,96 @@
+package com.wf.combinedassault.aircraft.data;
+
+import com.google.gson.annotations.SerializedName;
+import net.minecraft.world.phys.Vec3;
+import com.wf.combinedassault.aircraft.pojo.AfterburnerOffset;
+
+import java.util.ArrayList;
+import java.util.List;
+import com.wf.combinedassault.vehicle.data.BaseVehicleDataPojo;
+
+public class FixedWingVehicleDataPojo extends BaseVehicleDataPojo {
+
+    @SerializedName("attributes")
+    public FixedWingAttributes attributes;
+
+    @SerializedName("landing_gear_part_id")
+    public String landingGearPartId;
+
+    @SerializedName("airbrake_part_id")
+    public String airbrakePartId;
+
+    @SerializedName("thrust_part_id")
+    public String thrustPartId;
+
+    public static class FixedWingAttributes {
+
+        @SerializedName("thrust")
+        public float thrust = 8000f;
+
+        @SerializedName("thrust_k")
+        public float thrustK = 1.5f;
+
+        @SerializedName("ceiling")
+        public float ceiling = 512;
+
+        @SerializedName("x_rot_input_step")
+        public float xRotInputStep = 0.2f;
+
+        @SerializedName("y_rot_input_step")
+        public float yRotInputStep = 0.5f;
+
+        @SerializedName("z_rot_input_step")
+        public float zRotInputStep = 0.2f;
+
+        @SerializedName("air_drag_k_min")
+        public float airDragKMin = 2f;
+
+        @SerializedName("air_drag_k_max")
+        public float airDragKMax = 8f;
+
+        @SerializedName("lift_to_drag_k")
+        public float liftToDragK = 6;
+
+        @SerializedName("angle_of_attack_min")
+        public float angleOfAttackMin = -10f;
+
+        @SerializedName("angle_of_attack_max")
+        public float angleOfAttackMax = 25f;
+
+        @SerializedName("x_rot_input_drag_k")
+        public float xRotInputDragK = 1f;
+
+        @SerializedName("y_rot_input_drag_k")
+        public float yRotInputDragK = 1f / 4;
+
+        @SerializedName("z_rot_input_drag_k")
+        public float zRotInputDragK = 1f / 8;
+
+        @SerializedName("turn_rate_by_speed")
+        public float turnRateBySpeed = 1f / 2.5f;
+
+        @SerializedName("x_turn_rate")
+        public float xTurnRate = 2;
+
+        @SerializedName("y_turn_rate")
+        public float yTurnRate = 3;
+
+        @SerializedName("z_turn_rate")
+        public float zTurnRate = 8;
+
+        /** Hover pitch/roll authority from reaction controls, x/z_turn_rate share at full power, nozzles vertical. */
+        @SerializedName("vtol_turn_rate")
+        public float vtolTurnRate = 0;
+
+        @SerializedName("vortex_offsets")
+        public List<Vec3> vortexOffsets = new ArrayList<>();
+
+        @SerializedName("afterburner_offsets")
+        public List<AfterburnerOffset> afterburnerOffsets = new ArrayList<>();
+
+        @SerializedName("aerobatic_smoke_offsets")
+        public List<Vec3> aerobaticSmokeOffsets = new ArrayList<>();
+
+    }
+
+}

@@ -5,7 +5,6 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.CombinedAssault;
@@ -13,23 +12,22 @@ import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.ballistics.component.HullComponents;
 import com.wf.combinedassault.ballistics.component.VehicleRotors;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.vehicle.hit.HitMesh;
-import com.wf.combinedassault.vehicle.hit.VehicleHits;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.ballistics.hit.HitMesh;
+import com.wf.combinedassault.ballistics.hit.VehicleHits;
 
 import java.util.List;
 import java.util.Optional;
 
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class RotorSystemsGameTest {
 
     private static final String TEMPLATE = "empty";
     private static final ResourceLocation[] HELIS = {CombinedAssault.modLocation("ah64d"), CombinedAssault.modLocation("ah_6")};
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void attackHelicoptersHaveRotorSystems(GameTestHelper helper) {
         for (ResourceLocation id : HELIS) {
             AbstractVehicle heli = spawn(helper, id);
@@ -53,7 +51,7 @@ public class RotorSystemsGameTest {
     }
 
     /** Unpowered Ka-52 from 25 blocks: free fall (no rotor, no drag cap) => ~22 m/s into the ground. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void aDeadHelicopterFallingIsWrecked(GameTestHelper helper) {
         ResourceLocation id = CombinedAssault.modLocation("ka52");
         BlockPos at = helper.absolutePos(new BlockPos(1, 27, 1));
@@ -75,7 +73,7 @@ public class RotorSystemsGameTest {
     }
 
     /** Blade tip from above, tail disc from its own side: the surface trace DamageSystem routes by. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void aShotThroughADiscFindsThatRotor(GameTestHelper helper) {
         for (ResourceLocation id : HELIS) {
             AbstractVehicle heli = spawn(helper, id);
@@ -108,7 +106,7 @@ public class RotorSystemsGameTest {
         return hit == null ? "nothing" : hits.model().nodes().get(hit.node()).mesh().name();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void brokenRotorsCutLiftAndAntiTorque(GameTestHelper helper) {
         AbstractVehicle heli = spawn(helper, HELIS[0]);
         if (heli == null) {

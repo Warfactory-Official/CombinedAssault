@@ -1,8 +1,8 @@
 package com.wf.combinedassault.vehicle.part.client;
 
+import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.airdefense.client.AirDefenseProbe;
-import com.wf.combinedassault.all.AllItems;
-import com.wf.combinedassault.ballistics.ArmorRegions;
+import com.wf.wflib.armor.api.hull.HullWear;
 import com.wf.combinedassault.ballistics.addon.AddonActions;
 import com.wf.combinedassault.ballistics.addon.AddonArmorLayer;
 import com.wf.combinedassault.ballistics.addon.AddonFit;
@@ -16,37 +16,37 @@ import com.wf.combinedassault.ballistics.component.VehicleSystems;
 import com.wf.combinedassault.ballistics.component.client.SystemsHud;
 import com.wf.combinedassault.ballistics.component.client.SystemsProbe;
 import com.wf.combinedassault.energy.VehicleBattery;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.util.VectorUtil;
-import com.wf.combinedassault.vehicle.hit.VehicleHits;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
+import com.wf.combinedassault.ballistics.hit.VehicleHits;
 import com.wf.combinedassault.vehicle.part.AccessActions;
-import com.wf.combinedassault.vehicle.part.BarrelCharge;
-import com.wf.combinedassault.vehicle.part.BatteryActions;
+import com.wf.combinedassault.weapon.part.BarrelCharge;
+import com.wf.combinedassault.weapon.part.BatteryActions;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
-import com.wf.combinedassault.vehicle.part.WeaponActions;
-import com.wf.combinedassault.vehicle.part.StationActions;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.combinedassault.vehicle.weapon.AbstractVehicleWeapon;
-import com.wf.combinedassault.vehicle.structure.VehicleCubeGroup;
-import com.wf.combinedassault.client.model.VehicleModelInstance;
-import com.wf.combinedassault.client.render.entity.vehicle.VehicleRender;
-import com.wf.combinedassault.vehicle.loadout.Loadouts;
-import com.wf.combinedassault.vehicle.part.MissileHolderUnit;
-import com.wf.combinedassault.vehicle.loadout.client.LoadoutProbe;
-import com.wf.combinedassault.vehicle.hardware.Hardpoints;
-import com.wf.combinedassault.vehicle.hardware.client.HardpointProbe;
-import com.wf.combinedassault.vehicle.pojo.LoadoutInfo;
-import com.wf.combinedassault.vehicle.pojo.Bolt;
-import com.wf.combinedassault.vehicle.structure.VehicleCubeOBB;
-import com.wf.wflib.util.OBB;
-import com.wf.wflib.probe.ProbeAction;
-import com.wf.wflib.probe.ProbeContext;
-import com.wf.wflib.probe.ProbeElement;
-import com.wf.wflib.probe.ProbeInfo;
-import com.wf.wflib.probe.ProbeInventory;
-import com.wf.wflib.probe.ProbeNode;
-import com.wf.wflib.probe.ProbeRegistry;
+import com.wf.combinedassault.weapon.part.WeaponActions;
+import com.wf.combinedassault.weapon.part.StationActions;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
+import com.wf.combinedassault.render.model.VehicleModelInstance;
+import com.wf.combinedassault.render.entity.vehicle.VehicleRender;
+import com.wf.combinedassault.weapon.kit.Loadouts;
+import com.wf.combinedassault.weapon.part.MissileHolderUnit;
+import com.wf.combinedassault.weapon.client.LoadoutProbe;
+import com.wf.combinedassault.weapon.kit.Hardpoints;
+import com.wf.combinedassault.weapon.client.HardpointProbe;
+import com.wf.combinedassault.weapon.pojo.LoadoutInfo;
+import com.wf.combinedassault.weapon.pojo.Bolt;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.wflib.geom.api.OBB;
+import com.wf.wflib.probe.api.ProbeAction;
+import com.wf.wflib.probe.api.ProbeContext;
+import com.wf.wflib.probe.api.ProbeElement;
+import com.wf.wflib.probe.api.ProbeInfo;
+import com.wf.wflib.probe.api.ProbeInventory;
+import com.wf.wflib.probe.api.ProbeNode;
+import com.wf.wflib.probe.api.ProbeProviders;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -58,6 +58,7 @@ import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.wf.combinedassault.vehicle.VehicleContent;
 
 /**
  * Probe nodes on a vehicle, on foot: doors, free seats, hull (storage, systems grid, air defence, repairs without a place),
@@ -82,8 +83,8 @@ public final class VehicleNodes {
     }
 
     public static void register() {
-        ProbeRegistry.addEntityNodes(entity -> entity instanceof AbstractVehicle, VehicleNodes::nodes,
-                ProbeRegistry.CAPABILITY_PRIORITY);
+        ProbeProviders.addEntityNodes(CombinedAssault.modLocation("vehicle_nodes"), entity -> entity instanceof AbstractVehicle, VehicleNodes::nodes,
+                ProbeProviders.CAPABILITY_PRIORITY);
     }
 
     private static void nodes(List<ProbeNode> out, ProbeContext ctx, Entity entity) {
@@ -98,7 +99,7 @@ public final class VehicleNodes {
         boolean aimed = ctx.hit() instanceof EntityHitResult hit && hit.getEntity() == vehicle;
         PartUnit<?> looked = aimed ? VectorUtil.pickPartUnit(player, vehicle) : null;
         VehicleHits hits = vehicle.hits();
-        boolean tool = ctx.carrying(AllItems.MODDING_TOOL.get());
+        boolean tool = ctx.carrying(VehicleContent.MODDING_TOOL.get());
         int from = out.size();
 
         for (PartUnit<?> part : vehicle.getPartUnits()) {
@@ -304,12 +305,13 @@ public final class VehicleNodes {
         out.add(new ProbeNode("hull", vehicle.getBoundingBox().getCenter().add(drift), info -> {
             info.title(vehicle.getDisplayName());
             ItemStack held = ctx.player().getMainHandItem();
-            // UAV + item it takes: use falls through to the strap / missile load.
-            if (vehicle.hasContainer() && !(vehicle.uav && (Loadouts.strapIndex(vehicle, held) >= 0
-                    || MissileHolderUnit.couldLoad(vehicle, held)))) {
+            // UAV + item it takes: no hull action => use falls through to the strap / missile load.
+            boolean takesHeld = vehicle.uav && (Loadouts.strapIndex(vehicle, held) >= 0
+                    || MissileHolderUnit.couldLoad(vehicle, held));
+            if (vehicle.hasContainer() && !takesHeld) {
                 info.action(ProbeAction.of(AccessActions.STORAGE, 0, Component.translatable(KEY + "storage")));
             }
-            if (vehicle.pickup && !vehicle.isDestroyed()) {
+            if (vehicle.pickup && !vehicle.isDestroyed() && !takesHeld) {
                 ProbeAction pickUp = ProbeAction.of(AccessActions.PICK_UP, 0, Component.translatable(KEY + "pick_up"));
                 info.action(vehicle.isVehicle() || vehicle.isPassenger()
                         ? pickUp.unavailable(Component.translatable(KEY + "pick_up.occupied")) : pickUp);
@@ -331,11 +333,11 @@ public final class VehicleNodes {
         if (vehicle.armorProfile == null || !vehicle.armorProfile.isDefined() || main == null) {
             return;
         }
-        ArmorRegions regions = vehicle.armorRegions();
+        HullWear regions = vehicle.hullWear();
         OBB box = main.obb();
         Vector3f[] axes = box.getAxes();
         Vector3f ext = box.extents();
-        for (ArmorRegions.Face face : ArmorRegions.Face.VALUES) {
+        for (HullWear.Face face : HullWear.Face.VALUES) {
             if (!regions.worn(face) || vehicle.armorProfile.nominal(face.profile) <= 0) {
                 continue;
             }
@@ -344,8 +346,8 @@ public final class VehicleNodes {
                 case TOP, BOTTOM -> 1;
                 case FRONT, REAR -> 2;
             };
-            float sign = face == ArmorRegions.Face.REAR || face == ArmorRegions.Face.RIGHT
-                    || face == ArmorRegions.Face.BOTTOM ? -1 : 1;
+            float sign = face == HullWear.Face.REAR || face == HullWear.Face.RIGHT
+                    || face == HullWear.Face.BOTTOM ? -1 : 1;
             Vec3 normal = new Vec3(new Vector3f(axes[axis]).mul(sign));
             Vec3 at = box.centerVec().add(normal.scale(ext.get(axis)));
             float integrity = regions.integrity(face);
@@ -408,7 +410,7 @@ public final class VehicleNodes {
 
     private static void weapon(ProbeInfo info, WeaponUnit unit) {
         info.title(PartNames.name(unit));
-        ProbeElement icon = new ProbeElement.Icon(new ItemStack(AllItems.MODDING_TOOL.get()), 10, false);
+        ProbeElement icon = new ProbeElement.Icon(new ItemStack(VehicleContent.MODDING_TOOL.get()), 10, false);
         int current = unit.getCurrentWeaponIndex();
         for (int i = 0; i < unit.weapons.size(); i++) {
             Component name = unit.proxyWeapon(unit.weapons.get(i)).getDisplayName();

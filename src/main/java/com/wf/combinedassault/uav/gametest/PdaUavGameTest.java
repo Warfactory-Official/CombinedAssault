@@ -2,16 +2,15 @@ package com.wf.combinedassault.uav.gametest;
 
 import com.mojang.authlib.GameProfile;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.custom.vehicle.BaseVehicleData;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.indirect.CallForFire;
 import com.wf.combinedassault.uav.UavTablet;
-import com.wf.wflib.drone.cam.CameraNet;
-import com.wf.wflib.drone.cam.FeedTarget;
-import com.wf.wflib.pda.drone.DroneStatusPacket;
-import com.wf.wflib.pda.drone.PdaDrones;
-import com.wf.wflib.item.ModItems;
+import com.wf.wflib.cam.api.CameraNet;
+import com.wf.wflib.cam.api.FeedTarget;
+import com.wf.wflib.drone.api.DroneStatus;
+import com.wf.wflib.drone.api.PdaDrones;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -21,22 +20,21 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayer;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.UUID;
+import com.wf.wflib.pda.api.PdaContent;
 
 /** wflib PDA as UAV controller: links + feed rights; call for fire refused without uplink. */
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class PdaUavGameTest {
     private static final String TEMPLATE = "empty";
     private static final ResourceLocation DRONE = CombinedAssault.modLocation("mavic");
 
     /** Vehicle data (incl. {@code uav}) applies after spawn => checked a few ticks later. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void pdaLinksAUavAndEntitlesItsFeed(GameTestHelper helper) {
         AbstractVehicle drone = spawnDrone(helper);
         if (drone == null) {
@@ -55,7 +53,7 @@ public class PdaUavGameTest {
                 helper.fail("the UAV is not in the PDA's UAV links: " + UavTablet.channels(pda).targets());
                 return;
             }
-            DroneStatusPacket.Entry entry = PdaDrones.status(operator).drones().get(0);
+            DroneStatus.Entry entry = PdaDrones.status(operator).drones().get(0);
             if (!entry.refusal().isEmpty() || entry.feedId() != drone.getId() || entry.cells().isEmpty()) {
                 helper.fail("Drones app entry for a free UAV: " + entry);
                 return;
@@ -72,7 +70,7 @@ public class PdaUavGameTest {
         });
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void unlinkedPdaGetsNoUavFeed(GameTestHelper helper) {
         AbstractVehicle drone = spawnDrone(helper);
         if (drone == null) {
@@ -89,7 +87,7 @@ public class PdaUavGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void callForFireWithoutUplinkIsRefused(GameTestHelper helper) {
         FakePlayer observer = operator(helper, "cff_observer");
         BlockPos at = helper.absolutePos(new BlockPos(8, 1, 8));
@@ -105,7 +103,7 @@ public class PdaUavGameTest {
         FakePlayer player = new FakePlayer(helper.getLevel(), new GameProfile(UUID.randomUUID(), name));
         BlockPos at = helper.absolutePos(new BlockPos(1, 1, 1));
         player.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0f, 0f);
-        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.PDA.get()));
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(PdaContent.PDA.get()));
         return player;
     }
 

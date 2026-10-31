@@ -8,9 +8,9 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.naval.WaterColumn;
-import com.wf.combinedassault.vehicle.parenting.DeckSnapshot;
+import com.wf.wflib.physics.api.DeckSnapshot;
 
 import java.util.ArrayList;
 import java.util.EnumSet;

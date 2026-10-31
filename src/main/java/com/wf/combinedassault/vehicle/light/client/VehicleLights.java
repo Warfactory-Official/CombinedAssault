@@ -1,20 +1,20 @@
 package com.wf.combinedassault.vehicle.light.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.wf.combinedassault.client.model.VehicleModelInstance;
-import com.wf.combinedassault.custom.CommonAssetsManager;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.vehicle.hit.ModelData;
-import com.wf.combinedassault.vehicle.hit.ModelMounts;
+import com.wf.combinedassault.render.model.VehicleModelInstance;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.ballistics.hit.ModelData;
+import com.wf.combinedassault.ballistics.hit.ModelMounts;
 import com.wf.combinedassault.vehicle.light.LightToggleMessage;
 import com.wf.combinedassault.vehicle.light.VehicleLight;
-import com.wf.combinedassault.vehicle.part.WeaponUnit;
-import com.wf.combinedassault.vehicle.pojo.AimContext;
-import com.wf.combinedassault.util.VectorUtil;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.weapon.pojo.AimContext;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
 import com.wf.gemrender.light.LightCookie;
 import com.wf.gemrender.light.LightSink;
 import com.wf.gemrender.light.Lights;
-import com.wf.wflib.nvg.client.NvgIllumination;
+import com.wf.wflib.nvg.api.client.NvgIllumination;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -56,7 +56,11 @@ public final class VehicleLights {
     private static final Matrix4f WORLD = new Matrix4f();
     private static final Matrix4f NODE = new Matrix4f();
     /** Harness: spots submitted by the last collect. */
-    public static int submitted;
+    private static int submitted;
+
+    public static int submitted() {
+        return submitted;
+    }
 
     private VehicleLights() {
     }

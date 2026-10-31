@@ -2,12 +2,12 @@ package com.wf.combinedassault.energy.gametest;
 
 import com.mojang.authlib.GameProfile;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.compat.gtceu.GregTechCompat;
+import com.wf.combinedassault.energy.GregTechCompat;
 import com.wf.combinedassault.energy.VehicleBattery;
-import com.wf.combinedassault.entity.vehicle.AbstractVehicle;
-import com.wf.combinedassault.gametest.TestLanes;
-import com.wf.combinedassault.vehicle.part.BatteryActions;
-import com.wf.combinedassault.vehicle.pojo.EnergyInfo;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.gametest.TestLanes;
+import com.wf.combinedassault.weapon.part.BatteryActions;
+import com.wf.combinedassault.energy.pojo.EnergyInfo;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
@@ -18,7 +18,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.UUID;
@@ -27,7 +26,6 @@ import java.util.UUID;
  * The battery bay: a slot distinct from the generic hold, type-agnostic ({@link EnergyInfo#batterySlot}),
  * that only ever holds what it was given back.
  */
-@GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class VehicleBatteryGameTest {
 
@@ -55,7 +53,7 @@ public class VehicleBatteryGameTest {
     }
 
     /** A pack that never declared a battery slot keeps refusing one, so an existing vehicle's behaviour cannot drift. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void aVehicleWithoutABatterySlotRefusesOne(GameTestHelper helper) {
         AbstractVehicle vehicle = humvee(helper, false);
         helper.runAfterDelay(2, () -> {
@@ -70,7 +68,7 @@ public class VehicleBatteryGameTest {
     }
 
     /** Neither GT nor a plain FE capability on it: junk never earns a seat in the bay. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void onlyARealBatteryFitsTheSlot(GameTestHelper helper) {
         AbstractVehicle vehicle = humvee(helper, true);
         helper.runAfterDelay(2, () -> {
@@ -87,7 +85,7 @@ public class VehicleBatteryGameTest {
     }
 
     /** Taking the bay's battery back hands over the exact stack, slot and all, and empties the bay. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void unloadingGivesBackTheExactItem(GameTestHelper helper) {
         AbstractVehicle vehicle = humvee(helper, true);
         helper.runAfterDelay(2, () -> {
@@ -105,7 +103,7 @@ public class VehicleBatteryGameTest {
     }
 
     /** Without a working FE or GT capability the tick is a silent no-op: no crash, no drift, no ejection. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void aNonPoweredItemInTheBayDoesNothing(GameTestHelper helper) {
         AbstractVehicle vehicle = humvee(helper, true);
         helper.runAfterDelay(2, () -> {
@@ -123,7 +121,7 @@ public class VehicleBatteryGameTest {
     }
 
     /** What is in the bay is part of the vehicle, not of the session. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void theBatterySurvivesSaveAndReload(GameTestHelper helper) {
         AbstractVehicle vehicle = humvee(helper, true);
         helper.runAfterDelay(2, () -> {
@@ -142,7 +140,7 @@ public class VehicleBatteryGameTest {
     }
 
     /** Without GregTech the item-draining helpers answer nothing rather than exploding. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void gregTechHelpersAreSilentWithoutGregTech(GameTestHelper helper) {
         if (GregTechCompat.isAvailable()) {
             helper.fail("GregTech is loaded in this run, so this test proves nothing");
