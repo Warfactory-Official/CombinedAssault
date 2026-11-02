@@ -54,7 +54,7 @@ public final class WeaponSystem implements CombinedAssaultSystem {
 
     @Override
     public void register(IEventBus modBus, ModContainer container) {
-        GameTestSetup.testsNeeding(modBus, java.util.Set.of("aircraft", "uav"), LoadoutGameTest.class, PylonGameTest.class, RadioGameTest.class);
+        GameTestSetup.testsNeeding(modBus, java.util.Set.of("aircraft", "uav"), LoadoutGameTest.class, PylonGameTest.class, RadioGameTest.class, com.wf.combinedassault.weapon.gametest.CountermeasureGameTest.class);
         GameTestSetup.testsNeeding(modBus, java.util.Set.of("aircraft"), BombRoundsGameTest.class, MissileRoundsGameTest.class);
         WeaponContent.ITEMS.register(modBus);
         WeaponContent.DATA_COMPONENTS.register(modBus);
