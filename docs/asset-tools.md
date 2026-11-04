@@ -15,6 +15,7 @@ Install: `python3 tools/blender/build_addon.py` -> `build/combinedassault_tools.
 | roles (body, part, collider, seat...) | Object tab > combinedassault |
 | texture | Material tab > Set up texture (PNG): Image Texture -> Base Color, pixel-sharp; Transparency Solid / Cut-out / See-through |
 | player size | Scene tab > Player standing / Player seated (at the 3D cursor; seated: cursor on the seat socket). Never exported |
+| passenger views | Scene tab > Create passenger cameras: one camera per `seat` / `view` / `sight` / `camera` / `camera_zoomed` socket (eye = origin, -Y at yaw 0, 70 deg vertical); Previous / Next / per-socket buttons look through. Rebuilt per call; never exported |
 | check | Scene tab > Check vehicle; red lines in Object / Material tabs |
 | export | Scene tab > Export vehicle: check, write `.gltf` + `.bin` + textures, then the validator on the written file |
 
@@ -22,6 +23,7 @@ Install: `python3 tools/blender/build_addon.py` -> `build/combinedassault_tools.
 - Texture already in a pack => referenced in place (shared atlases, `_damaged` / `_wrecked` / `_paint` siblings keep
   working); elsewhere => copied to `textures/<model dir>/`.
 - Import keeps every node / material extra; panels override only what they show.
+- Scene tab > Merge coplanar faces: selected colliders, dissolve at 1e-3 rad (fixes the "share a plane" warning).
 - Colliders round-trip face for face (one glTF primitive per face). One triangulated primitive => the game regroups
   by plane and sliver triangles fail its 1e-4 flatness (EMB4 hulls are convex only to ~2e-3 per sliver).
 - Material problems the exporter would hide: texture not on Base Color, Base Color through Mix nodes, second UV map,
@@ -39,11 +41,12 @@ Install: Blockbench 5.1 desktop > File > Plugins > Load Plugin from File. Menu a
 | roles (body, part, collider, seat...) | select a group / element / locator > CombinedAssault panel |
 | socket | CombinedAssault > Add socket (locator at the selected group's pivot) |
 | player size | CombinedAssault > Add player reference (standing / seated, 15/16 model; seat locator selected => eye on it). Never exported |
+| passenger views | CombinedAssault > View as passenger... (socket list), Next / Previous passenger view (Ctrl+PgDn / Ctrl+PgUp): preview camera to the socket eye, +Z local, FOV 70. Orbit leaves |
 | check | CombinedAssault > Validate vehicle |
 | export | CombinedAssault > Export to pack: check, write `.gltf` + `.bin` + new textures |
 
 - Frame: 16 px = 1 block, nose south (+Z), port east (+X), up +Y.
-- Frames = groups; collider / `hit` / `hit_surface` = cube or mesh; socket = locator (`era` / `slat` / `track`: mesh). `export` off => skipped.
+- Frames = groups; collider / `hit` / `hit_surface` = cube or mesh; socket = locator (`era` / `slat` / `track` / `sight_lens`: mesh). `export` off => skipped.
 - No body group => part / display model: rig rules skipped, part sockets may omit the interface (as the validator).
 - Texture with a file under the pack => referenced in place; else written to `textures/<model dir>/<texture name>`.
 - New material = its texture: name = texture name (armour / decor / effect tags go there), alpha mode from the pixels. Imported material kept per face (name, alpha, cutoff, sides, factors, normal / ORM / emissive maps).
@@ -60,7 +63,7 @@ Install: Blockbench 5.1 desktop > File > Plugins > Load Plugin from File. Menu a
 
 `python3 tools/blender/ca_validate.py <model.gltf>...`; exit 1 on any error. No Blender needed. Mirrors `ModelRig`
 (roles, body, frames, collider keys, hulls), GemRender materials (resourceLocation, PNG, TEXCOORD_0 only,
-cutoff 0 / 0.1 / 0.5) and clip names. No body node => part / display model: rig rules skipped. Shipped pack:
+cutoff 0 / 0.1 / 0.5) and clip names. `sight_lens` mesh: drawn, UV not required. No body node => part / display model: rig rules skipped. Shipped pack:
 53 models, 0 errors.
 
 ## Player reference

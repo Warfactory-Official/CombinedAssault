@@ -40,7 +40,8 @@ public class CombinedAssault {
             new com.wf.combinedassault.deck.DeckSystem(),
             new com.wf.combinedassault.dynamics.DynamicsSystem(),
             new com.wf.combinedassault.vehicle.VehicleSystem(),
-            new com.wf.combinedassault.pack.PackSystem());
+            new com.wf.combinedassault.pack.PackSystem(),
+            new com.wf.combinedassault.labs.LabsSystem());
 
     private static PackHost packs;
 

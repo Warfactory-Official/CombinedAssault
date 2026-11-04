@@ -106,7 +106,8 @@ public final class VehicleEvents {
             PartUnit<?> seat = vehicle.getOwnOperatorUnit(event.getEntity());
             Boolean protect = seat == null ? null : seat.getData().getProtectPassenger();
             if ((protect == null ? vehicle.protectPassenger : protect)
-                    && !event.getSource().is(VehicleDamageTypes.BREECH_FIRE)) {
+                    && !event.getSource().is(VehicleDamageTypes.BREECH_FIRE)
+                    && !com.wf.combinedassault.ballistics.spall.Spall.delivering()) {
                 event.setNewDamage(0);
             }
         }

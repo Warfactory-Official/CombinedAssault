@@ -387,6 +387,26 @@ test('finishGltf: Mesh element primitives per (texture, kept material), extra ma
 	assert.ok(!JSON.stringify(out.gltf).includes('"location"'));
 });
 
+test('viewAngle looks along forward from the eye', () => {
+	const v = ca.viewAngle([8, 24, -4], [0, 0, 1]);
+	assert.deepEqual(v.position, [8, 24, -4]);
+	assert.deepEqual(v.target, [8, 24, 12]);
+	assert.deepEqual(ca.VIEW_FIELDS, ['seat', 'view', 'sight', 'camera', 'camera_zoomed']);
+});
+
+test('sparse accessor overrides base rows', () => {
+	const bin = Buffer.alloc(64);
+	[1, 2, 3, 4, 5, 6].forEach((v, i) => bin.writeFloatLE(v, i * 4));
+	bin.writeUInt16LE(1, 24);
+	[9, 9, 9].forEach((v, i) => bin.writeFloatLE(v, 28 + i * 4));
+	const gltf = {
+		bufferViews: [{buffer: 0, byteOffset: 0, byteLength: 24}, {buffer: 0, byteOffset: 24, byteLength: 2}, {buffer: 0, byteOffset: 28, byteLength: 12}],
+		accessors: [{bufferView: 0, componentType: 5126, count: 2, type: 'VEC3',
+			sparse: {count: 1, indices: {bufferView: 1, componentType: 5123}, values: {bufferView: 2}}}],
+	};
+	assert.deepEqual(ca.readAccessor(gltf, [bin], 0), [[1, 2, 3], [9, 9, 9]]);
+});
+
 if (failures) {
 	console.log(`${failures} failed`);
 	process.exit(1);

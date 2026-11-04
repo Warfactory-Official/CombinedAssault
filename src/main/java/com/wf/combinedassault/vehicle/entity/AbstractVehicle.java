@@ -1434,6 +1434,7 @@ public abstract class AbstractVehicle extends ContainerCraft
                     if (isDestroyed()) {
                         this.discard();
                     } else {
+                        com.wf.combinedassault.ballistics.spall.Spall.onDestroyed(this);
                         this.getPassengers().forEach(Entity::stopRiding);
                         setDestroyed();
                         VehicleExplosion.detonate(this, damageSource.getEntity());

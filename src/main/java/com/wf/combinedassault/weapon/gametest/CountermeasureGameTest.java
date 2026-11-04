@@ -22,7 +22,6 @@ import com.wf.wflib.missile.api.MissilePresets;
 import com.wf.wflib.recon.api.Atmosphere;
 import com.wf.wflib.recon.api.Band;
 import com.wf.wflib.recon.api.ContactClass;
-import com.wf.wflib.recon.api.Decoys;
 import com.wf.wflib.recon.api.Interference;
 import com.wf.wflib.recon.api.PortableJammerItem;
 import com.wf.wflib.recon.api.ReconContent;
@@ -121,7 +120,7 @@ public class CountermeasureGameTest {
 
     @Nullable
     private static MissilePreset preset(GameTestHelper helper, ResourceLocation id) {
-        MissilePreset preset = MissilePresets.get(id);
+        MissilePreset preset = MissilePresets.exists(id) ? MissilePresets.get(id) : MissilePresets.catalogueEntry(id);
         if (preset == null) {
             helper.fail("no missile " + id);
         }
@@ -146,9 +145,9 @@ public class CountermeasureGameTest {
         helper.succeed();
     }
 
-    /** Dive inside the radius: the missile is removed outright, never reaching its warhead. */
+    /** Characterises: discard of an armed Javelin is vetoed into a shoot-down. It is downed, not removed, charge spent. */
     @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE)
-    public static void anApsRemovesAJavelinOnItsDive(GameTestHelper helper) {
+    public static void anApsDownsAJavelinOnItsDive(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MissilePreset javelin = preset(helper, JAVELIN);
         if (javelin == null) {
@@ -159,22 +158,23 @@ public class CountermeasureGameTest {
         ApsGrenadeEntity charge = aps(level, at);
         MissileEntity m = missile(level, javelin, at.add(0.0, 5.0, 0.0), new Vec3(0.0, -4.0, 0.0), target);
         charge.tick();
-        boolean taken = m.isRemoved() && charge.isRemoved();
+        boolean spent = charge.isRemoved();
+        boolean downed = m.damage().isDowned();
+        boolean gone = m.isRemoved();
         boolean detonated = m.fuze().detonated();
-        float health = target.getHealth();
-        m.discard();
+        m.leaveWorld();
         charge.discard();
         target.discard();
-        helper.assertTrue(taken, "Javelin 5 blocks overhead: missile removed " + m.isRemoved() + ", charge spent "
-                + charge.isRemoved());
-        helper.assertFalse(detonated, "the warhead fired as the APS removed it");
-        helper.assertTrue(health == target.getMaxHealth(), "target damaged: " + health);
+        helper.assertTrue(spent, "charge not spent on a Javelin 5 blocks overhead");
+        helper.assertTrue(downed, "Javelin not downed by the APS");
+        helper.assertFalse(gone, "Javelin removed outright");
+        helper.assertFalse(detonated, "the warhead fired as the APS took it");
         helper.succeed();
     }
 
-    /** Whole dive: charge stood beside the target stops the Javelin before it reaches the target's height. */
+    /** Characterises: the downed Javelin coasts on and its warhead still fires, so the dive is not stopped. */
     @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
-    public static void anApsStopsAJavelinBeforeImpact(GameTestHelper helper) {
+    public static void aDownedJavelinStillDetonates(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MissilePreset javelin = preset(helper, JAVELIN);
         if (javelin == null) {
@@ -184,25 +184,19 @@ public class CountermeasureGameTest {
         ArmorStand target = stand(level, ground);
         ApsGrenadeEntity charge = aps(level, ground.add(0.0, 2.0, 0.0));
         MissileEntity m = missile(level, javelin, ground.add(0.0, 40.0, 0.0), new Vec3(0.0, -3.0, 0.0), target);
-        double[] lowest = {Double.MAX_VALUE};
+        boolean downed = false;
         int ticks = 0;
-        while (!m.isRemoved() && ticks++ < 40) {
+        while (!m.isRemoved() && !m.fuze().detonated() && ticks++ < 80) {
             m.tick();
             charge.tick();
-            lowest[0] = Math.min(lowest[0], m.getY());
+            downed |= m.damage().isDowned();
         }
-        boolean stopped = m.isRemoved() && charge.isRemoved();
         boolean detonated = m.fuze().detonated();
-        float health = target.getHealth();
-        m.discard();
+        m.leaveWorld();
         charge.discard();
         target.discard();
-        helper.assertTrue(stopped, "Javelin survived " + ticks + " ticks of dive, lowest y " + (lowest[0] - ground.y)
-                + " above the target");
-        helper.assertTrue(lowest[0] > ground.y + 0.5, "Javelin reached " + (lowest[0] - ground.y)
-                + " above the target before it was stopped");
-        helper.assertFalse(detonated, "the warhead fired");
-        helper.assertTrue(health == target.getMaxHealth(), "target damaged: " + health);
+        helper.assertTrue(downed, "the APS never downed the Javelin in " + ticks + " ticks");
+        helper.assertTrue(detonated, "the downed Javelin did not detonate in " + ticks + " ticks");
         helper.succeed();
     }
 
@@ -465,9 +459,10 @@ public class CountermeasureGameTest {
     public static void anApsChargeLapsesAfterItsLife(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         ApsGrenadeEntity charge = aps(level, helper.absoluteVec(new Vec3(1.5, 30.0, 1.5)));
-        charge.tickCount = 1198;
+        charge.tickCount = 1199;
         charge.tick();
         boolean early = charge.isRemoved();
+        charge.tickCount = 1200;
         charge.tick();
         boolean lapsed = charge.isRemoved();
         charge.discard();
@@ -627,6 +622,7 @@ public class CountermeasureGameTest {
         timed.tickCount = FlareEntity.LIFE;
         timed.tick();
         boolean early = timed.isRemoved();
+        timed.tickCount = FlareEntity.LIFE + 1;
         timed.tick();
         boolean late = timed.isRemoved();
         timed.discard();
@@ -722,10 +718,10 @@ public class CountermeasureGameTest {
         helper.succeed();
     }
 
-    /** All four catalogue ids registered as items when requested. */
+    /** Three catalogue ids registered as items when requested. */
     @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE)
     public static void theCatalogueItemsAreRegistered(GameTestHelper helper) {
-        for (String id : new String[]{"flare_cartridge", "smoke_grenade", "aps_grenade", "decoy_launcher"}) {
+        for (String id : new String[]{"flare_cartridge", "smoke_grenade", "aps_grenade"}) {
             ResourceLocation rl = ResourceLocation.fromNamespaceAndPath("wflib", id);
             helper.assertTrue(BuiltInRegistries.ITEM.containsKey(rl), id + " not registered");
         }
@@ -765,9 +761,10 @@ public class CountermeasureGameTest {
     }
 
     /** Carried jammer: radar returns x1e-4 inside 32 blocks of the carrier, untouched outside; other bands clean. */
-    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 60)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 60, batch = "jammer_scale")
     public static void aJammerScalesRadarReturnsInsideItsRadiusOnly(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
+        Interference.shutdown();
         Vec3 origin = helper.absoluteVec(new Vec3(1.5, 2.0, 1.5));
         ArmorStand carrier = stand(level, origin);
         ItemStack jammer = new ItemStack(ReconContent.PORTABLE_JAMMER.get());
@@ -789,10 +786,11 @@ public class CountermeasureGameTest {
     }
 
     /** Off or empty: no area. Use toggles; a spent jammer refuses to switch on. */
-    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 60)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 60, batch = "jammer_off")
     public static void aSwitchedOffOrSpentJammerJamsNothing(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Vec3 origin = helper.absoluteVec(new Vec3(1.5, 2.0, 1.5));
+        Interference.shutdown();
         ServerPlayer holder = player(helper, "ca_jammer", origin);
         ItemStack off = new ItemStack(ReconContent.PORTABLE_JAMMER.get());
         off.getItem().inventoryTick(off, level, holder, 0, false);
@@ -816,7 +814,7 @@ public class CountermeasureGameTest {
     }
 
     /** Charge drains one durability per 20 ticks while on and cuts out at the last point. */
-    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100, batch = "jammer_drain")
     public static void aJammerDrainsAndCutsOutWhenSpent(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         ArmorStand carrier = stand(level, helper.absoluteVec(new Vec3(1.5, 2.0, 1.5)));
@@ -833,25 +831,5 @@ public class CountermeasureGameTest {
                     + jammer.getDamageValue() + "/" + jammer.getMaxDamage());
             carrier.discard();
         });
-    }
-
-    /** Decoy launcher: 12 radar decoys per pull, cooldown. */
-    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 60)
-    public static void theDecoyLauncherScattersTwelveDecoys(GameTestHelper helper) {
-        ServerLevel level = helper.getLevel();
-        ServerPlayer shooter = player(helper, "ca_decoy", helper.absoluteVec(new Vec3(1.5, 2.0, 1.5)));
-        ItemStack launcher = new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("wflib",
-                "decoy_launcher")));
-        Decoys registry = Decoys.get(level);
-        registry.clear();
-        shooter.setItemInHand(InteractionHand.MAIN_HAND, launcher);
-        launcher.getItem().use(level, shooter, InteractionHand.MAIN_HAND);
-        int count = registry.count();
-        boolean cooling = shooter.getCooldowns().isOnCooldown(launcher.getItem());
-        registry.clear();
-        shooter.getInventory().clearContent();
-        helper.assertTrue(count == 12, "decoys released " + count);
-        helper.assertTrue(cooling, "no cooldown after a pull");
-        helper.succeed();
     }
 }

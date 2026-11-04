@@ -6,15 +6,15 @@
 
 const SYSTEMS = ['hull', 'engine', 'track', 'wheel', 'turret', 'barrel', 'fuel', 'ammo', 'optics', 'rotor',
 	'tail_rotor', 'wing'];
-const SOCKET_FIELDS = ['seat', 'dismount', 'view', 'sight', 'bolt', 'era', 'slat', 'mount_point', 'hitch', 'towable',
+const SOCKET_FIELDS = ['seat', 'dismount', 'view', 'sight', 'sight_lens', 'bolt', 'eject', 'era', 'slat', 'mount_point', 'hitch', 'towable',
 	'axle', 'exhaust', 'vortex', 'smoke', 'afterburner', 'camera', 'camera_zoomed', 'light', 'cargo_bay',
-	'center_of_mass', 'pivot', 'track', 'propeller'];
-const MESH_FIELDS = ['era', 'slat', 'track'];
+	'center_of_mass', 'pivot', 'track', 'propeller', 'station'];
+const MESH_FIELDS = ['era', 'slat', 'track', 'sight_lens'];
 const UNTARGETED = ['towable', 'axle', 'camera', 'camera_zoomed', 'exhaust', 'vortex', 'smoke', 'afterburner', 'light',
 	'cargo_bay', 'center_of_mass', 'pivot', 'propeller'];
 const ID_TARGETED = ['era', 'slat', 'mount_point', 'hitch'];
 // Node scale carries a size the game reads; Blockbench nodes always export scale 1.
-const SCALED_FIELDS = {bolt: 'barrel_length', propeller: 'radius', cargo_bay: 'cargo.bay_size'};
+const SCALED_FIELDS = {bolt: 'barrel_length', eject: 'ejects speed', station: 'holder round length', propeller: 'radius', cargo_bay: 'cargo.bay_size'};
 const ROLE = 'combinedassaultRole';
 const INTERFACE = 'combinedassaultInterface';
 const META = 'combinedassault';
@@ -229,29 +229,44 @@ const WIDTH = {SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT2: 4, MAT3: 9, MAT4: 16}
 /** Accessor -> rows of numbers (normalized integers scaled to [0,1] / [-1,1]). */
 function readAccessor(gltf, buffers, index) {
 	const a = gltf.accessors[index];
-	if (a.sparse) throw new Error(`accessor ${index} is sparse: not supported`);
 	const component = COMPONENTS[a.componentType];
 	const width = WIDTH[a.type];
 	if (!component || !width) throw new Error(`accessor ${index}: component type ${a.componentType} / ${a.type} not supported`);
 	const [type, size, max] = component;
 	const rows = [];
+	const scale = v => a.normalized && max ? Math.max(v / max, -1) : v;
+	const rowsOf = (view, base, count, rowWidth) => {
+		const buffer = buffers[view.buffer || 0];
+		const data = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+		const stride = view.byteStride || rowWidth * size;
+		const get = data['get' + type].bind(data);
+		const out = [];
+		for (let i = 0; i < count; i++) {
+			const row = [];
+			for (let c = 0; c < rowWidth; c++) row.push(scale(get(base + i * stride + c * size, true)));
+			out.push(row);
+		}
+		return out;
+	};
 	if (a.bufferView === undefined) {
 		for (let i = 0; i < a.count; i++) rows.push(new Array(width).fill(0));
-		return rows;
+	} else {
+		const view = gltf.bufferViews[a.bufferView];
+		rows.push(...rowsOf(view, (view.byteOffset || 0) + (a.byteOffset || 0), a.count, width));
 	}
-	const view = gltf.bufferViews[a.bufferView];
-	const buffer = buffers[view.buffer || 0];
-	const data = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
-	const stride = view.byteStride || width * size;
-	const base = (view.byteOffset || 0) + (a.byteOffset || 0);
-	const get = data['get' + type].bind(data);
-	for (let i = 0; i < a.count; i++) {
-		const row = [];
-		for (let c = 0; c < width; c++) {
-			const v = get(base + i * stride + c * size, true);
-			row.push(a.normalized && max ? Math.max(v / max, -1) : v);
+	if (a.sparse) {
+		const {count, indices, values} = a.sparse;
+		const indexView = gltf.bufferViews[indices.bufferView];
+		const indexBuffer = buffers[indexView.buffer || 0];
+		const indexData = new DataView(indexBuffer.buffer, indexBuffer.byteOffset, indexBuffer.byteLength);
+		const indexType = COMPONENTS[indices.componentType];
+		if (!indexType) throw new Error(`accessor ${index}: sparse index type ${indices.componentType} not supported`);
+		const indexBase = (indexView.byteOffset || 0) + (indices.byteOffset || 0);
+		const valueView = gltf.bufferViews[values.bufferView];
+		const substitutes = rowsOf(Object.assign({}, valueView, {byteStride: 0}), (valueView.byteOffset || 0) + (values.byteOffset || 0), count, width);
+		for (let i = 0; i < count; i++) {
+			rows[indexData['get' + indexType[0]](indexBase + i * indexType[1], true)] = substitutes[i];
 		}
-		rows.push(row);
 	}
 	return rows;
 }
@@ -956,7 +971,15 @@ function planImport(gltf, buffers, orders) {
 	return {entries, materials: [...materials.values()], clips, warnings};
 }
 
+const VIEW_FIELDS = ['seat', 'view', 'sight', 'camera', 'camera_zoomed'];
+
+/** Preview camera at a socket: eye = origin, looks along `forward` (unit); px. */
+function viewAngle(eye, forward) {
+	return {position: eye.slice(), target: eye.map((v, i) => v + forward[i] * PX), projection: 'perspective'};
+}
+
 const api = {
+	VIEW_FIELDS, viewAngle,
 	SYSTEMS, SOCKET_FIELDS, MESH_FIELDS, UNTARGETED, ROLES, DEFAULTS, CLIP_NAME,
 	nodeExtras, splitExtras, mergeExtras, quantiseCutoff, alphaModeOf, packPaths, resourceLocationOf, finishGltf, prune,
 	weld, polygonLoops, planeGroups, hullProblems, materialSource, openEdges, readAccessor, repack, quatToEuler, decompose, planImport,
@@ -1111,11 +1134,11 @@ function checkNode(node, rig) {
 		if (!UNTARGETED.includes(s.field) && !s.interface && (rig || ID_TARGETED.includes(s.field))) {
 			errors.push(`socket ${s.field} names no ${ID_TARGETED.includes(s.field) ? 'id' : 'part'} (interface)`);
 		}
-		if (kind === 'mesh' && !MESH_FIELDS.includes(s.field)) warnings.push('socket is a mesh; only era/slat/track use the geometry');
+		if (kind === 'mesh' && !MESH_FIELDS.includes(s.field)) warnings.push('socket is a mesh; only era/slat/track/sight_lens use the geometry');
 		if (kind !== 'mesh' && MESH_FIELDS.includes(s.field)) {
-			errors.push(`${s.field} socket must be a mesh (${s.field === 'track' ? 'outline = path' : 'one quad'})`);
+			errors.push(`${s.field} socket must be a mesh (${{track: 'outline = path', sight_lens: 'lens mesh'}[s.field] || 'one quad'})`);
 		}
-		if (kind === 'cube') errors.push('socket must be a locator, a group or (era/slat/track) a mesh');
+		if (kind === 'cube') errors.push('socket must be a locator, a group or (era/slat/track/sight_lens) a mesh');
 		if (SCALED_FIELDS[s.field] && !(node[SCALE_PROP] && node[SCALE_PROP].some(v => v !== 1))) {
 			warnings.push(`${s.field} reads its size from node scale (always 1 from Blockbench): set ${SCALED_FIELDS[s.field]} in the vehicle json`);
 		}
@@ -1509,6 +1532,52 @@ function pivotOf(node) {
 	return [v.x, v.y, v.z];
 }
 
+/** Socket locators a rider sees from: seat eye, weapon view, sight lens, third-person camera. */
+function viewLocators() {
+	return Locator.all.filter(l => roleOf(l) === 'socket' && VIEW_FIELDS.includes(l[PROP].field) && l.export !== false);
+}
+
+function locatorView(locator) {
+	const object = locator.scene_object || locator.mesh;
+	const position = object.getWorldPosition(new THREE.Vector3());
+	const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(object.getWorldQuaternion(new THREE.Quaternion()));
+	return viewAngle([position.x, position.y, position.z], [forward.x, forward.y, forward.z]);
+}
+
+let viewCursor = -1;
+
+function lookThrough(locator) {
+	const preview = Preview.selected;
+	preview.loadAnglePreset(locatorView(locator));
+	if (typeof preview.setFOV === 'function') preview.setFOV(70);
+	Blockbench.showQuickMessage(`${locator[PROP].field} ${locator[PROP].interface || ''} ${locator.name}`.replace(/\s+/g, ' '), 1200);
+}
+
+function passengerViewDialog() {
+	const views = viewLocators();
+	if (!views.length) return Blockbench.showQuickMessage('No seat / view / sight / camera sockets', 1800);
+	const label = l => `${l[PROP].field} ${l[PROP].interface || ''} (${l.name})`.replace(/\s+/g, ' ');
+	new Dialog({
+		id: 'ca_passenger_view',
+		title: 'View as passenger',
+		form: {
+			socket: {label: 'Socket', type: 'select', options: Object.fromEntries(views.map((l, i) => [i, label(l)]))},
+			info: {type: 'info', text: 'Moves the preview camera to the socket eye, looking along its local +Z (nose), FOV 70. Orbit to leave.'},
+		},
+		onConfirm(result) {
+			viewCursor = Number(result.socket);
+			lookThrough(views[viewCursor]);
+		},
+	}).show();
+}
+
+function nextPassengerView(step) {
+	const views = viewLocators();
+	if (!views.length) return Blockbench.showQuickMessage('No seat / view / sight / camera sockets', 1800);
+	viewCursor = (viewCursor + step + views.length) % views.length;
+	lookThrough(views[viewCursor]);
+}
+
 const EYE = 1.62 * PX;
 const HITBOX = [0.6 * PX, 1.8 * PX];
 
@@ -1781,8 +1850,22 @@ Plugin.register('combinedassault', {
 			name: 'Add player reference...', icon: 'accessibility', category: 'edit', condition: () => !!Project,
 			click: addPlayerDialog,
 		});
-		actions = [importAction, validate, exportAction, socket, player];
-		menu = new BarMenu('combinedassault', [importAction, exportAction, validate, '_', socket, player], {name: 'CombinedAssault'});
+		const passenger = new Action('ca_passenger_view', {
+			name: 'View as passenger...', icon: 'videocam', category: 'view', condition: () => !!Project,
+			click: passengerViewDialog,
+		});
+		const nextView = new Action('ca_next_passenger_view', {
+			name: 'Next passenger view', icon: 'skip_next', category: 'view', condition: () => !!Project,
+			keybind: new Keybind({key: 'pagedown', ctrl: true}),
+			click: () => nextPassengerView(1),
+		});
+		const previousView = new Action('ca_previous_passenger_view', {
+			name: 'Previous passenger view', icon: 'skip_previous', category: 'view', condition: () => !!Project,
+			keybind: new Keybind({key: 'pageup', ctrl: true}),
+			click: () => nextPassengerView(-1),
+		});
+		actions = [importAction, validate, exportAction, socket, player, passenger, nextView, previousView];
+		menu = new BarMenu('combinedassault', [importAction, exportAction, validate, '_', socket, player, '_', passenger, nextView, previousView], {name: 'CombinedAssault'});
 		MenuBar.update();
 		buildPanel();
 	},

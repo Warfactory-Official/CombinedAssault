@@ -73,7 +73,7 @@ public final class CollisionMeshRenderer {
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
         while (VehicleKeys.TOGGLE_COLLISION_DEBUG.consumeClick()) {
-            if (!com.wf.wflib.core.client.DebugGate.allowed()) {
+            if (!com.wf.wflib.core.api.client.DebugGate.allowed()) {
                 mode = Mode.OFF;
                 continue;
             }
@@ -87,7 +87,7 @@ public final class CollisionMeshRenderer {
                         Component.literal("Vehicle collision overlay: " + mode.label), true);
             }
         }
-        if (mode == Mode.OFF || !com.wf.wflib.core.client.DebugGate.allowed()) {
+        if (mode == Mode.OFF || !com.wf.wflib.core.api.client.DebugGate.allowed()) {
             return;
         }
         // Client never runs tickPhysics; prepare cache here so overlay isn't empty.
@@ -103,7 +103,7 @@ public final class CollisionMeshRenderer {
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
-        if (mode == Mode.OFF || !com.wf.wflib.core.client.DebugGate.allowed() || event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+        if (mode == Mode.OFF || !com.wf.wflib.core.api.client.DebugGate.allowed() || event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
             return;
         }
         Minecraft minecraft = Minecraft.getInstance();

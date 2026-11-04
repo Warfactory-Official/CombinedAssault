@@ -11,6 +11,7 @@ model.
 """
 
 import json
+import math
 import os
 import re
 import struct
@@ -34,7 +35,7 @@ SOCKET_FIELDS = ca_validate.SOCKET_FIELDS
 # Socket fields whose marker is a quad mesh (addon panel extent) rather than an empty.
 PANEL_FIELDS = {"era", "slat"}
 # Socket fields read from their mesh: panels + track (outline = path).
-MESH_FIELDS = PANEL_FIELDS | {"track"}
+MESH_FIELDS = PANEL_FIELDS | {"track", "sight_lens"}
 UNTARGETED = ca_validate.UNTARGETED
 ROLE = ca_validate.ROLE
 INTERFACE = ca_validate.INTERFACE
@@ -241,10 +242,9 @@ def check_object(obj, depsgraph=None, part_model=False):
             errors.append("socket %s names no %s (interface)" % (settings.field, "id" if settings.field in (
                 "era", "slat", "mount_point", "hitch") else "part"))
         if obj.type == "MESH" and settings.field not in MESH_FIELDS:
-            warnings.append("socket is a mesh; only era/slat/track use the geometry")
+            warnings.append("socket is a mesh; only era/slat/track/sight_lens use the geometry")
         if obj.type != "MESH" and settings.field in MESH_FIELDS:
-            errors.append("%s socket needs a mesh (%s)" % (settings.field, "outline = path" if settings.field == "track"
-                                                            else "quad"))
+            errors.append("%s socket needs a mesh (%s)" % (settings.field, {"track": "outline = path", "sight_lens": "lens mesh"}.get(settings.field, "quad")))
     if obj.type == "MESH" and is_mirrored(obj):
         errors.append("is mirrored: exports inside out. Apply scale, rebuild with a rotation")
     if obj.type == "MESH" and role == "NONE" and obj.material_slots and not obj.data.uv_layers:
@@ -849,6 +849,58 @@ def add_player_reference(context, seated):
     return root
 
 
+# ---------------------------------------------------------------- passenger cameras
+
+VIEW_FIELDS = ("seat", "view", "sight", "camera", "camera_zoomed")
+VIEW_FOV = 70.0
+VIEW_PREFIX = "view_"
+
+
+def view_cameras(scene):
+    return sorted((obj for obj in scene.objects if obj.type == "CAMERA" and obj.name.startswith(VIEW_PREFIX)
+                   and obj.combinedassault.reference), key=lambda obj: obj.name)
+
+
+def add_view_cameras(context):
+    """One reference camera per seat / view / sight / camera socket, parented to it: eye = origin, looking along the
+    socket's -Y (nose at yaw 0), 70 deg vertical like the game. Rebuilt each call; never exported or checked."""
+    scene = context.scene
+    for old in view_cameras(scene):
+        data = old.data
+        bpy.data.objects.remove(old)
+        if data.users == 0:
+            bpy.data.cameras.remove(data)
+    collection = bpy.data.collections.get("combinedassault reference")
+    if collection is None:
+        collection = bpy.data.collections.new("combinedassault reference")
+        scene.collection.children.link(collection)
+    made = []
+    for socket in sorted(scene.objects, key=lambda obj: obj.name):
+        if role_of(socket) != "SOCKET" or socket.combinedassault.field not in VIEW_FIELDS or socket.combinedassault.reference:
+            continue
+        data = bpy.data.cameras.new(VIEW_PREFIX + socket.name)
+        data.sensor_fit = "VERTICAL"
+        data.angle = math.radians(VIEW_FOV)
+        data.clip_start = 0.05
+        data.clip_end = 512.0
+        data.display_size = 0.4
+        camera = bpy.data.objects.new(VIEW_PREFIX + socket.name, data)
+        camera.combinedassault.reference = True
+        camera.parent = socket
+        camera.rotation_euler = (math.radians(90.0), 0.0, math.radians(180.0))
+        camera.hide_select = True
+        collection.objects.link(camera)
+        made.append(camera)
+    return made
+
+
+def look_through(context, camera):
+    context.scene.camera = camera
+    for area in context.screen.areas:
+        if area.type == "VIEW_3D":
+            area.spaces.active.region_3d.view_perspective = "CAMERA"
+
+
 # ---------------------------------------------------------------- properties
 
 
@@ -1059,6 +1111,39 @@ class COMBINEDASSAULT_OT_make_hinge(Operator):
 
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
+
+
+class COMBINEDASSAULT_OT_merge_coplanar(Operator):
+    """Merge edge-sharing faces on one plane in the selected colliders (the game keeps each authored face as a hull
+    face; a triangulated box bottom is a 3-corner ground contact)"""
+
+    bl_idname = "combinedassault.merge_coplanar"
+    bl_label = "Merge coplanar faces"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return any(role_of(obj) == "COLLIDER" and obj.type == "MESH" for obj in context.selected_objects)
+
+    def execute(self, context):
+        merged = 0
+        for obj in context.selected_objects:
+            if role_of(obj) != "COLLIDER" or obj.type != "MESH":
+                continue
+            before = len(obj.data.polygons)
+            mesh = bmesh.new()
+            mesh.from_mesh(obj.data)
+            bmesh.ops.dissolve_limit(mesh, angle_limit=1.0e-3, use_dissolve_boundaries=False,
+                                     verts=mesh.verts, edges=mesh.edges)
+            mesh.to_mesh(obj.data)
+            mesh.free()
+            obj.data.update()
+            merged += before - len(obj.data.polygons)
+            points, faces = faces_of(obj)
+            if coplanar_neighbours(points, faces):
+                self.report({"WARNING"}, "%s: coplanar faces remain (offset beyond %g)" % (obj.name, PLANAR_EPS))
+        self.report({"INFO"}, "%d face(s) merged" % merged)
+        return {"FINISHED"}
 
 
 class COMBINEDASSAULT_OT_key_clip(Operator):
@@ -1351,6 +1436,50 @@ class COMBINEDASSAULT_OT_player_reference(Operator):
         return {"FINISHED"}
 
 
+class COMBINEDASSAULT_OT_view_cameras(Operator):
+    """A camera at every seat / view / sight / camera socket (eye = origin, FOV 70), to look through as each
+    passenger; never exported"""
+
+    bl_idname = "combinedassault.view_cameras"
+    bl_label = "Create passenger cameras"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+        made = add_view_cameras(context)
+        if not made:
+            self.report({"WARNING"}, "no seat / view / sight / camera sockets in the scene")
+            return {"CANCELLED"}
+        look_through(context, made[0])
+        self.report({"INFO"}, "%d passenger camera(s)" % len(made))
+        return {"FINISHED"}
+
+
+class COMBINEDASSAULT_OT_look_through(Operator):
+    """Look through a passenger camera (step: next / previous when no camera is named)"""
+
+    bl_idname = "combinedassault.look_through"
+    bl_label = "Look through"
+
+    camera: StringProperty(name="Camera", default="")
+    step: IntProperty(name="Step", default=0)
+
+    def execute(self, context):
+        cameras = view_cameras(context.scene)
+        if not cameras:
+            self.report({"WARNING"}, "no passenger cameras: Create passenger cameras first")
+            return {"CANCELLED"}
+        if self.camera:
+            target = bpy.data.objects.get(self.camera)
+        else:
+            current = context.scene.camera
+            index = cameras.index(current) if current in cameras else -self.step - 1 if self.step < 0 else -1
+            target = cameras[(index + self.step) % len(cameras)]
+        if target is None:
+            return {"CANCELLED"}
+        look_through(context, target)
+        return {"FINISHED"}
+
+
 def menu_import(self, context):
     self.layout.operator(COMBINEDASSAULT_OT_import.bl_idname, text="combinedassault pack model (.gltf)")
 
@@ -1507,6 +1636,7 @@ class COMBINEDASSAULT_PT_scene(Panel):
         if settings.note:
             layout.label(text=settings.note)
         layout.operator("combinedassault.make_hull", icon="MESH_ICOSPHERE")
+        layout.operator("combinedassault.merge_coplanar", icon="MOD_DECIM")
         row = layout.row()
         row.operator("combinedassault.add_socket", icon="EMPTY_ARROWS")
         row.operator("combinedassault.make_hinge", icon="CON_PIVOT")
@@ -1514,6 +1644,17 @@ class COMBINEDASSAULT_PT_scene(Panel):
         row = layout.row()
         row.operator("combinedassault.player_reference", text="Player standing", icon="ARMATURE_DATA").seated = False
         row.operator("combinedassault.player_reference", text="Player seated", icon="ARMATURE_DATA").seated = True
+        layout.operator("combinedassault.view_cameras", icon="CAMERA_DATA")
+        cameras = view_cameras(context.scene)
+        if cameras:
+            row = layout.row(align=True)
+            row.operator("combinedassault.look_through", text="Previous", icon="TRIA_LEFT").step = -1
+            row.operator("combinedassault.look_through", text="Next", icon="TRIA_RIGHT").step = 1
+            column = layout.column(align=True)
+            for camera in cameras:
+                button = column.operator("combinedassault.look_through", text=camera.parent.name if camera.parent else camera.name,
+                                         icon="OUTLINER_OB_CAMERA" if camera == context.scene.camera else "CAMERA_DATA")
+                button.camera = camera.name
         layout.operator("combinedassault.check", icon="CHECKMARK")
         layout.operator("combinedassault.export", icon="EXPORT")
 
@@ -1525,6 +1666,7 @@ CLASSES = (
     COMBINEDASSAULT_OT_make_hull,
     COMBINEDASSAULT_OT_add_socket,
     COMBINEDASSAULT_OT_make_hinge,
+    COMBINEDASSAULT_OT_merge_coplanar,
     COMBINEDASSAULT_OT_key_clip,
     COMBINEDASSAULT_OT_assign_armor,
     COMBINEDASSAULT_OT_tag_material,
@@ -1533,6 +1675,8 @@ CLASSES = (
     COMBINEDASSAULT_OT_import,
     COMBINEDASSAULT_OT_setup_texture,
     COMBINEDASSAULT_OT_player_reference,
+    COMBINEDASSAULT_OT_view_cameras,
+    COMBINEDASSAULT_OT_look_through,
     COMBINEDASSAULT_PT_object,
     COMBINEDASSAULT_PT_material,
     COMBINEDASSAULT_PT_scene,

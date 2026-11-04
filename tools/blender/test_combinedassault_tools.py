@@ -289,6 +289,8 @@ def run():
     validator_refuses()
     texture_setup(work)
     player_reference()
+    passenger_cameras()
+    merge_coplanar()
     part_model()
 
     print("SUMMARY %d failure(s)" % len(FAILURES))
@@ -478,6 +480,75 @@ def player_reference():
     check("reference never exported", not any("player" in n for n in names), str(names))
     shutil.rmtree(pack)
 
+
+
+def passenger_cameras():
+    fresh_scene()
+    scene = bpy.context.scene
+    body = bpy.data.objects.new("tank", None)
+    scene.collection.objects.link(body)
+    body.combinedassault.role = "BODY"
+    box("hull", (0, 0, 1), (2, 4, 1)).parent = body
+    for name, field, target, location, yaw in (("socket_seat_driver", "seat", "driver", (0.5, -1, 1.6), 0.0),
+                                               ("socket_seat_rear", "seat", "rear", (-0.5, 1, 1.6), math.pi),
+                                               ("socket_camera", "camera", "", (0, 4, 3), 0.0),
+                                               ("socket_hitch", "towable", "", (0, 0, 2), 0.0)):
+        socket = bpy.data.objects.new(name, None)
+        scene.collection.objects.link(socket)
+        socket.parent = body
+        socket.location = location
+        socket.rotation_euler = (0, 0, yaw)
+        socket.combinedassault.role = "SOCKET"
+        socket.combinedassault.field = field
+        socket.combinedassault.target = target
+    bpy.ops.combinedassault.view_cameras()
+    cameras = T.view_cameras(scene)
+    check("one camera per seat / camera socket", len(cameras) == 3, str([c.name for c in cameras]))
+    bpy.context.view_layer.update()
+    by = {c.parent.name: c for c in cameras}
+    for name, expected in (("socket_seat_driver", (0, -1, 0)), ("socket_seat_rear", (0, 1, 0))):
+        camera = by[name]
+        look = camera.matrix_world.to_3x3() @ Vector((0, 0, -1))
+        up = camera.matrix_world.to_3x3() @ Vector((0, 1, 0))
+        check("%s looks along nose at its yaw" % name, (look - Vector(expected)).length < 1e-5, str(look))
+        check("%s is level" % name, abs(up.z - 1) < 1e-5, str(up))
+        eye = camera.matrix_world.translation
+        check("%s at the socket" % name, (eye - camera.parent.matrix_world.translation).length < 1e-6, str(eye))
+    check("camera fov 70 vertical", abs(math.degrees(cameras[0].data.angle_y) - 70) < 1e-3, str(cameras[0].data.angle_y))
+    bpy.ops.combinedassault.look_through(step=1)
+    check("look through next sets scene camera", scene.camera in cameras, str(scene.camera))
+    bpy.ops.combinedassault.view_cameras()
+    check("rebuild keeps one camera per socket", len(T.view_cameras(scene)) == 3)
+    errors, _ = T.check_scene(scene)
+    check("cameras never checked", not errors, str(errors))
+    pack = tempfile.mkdtemp(prefix="combinedassault_cam_")
+    settings = scene.combinedassault_export
+    settings.pack_root = pack
+    settings.model_path = "test/cam/cam"
+    bpy.ops.combinedassault.export()
+    with open(os.path.join(pack, "assets/combinedassault/models/test/cam/cam.gltf"), encoding="utf-8") as source:
+        written = json.load(source)
+    check("cameras never exported", "cameras" not in written and not any(n["name"].startswith("view_") for n in written["nodes"]))
+    shutil.rmtree(pack)
+
+
+def merge_coplanar():
+    fresh_scene()
+    scene = bpy.context.scene
+    cube = box("slab", (0, 0, 0), (2, 2, 1))
+    cube.combinedassault.role = "COLLIDER"
+    mesh = bmesh.new()
+    mesh.from_mesh(cube.data)
+    bmesh.ops.triangulate(mesh, faces=mesh.faces)
+    mesh.to_mesh(cube.data)
+    mesh.free()
+    points, faces = T.faces_of(cube)
+    check("triangulated box has coplanar neighbours", T.coplanar_neighbours(points, faces) is not None)
+    select(cube)
+    bpy.ops.combinedassault.merge_coplanar()
+    points, faces = T.faces_of(cube)
+    check("merge restores 6 quads", len(faces) == 6 and T.coplanar_neighbours(points, faces) is None, str(len(faces)))
+    check("merged collider still valid", not T.check_collider(cube), str(T.check_collider(cube)))
 
 
 def part_model():

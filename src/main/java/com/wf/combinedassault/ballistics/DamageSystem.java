@@ -17,6 +17,7 @@ import com.wf.combinedassault.ballistics.event.HitVehicleEvent;
 import com.wf.wflib.armor.api.hull.HullWear;
 import com.wf.wflib.armor.api.hull.HullResult;
 import com.wf.combinedassault.ballistics.addon.AddonStrike;
+import com.wf.combinedassault.ballistics.spall.Spall;
 import com.wf.wflib.damage.api.StrikeContext;
 import com.wf.combinedassault.ballistics.addon.AddonStrikes;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
@@ -149,6 +150,10 @@ public class DamageSystem {
         }
         // Core-line falloff applies to hull only; struck system takes the hit whole.
         float systemAmount = amount;
+        if (ballistic != null && round != null && hitPos != null
+                && Spall.onPenetration(vehicle, round, ballistic, hitPos, incoming, systemAmount)) {
+            systemAmount *= Spall.DIRECT_SHARE;
+        }
         amount *= (float) scale;
         if (hitPos != null) {
             MutableComponent message;

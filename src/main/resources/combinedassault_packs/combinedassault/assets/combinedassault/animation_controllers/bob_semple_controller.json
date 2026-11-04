@@ -1,0 +1,92 @@
+{
+    "name": "bob_semple_controller",
+    "parameters": {},
+    "graph": {
+        "type": "merge",
+        "inputs": [
+            {
+                "type": "bone_binding",
+                "special_bindings": [
+                    {
+                        "bones": [
+                            "wheel_left_sprocket"
+                        ],
+                        "source": "left_wheel_rotation",
+                        "axis": "x",
+                        "param": 0.39
+                    },
+                    {
+                        "bones": [
+                            "wheel_left_idler"
+                        ],
+                        "source": "left_wheel_rotation",
+                        "axis": "x",
+                        "param": 0.42
+                    },
+                    {
+                        "bones": [
+                            "wheel_left_road1",
+                            "wheel_left_road2",
+                            "wheel_left_road3",
+                            "wheel_left_road4",
+                            "wheel_left_road5",
+                            "wheel_left_road6",
+                            "wheel_left_road7"
+                        ],
+                        "source": "left_wheel_rotation",
+                        "axis": "x",
+                        "param": 0.115
+                    },
+                    {
+                        "bones": [
+                            "wheel_left_roller1",
+                            "wheel_left_roller2"
+                        ],
+                        "source": "left_wheel_rotation",
+                        "axis": "x",
+                        "param": 0.105
+                    },
+                    {
+                        "bones": [
+                            "wheel_right_sprocket"
+                        ],
+                        "source": "right_wheel_rotation",
+                        "axis": "x",
+                        "param": 0.39
+                    },
+                    {
+                        "bones": [
+                            "wheel_right_idler"
+                        ],
+                        "source": "right_wheel_rotation",
+                        "axis": "x",
+                        "param": 0.42
+                    },
+                    {
+                        "bones": [
+                            "wheel_right_road1",
+                            "wheel_right_road2",
+                            "wheel_right_road3",
+                            "wheel_right_road4",
+                            "wheel_right_road5",
+                            "wheel_right_road6",
+                            "wheel_right_road7"
+                        ],
+                        "source": "right_wheel_rotation",
+                        "axis": "x",
+                        "param": 0.115
+                    },
+                    {
+                        "bones": [
+                            "wheel_right_roller1",
+                            "wheel_right_roller2"
+                        ],
+                        "source": "right_wheel_rotation",
+                        "axis": "x",
+                        "param": 0.105
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -1,0 +1,319 @@
+{
+    "type": "combinedassault:tracked_vehicle",
+    "attributes": {
+        "brake_acceleration": 0.025,
+        "forward_acceleration": 0.01,
+        "backward_acceleration": 0.008,
+        "max_speed_forward": 0.2,
+        "max_speed_backward": 0.1,
+        "turn_acceleration": 0.6,
+        "max_turn": 1.5
+    },
+    "physics_info": {
+        "mass": 8000,
+        "friction": 16000,
+        "suspension_response": 4,
+        "can_destroy_block": false
+    },
+    "max_health": 420,
+    "armor": {
+        "front": 8,
+        "side": 8,
+        "rear": 6,
+        "top": 4,
+        "bottom": 4,
+        "parts": {
+            "turret": {
+                "front": 10,
+                "side": 10,
+                "rear": 8,
+                "top": 4,
+                "bottom": 4
+            }
+        }
+    },
+    "view_info": {
+        "third_person_distance": 8
+    },
+    "energy_info": {
+        "energy_capacity": 120,
+        "energy_consumption_per_tick": 0.0015
+    },
+    "storage": {
+        "slots": 18,
+        "max_payload": 1500
+    },
+    "parts": [
+        {
+            "id": "turret",
+            "crew_roles": [
+                "gunner"
+            ],
+            "name": "turret",
+            "type": "combinedassault:weapon",
+            "max_health": 150,
+            "render_bone": "turret",
+            "rot_info": {
+                "x_rot_speed": 3,
+                "y_rot_speed": 3,
+                "need_power": false
+            },
+            "optical_sight_type": "operator",
+            "zoom_max": 2,
+            "weapons": [
+                "combinedassault:gun_7.62mm"
+            ]
+        },
+        {
+            "id": "seat",
+            "crew_roles": [
+                "driver"
+            ],
+            "name": "seat",
+            "type": "combinedassault:generic"
+        },
+        {
+            "id": "commander",
+            "name": "commander",
+            "type": "combinedassault:generic",
+            "crew_roles": [
+                "commander"
+            ]
+        },
+        {
+            "id": "mg_front_a",
+            "name": "mg_front_a",
+            "type": "combinedassault:weapon",
+            "crew_roles": [
+                "gunner"
+            ],
+            "max_health": 60,
+            "render_bone": "mg_front_a",
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 4,
+                "y_rot_speed": 4,
+                "need_power": false
+            },
+            "optical_sight_type": "operator",
+            "zoom_max": 2,
+            "weapons": [
+                "combinedassault:gun_7.62mm"
+            ]
+        },
+        {
+            "id": "mg_front_b",
+            "name": "mg_front_b",
+            "type": "combinedassault:weapon",
+            "crew_roles": [
+                "gunner"
+            ],
+            "max_health": 60,
+            "render_bone": "mg_front_b",
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 4,
+                "y_rot_speed": 4,
+                "need_power": false
+            },
+            "optical_sight_type": "operator",
+            "zoom_max": 2,
+            "weapons": [
+                "combinedassault:gun_7.62mm"
+            ]
+        },
+        {
+            "id": "mg_side_l",
+            "name": "mg_side_l",
+            "type": "combinedassault:weapon",
+            "crew_roles": [
+                "gunner"
+            ],
+            "max_health": 60,
+            "render_bone": "mg_side_l",
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 4,
+                "y_rot_speed": 4,
+                "need_power": false
+            },
+            "optical_sight_type": "operator",
+            "zoom_max": 2,
+            "weapons": [
+                "combinedassault:gun_7.62mm"
+            ]
+        },
+        {
+            "id": "mg_side_r",
+            "name": "mg_side_r",
+            "type": "combinedassault:weapon",
+            "crew_roles": [
+                "gunner"
+            ],
+            "max_health": 60,
+            "render_bone": "mg_side_r",
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 4,
+                "y_rot_speed": 4,
+                "need_power": false
+            },
+            "optical_sight_type": "operator",
+            "zoom_max": 2,
+            "weapons": [
+                "combinedassault:gun_7.62mm"
+            ]
+        },
+        {
+            "id": "mg_rear",
+            "name": "mg_rear",
+            "type": "combinedassault:weapon",
+            "crew_roles": [
+                "gunner"
+            ],
+            "max_health": 60,
+            "render_bone": "mg_rear",
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 4,
+                "y_rot_speed": 4,
+                "need_power": false
+            },
+            "optical_sight_type": "operator",
+            "zoom_max": 2,
+            "weapons": [
+                "combinedassault:gun_7.62mm"
+            ]
+        },
+        {
+            "id": "suspension_left",
+            "name": "suspension_left",
+            "type": "combinedassault:track",
+            "is_seat": false,
+            "spring_stiffness": 160000,
+            "damping": 15000,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.05,
+            "max_droop": 0.08,
+            "track_width": 0.59
+        },
+        {
+            "id": "suspension_right",
+            "name": "suspension_right",
+            "type": "combinedassault:track",
+            "is_seat": false,
+            "spring_stiffness": 160000,
+            "damping": 15000,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.05,
+            "max_droop": 0.08,
+            "track_width": 0.59
+        }
+    ],
+    "model": "combinedassault:models/ground/bob_semple/bob_semple.gltf",
+    "display": {
+        "icon": "combinedassault:textures/slot/bob_semple.png",
+        "controller": "combinedassault:bob_semple_controller",
+        "engine": {
+            "start": {
+                "event": "combinedassault:lav150_engine_start",
+                "range": 96
+            },
+            "loops": [
+                {
+                    "sound": {
+                        "event": "combinedassault:truck_engine_idle",
+                        "range": 96
+                    },
+                    "input": "rpm",
+                    "volume": [
+                        [
+                            0.05,
+                            0
+                        ],
+                        [
+                            0.3,
+                            1
+                        ],
+                        [
+                            0.6,
+                            1
+                        ],
+                        [
+                            0.75,
+                            0
+                        ]
+                    ],
+                    "pitch": [
+                        [
+                            0.3,
+                            0.85
+                        ],
+                        [
+                            0.6,
+                            1
+                        ]
+                    ]
+                },
+                {
+                    "sound": {
+                        "event": "combinedassault:track_run",
+                        "range": 96
+                    },
+                    "input": "speed",
+                    "volume": [
+                        [
+                            0.01,
+                            0
+                        ],
+                        [
+                            0.1,
+                            0.6
+                        ],
+                        [
+                            0.6,
+                            1
+                        ]
+                    ],
+                    "pitch": [
+                        [
+                            0,
+                            0.8
+                        ],
+                        [
+                            1,
+                            1.1
+                        ]
+                    ]
+                }
+            ]
+        },
+        "tab_index": 105,
+        "track": {
+            "model": "combinedassault:models/effect/bob_semple_track_link.gltf",
+            "module_length": 0.1402
+        },
+        "variants": {
+            "bob_semple_black": {
+                "paint": "combinedassault:black"
+            },
+            "bob_semple_olive_drab": {
+                "paint": "combinedassault:olive_drab"
+            },
+            "bob_semple_sand": {
+                "paint": "combinedassault:sand"
+            },
+            "bob_semple_urban": {
+                "paint": "combinedassault:urban"
+            },
+            "bob_semple_winter": {
+                "paint": "combinedassault:winter"
+            },
+            "bob_semple_woodland": {
+                "paint": "combinedassault:woodland"
+            }
+        }
+    }
+}

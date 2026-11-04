@@ -30,7 +30,7 @@ public final class ArmorDebugText {
     @SubscribeEvent
     public static void onDebugText(CustomizeGuiOverlayEvent.DebugText event) {
         Minecraft mc = Minecraft.getInstance();
-        if (!mc.getDebugOverlay().showDebugScreen() || mc.player == null || !com.wf.wflib.core.client.DebugGate.allowed()) {
+        if (!mc.getDebugOverlay().showDebugScreen() || mc.player == null || !com.wf.wflib.core.api.client.DebugGate.allowed()) {
             return;
         }
         Camera camera = mc.gameRenderer.getMainCamera();

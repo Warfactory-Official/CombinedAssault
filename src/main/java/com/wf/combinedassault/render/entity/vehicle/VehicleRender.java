@@ -163,7 +163,7 @@ public class VehicleRender<T extends AbstractVehicle> extends EntityRenderer<T> 
     public static void renderHitbox(AbstractVehicle vehicle, PoseStack poseStack, MultiBufferSource bufferSource) {
         VertexConsumer buffer = bufferSource.getBuffer(RenderType.lines());
         EntityRenderDispatcher dispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
-        boolean debugHitboxes = dispatcher.shouldRenderHitBoxes() && com.wf.wflib.core.client.DebugGate.allowed();
+        boolean debugHitboxes = dispatcher.shouldRenderHitBoxes() && com.wf.wflib.core.api.client.DebugGate.allowed();
         boolean renderSelfVehicleHitbox = vehicle == LocalVehiclePlayer.instance().vehicle && VehicleKeys.INSPECT_VEHICLE.isDown();
         List<PartUnit<?>> partUnits = new ArrayList<>();
         if ((debugHitboxes || renderSelfVehicleHitbox) && vehicle.hits() != null) {

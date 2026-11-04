@@ -26,6 +26,7 @@ NeoForge 1.21.1, Java 21, ModDevGradle. Deps: WFLib (all wflib access via `api`,
 | dynamics | mandatory | wflib:physics |
 | vehicle | mandatory | wflib:armor, wflib:drone, wflib:laser, wflib:nvg, wflib:physics, wflib:probe |
 | pack | mandatory | wflib:barrel, wflib:magazine, wflib:packs |
+| labs | switchable | airdefense, ballistics, energy, vehicle, wflib:labs |
 <!-- systems:end -->
 - Mandatory = one block (mutual deps, `SystemBoundaryTest`); leaves depend on own + `requires()` + mandatory.
 - Own ids bare in `requires()`, wflib ids `wflib:`-qualified; needed-but-off => kernel auto-enables with warning.

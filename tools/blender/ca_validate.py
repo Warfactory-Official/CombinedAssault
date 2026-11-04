@@ -18,12 +18,14 @@ import sys
 SYSTEMS = ["hull", "engine", "track", "wheel", "turret", "barrel", "fuel", "ammo", "optics", "rotor",
            "tail_rotor", "wing"]
 # NodeRole SOCKET kind.
-SOCKET_FIELDS = ["seat", "dismount", "view", "sight", "bolt", "eject", "era", "slat", "mount_point", "hitch", "towable",
+SOCKET_FIELDS = ["seat", "dismount", "view", "sight", "sight_lens", "bolt", "eject", "era", "slat", "mount_point", "hitch", "towable",
                  "axle", "exhaust", "vortex", "smoke", "afterburner", "camera", "camera_zoomed", "light", "cargo_bay",
                  "center_of_mass", "pivot", "track", "propeller", "station"]
 # Socket fields with no interface (MountDefaults `none`).
 UNTARGETED = {"towable", "axle", "camera", "camera_zoomed", "exhaust", "vortex", "smoke", "afterburner", "light",
               "cargo_bay", "center_of_mass", "pivot", "propeller"}
+# Sockets whose mesh is drawn (PiP lens: texture without UV, shown).
+DRAWN_SOCKETS = {"sight_lens"}
 FRAME_ROLES = {"body", "part", "pitch"}
 SHAPE_ROLES = {"collider", "hit", "hit_surface"}
 ROLES = FRAME_ROLES | SHAPE_ROLES | set(SOCKET_FIELDS)
@@ -215,7 +217,7 @@ def roles(model):
                 model.errors.append("%s: socket %s takes no interface" % (name, role))
             if role not in UNTARGETED and not iface:
                 model.errors.append("%s: socket %s names no interface" % (name, role))
-        if role in SHAPE_ROLES | set(SOCKET_FIELDS) and not extras.get(HIDDEN):
+        if role in SHAPE_ROLES | set(SOCKET_FIELDS) - DRAWN_SOCKETS and not extras.get(HIDDEN):
             model.warnings.append("%s (%s) is drawn: set %s" % (name, role, HIDDEN))
         if role == "collider":
             unknown = sorted(set(meta) - COLLIDER_KEYS)
@@ -405,7 +407,11 @@ def materials(model):
     for index, image in enumerate(images):
         if index not in used:
             model.warnings.append("image %s is not used by any material" % image.get("name", index))
-    for mesh in gltf.get("meshes", []):
+    lenses = {n["mesh"] for n in gltf.get("nodes", [])
+              if "mesh" in n and (n.get("extras") or {}).get(ROLE) in DRAWN_SOCKETS}
+    for index, mesh in enumerate(gltf.get("meshes", [])):
+        if index in lenses:
+            continue
         for primitive in mesh.get("primitives", []):
             material = primitive.get("material")
             textured = material is not None and \
