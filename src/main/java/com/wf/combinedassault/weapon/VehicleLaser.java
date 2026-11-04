@@ -14,6 +14,7 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +59,7 @@ public class VehicleLaser extends AbstractVehicleWeapon<VehicleLaserWeaponData> 
         Vec3 from = aim.from;
         Vec3 end = from.add(VectorUtil.rotToVec(aim.direction.x, aim.direction.y).scale(getData().range));
         BlockHitResult block = level.clip(new ClipContext(from, end, ClipContext.Block.COLLIDER,
-                ClipContext.Fluid.NONE, (Entity) null));
+                ClipContext.Fluid.NONE, CollisionContext.empty()));
         if (block.getType() != HitResult.Type.MISS) {
             end = block.getLocation();
         }
@@ -80,7 +81,7 @@ public class VehicleLaser extends AbstractVehicleWeapon<VehicleLaserWeaponData> 
         }
         Vec3 from = weaponUnit.aimContext().from;
         Vec3 to = target.getBoundingBox().getCenter();
-        if (level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, (Entity) null))
+        if (level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, CollisionContext.empty()))
                 .getType() != HitResult.Type.MISS) {
             return false;
         }
