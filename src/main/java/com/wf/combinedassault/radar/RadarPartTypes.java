@@ -1,8 +1,8 @@
 package com.wf.combinedassault.radar;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.pack.serialize.GsonUtil;
 import com.wf.combinedassault.pack.part.PartUnitType;
+import com.wf.combinedassault.pack.serialize.GsonUtil;
 
 public final class RadarPartTypes {
 

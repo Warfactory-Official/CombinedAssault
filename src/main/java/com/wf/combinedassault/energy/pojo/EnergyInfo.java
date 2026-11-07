@@ -1,8 +1,8 @@
 package com.wf.combinedassault.energy.pojo;
 
 import com.google.gson.annotations.SerializedName;
-import net.minecraft.world.phys.Vec3;
 import com.wf.combinedassault.energy.EnergyType;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;

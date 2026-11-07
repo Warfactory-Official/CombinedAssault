@@ -1,18 +1,18 @@
 package com.wf.combinedassault.hud.widget;
 
-import com.wf.combinedassault.vehicle.VehicleConfig;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.message.ServerHitVehicleEvent;
 import com.wf.combinedassault.hud.AimPoint;
 import com.wf.combinedassault.hud.CaDraw;
 import com.wf.combinedassault.hud.HitFeedback;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.ballistics.message.ServerHitVehicleEvent;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.VehicleConfig;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.gemrender.ui.Canvas;
 import com.wf.gemrender.ui.TextBuffer;
 import com.wf.wflib.ui.api.Binder;

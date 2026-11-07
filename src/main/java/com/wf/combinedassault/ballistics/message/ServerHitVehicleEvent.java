@@ -1,5 +1,9 @@
 package com.wf.combinedassault.ballistics.message;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.event.HitVehicleEvent;
+import com.wf.combinedassault.hud.HitFeedback;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.VehicleConfig;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -8,10 +12,6 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.ballistics.event.HitVehicleEvent;
-import com.wf.combinedassault.hud.HitFeedback;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 
 import java.util.UUID;
 

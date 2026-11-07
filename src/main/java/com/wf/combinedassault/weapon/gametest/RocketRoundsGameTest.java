@@ -1,5 +1,10 @@
 package com.wf.combinedassault.weapon.gametest;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.weapon.ordnance.Munitions;
+import com.wf.wflib.countermeasure.api.ApsGrenadeEntity;
+import com.wf.wflib.countermeasure.api.Countermeasures;
 import com.wf.wflib.round.api.KineticPreset;
 import com.wf.wflib.round.api.KineticPresets;
 import com.wf.wflib.round.api.RocketEntity;
@@ -8,15 +13,10 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.pack.CommonAssetsManager;
-import com.wf.wflib.countermeasure.api.ApsGrenadeEntity;
-import com.wf.wflib.countermeasure.api.Countermeasures;
-import net.minecraft.world.item.ItemStack;
-import com.wf.combinedassault.weapon.ordnance.Munitions;
 
 /** Rocket weapons fly as WFLib rockets; the APS takes rockets and entity-less rounds. */
 @GameTestHolder(CombinedAssault.MOD_ID)

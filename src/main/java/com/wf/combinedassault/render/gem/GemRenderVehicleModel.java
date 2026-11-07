@@ -1,6 +1,9 @@
 package com.wf.combinedassault.render.gem;
 
+import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.render.model.BoneIndexProvider;
+import com.wf.combinedassault.render.model.VehicleModel;
+import com.wf.combinedassault.render.model.VehicleModelInstance;
 import com.wf.gemrender.asset.ModelCache;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
 import com.wf.gemrender.gltf.NodeTable;
@@ -8,9 +11,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.render.model.VehicleModel;
-import com.wf.combinedassault.render.model.VehicleModelInstance;
 
 import java.util.ArrayList;
 import java.util.List;

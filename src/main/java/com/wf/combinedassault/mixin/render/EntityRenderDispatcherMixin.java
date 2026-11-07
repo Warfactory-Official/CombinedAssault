@@ -2,13 +2,13 @@ package com.wf.combinedassault.mixin.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 /**
  * Vehicle hitbox draw only; collision AABB untouched. Vanilla's axis-aligned box is oversized

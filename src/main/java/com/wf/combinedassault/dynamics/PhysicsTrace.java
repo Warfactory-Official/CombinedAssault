@@ -1,22 +1,17 @@
 package com.wf.combinedassault.dynamics;
 
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.physics.api.SweptHull;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.wflib.physics.api.SweptHull;
 
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 /** Per-tick vertical-movement ledger by source. Closes against actual movement; MOVE = unclaimed remainder. */
 public final class PhysicsTrace {

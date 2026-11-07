@@ -1,5 +1,6 @@
 package com.wf.combinedassault.energy;
 
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -10,7 +11,6 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 /**
  * Refuelling and charging from the block a vehicle is parked on.

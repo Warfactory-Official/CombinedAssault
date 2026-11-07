@@ -1,5 +1,6 @@
 package com.wf.combinedassault.vehicle;
 
+import com.wf.combinedassault.CombinedAssault;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
@@ -8,7 +9,6 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-import com.wf.combinedassault.CombinedAssault;
 
 public class VehicleDamageTypes {
 

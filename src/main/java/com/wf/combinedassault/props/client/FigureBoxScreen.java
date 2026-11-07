@@ -6,6 +6,9 @@ import com.mojang.math.Axis;
 import com.sighs.apricityui.init.Document;
 import com.sighs.apricityui.init.Element;
 import com.sighs.apricityui.screen.ApricityScreen;
+import com.wf.combinedassault.props.FigureBoxBlock;
+import com.wf.combinedassault.props.FigureBoxBlockEntity;
+import com.wf.combinedassault.props.message.ClientFigureBoxUpdate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
@@ -15,9 +18,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.network.PacketDistributor;
-import com.wf.combinedassault.props.FigureBoxBlock;
-import com.wf.combinedassault.props.FigureBoxBlockEntity;
-import com.wf.combinedassault.props.message.ClientFigureBoxUpdate;
 
 import java.util.Locale;
 

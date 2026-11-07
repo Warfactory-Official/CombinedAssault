@@ -1,13 +1,13 @@
 package com.wf.combinedassault.cargo.client;
 
+import com.wf.combinedassault.cargo.HoldGrid;
+import com.wf.combinedassault.cargo.VehicleStorageMenu;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import org.jetbrains.annotations.NotNull;
-import com.wf.combinedassault.cargo.HoldGrid;
-import com.wf.combinedassault.cargo.VehicleStorageMenu;
 
 /**
  * Hold panel drawn flat, not blitted: vanilla's chest texture caps at 54 slots, a hold is any size.

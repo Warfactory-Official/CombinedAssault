@@ -3,14 +3,10 @@ package com.wf.combinedassault.render.fx;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.gemrender.asset.GemRenderModels;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
-import com.wf.gemrender.particle.GemRenderParticleTypes;
-import com.wf.gemrender.particle.ParticleBuffer;
-import com.wf.gemrender.particle.ParticleInstance;
-import com.wf.gemrender.particle.ParticleModels;
-import com.wf.gemrender.particle.ParticleStyle;
+import com.wf.gemrender.particle.*;
+import com.wf.wflib.ammo.api.Casing;
 import dev.engine_room.flywheel.api.instance.InstanceType;
 import dev.engine_room.flywheel.api.model.Model;
-import com.wf.wflib.ammo.api.Casing;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 

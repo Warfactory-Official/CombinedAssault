@@ -2,14 +2,14 @@ package com.wf.combinedassault.indirect.client;
 
 import com.wf.combinedassault.hud.HudCache;
 import com.wf.combinedassault.hud.HudSubjects;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.indirect.BallisticSolver;
 import com.wf.combinedassault.indirect.IndirectFire;
 import com.wf.combinedassault.indirect.RoundSpec;
 import com.wf.combinedassault.indirect.Trajectory;
 import com.wf.combinedassault.vehicle.crew.CrewRules;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.wflib.ui.api.Signals;
 import com.wf.wflib.ui.api.Subject;
 import com.wf.wflib.ui.api.UiContext;

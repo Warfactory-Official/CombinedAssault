@@ -1,6 +1,11 @@
 package com.wf.combinedassault.render.gem;
 
 import com.google.gson.annotations.SerializedName;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.pack.client.ClientAssetsManager;
+import com.wf.combinedassault.pack.client.JsonDataManager;
+import com.wf.combinedassault.pack.serialize.GsonUtil;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
 import com.wf.gemrender.texture.Paint;
 import com.wf.gemrender.texture.PaintArray;
@@ -10,11 +15,6 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.pack.client.ClientAssetsManager;
-import com.wf.combinedassault.pack.client.JsonDataManager;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.pack.serialize.GsonUtil;
 
 import java.util.HashMap;
 import java.util.Map;

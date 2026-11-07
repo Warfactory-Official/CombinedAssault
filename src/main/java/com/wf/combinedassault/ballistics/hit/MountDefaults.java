@@ -4,29 +4,23 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
+import com.wf.combinedassault.pack.part.PartUnitEntry;
+import com.wf.combinedassault.pack.serialize.GsonUtil;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.weapon.part.data.MissileHolderUnitData;
+import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
+import com.wf.combinedassault.weapon.pojo.Bolt;
+import com.wf.combinedassault.weapon.pojo.Eject;
+import com.wf.combinedassault.weapon.pojo.Station;
+import com.wf.wflib.physics.api.DeckFrame;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import com.wf.combinedassault.pack.part.PartUnitEntry;
-import com.wf.combinedassault.weapon.part.data.MissileHolderUnitData;
-import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
-import com.wf.combinedassault.pack.serialize.GsonUtil;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.wflib.physics.api.DeckFrame;
-import com.wf.combinedassault.weapon.pojo.Bolt;
-import com.wf.combinedassault.weapon.pojo.Eject;
-import com.wf.combinedassault.weapon.pojo.Station;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Socket-role nodes ({@link NodeRole.Kind#SOCKET}; interface = target, {@code combinedassault.index}) -> vehicle def

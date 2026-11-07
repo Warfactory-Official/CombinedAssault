@@ -1,15 +1,23 @@
 package com.wf.combinedassault.render.gem;
 
+import com.wf.combinedassault.dynamics.part.PartClipTracks;
+import com.wf.combinedassault.render.entity.vehicle.VehicleRender;
+import com.wf.combinedassault.render.model.VehicleModelInstance;
+import com.wf.combinedassault.vehicle.VehicleContent;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.part.data.PartMount;
+import com.wf.combinedassault.weapon.client.StationPip;
 import com.wf.gemrender.asset.GemRenderModels;
 import com.wf.gemrender.asset.ModelCache;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
 import com.wf.gemrender.gltf.GltfPose;
 import com.wf.gemrender.gltf.NodeTable;
 import com.wf.gemrender.iris.ShaderPacks;
-import com.wf.gemrender.texture.Paint;
 import com.wf.gemrender.render.BoneBuffer;
 import com.wf.gemrender.render.GemRenderInstance;
 import com.wf.gemrender.render.GemRenderInstanceTypes;
+import com.wf.gemrender.texture.Paint;
 import dev.engine_room.flywheel.api.task.Plan;
 import dev.engine_room.flywheel.api.task.TaskExecutor;
 import dev.engine_room.flywheel.api.visual.DynamicVisual;
@@ -30,17 +38,9 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector4f;
-import com.wf.combinedassault.weapon.client.StationPip;
-import com.wf.combinedassault.render.model.VehicleModelInstance;
-import com.wf.combinedassault.render.entity.vehicle.VehicleRender;
-import com.wf.combinedassault.vehicle.part.data.PartMount;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.dynamics.part.PartClipTracks;
-import com.wf.combinedassault.vehicle.part.PartUnit;
 
 import java.util.ArrayList;
 import java.util.List;
-import com.wf.combinedassault.vehicle.VehicleContent;
 
 /**
  * Draws a vehicle whose display was read by {@link GemRenderModelLoader}: one Flywheel instance for the

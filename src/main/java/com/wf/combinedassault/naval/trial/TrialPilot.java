@@ -1,8 +1,8 @@
 package com.wf.combinedassault.naval.trial;
 
-import net.minecraft.util.Mth;
 import com.wf.combinedassault.naval.ShipVehicle;
 import com.wf.combinedassault.naval.trial.TrialCourse.Mark;
+import net.minecraft.util.Mth;
 
 import java.util.List;
 

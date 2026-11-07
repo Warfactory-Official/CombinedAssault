@@ -2,14 +2,14 @@
   "use": ["combinedassault:hud"],
   "constants": {
     "shade": "#55000000",
-    "band": "#aa22aa55",
-    "stop_color": "indirect.within_stops ? $green : $amber",
-    "state_color": "indirect.state == indirect.state.stop ? $amber : indirect.state == indirect.state.laid ? $green : $label",
+    "band": "#aaffffff",
+    "stop_color": "indirect.within_stops ? $white : $amber",
+    "state_color": "indirect.state == indirect.state.stop ? $amber : indirect.state == indirect.state.laid ? $white : $label",
     "bottom": "!indirect.has_round ? 65 : indirect.in_flight > 0 ? (indirect.mission ? 152 : 128) : indirect.mission ? 139 : 115",
     "splash_y": "indirect.mission ? 143 : 119",
     "offset": "wrap(indirect.laid_bearing - indirect.gun_bearing, -180, 180)",
     "laid_at": "68 + round($offset * 2)",
-    "legend_color": "alpha(#66ff99, 0.6 * indirect.legend)"
+    "legend_color": "alpha(#ffffff, 0.6 * indirect.legend)"
   },
   "root": {"type": "column", "children": [
     {"type": "sized", "w": 146, "h": "5 + $bottom", "child": {"type": "stack", "children": [
@@ -17,9 +17,9 @@
       {"type": "rect", "w": 1, "h": "5 + $bottom", "color": "$label"},
       {"type": "place", "x": 5, "y": 5, "child": {"type": "stack", "children": [
         {"type": "when", "if": "indirect.self_guided",
-          "then": {"type": "text", "text": "{indirect.mode|tr:ui.indirect.laying.}", "color": "$green", "shadow": true},
+          "then": {"type": "text", "text": "{indirect.mode|tr:ui.indirect.laying.}", "color": "$white", "shadow": true},
           "else": {"type": "text", "text": "{indirect.mode|tr:ui.indirect.laying.} {tr:ui.indirect.mode(indirect.arc|tr:ui.indirect.arc.)}",
-            "color": "$green", "shadow": true}},
+            "color": "$white", "shadow": true}},
         {"type": "place", "x": 138, "y": -2, "pivot": "top_right",
           "child": {"type": "box", "background": "alpha($state_color, 0.133)", "border_width": 0, "pad_x": 2.5, "pad_y": 2,
             "child": {"type": "text", "text": "{indirect.state|tr:ui.indirect.state.}", "color": "$state_color", "shadow": true}}},
@@ -29,7 +29,7 @@
           "accent_step": 45, "accent_color": "$label",
           "band_from": "indirect.stop_low", "band_to": "indirect.stop_high", "band_offset": 3, "band_size": 3, "band_color": "$band",
           "needles": [
-            {"value": "indirect.gun_elevation", "inner": 3, "outer": 32, "size": 2, "color": "$green"},
+            {"value": "indirect.gun_elevation", "inner": 3, "outer": 32, "size": 2, "color": "$white"},
             {"value": "indirect.laid_elevation", "inner": 35, "outer": 40, "size": 2, "color": "$stop_color"}
           ]}},
 
@@ -37,14 +37,14 @@
           "value": "{indirect.laid_elevation|.1}", "color": "$stop_color"},
         {"type": "combinedassault:hud/indirect_row", "x": 46, "y": 26, "key": "ui.indirect.gun",
           "value": "{indirect.gun_elevation|.1}",
-          "color": "indirect.state == indirect.state.stop ? $amber : indirect.state == indirect.state.laying ? $green : $label"},
+          "color": "indirect.state == indirect.state.stop ? $amber : indirect.state == indirect.state.laying ? $white : $label"},
         {"type": "combinedassault:hud/indirect_row", "x": 46, "y": 37, "key": "ui.indirect.bearing",
-          "value": "{mod(round(indirect.laid_bearing), 360)|03}", "color": "$green"},
+          "value": "{mod(round(indirect.laid_bearing), 360)|03}", "color": "$white"},
 
         {"type": "place", "x": 136, "y": 54, "pivot": "top_right", "child": {"type": "repeat", "items": "indirect.steps", "gap": 2,
-          "child": {"type": "box", "background": "indirect_step.live ? #66007733 : $track", "border_width": 0, "pad_x": 2, "pad_y": 1.5,
+          "child": {"type": "box", "background": "indirect_step.live ? #50ffffff : $track", "border_width": 0, "pad_x": 2, "pad_y": 1.5,
             "child": {"type": "text", "text": "{indirect_step.label}",
-              "color": "!indirect_step.usable ? $scale : indirect_step.live ? $green : $label"}}}},
+              "color": "!indirect_step.usable ? $scale : indirect_step.live ? $white : $label"}}}},
 
         {"type": "place", "y": 70, "child": {"type": "stack", "children": [
           {"type": "rect", "w": 136, "h": 13, "color": "$track"},
@@ -54,35 +54,35 @@
             "label_color": "$label", "label_scale": 0.1, "label_pad": 2, "name_color": "$label", "major_color": "$label"}},
           {"type": "when", "if": "$laid_at >= 2 && $laid_at <= 134",
             "then": {"type": "place", "x": "$laid_at", "child": {"type": "stack", "children": [
-              {"type": "poly", "points": [-3, -4, 4, -4, 0.5, 0], "color": "$green"},
-              {"type": "rect", "w": 1, "h": 13, "color": "alpha($green, 0.467)"}]}},
+              {"type": "poly", "points": [-3, -4, 4, -4, 0.5, 0], "color": "$white"},
+              {"type": "rect", "w": 1, "h": 13, "color": "alpha($white, 0.467)"}]}},
             "else": {"type": "when", "if": "$offset < 0",
               "then": {"type": "stack", "children": [
-                {"type": "poly", "points": [1, 6.5, 6, 1.5, 6, 11.5], "color": "$green"},
-                {"type": "place", "x": 8, "y": 3, "child": {"type": "text", "text": "{round(abs($offset))}", "color": "$green"}}]},
+                {"type": "poly", "points": [1, 6.5, 6, 1.5, 6, 11.5], "color": "$white"},
+                {"type": "place", "x": 8, "y": 3, "child": {"type": "text", "text": "{round(abs($offset))}", "color": "$white"}}]},
               "else": {"type": "stack", "children": [
-                {"type": "poly", "points": [135, 6.5, 130, 1.5, 130, 11.5], "color": "$green"},
+                {"type": "poly", "points": [135, 6.5, 130, 1.5, 130, 11.5], "color": "$white"},
                 {"type": "place", "x": 128, "y": 3, "pivot": "top_right",
-                  "child": {"type": "text", "text": "{round(abs($offset))}", "color": "$green"}}]}}},
-          {"type": "place", "x": 68, "y": -5, "child": {"type": "rect", "w": 1, "h": 9, "color": "$green"}},
-          {"type": "place", "x": 66, "y": -5, "child": {"type": "rect", "w": 5, "h": 1, "color": "$green"}}
+                  "child": {"type": "text", "text": "{round(abs($offset))}", "color": "$white"}}]}}},
+          {"type": "place", "x": 68, "y": -5, "child": {"type": "rect", "w": 1, "h": 9, "color": "$white"}},
+          {"type": "place", "x": 66, "y": -5, "child": {"type": "rect", "w": 5, "h": 1, "color": "$white"}}
         ]}},
 
         {"type": "when", "if": "indirect.has_round", "then": {"type": "stack", "children": [
           {"type": "combinedassault:hud/indirect_row", "x": 0, "y": 88, "key": "ui.indirect.reach",
             "value": "{tr:ui.indirect.metres(round(indirect.reach_laid))}",
-            "color": "indirect.covered && indirect.within_stops ? $green : $amber"},
+            "color": "indirect.covered && indirect.within_stops ? $white : $amber"},
           {"type": "place", "y": 99, "child": {"type": "combinedassault:range_scale", "w": 136,
             "near": "indirect.covered ? indirect.reach_near : 0/0", "far": "indirect.reach_far", "max": "indirect.reach_max",
-            "mark": "indirect.reach_laid", "track": "$track", "scale": "$scale", "band": "#99117733",
-            "mark_color": "$green", "label": "$label"}},
+            "mark": "indirect.reach_laid", "track": "$track", "scale": "$scale", "band": "#70ffffff",
+            "mark_color": "$white", "label": "$label"}},
           {"type": "when", "if": "!indirect.covered", "then": {"type": "place", "y": 106,
             "child": {"type": "text", "text": "{tr:ui.indirect.arc_blocked(indirect.arc|tr:ui.indirect.arc.)}", "color": "$amber"}}},
           {"type": "when", "if": "indirect.mission", "then": {"type": "stack", "children": [
             {"type": "combinedassault:hud/indirect_row", "x": 0, "y": 119, "key": "ui.indirect.target",
-              "value": "{floor(indirect.target_x)} {floor(indirect.target_y)} {floor(indirect.target_z)}", "color": "$green"},
+              "value": "{floor(indirect.target_x)} {floor(indirect.target_y)} {floor(indirect.target_z)}", "color": "$white"},
             {"type": "place", "y": 130,
-              "child": {"type": "text", "text": "{tr:ui.indirect.flight(indirect.flight|.1)}", "color": "$green"}},
+              "child": {"type": "text", "text": "{tr:ui.indirect.flight(indirect.flight|.1)}", "color": "$white"}},
             {"type": "place", "x": 136, "y": 130, "pivot": "top_right",
               "child": {"type": "text", "text": "{tr:ui.indirect.apex(round(indirect.apex))}", "color": "$label", "shadow": true}}
           ]}},

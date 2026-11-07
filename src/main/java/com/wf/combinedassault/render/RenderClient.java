@@ -1,6 +1,22 @@
 package com.wf.combinedassault.render;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.cargo.CargoContent;
+import com.wf.combinedassault.pack.client.ClientAssetsManager;
+import com.wf.combinedassault.radar.RadarContent;
+import com.wf.combinedassault.radar.client.RadarMarkerRenderer;
+import com.wf.combinedassault.render.entity.vehicle.VehiclePartRender;
+import com.wf.combinedassault.render.entity.vehicle.VehicleRender;
+import com.wf.combinedassault.render.fx.HitFx;
+import com.wf.combinedassault.render.fx.WakeFx;
+import com.wf.combinedassault.render.gem.GemRenderSetup;
+import com.wf.combinedassault.render.handler.RenderLivingHandler;
+import com.wf.combinedassault.render.particle.*;
+import com.wf.combinedassault.render.shader.ModShaders;
+import com.wf.combinedassault.render.shader.OverloadHandler;
+import com.wf.combinedassault.render.util.CollisionMeshRenderer;
+import com.wf.combinedassault.vehicle.VehicleContent;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
 import com.wf.wflib.core.api.WFSystems;
 import dev.engine_room.flywheel.api.event.EndClientResourceReloadEvent;
 import net.minecraft.client.renderer.entity.EntityRenderers;
@@ -10,27 +26,6 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import com.wf.combinedassault.pack.client.ClientAssetsManager;
-import com.wf.combinedassault.radar.client.RadarMarkerRenderer;
-import com.wf.combinedassault.render.entity.vehicle.VehiclePartRender;
-import com.wf.combinedassault.render.entity.vehicle.VehicleRender;
-import com.wf.combinedassault.render.fx.HitFx;
-import com.wf.combinedassault.render.fx.WakeFx;
-import com.wf.combinedassault.render.gem.GemRenderSetup;
-import com.wf.combinedassault.render.handler.RenderLivingHandler;
-import com.wf.combinedassault.render.particle.BulletHoleParticle;
-import com.wf.combinedassault.render.particle.DustSmokeParticle;
-import com.wf.combinedassault.render.particle.DustStoneParticle;
-import com.wf.combinedassault.render.particle.SmokeCloudParticle;
-import com.wf.combinedassault.render.particle.TrackDustParticle;
-import com.wf.combinedassault.render.particle.TrackParticle;
-import com.wf.combinedassault.render.shader.ModShaders;
-import com.wf.combinedassault.render.shader.OverloadHandler;
-import com.wf.combinedassault.render.util.CollisionMeshRenderer;
-import com.wf.combinedassault.vehicle.util.VectorUtil;
-import com.wf.combinedassault.cargo.CargoContent;
-import com.wf.combinedassault.vehicle.VehicleContent;
-import com.wf.combinedassault.radar.RadarContent;
 
 /** Server-unsafe half of {@link RenderSystem}. */
 final class RenderClient {

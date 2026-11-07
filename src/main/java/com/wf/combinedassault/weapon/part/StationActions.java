@@ -2,6 +2,7 @@ package com.wf.combinedassault.weapon.part;
 
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.wflib.probe.api.ProbeActions;
 import com.wf.wflib.probe.api.ProbeInventory;
@@ -9,7 +10,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.vehicle.part.PartUnit;
 
 /**
  * Exposed ordnance stations, on foot: holder station ({@code arg} = {@link #holder}) or weapon {@code round_bones}

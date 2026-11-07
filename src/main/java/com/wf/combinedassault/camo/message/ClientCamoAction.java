@@ -1,5 +1,13 @@
 package com.wf.combinedassault.camo.message;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.camo.CamoConfig;
+import com.wf.combinedassault.camo.CamoKind;
+import com.wf.combinedassault.camo.CamoKitItem;
+import com.wf.combinedassault.camo.CamoPlacement;
+import com.wf.combinedassault.camo.pojo.CamoAction;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -11,14 +19,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.camo.CamoConfig;
-import com.wf.combinedassault.camo.CamoKitItem;
-import com.wf.combinedassault.vehicle.util.VectorUtil;
-import com.wf.combinedassault.camo.CamoKind;
-import com.wf.combinedassault.camo.CamoPlacement;
-import com.wf.combinedassault.camo.pojo.CamoAction;
 
 import java.util.ArrayList;
 import java.util.HashMap;

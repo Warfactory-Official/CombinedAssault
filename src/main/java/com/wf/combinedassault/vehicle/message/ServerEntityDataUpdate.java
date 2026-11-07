@@ -1,14 +1,14 @@
 package com.wf.combinedassault.vehicle.message;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.pack.sync.SyncDataEntry;
+import com.wf.combinedassault.pack.sync.SyncDataManager;
+import com.wf.combinedassault.pack.sync.SyncDataSerializer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.pack.sync.SyncDataSerializer;
-import com.wf.combinedassault.pack.sync.SyncDataEntry;
-import com.wf.combinedassault.pack.sync.SyncDataManager;
 
 import java.util.ArrayList;
 import java.util.List;

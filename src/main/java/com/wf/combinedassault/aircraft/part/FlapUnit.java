@@ -1,14 +1,14 @@
 package com.wf.combinedassault.aircraft.part;
 
+import com.wf.combinedassault.aircraft.part.data.FlapUnitData;
+import com.wf.combinedassault.pack.sync.SyncDataSerializers;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.RotatableUnit;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
-import com.wf.combinedassault.pack.sync.SyncDataSerializers;
-import com.wf.combinedassault.aircraft.part.data.FlapUnitData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.part.RotatableUnit;
 
 /** Trailing-edge flaps: notched deflection = part xRot. */
 public class FlapUnit extends RotatableUnit<FlapUnitData> {

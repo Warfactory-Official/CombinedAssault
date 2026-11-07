@@ -3,24 +3,18 @@ package com.wf.combinedassault.uav.autonomy.gametest;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.gametest.TestLanes;
-import com.wf.wflib.drone.api.DronePadBlockEntity;
-import com.wf.wflib.drone.api.DroneMission;
-import com.wf.wflib.drone.api.DroneState;
-import com.wf.wflib.drone.api.DroneTask;
-import com.wf.wflib.drone.api.DroneTasking;
-import com.wf.wflib.drone.api.DroneTracker;
+import com.wf.wflib.drone.api.*;
 import com.wf.wflib.testkit.api.ForcedChunks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import com.wf.wflib.drone.api.DroneContent;
 
 /** Lane z -3000 from the arena, route +X 48 blocks: chunks forced along it. */
 @PrefixGameTestTemplate(false)

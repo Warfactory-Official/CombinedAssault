@@ -1,17 +1,16 @@
 package com.wf.combinedassault.hud;
 
-import com.wf.wflib.ammo.api.AmmoItems;
-import com.wf.combinedassault.weapon.RoundCount;
-import com.wf.wflib.magazine.api.MagFill;
-import com.wf.wflib.ammo.api.Ammo;
-import com.wf.wflib.ammo.api.AmmoVariant;
-
 import com.wf.combinedassault.ballistics.component.ComponentState;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.RoundCount;
 import com.wf.combinedassault.weapon.VehicleWeaponAgent;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.wflib.ammo.api.Ammo;
+import com.wf.wflib.ammo.api.AmmoItems;
+import com.wf.wflib.ammo.api.AmmoVariant;
+import com.wf.wflib.magazine.api.MagFill;
 import com.wf.wflib.ui.api.UiHud;
 import net.minecraft.client.Minecraft;
 import net.minecraft.locale.Language;
@@ -19,15 +18,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.scores.Team;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.scores.Team;
 import net.neoforged.neoforge.fluids.FluidStack;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.*;
 
 /**
  * Per-frame / per-object memo behind the HUD signals so getters return the same objects frame after
@@ -146,6 +141,22 @@ public final class HudCache {
             }
             AmmoVariant variant = AmmoItems.variantOf(round);
             return variant != null ? variant.name() : round.getHoverName().getString();
+        });
+    }
+
+    private static final Map<Object, List<AmmoVariant>> ROUND_VARIANTS = new java.util.HashMap<>();
+
+    /** Loads of a cartridge / magazine; other item => none. */
+    public static List<AmmoVariant> roundVariants(ItemStack round) {
+        if (round.isEmpty()) {
+            return List.of();
+        }
+        return ROUND_VARIANTS.computeIfAbsent(roundKey(round), key -> {
+            if (MagFill.isMagazine(round)) {
+                return RoundCount.variants(round).stream().map(Ammo::variant).toList();
+            }
+            AmmoVariant variant = AmmoItems.variantOf(round);
+            return variant != null ? List.of(variant) : List.of();
         });
     }
 

@@ -1,5 +1,6 @@
 package com.wf.combinedassault.cargo;
 
+import com.wf.combinedassault.CombinedAssault;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -9,7 +10,6 @@ import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import com.wf.combinedassault.CombinedAssault;
 
 public final class CargoContent {
 

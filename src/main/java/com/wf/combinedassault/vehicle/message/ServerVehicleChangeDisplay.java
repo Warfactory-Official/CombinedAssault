@@ -1,13 +1,13 @@
 package com.wf.combinedassault.vehicle.message;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 public class ServerVehicleChangeDisplay implements CustomPacketPayload {
 

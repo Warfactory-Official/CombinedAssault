@@ -1,7 +1,7 @@
 package com.wf.combinedassault.vehicle.event;
 
-import net.minecraft.world.damagesource.DamageSource;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import net.minecraft.world.damagesource.DamageSource;
 
 public class VehicleAttackEvent extends VehicleEvent {
 

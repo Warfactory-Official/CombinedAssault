@@ -1,5 +1,6 @@
 package com.wf.combinedassault.energy;
 
+import com.wf.combinedassault.CombinedAssault;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
@@ -21,7 +22,6 @@ import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
-import com.wf.combinedassault.CombinedAssault;
 
 import java.util.function.Consumer;
 

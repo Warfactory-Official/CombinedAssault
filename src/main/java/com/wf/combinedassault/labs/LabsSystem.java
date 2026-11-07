@@ -3,15 +3,11 @@ package com.wf.combinedassault.labs;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.CombinedAssaultSystem;
 import com.wf.combinedassault.labs.gametest.VehicleParityGameTest;
+import com.wf.combinedassault.labs.gametest.VehicleStageGameTest;
 import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
-import com.wf.combinedassault.ballistics.event.HitVehicleEvent;
-import com.wf.wflib.damage.api.event.ProjectileStrikeEvent;
-import com.wf.wflib.labs.api.LabContent;
-import com.wf.wflib.labs.api.LabContents;
-import com.wf.wflib.labs.api.LabProducers;
-import com.wf.wflib.labs.api.LabShelters;
-import com.wf.wflib.packs.api.PackEntry;
+import com.wf.wflib.labs.api.*;
 import com.wf.wflib.packs.api.Pack;
+import com.wf.wflib.packs.api.PackEntry;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -35,7 +31,7 @@ public final class LabsSystem implements CombinedAssaultSystem {
 
     @Override
     public void register(IEventBus modBus, ModContainer container) {
-        GameTestSetup.tests(modBus, VehicleParityGameTest.class, com.wf.combinedassault.ballistics.spall.gametest.SpallGameTest.class);
+        GameTestSetup.tests(modBus, VehicleParityGameTest.class, VehicleStageGameTest.class, com.wf.combinedassault.ballistics.spall.gametest.SpallGameTest.class);
         LabProducers.register(new VehicleProducer());
         LabProducers.register(new VehicleSummaryProducer());
         LabProducers.register(new VehicleSystemsProducer());
@@ -45,6 +41,7 @@ public final class LabsSystem implements CombinedAssaultSystem {
         LabProducers.register(new VehicleSideProducers.GridTable());
         LabProducers.register(new VehicleMeshProducer());
         LabProducers.register(new VehicleArmorProducer());
+        ScenarioStages.register(new VehicleStage());
         LabContents.register(new Content());
         LabShelters.registerLazy(CombinedAssault.MOD_ID + ":vehicles", () -> VehicleShelter.all(
                 net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().overworld()));

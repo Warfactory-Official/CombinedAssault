@@ -1,7 +1,7 @@
 package com.wf.combinedassault.weapon.client;
 
-import com.wf.combinedassault.weapon.barrel.GunBarrel;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.barrel.GunBarrel;
 import com.wf.wflib.barrel.api.BarrelState;
 import com.wf.wflib.ui.api.Signals;
 import com.wf.wflib.ui.api.Subject;

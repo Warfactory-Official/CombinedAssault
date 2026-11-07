@@ -1,13 +1,13 @@
 package com.wf.combinedassault.vehicle.part.data;
 
 import com.google.gson.annotations.SerializedName;
+import com.wf.combinedassault.ballistics.pojo.DefenseStats;
+import com.wf.combinedassault.vehicle.crew.CrewRole;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
-import com.wf.combinedassault.ballistics.pojo.DefenseStats;
 
 import java.util.ArrayList;
 import java.util.List;
-import com.wf.combinedassault.vehicle.crew.CrewRole;
 
 public class PartUnitPojo {
 

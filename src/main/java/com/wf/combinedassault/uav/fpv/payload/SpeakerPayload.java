@@ -1,12 +1,12 @@
 package com.wf.combinedassault.uav.fpv.payload;
 
 import com.google.gson.JsonObject;
+import com.wf.wflib.radio.api.RadioContent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import com.wf.wflib.radio.api.RadioContent;
 
 /** One {@code wflib:loudspeaker}: the carrier's radio plays loud ({@code RadioVoice.SPEAKER}); no triggers. */
 public class SpeakerPayload extends StrappedPayload {

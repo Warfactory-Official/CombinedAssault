@@ -2,9 +2,9 @@ package com.wf.combinedassault.vehicle.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.wf.wflib.core.api.OrderedRegistry;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import com.wf.wflib.core.api.OrderedRegistry;
 
 import java.util.function.Supplier;
 

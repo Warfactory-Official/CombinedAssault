@@ -1,7 +1,7 @@
 package com.wf.combinedassault.render.animation.context;
 
-import net.minecraft.util.Mth;
 import com.wf.combinedassault.vehicle.entity.WheeledVehicle;
+import net.minecraft.util.Mth;
 
 public class WheeledVehicleContext extends VehicleContext<WheeledVehicle> {
 

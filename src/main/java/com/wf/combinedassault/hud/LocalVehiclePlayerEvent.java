@@ -1,13 +1,13 @@
 package com.wf.combinedassault.hud;
 
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.weapon.client.StationAds;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
-import com.wf.combinedassault.weapon.client.StationAds;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
 
 import static com.wf.combinedassault.hud.MathUtil.magnificationToFov;
 

@@ -1,6 +1,7 @@
 package com.wf.combinedassault.vehicle.screen;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.indirect.client.GunComputer;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
@@ -13,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.WeakHashMap;
-import com.wf.combinedassault.indirect.client.GunComputer;
 
 /**
  * Screens of one vehicle against its model: each {@code screen_<id>} slot mesh gives pose, size and bone, the pack's

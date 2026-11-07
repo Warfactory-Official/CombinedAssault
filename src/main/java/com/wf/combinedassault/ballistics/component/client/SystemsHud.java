@@ -1,10 +1,10 @@
 package com.wf.combinedassault.ballistics.component.client;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import com.wf.gemrender.ui.Canvas;
 import com.wf.combinedassault.ballistics.component.ComponentState;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
+import com.wf.gemrender.ui.Canvas;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 
 import java.util.List;
 

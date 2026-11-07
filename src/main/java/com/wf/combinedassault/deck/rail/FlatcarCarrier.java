@@ -4,24 +4,18 @@ import cam72cam.immersiverailroading.entity.EntityMoveableRollingStock;
 import cam72cam.immersiverailroading.registry.EntityRollingStockDefinition;
 import cam72cam.mod.entity.ModdedEntity;
 import cam72cam.mod.math.Vec3d;
+import com.wf.combinedassault.deck.HarnessCarrier;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.physics.api.DeckFrame;
+import com.wf.wflib.physics.api.DeckSnapshot;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.deck.HarnessCarrier;
-import com.wf.wflib.physics.api.DeckFrame;
-import com.wf.wflib.physics.api.DeckSnapshot;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.lang.ref.WeakReference;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.WeakHashMap;
+import java.util.*;
 
 /**
  * IR stock as a {@link HarnessCarrier}. IR entity is a {@code ModdedEntity} wrapping a UMC {@code CustomEntity}

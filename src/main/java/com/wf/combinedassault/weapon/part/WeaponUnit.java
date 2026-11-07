@@ -1,26 +1,59 @@
 package com.wf.combinedassault.weapon.part;
 
-import com.wf.wflib.missile.api.client.SimGhostEntities;
-import com.wf.wflib.sim.api.SimTargets;
-import com.wf.combinedassault.weapon.barrel.GunBarrel;
+import com.mojang.math.Axis;
+import com.wf.combinedassault.airdefense.AirDefense;
+import com.wf.combinedassault.ballistics.component.ComponentDamage;
+import com.wf.combinedassault.ballistics.component.ComponentState;
+import com.wf.combinedassault.ballistics.message.ServerVehicleWarn;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
+import com.wf.combinedassault.indirect.GunLaying;
+import com.wf.combinedassault.indirect.IndirectFire;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.pack.sync.SyncDataHolder;
+import com.wf.combinedassault.pack.sync.SyncDataSerializers;
+import com.wf.combinedassault.pack.weapon.VehicleWeaponIndex;
+import com.wf.combinedassault.radar.RadarUnit;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.VehicleContent;
 import com.wf.combinedassault.vehicle.audio.CueLoop;
+import com.wf.combinedassault.vehicle.audio.VehicleSounds;
+import com.wf.combinedassault.vehicle.crew.WeaponLoading;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.event.VehicleFireEvent;
+import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.part.RotatableUnit;
+import com.wf.combinedassault.vehicle.pojo.WarnType;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
+import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.CcipUtil;
+import com.wf.combinedassault.weapon.VehicleMissile;
+import com.wf.combinedassault.weapon.VehicleWeaponAgent;
+import com.wf.combinedassault.weapon.barrel.GunBarrel;
+import com.wf.combinedassault.weapon.kit.HardwareKits;
+import com.wf.combinedassault.weapon.message.ServerVehicleFire;
+import com.wf.combinedassault.weapon.ordnance.Munitions;
+import com.wf.combinedassault.weapon.part.data.OpticSpec;
+import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
+import com.wf.combinedassault.weapon.pojo.AimContext;
+import com.wf.combinedassault.weapon.pojo.Bolt;
+import com.wf.combinedassault.weapon.pojo.Eject;
+import com.wf.combinedassault.weapon.seeker.ElectroOptical;
+import com.wf.combinedassault.weapon.seeker.Infrared;
+import com.wf.combinedassault.weapon.seeker.Radar;
 import com.wf.wflib.audio.api.AudioCategory;
 import com.wf.wflib.audio.api.SoundSpec;
-import com.wf.combinedassault.vehicle.audio.VehicleSounds;
 import com.wf.wflib.audio.api.WfAudio;
-import net.minecraft.server.level.ServerLevel;
-import java.util.List;
-import com.wf.combinedassault.weapon.ordnance.Munitions;
-import com.wf.wflib.round.api.KineticPreset;
-
-import com.wf.combinedassault.vehicle.crew.WeaponLoading;
 import com.wf.wflib.cam.api.CameraMode;
-import com.mojang.math.Axis;
+import com.wf.wflib.missile.api.client.SimGhostEntities;
+import com.wf.wflib.round.api.KineticPreset;
+import com.wf.wflib.sim.api.SimTargets;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -35,44 +68,8 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import com.wf.combinedassault.airdefense.AirDefense;
-import com.wf.combinedassault.pack.sync.SyncDataSerializers;
-import com.wf.combinedassault.vehicle.event.VehicleFireEvent;
-import com.wf.combinedassault.pack.CommonAssetsManager;
-import com.wf.combinedassault.weapon.part.data.OpticSpec;
-import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
-import com.wf.combinedassault.pack.sync.SyncDataHolder;
-import com.wf.combinedassault.pack.weapon.VehicleWeaponIndex;
-import com.wf.combinedassault.ballistics.component.ComponentDamage;
-import com.wf.combinedassault.ballistics.component.ComponentState;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
-import com.wf.combinedassault.weapon.message.ServerVehicleFire;
-import com.wf.combinedassault.ballistics.message.ServerVehicleWarn;
-import com.wf.combinedassault.weapon.CcipUtil;
-import com.wf.combinedassault.vehicle.util.VectorUtil;
-import com.wf.combinedassault.indirect.GunLaying;
-import com.wf.combinedassault.indirect.IndirectFire;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.combinedassault.weapon.kit.HardwareKits;
-import com.wf.combinedassault.weapon.pojo.AimContext;
-import com.wf.combinedassault.weapon.pojo.Bolt;
-import com.wf.combinedassault.weapon.pojo.Eject;
-import com.wf.combinedassault.vehicle.pojo.WarnType;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
-import com.wf.combinedassault.weapon.*;
-import com.wf.combinedassault.weapon.seeker.ElectroOptical;
-import com.wf.combinedassault.weapon.seeker.Infrared;
-import com.wf.combinedassault.weapon.seeker.Radar;
 
 import java.util.*;
-import com.wf.combinedassault.radar.RadarUnit;
-import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.vehicle.part.RotatableUnit;
-import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
-import com.wf.combinedassault.weapon.VehicleMissile;
-import com.wf.combinedassault.weapon.VehicleWeaponAgent;
-import com.wf.combinedassault.vehicle.VehicleContent;
 
 public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
 
@@ -422,7 +419,13 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
             }
         }
         super.tick();
-        indexedWeapons.forEach(AbstractVehicleWeapon::tick);
+        for (int i = 0; i < indexedWeapons.size(); i++) {
+            AbstractVehicleWeapon<?> weapon = indexedWeapons.get(i);
+            // Unfitted kit gun: no reload from the stores, barrel state frozen until refit.
+            if (carries(weapon)) {
+                weapon.tick();
+            }
+        }
     }
 
     @Override

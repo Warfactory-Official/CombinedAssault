@@ -1,37 +1,18 @@
 package com.wf.combinedassault.pack.part;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.dynamics.part.LandingGearUnit;
+import com.wf.combinedassault.dynamics.part.SuspensionUnit;
+import com.wf.combinedassault.dynamics.part.TrackUnit;
+import com.wf.combinedassault.dynamics.part.data.*;
 import com.wf.combinedassault.pack.serialize.GsonUtil;
 import com.wf.combinedassault.vehicle.part.*;
+import com.wf.combinedassault.vehicle.part.data.*;
 import com.wf.combinedassault.weapon.part.AutoWeaponUnit;
 import com.wf.combinedassault.weapon.part.MissileHolderUnit;
 import com.wf.combinedassault.weapon.part.WeaponBayUnit;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
-import com.wf.combinedassault.weapon.part.data.MissileHolderUnitData;
-import com.wf.combinedassault.weapon.part.data.MissileHolderUnitPojo;
-import com.wf.combinedassault.weapon.part.data.WeaponBayUnitData;
-import com.wf.combinedassault.weapon.part.data.WeaponBayUnitPojo;
-import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
-import com.wf.combinedassault.weapon.part.data.WeaponUnitPojo;
-import com.wf.combinedassault.dynamics.part.LandingGearUnit;
-import com.wf.combinedassault.dynamics.part.SuspensionUnit;
-import com.wf.combinedassault.dynamics.part.TrackUnit;
-import com.wf.combinedassault.dynamics.part.data.LandingGearUnitData;
-import com.wf.combinedassault.dynamics.part.data.LandingGearUnitPojo;
-import com.wf.combinedassault.dynamics.part.data.SuspensionUnitData;
-import com.wf.combinedassault.dynamics.part.data.SuspensionUnitPojo;
-import com.wf.combinedassault.dynamics.part.data.TrackUnitData;
-import com.wf.combinedassault.dynamics.part.data.TrackUnitPojo;
-import com.wf.combinedassault.vehicle.part.data.DoorUnitData;
-import com.wf.combinedassault.vehicle.part.data.DoorUnitPojo;
-import com.wf.combinedassault.vehicle.part.data.LinkedHingeUnitData;
-import com.wf.combinedassault.vehicle.part.data.LinkedHingeUnitPojo;
-import com.wf.combinedassault.vehicle.part.data.PartUnitData;
-import com.wf.combinedassault.vehicle.part.data.PartUnitPojo;
-import com.wf.combinedassault.vehicle.part.data.RopeUnitData;
-import com.wf.combinedassault.vehicle.part.data.RopeUnitPojo;
-import com.wf.combinedassault.vehicle.part.data.RotatableUnitData;
-import com.wf.combinedassault.vehicle.part.data.RotatableUnitPojo;
+import com.wf.combinedassault.weapon.part.data.*;
 
 public class PartUnitTypes {
 

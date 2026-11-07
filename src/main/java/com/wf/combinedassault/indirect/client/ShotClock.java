@@ -1,15 +1,11 @@
 package com.wf.combinedassault.indirect.client;
 
+import com.wf.combinedassault.indirect.*;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.event.VehicleFireEvent;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
-import com.wf.combinedassault.vehicle.event.VehicleFireEvent;
-import com.wf.combinedassault.indirect.GunLaying;
-import com.wf.combinedassault.indirect.IndirectFire;
-import com.wf.combinedassault.indirect.RoundSpec;
-import com.wf.combinedassault.indirect.Trajectory;
-import com.wf.combinedassault.indirect.FireSolution;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
 
 /**
  * ETA of fired rounds landing, captured from the laying at the moment of firing, not read live later:

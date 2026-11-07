@@ -1,10 +1,15 @@
 package com.wf.combinedassault.render.gem;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.wf.combinedassault.render.entity.vehicle.VehicleRender;
+import com.wf.combinedassault.render.model.VehicleModelInstance;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.part.data.PartMount;
+import com.wf.gemrender.asset.GemRenderModels;
 import com.wf.gemrender.direct.DirectPass;
 import com.wf.gemrender.direct.DirectRenderer;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
-import com.wf.gemrender.asset.GemRenderModels;
 import com.wf.gemrender.texture.Paint;
 import com.wf.gemrender.texture.VariantUv;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -12,11 +17,6 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.joml.Matrix4f;
-import com.wf.combinedassault.render.model.VehicleModelInstance;
-import com.wf.combinedassault.render.entity.vehicle.VehicleRender;
-import com.wf.combinedassault.vehicle.part.data.PartMount;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.part.PartUnit;
 
 /**
  * GemRender hull + part mounts outside the level (GUI): {@link VehicleGemVisual} is a Flywheel instance, drawn only in

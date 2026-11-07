@@ -1,7 +1,7 @@
 package com.wf.combinedassault.vehicle.audio;
 
-import com.wf.combinedassault.weapon.data.BaseVehicleWeaponData;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.data.BaseVehicleWeaponData;
 import com.wf.wflib.audio.api.AudioCategory;
 import com.wf.wflib.audio.api.SoundSpec;
 import com.wf.wflib.audio.api.client.Emitter;

@@ -1,20 +1,21 @@
 package com.wf.combinedassault.weapon.part.data;
 
-import com.wf.combinedassault.vehicle.crew.WeaponLoading;
 import com.google.gson.annotations.SerializedName;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.combinedassault.vehicle.crew.WeaponLoading;
+import com.wf.combinedassault.vehicle.part.data.RotatableUnitData;
 import com.wf.combinedassault.weapon.kit.HardwareKits;
 import com.wf.combinedassault.weapon.pojo.Bolt;
 import com.wf.combinedassault.weapon.pojo.Eject;
 import com.wf.combinedassault.weapon.pojo.WeaponInfo;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import com.wf.combinedassault.vehicle.part.data.RotatableUnitData;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class WeaponUnitData extends RotatableUnitData {
 

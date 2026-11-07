@@ -2,11 +2,12 @@ package com.wf.combinedassault.ballistics.addon.client;
 
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
-import com.mojang.blaze3d.vertex.MeshData;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexBuffer;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.*;
+import com.wf.combinedassault.ballistics.addon.*;
+import com.wf.combinedassault.camo.client.CamoMesh;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
+import com.wf.combinedassault.vehicle.compat.IrisCompat;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -23,24 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import com.wf.combinedassault.ballistics.addon.AddonArmorLayer;
-import com.wf.combinedassault.ballistics.addon.AddonFit;
-import com.wf.combinedassault.ballistics.addon.AddonKind;
-import com.wf.combinedassault.ballistics.addon.AddonMount;
-import com.wf.combinedassault.ballistics.addon.AddonMountState;
-import com.wf.combinedassault.ballistics.addon.AddonTargeting;
-import com.wf.combinedassault.camo.client.CamoMesh;
-import com.wf.combinedassault.vehicle.compat.IrisCompat;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.ballistics.addon.AddonArmorItem;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * ERA and slat: one dynamic VertexBuffer and one draw per installed panel. A panel's buffer is rebuilt

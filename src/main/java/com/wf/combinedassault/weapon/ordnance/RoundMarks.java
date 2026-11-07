@@ -1,5 +1,6 @@
 package com.wf.combinedassault.weapon.ordnance;
 
+import com.wf.combinedassault.render.particle.BulletHoleOption;
 import com.wf.wflib.round.api.event.RoundImpactEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -10,7 +11,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
-import com.wf.combinedassault.render.particle.BulletHoleOption;
 
 /** Chips and a bullet hole where a WFLib round stops on a block, sized by calibre. */
 public final class RoundMarks {

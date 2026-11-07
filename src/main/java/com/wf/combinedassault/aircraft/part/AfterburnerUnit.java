@@ -1,14 +1,14 @@
 package com.wf.combinedassault.aircraft.part;
 
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import com.wf.combinedassault.vehicle.part.data.PartUnitData;
 import com.wf.combinedassault.vehicle.part.data.PartUnitPojo;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 import com.wf.wflib.geom.api.OBB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
-import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 
 // TODO: flame visual gone with the unshipped Bedrock asset; on/off state only, no render.
 public class AfterburnerUnit extends SwitchableUnit<PartUnitData> {

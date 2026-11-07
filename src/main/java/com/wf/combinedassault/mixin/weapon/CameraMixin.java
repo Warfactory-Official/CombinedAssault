@@ -1,5 +1,10 @@
 package com.wf.combinedassault.mixin.weapon;
 
+import com.wf.combinedassault.hud.FirstPersonHandler;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.weapon.client.StationRecoil;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -14,11 +19,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import com.wf.combinedassault.hud.FirstPersonHandler;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.weapon.client.StationRecoil;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.combinedassault.vehicle.part.PartUnit;
 
 @Mixin(Camera.class)
 public abstract class CameraMixin {

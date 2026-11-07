@@ -1,11 +1,16 @@
 {
-  "green": "#dd00ff00",
   "white": "#ddffffff",
   "red": "#ddff0000",
   "amber": "#ddffaa00",
   "gray": "#dd999999",
-  "label": "#9966ff99",
-  "scale": "#8800cc44",
-  "track": "#66003311",
-  "shade": "#33000000"
+  "label": "#ccffffff",
+  "scale": "#80ffffff",
+  "track": "#66000000",
+  "shade": "#66000000",
+  "text": "#fff4f4f4",
+  "dim": "#ffb4b4b4",
+  "panel": "#a0000000",
+  "panel_lit": "#a0303030",
+  "edge": "#55ffffff",
+  "well": "#80000000"
 }

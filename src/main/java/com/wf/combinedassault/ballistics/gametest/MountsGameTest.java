@@ -2,6 +2,8 @@ package com.wf.combinedassault.ballistics.gametest;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.hit.*;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -9,12 +11,6 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.ballistics.hit.ModelMounts;
-import com.wf.combinedassault.ballistics.hit.MountDefaults;
-import com.wf.combinedassault.ballistics.hit.GltfReader;
-import com.wf.combinedassault.ballistics.hit.ModelRig;
-import com.wf.combinedassault.ballistics.hit.NodeRole;
 
 import java.util.List;
 

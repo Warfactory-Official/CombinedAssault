@@ -1,13 +1,13 @@
 package com.wf.combinedassault.energy;
 
+import com.wf.combinedassault.energy.pojo.EnergyInfo;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.NotNull;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.energy.pojo.EnergyInfo;
 
 /**
  * A vehicle's fuel tank as a Forge fluid handler.

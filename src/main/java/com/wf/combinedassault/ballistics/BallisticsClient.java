@@ -1,7 +1,7 @@
 package com.wf.combinedassault.ballistics;
 
-import net.neoforged.neoforge.common.NeoForge;
 import com.wf.combinedassault.ballistics.addon.client.AddonArmorRenderer;
+import net.neoforged.neoforge.common.NeoForge;
 
 /** Server-unsafe half of {@link BallisticsSystem}. */
 final class BallisticsClient {

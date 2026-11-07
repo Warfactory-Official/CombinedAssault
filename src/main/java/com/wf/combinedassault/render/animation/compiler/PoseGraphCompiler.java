@@ -1,21 +1,14 @@
 package com.wf.combinedassault.render.animation.compiler;
 
-import com.wf.combinedassault.render.model.BoneIndexProvider;
+import com.wf.combinedassault.pack.client.animation.PoseNodeDefinition;
 import com.wf.combinedassault.render.animation.graph.PoseGraph;
 import com.wf.combinedassault.render.animation.graph.WeightSource;
 import com.wf.combinedassault.render.animation.graph.node.*;
-import com.wf.combinedassault.pack.client.animation.PoseNodeDefinition;
+import com.wf.combinedassault.render.model.BoneIndexProvider;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import com.wf.combinedassault.render.animation.graph.node.AdditiveNode;
-import com.wf.combinedassault.render.animation.graph.node.BlendNode;
-import com.wf.combinedassault.render.animation.graph.node.BoneBindingNode;
-import com.wf.combinedassault.render.animation.graph.node.LayeredBlendNode;
-import com.wf.combinedassault.render.animation.graph.node.MergeNode;
-import com.wf.combinedassault.render.animation.graph.node.PoseNode;
-import com.wf.combinedassault.render.animation.graph.node.ScriptPoseNode;
 
 public class PoseGraphCompiler {
 

@@ -1,20 +1,20 @@
 package com.wf.combinedassault.uav.fpv.payload;
 
+import com.google.gson.JsonObject;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.pack.sync.SyncDataSerializers;
+import com.wf.combinedassault.uav.fpv.FpvImpact;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import com.google.gson.JsonObject;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.pack.sync.SyncDataSerializers;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.uav.fpv.FpvImpact;
-import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 
 import java.util.List;
 

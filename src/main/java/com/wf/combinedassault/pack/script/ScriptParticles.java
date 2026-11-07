@@ -1,10 +1,10 @@
 package com.wf.combinedassault.pack.script;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.wf.combinedassault.CombinedAssault;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.resources.ResourceLocation;
-import com.wf.combinedassault.CombinedAssault;
 
 public enum ScriptParticles {
 

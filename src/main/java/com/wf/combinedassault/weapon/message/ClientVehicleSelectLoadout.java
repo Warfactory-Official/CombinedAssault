@@ -1,6 +1,7 @@
 package com.wf.combinedassault.weapon.message;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.vehicle.VehicleContent;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.weapon.kit.Loadouts;
 import net.minecraft.network.FriendlyByteBuf;
@@ -11,7 +12,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import com.wf.combinedassault.vehicle.VehicleContent;
 
 /** Modding tool: switch loadout (free; fitted hardware back to the player). Tool in hand, within 16 blocks. */
 public record ClientVehicleSelectLoadout(int vehicleEntityId, int index) implements CustomPacketPayload {

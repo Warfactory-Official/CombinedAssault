@@ -1,8 +1,8 @@
 package com.wf.combinedassault.weapon;
 
-import com.wf.combinedassault.weapon.data.VehicleLaserWeaponData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.util.VectorUtil;
+import com.wf.combinedassault.weapon.data.VehicleLaserWeaponData;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.pojo.AimContext;
 import com.wf.wflib.laser.api.LaserDamage;
@@ -14,8 +14,8 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;

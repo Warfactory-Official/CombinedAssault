@@ -1,20 +1,21 @@
 package com.wf.combinedassault;
 
-import com.wf.wflib.core.api.WFSystems;
-import com.wf.wflib.packs.api.PackHost;
-import com.wf.wflib.packs.api.PackHosts;
-import com.wf.wflib.packs.api.PackSpec;
 import com.wf.combinedassault.camo.CamoSystem;
 import com.wf.combinedassault.cargo.CargoSystem;
 import com.wf.combinedassault.energy.EnergySystem;
 import com.wf.combinedassault.props.PropsSystem;
-import java.util.List;
+import com.wf.wflib.core.api.WFSystems;
+import com.wf.wflib.packs.api.PackHost;
+import com.wf.wflib.packs.api.PackHosts;
+import com.wf.wflib.packs.api.PackSpec;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.List;
 
 @Mod(CombinedAssault.MOD_ID)
 public class CombinedAssault {

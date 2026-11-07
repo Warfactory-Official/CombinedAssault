@@ -1,10 +1,19 @@
 package com.wf.combinedassault.ballistics.addon.gametest;
 
-import com.wf.wflib.testkit.api.ForcedChunks;
-import com.wf.wflib.explosion.api.ExplosionAEF;
-import com.wf.wflib.damage.api.event.ProjectileStrikeEvent;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.BallisticsContent;
+import com.wf.combinedassault.ballistics.addon.*;
+import com.wf.combinedassault.ballistics.hit.VehicleHits;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.armor.api.hull.HullProfile;
 import com.wf.wflib.damage.api.Threat;
 import com.wf.wflib.damage.api.ThreatKind;
+import com.wf.wflib.damage.api.event.ProjectileStrikeEvent;
+import com.wf.wflib.explosion.api.ExplosionAEF;
+import com.wf.wflib.geom.api.OBB;
+import com.wf.wflib.testkit.api.ForcedChunks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -17,7 +26,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
@@ -30,30 +38,10 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.ballistics.addon.AddonActions;
-import com.wf.combinedassault.ballistics.addon.AddonArmorLayer;
-import com.wf.combinedassault.ballistics.addon.AddonCommand;
-import com.wf.combinedassault.ballistics.addon.AddonFit;
-import com.wf.combinedassault.ballistics.addon.AddonKind;
-import com.wf.combinedassault.ballistics.addon.AddonMount;
-import com.wf.combinedassault.ballistics.addon.AddonMountInfo;
-import com.wf.combinedassault.ballistics.addon.AddonMountState;
-import com.wf.combinedassault.ballistics.addon.AddonPhysics;
-import com.wf.wflib.armor.api.hull.HullProfile;
-import com.wf.combinedassault.ballistics.addon.AddonStrike;
-import com.wf.combinedassault.ballistics.addon.AddonStrikes;
-import com.wf.combinedassault.ballistics.addon.EraSpec;
-import com.wf.combinedassault.pack.CommonAssetsManager;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.wflib.geom.api.OBB;
-import com.wf.combinedassault.ballistics.hit.VehicleHits;
 
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Consumer;
-import com.wf.combinedassault.ballistics.BallisticsContent;
 
 /** ERA and slat: the mechanism in isolation, then through a real hull, a real round, a save and the probe actions. */
 @GameTestHolder(CombinedAssault.MOD_ID)

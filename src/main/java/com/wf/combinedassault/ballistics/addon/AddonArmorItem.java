@@ -1,5 +1,7 @@
 package com.wf.combinedassault.ballistics.addon;
 
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.item.VehicleItem;
 import com.wf.wflib.probe.api.ProbeActions;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -9,11 +11,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.util.List;
 import java.util.Locale;
-import com.wf.combinedassault.vehicle.item.VehicleItem;
 
 public class AddonArmorItem extends VehicleItem {
 

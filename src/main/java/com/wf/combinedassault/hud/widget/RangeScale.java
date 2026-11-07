@@ -2,12 +2,7 @@ package com.wf.combinedassault.hud.widget;
 
 import com.wf.gemrender.ui.Canvas;
 import com.wf.gemrender.ui.TextBuffer;
-import com.wf.wflib.ui.api.Binder;
-import com.wf.wflib.ui.api.ColorProp;
-import com.wf.wflib.ui.api.NumProp;
-import com.wf.wflib.ui.api.UiEval;
-import com.wf.wflib.ui.api.Widget;
-import com.wf.wflib.ui.api.WidgetDef;
+import com.wf.wflib.ui.api.*;
 
 /**
  * Range bar 0..{@code max} ({@code w} wide, 5 tall, quarter ticks) with the [{@code near}, {@code far}]

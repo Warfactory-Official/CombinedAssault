@@ -1,12 +1,12 @@
 package com.wf.combinedassault.cargo;
 
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 /** Use on a vehicle: fits a cargo parachute; sneak-use on a fitted one takes it back. */
 public class CargoParachuteItem extends Item {

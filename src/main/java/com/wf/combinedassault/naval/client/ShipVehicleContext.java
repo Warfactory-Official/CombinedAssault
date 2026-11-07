@@ -1,8 +1,8 @@
 package com.wf.combinedassault.naval.client;
 
 import com.wf.combinedassault.naval.ShipVehicle;
-import net.minecraft.util.Mth;
 import com.wf.combinedassault.render.animation.context.VehicleContext;
+import net.minecraft.util.Mth;
 
 public class ShipVehicleContext extends VehicleContext<ShipVehicle> {
 

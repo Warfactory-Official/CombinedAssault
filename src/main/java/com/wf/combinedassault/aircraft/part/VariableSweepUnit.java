@@ -1,9 +1,9 @@
 package com.wf.combinedassault.aircraft.part;
 
-import net.minecraft.util.Mth;
 import com.wf.combinedassault.aircraft.part.data.VariableSweepUnitData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.RotatableUnit;
+import net.minecraft.util.Mth;
 
 /** Wing whose yaw follows airspeed; its structure bone (hull pieces, hits) turns with it. */
 public class VariableSweepUnit extends RotatableUnit<VariableSweepUnitData> {

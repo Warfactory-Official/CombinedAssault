@@ -1,0 +1,82 @@
+{
+  "use": [
+    "combinedassault:hud"
+  ],
+  "root": {
+    "type": "column",
+    "gap": 1.5,
+    "align": "end",
+    "children": [
+      {
+        "type": "key_hint",
+        "if": "station.present && station.weapon_count > 0",
+        "label": "{tr:hud.combinedassault.hint.scope}",
+        "key": "key.combinedassault.switch_scope.desc",
+        "right": true
+      },
+      {
+        "type": "key_hint",
+        "if": "station.present && station.weapon_count > 0 && local.scope",
+        "label": "{tr:hud.combinedassault.hint.zoom}",
+        "key": "key.combinedassault.magnification_change.desc",
+        "right": true
+      },
+      {
+        "type": "key_hint",
+        "if": "station.present && station.weapon_count > 0",
+        "label": "{tr:hud.combinedassault.hint.ammo}",
+        "key": "key.combinedassault.switch_ammo.desc",
+        "right": true
+      },
+      {
+        "type": "key_hint",
+        "if": "station.present && station.weapon_count > 0 && station.weapon_count > 1",
+        "label": "{tr:hud.combinedassault.hint.weapon}",
+        "key": "key.combinedassault.secondary_weapon_switch.desc",
+        "right": true
+      },
+      {
+        "type": "key_hint",
+        "if": "station.present && station.weapon_count > 0 && primary.barrel",
+        "label": "{tr:hud.combinedassault.hint.reload}",
+        "key": "key.combinedassault.reload_clear_jam.desc",
+        "right": true
+      },
+      {
+        "type": "key_hint",
+        "if": "station.present && station.weapon_count > 0 && primary.barrel",
+        "label": "{tr:hud.combinedassault.hint.barrel}",
+        "key": "key.combinedassault.change_barrel.desc",
+        "right": true
+      },
+      {
+        "type": "key_hint",
+        "if": "station.present && station.focus_locker",
+        "label": "{tr:hud.combinedassault.hint.lock}",
+        "key": "key.combinedassault.fire_control_lock.desc",
+        "right": true
+      },
+      {
+        "type": "key_hint",
+        "if": "station.present && station.radar",
+        "label": "{tr:hud.combinedassault.hint.radar}",
+        "key": "key.combinedassault.toggle_radar.desc",
+        "right": true
+      },
+      {
+        "type": "key_hint",
+        "if": "station.present && station.flares",
+        "label": "{tr:hud.combinedassault.hint.flares}",
+        "key": "key.combinedassault.decoy_flare_launch.desc",
+        "right": true
+      },
+      {
+        "type": "key_hint",
+        "if": "station.present && station.smoke",
+        "label": "{tr:hud.combinedassault.hint.smoke}",
+        "key": "key.combinedassault.smoke_grenade_launch.desc",
+        "right": true
+      }
+    ]
+  }
+}

@@ -1,10 +1,10 @@
 package com.wf.combinedassault.tow;
 
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.util.List;
 

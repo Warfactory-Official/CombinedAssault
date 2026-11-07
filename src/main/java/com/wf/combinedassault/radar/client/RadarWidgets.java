@@ -2,20 +2,16 @@ package com.wf.combinedassault.radar.client;
 
 import com.wf.combinedassault.hud.CaDraw;
 import com.wf.combinedassault.hud.HudSubjects;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.radar.RadarUnit;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.radar.WarningReceiver;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.pojo.WarnType;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.gemrender.ui.Canvas;
 import com.wf.gemrender.ui.TextBuffer;
 import com.wf.wflib.missile.api.MissileEntity;
-import com.wf.wflib.ui.api.Binder;
-import com.wf.wflib.ui.api.SubjectRef;
-import com.wf.wflib.ui.api.UiEval;
-import com.wf.wflib.ui.api.Widget;
-import com.wf.wflib.ui.api.WidgetDef;
+import com.wf.wflib.ui.api.*;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -26,7 +22,7 @@ import java.util.Map;
 
 /** Radar PPI scopes and the radar warning receiver; drawn about the box origin, size 0. */
 public final class RadarWidgets {
-    private static final int SECTOR = 0x4433FF33;
+    private static final int SECTOR = 0x44FFFFFF;
     private static final int DIM = 0x33000000;
 
     private RadarWidgets() {
@@ -43,7 +39,7 @@ public final class RadarWidgets {
         void bearingText(Canvas canvas, float cx, float cy, float r, float degrees) {
             float rad = -(float) Math.toRadians(degrees + 90);
             canvas.push().translate(cx + (float) Math.cos(rad) * r, cy + (float) Math.sin(rad) * r).scale(0.8f);
-            canvas.textCentred(text, 0, 0, CaDraw.GREEN, true);
+            canvas.textCentred(text, 0, 0, CaDraw.WHITE, true);
             canvas.pop();
         }
     }
@@ -93,7 +89,7 @@ public final class RadarWidgets {
                         if (radar.getLockedEntity() == null) {
                             double sweep = Math.toRadians(Mth.lerp(ev.partialTick, radar.yRotO, radar.getYRot()) - 90);
                             canvas.line(cx, y, cx + (float) Math.cos(sweep) * radius, y + (float) Math.sin(sweep) * radius,
-                                    0.4f, CaDraw.GREEN);
+                                    0.4f, CaDraw.WHITE);
                         }
                         Entity locked = radar.getLockedEntity();
                         Vec3 origin = radar.worldRadarPosition();
@@ -106,7 +102,7 @@ public final class RadarWidgets {
                             float ty = y + (float) local.z * scale;
                             target(canvas, tx, ty, object, radar);
                             if (locked != null && locked == object.entity) {
-                                canvas.dashed(cx, y, tx, ty, 0.5f, 3, 1, CaDraw.GREEN);
+                                canvas.dashed(cx, y, tx, ty, 0.5f, 3, 1, CaDraw.WHITE);
                             }
                         }
                         cx -= (float) (radius * Math.sin(max) * 1.3f);
@@ -114,20 +110,20 @@ public final class RadarWidgets {
                 }
 
                 private void target(Canvas canvas, float tx, float ty, RadarUnit.DetectedObject object, RadarUnit radar) {
-                    canvas.fill(tx - 1, ty - 1, tx + 1, ty + 1, CaDraw.GREEN);
+                    canvas.fill(tx - 1, ty - 1, tx + 1, ty + 1, CaDraw.WHITE);
                     if (!(object.entity instanceof MissileEntity)) {
-                        canvas.fill(tx - 3, ty - 2, tx - 2, ty + 2, CaDraw.GREEN);
-                        canvas.fill(tx + 2, ty - 2, tx + 3, ty + 2, CaDraw.GREEN);
+                        canvas.fill(tx - 3, ty - 2, tx - 2, ty + 2, CaDraw.WHITE);
+                        canvas.fill(tx + 2, ty - 2, tx + 3, ty + 2, CaDraw.WHITE);
                         Team team = object.entity.getTeam();
                         if (team != null && team.isAlliedTo(LocalVehiclePlayer.instance().getPlayer().getTeam())) {
-                            canvas.fill(tx - 3, ty - 4, tx + 3, ty - 3, CaDraw.GREEN);
+                            canvas.fill(tx - 3, ty - 4, tx + 3, ty - 3, CaDraw.WHITE);
                         }
                     }
                     Vec3 velocity = object.entity.getDeltaMovement();
                     double speed = velocity.length();
                     if (speed != 0) {
                         Vec3 tail = radar.worldVecToLocalVec(velocity.scale(-5 / speed));
-                        canvas.line(tx, ty, tx + (float) tail.x, ty + (float) tail.z, 0.8f, CaDraw.GREEN);
+                        canvas.line(tx, ty, tx + (float) tail.x, ty + (float) tail.z, 0.8f, CaDraw.WHITE);
                     }
                 }
             };
@@ -152,11 +148,11 @@ public final class RadarWidgets {
                     }
                     Canvas canvas = ev.canvas;
                     canvas.push().translate(x, y - 40).scale(0.8f);
-                    canvas.textCentred("RWR", 0, 0, CaDraw.GREEN, true);
+                    canvas.textCentred("RWR", 0, 0, CaDraw.WHITE, true);
                     canvas.pop();
-                    CaDraw.circle(canvas, x, y, 3, 0.1f, CaDraw.GREEN);
-                    CaDraw.circle(canvas, x, y, 25, 0.01f, CaDraw.GREEN);
-                    CaDraw.circle(canvas, x, y, 20, 0.01f, CaDraw.GREEN);
+                    CaDraw.circle(canvas, x, y, 3, 0.1f, CaDraw.WHITE);
+                    CaDraw.circle(canvas, x, y, 25, 0.01f, CaDraw.WHITE);
+                    CaDraw.circle(canvas, x, y, 20, 0.01f, CaDraw.WHITE);
                     canvas.disc(x, y, 25, DIM);
                     if (receiver.targets.isEmpty()) {
                         return;
@@ -183,12 +179,12 @@ public final class RadarWidgets {
                         float dz = (float) (direction.z / length);
                         if (target.warnType() == WarnType.RADAR_LOCK || target.warnType() == WarnType.MISSILE_LAUNCH) {
                             float reach = (float) (scale * -25);
-                            canvas.dashed(x, y, x + dx * reach, y + dz * reach, 0.8f, 3, 1, CaDraw.GREEN);
+                            canvas.dashed(x, y, x + dx * reach, y + dz * reach, 0.8f, 3, 1, CaDraw.WHITE);
                         }
-                        int colour = CaDraw.GREEN;
+                        int colour = CaDraw.WHITE;
                         if (target.warnType() == WarnType.RADAR_SEARCH) {
                             float age = (float) (System.currentTimeMillis() - target.receivedTime());
-                            colour = CaDraw.withAlpha(CaDraw.GREEN, Math.max(4 / 255f, 1.0f - Math.min(1000f, age) / 1000f));
+                            colour = CaDraw.withAlpha(CaDraw.WHITE, Math.max(4 / 255f, 1.0f - Math.min(1000f, age) / 1000f));
                         }
                         float reach = (float) (scale * 28);
                         canvas.push().translate(x + dx * reach, y + dz * reach).scale(0.6f);

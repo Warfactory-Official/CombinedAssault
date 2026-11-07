@@ -2,10 +2,12 @@ package com.wf.combinedassault.hud.widget;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.wf.combinedassault.hud.HudCache;
-import com.wf.combinedassault.weapon.client.AmmoSelect;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.RoundCount;
+import com.wf.combinedassault.weapon.client.AmmoSelect;
 import com.wf.gemrender.ui.Canvas;
+import com.wf.wflib.ammo.api.AmmoVariant;
+import com.wf.wflib.ammo.api.client.AmmoGlyph;
 import com.wf.wflib.ui.api.Binder;
 import com.wf.wflib.ui.api.UiEval;
 import com.wf.wflib.ui.api.Widget;
@@ -18,7 +20,7 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 
 /**
- * Round kinds of {@link AmmoSelect}'s weapon, above the weapon card: icon, variant, stores count; cursor row lit,
+ * Round kinds of {@link AmmoSelect}'s weapon, above the weapon card: icon, kind chips, variant, stores count; cursor row lit,
  * overflowing name scrolls sideways. {@link #ROWS} visible, window follows the cursor. Card units (130 wide).
  */
 public record AmmoList() implements WidgetDef {
@@ -29,17 +31,20 @@ public record AmmoList() implements WidgetDef {
     private static final float ICON = 13;
     private static final float NAME_X = PAD + 4 + ICON + 3;
     private static final float COUNT_W = 26;
+    private static final float CHIP = 9;
+    private static final float CHIP_STEP = CHIP + 1;
+    private static final int CHIPS = 3;
     /** Window slide time constant, s. */
     private static final double SLIDE_S = 0.06;
     /** Marquee: rest at each end, s; travel, units/s. */
     private static final double MARQUEE_REST_S = 0.8;
     private static final double MARQUEE_SPEED = 24;
-    private static final int BACK = 0xCC0A1408;
-    private static final int BORDER = 0xFF2A7A3A;
-    private static final int LIT = 0x40FFFFFF;
-    private static final int PICKED = 0xFFFF8C00;
-    private static final int TEXT = 0xFFD8F8E0;
-    private static final int TEXT_DIM = 0xFF8AB896;
+    private static final int BACK = 0xA0000000;
+    private static final int BORDER = 0x55FFFFFF;
+    private static final int LIT = 0x38FFFFFF;
+    private static final int PICKED = 0xFFFFFFFF;
+    private static final int TEXT = 0xFFF4F4F4;
+    private static final int TEXT_DIM = 0xFFB4B4B4;
     private static final int EMPTY = 0xFFFF6040;
 
     @Override
@@ -90,7 +95,13 @@ public record AmmoList() implements WidgetDef {
                     }
                     String count = option.count() == RoundCount.UNLIMITED ? "∞" : "x" + option.count();
                     canvas.textRight(count, x + W - PAD, rowY + 3, fade(option.count() == 0 ? EMPTY : TEXT_DIM), true);
-                    drawName(canvas, label(option.round()), x + NAME_X, rowY + 3, x + W - PAD - COUNT_W,
+                    List<AmmoVariant> variants = HudCache.roundVariants(option.round());
+                    int chips = Math.min(variants.size(), CHIPS);
+                    for (int c = 0; c < chips; c++) {
+                        AmmoGlyph.drawChip(canvas, variants.get(c), x + NAME_X + c * CHIP_STEP, rowY + (ROW_H - CHIP) / 2,
+                                CHIP, alpha);
+                    }
+                    drawName(canvas, label(option.round()), x + NAME_X + chips * CHIP_STEP + 2, rowY + 3, x + W - PAD - COUNT_W,
                             i == cursor, fade(i == cursor ? TEXT : TEXT_DIM));
                 }
                 canvas.popClip();

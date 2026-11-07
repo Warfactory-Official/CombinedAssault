@@ -1,5 +1,8 @@
 package com.wf.combinedassault.weapon.gametest;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.gametest.TestLanes;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -7,9 +10,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.gametest.TestLanes;
 
 /** Emplacements stand on their legs: shoved sideways, they slide or rock back, never tip. */
 @GameTestHolder(CombinedAssault.MOD_ID)

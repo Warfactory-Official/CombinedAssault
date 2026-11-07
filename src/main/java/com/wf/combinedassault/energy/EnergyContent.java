@@ -1,12 +1,12 @@
 package com.wf.combinedassault.energy;
 
+import com.wf.combinedassault.CombinedAssault;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.fluids.SimpleFluidContent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import com.wf.combinedassault.CombinedAssault;
 
 public final class EnergyContent {
 

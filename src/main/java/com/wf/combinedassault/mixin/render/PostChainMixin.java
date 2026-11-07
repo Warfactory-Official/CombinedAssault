@@ -1,10 +1,10 @@
 package com.wf.combinedassault.mixin.render;
 
+import com.wf.combinedassault.render.util.PostPassesGetter;
 import net.minecraft.client.renderer.PostChain;
 import net.minecraft.client.renderer.PostPass;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
-import com.wf.combinedassault.render.util.PostPassesGetter;
 
 import java.util.List;
 

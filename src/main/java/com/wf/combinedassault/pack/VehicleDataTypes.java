@@ -2,13 +2,7 @@ package com.wf.combinedassault.pack;
 
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.pack.serialize.GsonUtil;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.vehicle.data.BaseVehicleDataPojo;
-import com.wf.combinedassault.vehicle.data.TrackedVehicleData;
-import com.wf.combinedassault.vehicle.data.TrackedVehicleDataPojo;
-import com.wf.combinedassault.vehicle.data.VehicleDataType;
-import com.wf.combinedassault.vehicle.data.WheeledVehicleData;
-import com.wf.combinedassault.vehicle.data.WheeledVehicleDataPojo;
+import com.wf.combinedassault.vehicle.data.*;
 
 public class VehicleDataTypes {
 

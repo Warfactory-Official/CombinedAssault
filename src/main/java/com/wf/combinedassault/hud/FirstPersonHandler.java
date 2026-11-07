@@ -1,6 +1,8 @@
 package com.wf.combinedassault.hud;
 
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.VehicleConfig;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -11,8 +13,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import org.joml.Vector3f;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 
 import java.util.ArrayList;
 import java.util.Iterator;

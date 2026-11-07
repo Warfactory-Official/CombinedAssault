@@ -1,5 +1,6 @@
 package com.wf.combinedassault.props;
 
+import com.wf.combinedassault.CombinedAssault;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -9,7 +10,6 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import com.wf.combinedassault.CombinedAssault;
 
 public final class PropsContent {
 

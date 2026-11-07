@@ -1,14 +1,15 @@
 package com.wf.combinedassault.pack;
 
-import java.util.Set;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.CombinedAssaultSystem;
 import com.wf.combinedassault.pack.client.DisplayTypes;
 import com.wf.combinedassault.vehicle.VehicleTabs;
 import com.wf.combinedassault.vehicle.command.RootCommand;
-import com.wf.combinedassault.CombinedAssaultSystem;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+
+import java.util.Set;
 
 public final class PackSystem implements CombinedAssaultSystem {
 

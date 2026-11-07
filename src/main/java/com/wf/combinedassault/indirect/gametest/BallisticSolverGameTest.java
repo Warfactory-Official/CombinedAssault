@@ -1,17 +1,12 @@
 package com.wf.combinedassault.indirect.gametest;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.dynamics.PhysicsEngine;
+import com.wf.combinedassault.indirect.*;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.indirect.BallisticSolver;
-import com.wf.combinedassault.indirect.FireArc;
-import com.wf.combinedassault.indirect.FireSolution;
-import com.wf.combinedassault.indirect.GunLaying;
-import com.wf.combinedassault.indirect.RoundSpec;
-import com.wf.combinedassault.indirect.Trajectory;
-import com.wf.combinedassault.dynamics.PhysicsEngine;
 
 /**
  * Checked against {@link Trajectory}, which {@link TrajectoryGameTest} ties to the entity's own

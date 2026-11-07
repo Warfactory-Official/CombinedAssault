@@ -1,5 +1,7 @@
 package com.wf.combinedassault.aircraft;
 
+import com.wf.combinedassault.ballistics.message.ServerVehicleHurtEntity;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,8 +15,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.network.PacketDistributor;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.ballistics.message.ServerVehicleHurtEntity;
 
 import java.util.OptionalDouble;
 

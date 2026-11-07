@@ -1,10 +1,6 @@
 package com.wf.combinedassault.labs;
 
-import com.wf.wflib.labs.api.LabContext;
-import com.wf.wflib.labs.api.LabLauncher;
-import com.wf.wflib.labs.api.LabProducer;
-import com.wf.wflib.labs.api.LabSink;
-import com.wf.wflib.labs.api.LabTable;
+import com.wf.wflib.labs.api.*;
 
 import java.util.List;
 import java.util.Map;

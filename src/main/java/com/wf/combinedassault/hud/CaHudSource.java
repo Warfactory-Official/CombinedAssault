@@ -1,12 +1,12 @@
 package com.wf.combinedassault.hud;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.aircraft.FixedWingVehicle;
 import com.wf.combinedassault.aircraft.RotaryWingVehicle;
-import com.wf.combinedassault.naval.ShipVehicle;
 import com.wf.combinedassault.indirect.client.IndirectView;
+import com.wf.combinedassault.naval.ShipVehicle;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.core.api.WFSystems;
 import com.wf.wflib.ui.api.UiHud;
 import com.wf.wflib.ui.api.UiInstance;

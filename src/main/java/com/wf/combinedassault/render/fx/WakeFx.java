@@ -1,9 +1,9 @@
 package com.wf.combinedassault.render.fx;
 
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.naval.ShipVehicle;
-import com.wf.combinedassault.naval.Propeller;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.combinedassault.naval.Propeller;
+import com.wf.combinedassault.naval.ShipVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.gemrender.particle.ParticleEmitter;
 import com.wf.gemrender.particle.ParticleLook;
 import com.wf.gemrender.particle.ParticleStyle;

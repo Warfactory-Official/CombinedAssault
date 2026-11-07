@@ -1,14 +1,9 @@
 package com.wf.combinedassault.aircraft.part;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.pack.serialize.GsonUtil;
+import com.wf.combinedassault.aircraft.part.data.*;
 import com.wf.combinedassault.pack.part.PartUnitType;
-import com.wf.combinedassault.aircraft.part.data.AirbrakeUnitData;
-import com.wf.combinedassault.aircraft.part.data.AirbrakeUnitPojo;
-import com.wf.combinedassault.aircraft.part.data.FlapUnitData;
-import com.wf.combinedassault.aircraft.part.data.FlapUnitPojo;
-import com.wf.combinedassault.aircraft.part.data.VariableSweepUnitData;
-import com.wf.combinedassault.aircraft.part.data.VariableSweepUnitPojo;
+import com.wf.combinedassault.pack.serialize.GsonUtil;
 import com.wf.combinedassault.vehicle.part.data.RotatableUnitData;
 import com.wf.combinedassault.vehicle.part.data.RotatableUnitPojo;
 

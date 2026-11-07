@@ -1,14 +1,14 @@
 package com.wf.combinedassault.dynamics.structure;
 
-import com.wf.wflib.physics.api.HullPiece;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.geom.api.OBB;
+import com.wf.wflib.physics.api.ConvexHull;
+import com.wf.wflib.physics.api.HullPiece;
+import com.wf.wflib.physics.api.HullTag;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.wflib.physics.api.ConvexHull;
-import com.wf.wflib.physics.api.HullTag;
 
 
 public class VehicleCubeOBB implements HullPiece {

@@ -2,28 +2,28 @@ package com.wf.combinedassault.render.util;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.wf.combinedassault.ballistics.component.ComponentKind;
+import com.wf.combinedassault.ballistics.hit.HitMesh;
+import com.wf.combinedassault.ballistics.hit.HitModel;
+import com.wf.combinedassault.ballistics.hit.TriangleBvh;
+import com.wf.combinedassault.ballistics.hit.VehicleHits;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.armor.api.hull.HullProfile;
+import com.wf.wflib.armor.api.hull.HullResolver;
+import com.wf.wflib.physics.api.ConvexHull;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.ballistics.hit.HitMesh;
-import com.wf.combinedassault.ballistics.hit.HitModel;
-import com.wf.combinedassault.ballistics.hit.TriangleBvh;
-import com.wf.combinedassault.ballistics.hit.VehicleHits;
 import org.joml.Vector3f;
-import com.wf.wflib.armor.api.hull.HullProfile;
-import com.wf.combinedassault.ballistics.component.ComponentKind;
-import net.minecraft.util.Mth;
-import com.wf.wflib.physics.api.ConvexHull;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 
 import java.util.EnumMap;
 import java.util.Map;
-import com.wf.wflib.armor.api.hull.HullResolver;
 
 /**
  * Convex hull wireframe, the way {@link OBBRenderer} draws a box.

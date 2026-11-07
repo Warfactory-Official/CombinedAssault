@@ -1,9 +1,9 @@
 package com.wf.combinedassault.uav.fpv.payload;
 
-import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.wflib.core.api.WFRegistry;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /** Looked up by name from JSON/NBT only; no NeoForge registry sync. */
 public final class FpvPayloadTypes {

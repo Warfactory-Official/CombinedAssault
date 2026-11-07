@@ -1,16 +1,17 @@
 package com.wf.combinedassault.dynamics;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.CombinedAssaultSystem;
+import com.wf.combinedassault.dynamics.gametest.CollisionProviderGameTest;
 import com.wf.combinedassault.dynamics.gametest.StepDeterminismGameTest;
+import com.wf.combinedassault.vehicle.command.RootCommand;
 import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
-import java.util.Set;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.config.ModConfigEvent;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.dynamics.gametest.CollisionProviderGameTest;
-import com.wf.combinedassault.vehicle.command.RootCommand;
-import com.wf.combinedassault.CombinedAssaultSystem;
+
+import java.util.Set;
 
 public final class DynamicsSystem implements CombinedAssaultSystem {
 

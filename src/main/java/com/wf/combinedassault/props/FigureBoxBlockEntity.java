@@ -1,5 +1,7 @@
 package com.wf.combinedassault.props;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -12,8 +14,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import static com.wf.combinedassault.props.FigureBoxItem.ENTITY_DATA;
 import static com.wf.combinedassault.props.FigureBoxItem.ENTITY_TYPE;

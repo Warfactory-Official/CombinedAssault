@@ -3,6 +3,7 @@ package com.wf.combinedassault.pack.client;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonParseException;
+import com.wf.combinedassault.CombinedAssault;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
@@ -13,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.mozillaa.javascript.Context;
 import org.mozillaa.javascript.ContextFactory;
 import org.mozillaa.javascript.Script;
-import com.wf.combinedassault.CombinedAssault;
 
 import java.io.IOException;
 import java.io.Reader;

@@ -2,6 +2,7 @@ package com.wf.combinedassault.weapon.kit;
 
 import com.wf.combinedassault.hud.tooltip.VehicleTooltips;
 import com.wf.combinedassault.render.gem.HardwareItemClient;
+import com.wf.combinedassault.weapon.WeaponContent;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -13,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Consumer;
-import com.wf.combinedassault.weapon.WeaponContent;
 
 /** A {@link HardwareKit} carried: kit id in {@code hardware_kit}; fitted at a hardpoint probe node. */
 public class HardwareItem extends Item {

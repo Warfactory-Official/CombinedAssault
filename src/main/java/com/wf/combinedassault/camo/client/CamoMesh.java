@@ -1,10 +1,12 @@
 package com.wf.combinedassault.camo.client;
 
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
-import com.mojang.blaze3d.vertex.MeshData;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.*;
+import com.wf.combinedassault.camo.CamoLayer;
+import com.wf.combinedassault.camo.CamoPiece;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.client.Minecraft;
@@ -28,18 +30,8 @@ import net.neoforged.neoforge.client.model.data.ModelData;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.util.VectorUtil;
-import com.wf.combinedassault.camo.CamoLayer;
-import com.wf.combinedassault.camo.CamoPiece;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Layer flattened to vertex arrays, batched by (bone, sheet) pair; same bone+sheet merges into one array.

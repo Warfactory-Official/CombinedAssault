@@ -1,11 +1,11 @@
 package com.wf.combinedassault.ballistics;
 
-import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.armor.api.hull.HullResolver;
 import com.wf.wflib.armor.api.hull.HullResult;
 import com.wf.wflib.damage.api.ThreatKind;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 public class ArmorResolver implements BallisticResolver {
 

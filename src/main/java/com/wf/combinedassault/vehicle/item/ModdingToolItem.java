@@ -1,5 +1,7 @@
 package com.wf.combinedassault.vehicle.item;
 
+import com.wf.combinedassault.vehicle.client.VehicleModdingToolScreen;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -8,8 +10,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import com.wf.combinedassault.vehicle.client.VehicleModdingToolScreen;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 public class ModdingToolItem extends VehicleItem {
 

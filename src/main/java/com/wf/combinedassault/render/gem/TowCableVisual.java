@@ -1,5 +1,8 @@
 package com.wf.combinedassault.render.gem;
 
+import com.wf.combinedassault.tow.TowMode;
+import com.wf.combinedassault.tow.client.TowCable;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.gemrender.rope.GemRenderRopeTypes;
 import com.wf.gemrender.rope.RopeInstance;
 import com.wf.gemrender.rope.RopeModels;
@@ -12,9 +15,6 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.tow.TowMode;
-import com.wf.combinedassault.tow.client.TowCable;
 
 /**
  * A tow cable as one Flywheel instance, owned by the towed vehicle's visual (it holds the link).

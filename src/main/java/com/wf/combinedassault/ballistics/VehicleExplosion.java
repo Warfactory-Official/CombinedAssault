@@ -1,5 +1,12 @@
 package com.wf.combinedassault.ballistics;
 
+import com.wf.combinedassault.ballistics.message.ServerVehicleExplosion;
+import com.wf.combinedassault.vehicle.VehicleDamageTypes;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.core.api.ViewRange;
+import com.wf.wflib.explosion.api.EntityProcessorCross;
+import com.wf.wflib.explosion.api.ExplosionAEF;
+import com.wf.wflib.explosion.api.PlayerProcessorStandard;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
@@ -7,13 +14,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.vehicle.VehicleDamageTypes;
-import com.wf.combinedassault.ballistics.message.ServerVehicleExplosion;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.wflib.core.api.ViewRange;
-import com.wf.wflib.explosion.api.EntityProcessorCross;
-import com.wf.wflib.explosion.api.ExplosionAEF;
-import com.wf.wflib.explosion.api.PlayerProcessorStandard;
 
 /** A vehicle's own death blast: wflib AEF entity stage, no blocks; CA client effect. */
 public final class VehicleExplosion {

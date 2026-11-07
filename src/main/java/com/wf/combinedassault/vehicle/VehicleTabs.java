@@ -1,20 +1,20 @@
 package com.wf.combinedassault.vehicle;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.pack.client.ClientAssetsManager;
+import com.wf.combinedassault.props.PropsContent;
+import com.wf.combinedassault.weapon.kit.HardwareItem;
+import com.wf.combinedassault.weapon.kit.HardwareKits;
+import com.wf.wflib.core.api.WFSystems;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
-import com.wf.combinedassault.weapon.kit.HardwareItem;
-import com.wf.combinedassault.weapon.kit.HardwareKits;
 import net.minecraft.world.level.ItemLike;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.props.PropsContent;
-import com.wf.wflib.core.api.WFSystems;
-import com.wf.combinedassault.pack.client.ClientAssetsManager;
-import com.wf.combinedassault.pack.CommonAssetsManager;
 
 import java.util.ArrayList;
 import java.util.Comparator;

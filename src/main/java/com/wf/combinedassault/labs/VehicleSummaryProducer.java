@@ -1,10 +1,10 @@
 package com.wf.combinedassault.labs;
 
+import com.wf.wflib.armor.api.hull.HullOutcome;
 import com.wf.wflib.labs.api.LabContext;
 import com.wf.wflib.labs.api.LabProducer;
 import com.wf.wflib.labs.api.LabSink;
 import com.wf.wflib.labs.api.LabTable;
-import com.wf.wflib.armor.api.hull.HullOutcome;
 
 import java.util.ArrayList;
 import java.util.List;

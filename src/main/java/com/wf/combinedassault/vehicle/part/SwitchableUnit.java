@@ -1,12 +1,12 @@
 package com.wf.combinedassault.vehicle.part;
 
+import com.wf.combinedassault.pack.sync.SyncDataSerializers;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.data.PartUnitData;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
-import com.wf.combinedassault.pack.sync.SyncDataSerializers;
-import com.wf.combinedassault.vehicle.part.data.PartUnitData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 public class SwitchableUnit<T extends PartUnitData> extends PartUnit<T> {
 

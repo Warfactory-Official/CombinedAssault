@@ -3,12 +3,13 @@ package com.wf.combinedassault.pack;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.wflib.core.api.WFSystems;
+import net.minecraft.resources.ResourceLocation;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
-import net.minecraft.resources.ResourceLocation;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.wflib.core.api.WFSystems;
 
 /** Pack defs naming a vehicle data type or part unit type of a switched-off system are skipped, one warning per system. */
 public final class OffSystemDefs {

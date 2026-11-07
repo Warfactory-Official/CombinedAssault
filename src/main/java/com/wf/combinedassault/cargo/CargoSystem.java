@@ -1,20 +1,21 @@
 package com.wf.combinedassault.cargo;
 
+import com.wf.combinedassault.CombinedAssaultSystem;
+import com.wf.combinedassault.cargo.client.VehicleStorageScreen;
 import com.wf.combinedassault.cargo.gametest.CargoGameTest;
 import com.wf.combinedassault.cargo.gametest.CargoLoadGameTest;
 import com.wf.combinedassault.cargo.gametest.VehicleStorageGameTest;
+import com.wf.combinedassault.cargo.message.ClientOpenParachute;
+import com.wf.combinedassault.vehicle.VehicleTabs;
 import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
-import java.util.Set;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import com.wf.combinedassault.vehicle.VehicleTabs;
-import com.wf.combinedassault.cargo.client.VehicleStorageScreen;
-import com.wf.combinedassault.cargo.message.ClientOpenParachute;
-import com.wf.combinedassault.CombinedAssaultSystem;
+
+import java.util.Set;
 
 public final class CargoSystem implements CombinedAssaultSystem {
 

@@ -1,20 +1,18 @@
 package com.wf.combinedassault.camo.client;
 
+import com.wf.combinedassault.camo.CamoKitItem;
+import com.wf.combinedassault.camo.CamoTargeting;
+import com.wf.combinedassault.camo.message.ClientCamoAction;
+import com.wf.combinedassault.camo.pojo.CamoAction;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.camo.CamoKitItem;
-import com.wf.combinedassault.camo.message.ClientCamoAction;
-import com.wf.combinedassault.camo.CamoTargeting;
-import com.wf.combinedassault.camo.pojo.CamoAction;
 
 import java.util.ArrayList;
 import java.util.List;

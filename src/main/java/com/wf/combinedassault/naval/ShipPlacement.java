@@ -1,5 +1,6 @@
 package com.wf.combinedassault.naval;
 
+import com.wf.combinedassault.naval.data.ShipVehicleData;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
@@ -7,7 +8,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import com.wf.combinedassault.naval.data.ShipVehicleData;
 
 /**
  * Hull placement: on water the player looks at, clear of the player, floating at its waterline.

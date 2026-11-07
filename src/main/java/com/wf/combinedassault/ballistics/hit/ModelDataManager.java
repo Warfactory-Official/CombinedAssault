@@ -5,19 +5,15 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.ballistics.component.ComponentKind;
-import com.wf.combinedassault.vehicle.light.VehicleLight;
 import com.wf.combinedassault.dynamics.part.PartClipTracks;
+import com.wf.combinedassault.vehicle.light.VehicleLight;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

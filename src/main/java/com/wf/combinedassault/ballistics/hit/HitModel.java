@@ -1,17 +1,14 @@
 package com.wf.combinedassault.ballistics.hit;
 
+import com.wf.combinedassault.ballistics.component.ComponentKind;
+import com.wf.combinedassault.ballistics.component.VehicleSystems;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.ballistics.component.ComponentKind;
-import com.wf.combinedassault.ballistics.component.NodeSystems;
-import com.wf.combinedassault.ballistics.component.VehicleSystems;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A {@link HitMesh} bound to one vehicle type's structure: each node rides a structure group (so the server's part

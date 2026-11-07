@@ -1,10 +1,10 @@
 package com.wf.combinedassault.ballistics;
 
-import com.wf.combinedassault.vehicle.VehicleDamageTypes;
 import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.combinedassault.vehicle.VehicleDamageTypes;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.damage.api.event.ThermalAttackEvent;
 import com.wf.wflib.geom.api.OBB;
 import net.minecraft.world.phys.Vec3;

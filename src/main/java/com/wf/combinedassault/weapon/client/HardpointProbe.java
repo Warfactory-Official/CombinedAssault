@@ -1,10 +1,10 @@
 package com.wf.combinedassault.weapon.client;
 
+import com.wf.combinedassault.vehicle.part.client.PartNames;
+import com.wf.combinedassault.weapon.kit.Hardpoints;
 import com.wf.combinedassault.weapon.kit.HardwareItem;
 import com.wf.combinedassault.weapon.kit.HardwareKit;
-import com.wf.combinedassault.weapon.kit.Hardpoints;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
-import com.wf.combinedassault.vehicle.part.client.PartNames;
 import com.wf.wflib.probe.api.ProbeAction;
 import com.wf.wflib.probe.api.ProbeContext;
 import com.wf.wflib.probe.api.ProbeElement;

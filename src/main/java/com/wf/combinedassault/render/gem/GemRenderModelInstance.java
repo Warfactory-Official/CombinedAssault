@@ -1,44 +1,31 @@
 package com.wf.combinedassault.render.gem;
 
-import com.maydaymemory.mae.basic.ArrayPoseBuilder;
-import com.maydaymemory.mae.basic.BoneTransform;
-import com.maydaymemory.mae.basic.DummyPose;
-import com.maydaymemory.mae.basic.Pose;
-import com.maydaymemory.mae.basic.PoseBuilder;
-import com.maydaymemory.mae.basic.ZYXBoneTransformFactory;
+import com.maydaymemory.mae.basic.*;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.wf.combinedassault.ballistics.hit.ModelRig;
+import com.wf.combinedassault.dynamics.part.PartClipTracks;
+import com.wf.combinedassault.dynamics.part.SuspensionUnit;
+import com.wf.combinedassault.dynamics.part.TrackUnit;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.radar.RadarUnit;
+import com.wf.combinedassault.render.model.VehicleModel;
+import com.wf.combinedassault.render.model.VehicleModelInstance;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.part.RotatableUnit;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
 import com.wf.gemrender.gltf.GltfPose;
 import com.wf.gemrender.gltf.NodeTable;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
-import org.joml.Vector4f;
-import com.wf.combinedassault.render.model.VehicleModel;
-import com.wf.combinedassault.render.model.VehicleModelInstance;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.pack.CommonAssetsManager;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.ballistics.hit.ModelRig;
-import com.wf.combinedassault.dynamics.part.PartClipTracks;
-import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.radar.RadarUnit;
-import com.wf.combinedassault.vehicle.part.RotatableUnit;
-import com.wf.combinedassault.dynamics.part.SuspensionUnit;
-import com.wf.combinedassault.dynamics.part.TrackUnit;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
-import net.minecraft.world.phys.Vec3;
+import org.joml.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.lang.Math;
+import java.util.*;
 
 /**
  * One vehicle's pose on a GemRender model: written on render thread, read by {@link VehicleGemVisual}

@@ -1,5 +1,8 @@
 package com.wf.combinedassault.weapon.client;
 
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.weapon.VehicleMissile;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -7,9 +10,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
-import com.wf.combinedassault.weapon.VehicleMissile;
 
 import java.util.Locale;
 import java.util.function.Consumer;

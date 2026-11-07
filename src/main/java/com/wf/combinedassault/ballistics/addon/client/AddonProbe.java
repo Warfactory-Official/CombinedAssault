@@ -1,23 +1,19 @@
 package com.wf.combinedassault.ballistics.addon.client;
 
+import com.wf.combinedassault.ballistics.addon.*;
+import com.wf.combinedassault.ballistics.component.ComponentKind;
+import com.wf.combinedassault.ballistics.component.SystemRepair;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.gemrender.ui.Canvas;
 import com.wf.wflib.probe.api.ProbeAction;
 import com.wf.wflib.probe.api.ProbeContext;
 import com.wf.wflib.probe.api.ProbeElement;
 import com.wf.wflib.probe.api.ProbeInfo;
 import net.minecraft.ChatFormatting;
-import com.wf.gemrender.ui.Canvas;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import com.wf.combinedassault.ballistics.addon.AddonActions;
-import com.wf.combinedassault.ballistics.addon.AddonFit;
-import com.wf.combinedassault.ballistics.addon.AddonKind;
-import com.wf.combinedassault.ballistics.addon.AddonMount;
-import com.wf.combinedassault.ballistics.addon.AddonMountState;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.ballistics.component.ComponentKind;
-import com.wf.combinedassault.ballistics.component.SystemRepair;
 
 /** Node panel of one ERA/slat mount. */
 public final class AddonProbe {

@@ -1,5 +1,10 @@
 package com.wf.combinedassault.radar.message;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.RemoteTickEntity;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -14,11 +19,6 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.entity.RemoteTickEntity;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -2,9 +2,9 @@
   "constants": {
     "tab_w": "floor(130 / count) + (index < mod(130, count) ? 1 : 0)",
     "active": "index == station.active_index",
-    "ammo": "primary.ammo == 0 ? #ffff6040 : primary.ammo <= floor(primary.capacity / 4) ? #ddffaa00 : #ff60e880",
-    "ammo_bar": "primary.ammo == 0 ? #ffff6040 : primary.ammo <= floor(primary.capacity / 4) ? #ddffaa00 : #ff30d050",
-    "heat": "primary.temp >= 450 ? #ffff5020 : primary.temp >= 150 ? #ffffa030 : #ff60c070",
+    "ammo": "primary.ammo == 0 ? #ffff6040 : primary.ammo <= floor(primary.capacity / 4) ? #ddffaa00 : $text",
+    "ammo_bar": "primary.ammo == 0 ? #ffff6040 : primary.ammo <= floor(primary.capacity / 4) ? #ddffaa00 : $text",
+    "heat": "primary.temp >= 450 ? #ffff5020 : primary.temp >= 150 ? #ffffa030 : $dim",
     "status": "primary.reloading || primary.jammed || primary.changing > 0"
   },
   "use": [
@@ -31,8 +31,8 @@
             "children": [
               {
                 "type": "box",
-                "background": "#cc0a1408",
-                "border": "#ff2a7a3a",
+                "background": "$panel",
+                "border": "$edge",
                 "min_width": 130,
                 "min_height": 58
               },
@@ -43,7 +43,7 @@
                 "child": {
                   "type": "text",
                   "text": "{primary.name}",
-                  "color": "#ffd0f0d8",
+                  "color": "$text",
                   "max_width": 86
                 }
               },
@@ -53,7 +53,7 @@
                 "y": 18,
                 "child": {
                   "type": "row",
-                  "gap": 5,
+                  "gap": 2,
                   "children": [
                     {
                       "type": "when",
@@ -97,10 +97,17 @@
                       }
                     },
                     {
+                      "type": "repeat",
+                      "items": "primary.round_variants",
+                      "gap": 1,
+                      "max": 3,
+                      "child": {"type": "ammo_glyph", "size": 8}
+                    },
+                    {
                       "type": "text",
                       "text": "{primary.round}",
-                      "color": "#ffff8c00",
-                      "max_width": "$status || primary.capacity >= 100 ? 28 : primary.capacity >= 10 ? 40 : 52"
+                      "color": "$dim",
+                      "max_width": "max(8, ($status || primary.capacity >= 100 ? 28 : primary.capacity >= 10 ? 40 : 50) - 10 * min(primary.round_variant_count, 3))"
                     }
                   ]
                 }
@@ -115,7 +122,7 @@
                   "h": 3,
                   "value": "primary.capacity > 0 ? primary.ammo / primary.capacity : 0",
                   "fill": "$ammo_bar",
-                  "back": "#dd0f2210"
+                  "back": "$well"
                 }
               },
               {
@@ -135,14 +142,14 @@
                         "h": 2,
                         "value": "clamp(primary.heat, 0, 1)",
                         "fill": "$heat",
-                        "back": "#dd0f2210"
+                        "back": "$well"
                       },
                       {
                         "type": "bar",
                         "w": 68.8,
                         "h": 1,
                         "value": "primary.wear",
-                        "fill": "#ff90a0b0",
+                        "fill": "$dim",
                         "back": "#00000000"
                       }
                     ]
@@ -187,13 +194,13 @@
                           "type": "rect",
                           "w": "$tab_w",
                           "h": "$active ? 19 : 14",
-                          "color": "$active ? #cc0e2a10 : #cc0a1408"
+                          "color": "$active ? $panel_lit : $panel"
                         },
                         {
                           "type": "rect",
                           "w": "$tab_w",
                           "h": 1,
-                          "color": "$green"
+                          "color": "$white"
                         },
                         {
                           "type": "when",
@@ -206,7 +213,7 @@
                               "type": "rect",
                               "w": "$tab_w - 2",
                               "h": 1,
-                              "color": "$green"
+                              "color": "$white"
                             }
                           }
                         },
@@ -221,7 +228,7 @@
                               "type": "rect",
                               "w": 1,
                               "h": "$active ? 17 : 12",
-                              "color": "$green"
+                              "color": "$white"
                             }
                           }
                         },
@@ -232,7 +239,7 @@
                           "child": {
                             "type": "text",
                             "text": "{weapon.name}",
-                            "color": "$active ? #ffd8f8e0 : #ff5a9060",
+                            "color": "$active ? $text : $dim",
                             "shadow": true,
                             "max_width": "$tab_w - 4"
                           }

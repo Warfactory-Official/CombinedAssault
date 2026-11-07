@@ -1,10 +1,9 @@
 {
   "use": ["combinedassault:hud"],
-  "constants": {"aim": "vehicle.rotary ? $green : $white"},
   "root": {"type": "stack", "children": [
     {"type": "when", "if": "!local.scope", "then": {"type": "stack", "children": [
-      {"type": "combinedassault:aim_reticle", "color": "$aim"},
-      {"type": "combinedassault:impact_markers", "color": "$aim"},
+      {"type": "combinedassault:aim_reticle", "color": "$white"},
+      {"type": "combinedassault:impact_markers", "color": "$white"},
       {"type": "combinedassault:lock_markers"}
     ]}},
     {"type": "combinedassault:hud/weapon_card"},

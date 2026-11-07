@@ -1,14 +1,14 @@
 package com.wf.combinedassault.ballistics.component.client;
 
+import com.wf.combinedassault.ballistics.component.ComponentState;
+import com.wf.combinedassault.ballistics.component.SystemRepair;
+import com.wf.combinedassault.ballistics.component.VehicleSystems;
 import com.wf.wflib.probe.api.ProbeAction;
 import com.wf.wflib.probe.api.ProbeContext;
 import com.wf.wflib.probe.api.ProbeElement;
 import com.wf.wflib.probe.api.ProbeInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import com.wf.combinedassault.ballistics.component.ComponentState;
-import com.wf.combinedassault.ballistics.component.SystemRepair;
-import com.wf.combinedassault.ballistics.component.VehicleSystems;
 
 import java.util.List;
 

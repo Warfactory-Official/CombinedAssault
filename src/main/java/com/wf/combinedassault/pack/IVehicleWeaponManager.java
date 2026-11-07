@@ -1,7 +1,7 @@
 package com.wf.combinedassault.pack;
 
-import net.minecraft.resources.ResourceLocation;
 import com.wf.combinedassault.pack.weapon.VehicleWeaponIndex;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.Map;
 import java.util.Optional;

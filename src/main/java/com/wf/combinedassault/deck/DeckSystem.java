@@ -1,15 +1,16 @@
 package com.wf.combinedassault.deck;
 
+import com.wf.combinedassault.CombinedAssaultSystem;
 import com.wf.combinedassault.deck.gametest.DeckParentingGameTest;
-import com.wf.combinedassault.deck.rail.gametest.FlatcarCarryGameTest;
 import com.wf.combinedassault.deck.gametest.NonVehicleCarrierGameTest;
 import com.wf.combinedassault.deck.gametest.VehicleMountGameTest;
+import com.wf.combinedassault.deck.rail.RailCompat;
+import com.wf.combinedassault.deck.rail.gametest.FlatcarCarryGameTest;
 import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
-import java.util.Set;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
-import com.wf.combinedassault.deck.rail.RailCompat;
-import com.wf.combinedassault.CombinedAssaultSystem;
+
+import java.util.Set;
 
 public final class DeckSystem implements CombinedAssaultSystem {
 

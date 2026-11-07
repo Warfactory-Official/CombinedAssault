@@ -1,9 +1,9 @@
 package com.wf.combinedassault.pack.sync.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.pack.sync.SyncDataManager;
 import com.wf.combinedassault.pack.sync.SyncDataSerializer;
 import com.wf.combinedassault.pack.sync.SyncDataSerializers;
-import com.wf.combinedassault.pack.sync.SyncDataManager;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.neoforged.neoforge.gametest.GameTestHolder;

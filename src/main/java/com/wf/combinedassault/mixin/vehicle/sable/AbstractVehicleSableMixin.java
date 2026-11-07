@@ -1,5 +1,6 @@
 package com.wf.combinedassault.mixin.vehicle.sable;
 
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import dev.ryanhcode.sable.mixinterface.entity.entity_sublevel_collision.EntityMovementExtension;
 import dev.ryanhcode.sable.mixinterface.entity.entity_sublevel_collision.LivingEntityMovementExtension;
 import dev.ryanhcode.sable.sublevel.entity_collision.SubLevelEntityCollision;
@@ -11,7 +12,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 @Mixin(AbstractVehicle.class)
 @Implements(@Interface(iface = LivingEntityMovementExtension.class, prefix = "sableext$"))

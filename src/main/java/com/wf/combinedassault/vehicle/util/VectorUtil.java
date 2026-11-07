@@ -1,5 +1,18 @@
 package com.wf.combinedassault.vehicle.util;
 
+import com.wf.combinedassault.ballistics.addon.AddonArmorLayer;
+import com.wf.combinedassault.ballistics.hit.VehicleHits;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.combinedassault.props.part.DecorationUnit;
+import com.wf.combinedassault.render.model.VehicleModelInstance;
+import com.wf.combinedassault.vehicle.compat.sable.SableCompat;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.wflib.geom.api.OBB;
+import com.wf.wflib.geom.api.OBBEntity;
+import com.wf.wflib.grenade.api.SightBlocker;
+import com.wf.wflib.missile.api.SeekerDecoy;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
@@ -15,19 +28,6 @@ import net.neoforged.neoforge.entity.PartEntity;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
-import com.wf.combinedassault.render.model.VehicleModelInstance;
-import com.wf.wflib.geom.api.OBBEntity;
-import com.wf.wflib.grenade.api.SightBlocker;
-import com.wf.wflib.missile.api.SeekerDecoy;
-import com.wf.combinedassault.vehicle.compat.sable.SableCompat;
-import com.wf.combinedassault.ballistics.addon.AddonArmorLayer;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.ballistics.hit.VehicleHits;
-import com.wf.combinedassault.props.part.DecorationUnit;
-import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.wflib.geom.api.OBB;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 
 import java.lang.Math;
 import java.util.ArrayList;

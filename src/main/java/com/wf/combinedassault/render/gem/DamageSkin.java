@@ -1,15 +1,15 @@
 package com.wf.combinedassault.render.gem;
 
-import com.wf.gemrender.gltf.GemRenderGltfModel;
-import com.wf.gemrender.gltf.NodeTable;
-import com.wf.gemrender.texture.VariantUv;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.ballistics.component.ComponentState;
 import com.wf.combinedassault.ballistics.component.NodeSystems;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.gemrender.gltf.GemRenderGltfModel;
+import com.wf.gemrender.gltf.NodeTable;
+import com.wf.gemrender.texture.VariantUv;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.List;
 import java.util.Locale;

@@ -3,22 +3,16 @@ package com.wf.combinedassault.hud.widget;
 import com.wf.combinedassault.hud.AimPoint;
 import com.wf.combinedassault.hud.CaDraw;
 import com.wf.combinedassault.hud.HudSubjects;
-import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
-import com.wf.wflib.round.api.RocketEntity;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.radar.RadarUnit;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
 import com.wf.gemrender.ui.Canvas;
 import com.wf.gemrender.ui.TextBuffer;
-import com.wf.wflib.ui.api.Binder;
-import com.wf.wflib.ui.api.ColorProp;
-import com.wf.wflib.ui.api.ScreenProjection;
-import com.wf.wflib.ui.api.SubjectRef;
-import com.wf.wflib.ui.api.UiEval;
-import com.wf.wflib.ui.api.Widget;
-import com.wf.wflib.ui.api.WidgetDef;
+import com.wf.wflib.round.api.RocketEntity;
+import com.wf.wflib.ui.api.*;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -157,13 +151,12 @@ public final class AimWidgets {
                             || !project(ev, aiming.weaponHitPos, aiming.weaponHitPosO)) {
                         return;
                     }
-                    int markColour = sensor == WeaponUnitData.FireControlSensorType.CCIP ? CaDraw.GREEN : argb;
                     Canvas canvas = ev.canvas;
                     switch (style) {
-                        case CIRCLE -> CaDraw.circle(canvas, at[0], at[1], 3, 0.05f, markColour);
-                        case SQUARE -> CaDraw.square(canvas, at[0], at[1], 5, markColour);
-                        case CROSS -> CaDraw.crossDiagonal(canvas, at[0], at[1], 8, 1, markColour);
-                        case BIG_CROSS -> CaDraw.cross(canvas, at[0], at[1], 16, markColour);
+                        case CIRCLE -> CaDraw.circle(canvas, at[0], at[1], 3, 0.05f, argb);
+                        case SQUARE -> CaDraw.square(canvas, at[0], at[1], 5, argb);
+                        case CROSS -> CaDraw.crossDiagonal(canvas, at[0], at[1], 8, 1, argb);
+                        case BIG_CROSS -> CaDraw.cross(canvas, at[0], at[1], 16, argb);
                         default -> {
                         }
                     }
@@ -228,7 +221,7 @@ public final class AimWidgets {
                             }
                         }
                         if (sensor == WeaponUnitData.FireControlSensorType.EO) {
-                            CaDraw.square(canvas, at[0], at[1], 15, CaDraw.GREEN);
+                            CaDraw.square(canvas, at[0], at[1], 15, CaDraw.WHITE);
                         }
                     }
                     RadarUnit radar = unit.getMainRadarUnit();
@@ -239,8 +232,8 @@ public final class AimWidgets {
                     if (sensor == WeaponUnitData.FireControlSensorType.RF && radarLock != null) {
                         RadarUnit.DetectedObject object = radar.getDetectedEntities().get(radarLock.getId());
                         if (object != null && project(ev, object.entity.getBoundingBox().getCenter())) {
-                            CaDraw.square(canvas, at[0], at[1], 15, CaDraw.GREEN);
-                            CaDraw.square(canvas, at[0], at[1], 10, CaDraw.GREEN);
+                            CaDraw.square(canvas, at[0], at[1], 15, CaDraw.WHITE);
+                            CaDraw.square(canvas, at[0], at[1], 10, CaDraw.WHITE);
                             allies(canvas, object, at[0], at[1]);
                             info(canvas, vehicle, object, at[0], at[1]);
                         }
@@ -255,9 +248,9 @@ public final class AimWidgets {
                                 continue;
                             }
                             if (object.entity instanceof Projectile || object.entity instanceof RocketEntity) {
-                                CaDraw.squareCorners(canvas, at[0], at[1], 10, 3, CaDraw.GREEN);
+                                CaDraw.squareCorners(canvas, at[0], at[1], 10, 3, CaDraw.WHITE);
                             } else {
-                                CaDraw.squareCorners(canvas, at[0], at[1], 15, 5, CaDraw.GREEN);
+                                CaDraw.squareCorners(canvas, at[0], at[1], 15, 5, CaDraw.WHITE);
                                 allies(canvas, object, at[0], at[1]);
                                 info(canvas, vehicle, object, at[0], at[1]);
                             }
@@ -278,17 +271,17 @@ public final class AimWidgets {
                     Team team = object.entity.getTeam();
                     if (team != null && team.isAlliedTo(LocalVehiclePlayer.instance().getPlayer().getTeam())) {
                         Integer colour = team.getColor().getColor();
-                        canvas.fill(px - 6, py - 11, px + 7, py - 10, colour == null ? CaDraw.GREEN : 0xFF000000 | colour);
+                        canvas.fill(px - 6, py - 11, px + 7, py - 10, colour == null ? CaDraw.WHITE : 0xFF000000 | colour);
                     }
                 }
 
                 private void info(Canvas canvas, AbstractVehicle vehicle, RadarUnit.DetectedObject object, float px, float py) {
                     Vec3 velocity = object.entity.getDeltaMovement();
-                    CaDraw.square(canvas, px, py + 12, 4, CaDraw.GREEN);
+                    CaDraw.square(canvas, px, py + 12, 4, CaDraw.WHITE);
                     double speed = velocity.length();
                     if (speed != 0) {
                         Vec3 direction = vehicle.relativeRotDirection(velocity.scale(-8 / speed), true);
-                        canvas.line(px + 0.5f, py + 12, px + 0.5f + (float) direction.x, py + 12 + (float) direction.z, 1, CaDraw.GREEN);
+                        canvas.line(px + 0.5f, py + 12, px + 0.5f + (float) direction.x, py + 12 + (float) direction.z, 1, CaDraw.WHITE);
                     }
                     boolean small = object.entity instanceof Projectile || object.entity instanceof RocketEntity;
                     float tx = px + (small ? 8 : 12);
@@ -296,12 +289,12 @@ public final class AimWidgets {
                     canvas.push().translate(tx, ty).scale(0.8f);
                     Vec3 position = vehicle.position();
                     text.clear().append(object.detectedPosition.distanceTo(position), 2).append(" m");
-                    canvas.text(text, 0, 0, CaDraw.GREEN, false);
+                    canvas.text(text, 0, 0, CaDraw.WHITE, false);
                     Vec3 approach = velocity.subtract(vehicle.getDeltaMovement());
                     double dot = approach.x * (object.entity.getX() - position.x) + approach.y * (object.entity.getY() - position.y)
                             + approach.z * (object.entity.getZ() - position.z);
                     text.clear().append((dot > 0 ? -1 : 1) * approach.length() * 20, 2).append(" m/s");
-                    canvas.text(text, 0, 12, CaDraw.GREEN, false);
+                    canvas.text(text, 0, 12, CaDraw.WHITE, false);
                     canvas.pop();
                 }
             };

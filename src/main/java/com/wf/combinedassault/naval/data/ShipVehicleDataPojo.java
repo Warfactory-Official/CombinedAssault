@@ -1,9 +1,9 @@
 package com.wf.combinedassault.naval.data;
 
 import com.google.gson.annotations.SerializedName;
+import com.wf.combinedassault.vehicle.data.BaseVehicleDataPojo;
 
 import java.util.List;
-import com.wf.combinedassault.vehicle.data.BaseVehicleDataPojo;
 
 /** The {@code attributes} block of a {@code combinedassault:ship}. */
 public class ShipVehicleDataPojo extends BaseVehicleDataPojo {

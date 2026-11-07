@@ -6,6 +6,14 @@ import com.google.common.cache.LoadingCache;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.pack.client.ClientAssetsManager;
+import com.wf.combinedassault.pack.client.vehicle.VehicleDisplay;
+import com.wf.combinedassault.props.FigureBoxBlockEntity;
+import com.wf.combinedassault.props.FigureBoxItem;
+import com.wf.combinedassault.props.PropsContent;
+import com.wf.combinedassault.render.item.SlotQuad;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -29,17 +37,9 @@ import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.model.data.ModelData;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.props.PropsContent;
-import com.wf.combinedassault.props.FigureBoxBlockEntity;
-import com.wf.combinedassault.pack.client.ClientAssetsManager;
-import com.wf.combinedassault.pack.client.vehicle.VehicleDisplay;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.props.FigureBoxItem;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.TimeUnit;
-import com.wf.combinedassault.render.item.SlotQuad;
 
 public class FigureBoxItemRenderer extends BlockEntityWithoutLevelRenderer {
 

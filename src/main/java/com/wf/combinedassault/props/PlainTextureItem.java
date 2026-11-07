@@ -1,5 +1,6 @@
 package com.wf.combinedassault.props;
 
+import com.wf.combinedassault.props.client.PlainTextureItemRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.component.DataComponents;
@@ -9,7 +10,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
-import com.wf.combinedassault.props.client.PlainTextureItemRenderer;
 
 import java.util.function.Consumer;
 

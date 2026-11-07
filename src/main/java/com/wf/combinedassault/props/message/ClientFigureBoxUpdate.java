@@ -1,5 +1,8 @@
 package com.wf.combinedassault.props.message;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.props.FigureBoxBlock;
+import com.wf.combinedassault.props.FigureBoxBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -8,9 +11,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.props.FigureBoxBlock;
-import com.wf.combinedassault.props.FigureBoxBlockEntity;
 
 public class ClientFigureBoxUpdate implements CustomPacketPayload {
 

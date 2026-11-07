@@ -1,5 +1,6 @@
 package com.wf.combinedassault.vehicle.recipe;
 
+import com.wf.combinedassault.vehicle.VehicleContent;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
@@ -9,7 +10,6 @@ import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
 
 import java.util.List;
-import com.wf.combinedassault.vehicle.VehicleContent;
 
 public class VehiclePrintingRecipe implements CraftingRecipe {
 

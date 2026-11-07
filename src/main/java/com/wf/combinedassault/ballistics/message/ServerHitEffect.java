@@ -1,9 +1,9 @@
 package com.wf.combinedassault.ballistics.message;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.wflib.armor.api.hull.HullOutcome;
-import com.wf.combinedassault.render.fx.HitFx;
 import com.wf.combinedassault.ballistics.hit.SurfaceMaterial;
+import com.wf.combinedassault.render.fx.HitFx;
+import com.wf.wflib.armor.api.hull.HullOutcome;
 import com.wf.wflib.damage.api.ThreatKind;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;

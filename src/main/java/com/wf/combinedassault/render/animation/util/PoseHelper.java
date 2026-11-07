@@ -1,7 +1,7 @@
 package com.wf.combinedassault.render.animation.util;
 
-import com.wf.combinedassault.render.model.BoneIndexProvider;
 import com.maydaymemory.mae.basic.*;
+import com.wf.combinedassault.render.model.BoneIndexProvider;
 import org.joml.Vector3f;
 
 import java.util.TreeMap;

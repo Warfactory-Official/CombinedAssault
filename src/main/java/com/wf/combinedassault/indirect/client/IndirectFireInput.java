@@ -1,5 +1,11 @@
 package com.wf.combinedassault.indirect.client;
 
+import com.wf.combinedassault.indirect.GunLaying;
+import com.wf.combinedassault.indirect.IndirectFire;
+import com.wf.combinedassault.indirect.LayingMode;
+import com.wf.combinedassault.indirect.RoundSpec;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -10,12 +16,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
-import com.wf.combinedassault.indirect.GunLaying;
-import com.wf.combinedassault.indirect.IndirectFire;
-import com.wf.combinedassault.indirect.LayingMode;
-import com.wf.combinedassault.indirect.RoundSpec;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
 
 /** Repeats honoured, not just presses: a held key moves the mount many steps. */
 public final class IndirectFireInput {

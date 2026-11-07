@@ -1,17 +1,17 @@
 package com.wf.combinedassault.weapon.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.wf.combinedassault.vehicle.client.VehicleKeys;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.weapon.message.ClientSelectRound;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.client.VehicleKeys;
 import com.wf.combinedassault.vehicle.crew.CrewRole;
 import com.wf.combinedassault.vehicle.crew.CrewRules;
 import com.wf.combinedassault.vehicle.crew.WeaponLoading;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.RoundCount;
+import com.wf.combinedassault.weapon.message.ClientSelectRound;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;

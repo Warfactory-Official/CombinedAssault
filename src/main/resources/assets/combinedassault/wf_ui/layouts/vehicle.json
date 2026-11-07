@@ -7,11 +7,14 @@
     {"type": "combinedassault:hud/alerts"},
     {"type": "when", "if": "station.present", "then": {"type": "combinedassault:hud/station"}},
     {"type": "place", "x": "ui.width - 4", "y": "ui.height - 9 - (station.present && station.weapon_count > 0 ? 44 : 0)",
-      "pivot": "bottom_right", "child": {"type": "transform", "scale": 0.75, "pivot": "bottom_right",
-        "child": {"type": "combinedassault:ammo_list"}}},
+      "pivot": "bottom_right", "child": {"type": "column", "gap": 2, "align": "end", "children": [
+        {"type": "combinedassault:hud/key_hints_weapons"},
+        {"type": "transform", "scale": 0.75, "pivot": "bottom_right", "child": {"type": "combinedassault:ammo_list"}}
+      ]}},
     {"type": "when", "if": "payload.loaded", "then": {"type": "combinedassault:hud/payload"}},
     {"type": "place", "x": "ui.width - floor(ui.width / 8)", "y": "ui.height / 2 + floor(ui.height / 5)",
       "child": {"type": "combinedassault:hit_panel"}},
+    {"type": "combinedassault:hud/key_hints"},
     {"type": "combinedassault:debug_dump"}
   ]}
 }

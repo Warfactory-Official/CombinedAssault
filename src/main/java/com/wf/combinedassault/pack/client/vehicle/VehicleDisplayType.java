@@ -1,12 +1,12 @@
 package com.wf.combinedassault.pack.client.vehicle;
 
 import com.google.gson.JsonElement;
-import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.render.animation.context.AnimationContextFactory;
 import com.wf.combinedassault.render.animation.context.VehicleContext;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public record VehicleDisplayType<D extends BaseDisplay> (
         ResourceLocation id,

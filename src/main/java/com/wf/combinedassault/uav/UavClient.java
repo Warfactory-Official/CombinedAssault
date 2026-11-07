@@ -1,9 +1,9 @@
 package com.wf.combinedassault.uav;
 
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.common.NeoForge;
 import com.wf.combinedassault.uav.fpv.client.FpvClientInput;
 import com.wf.combinedassault.uav.fpv.client.FpvKeys;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
 
 /** Server-unsafe half of {@link UavSystem}. */
 final class UavClient {

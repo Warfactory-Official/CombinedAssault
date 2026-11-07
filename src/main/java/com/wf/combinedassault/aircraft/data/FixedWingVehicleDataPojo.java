@@ -1,12 +1,12 @@
 package com.wf.combinedassault.aircraft.data;
 
 import com.google.gson.annotations.SerializedName;
-import net.minecraft.world.phys.Vec3;
 import com.wf.combinedassault.aircraft.pojo.AfterburnerOffset;
+import com.wf.combinedassault.vehicle.data.BaseVehicleDataPojo;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
-import com.wf.combinedassault.vehicle.data.BaseVehicleDataPojo;
 
 public class FixedWingVehicleDataPojo extends BaseVehicleDataPojo {
 

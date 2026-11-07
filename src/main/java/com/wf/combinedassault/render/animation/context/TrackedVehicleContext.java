@@ -1,7 +1,7 @@
 package com.wf.combinedassault.render.animation.context;
 
-import com.wf.combinedassault.vehicle.entity.TrackedVehicle;
 import com.wf.combinedassault.dynamics.part.TrackUnit;
+import com.wf.combinedassault.vehicle.entity.TrackedVehicle;
 
 import java.util.OptionalDouble;
 

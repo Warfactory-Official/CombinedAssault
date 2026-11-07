@@ -2,17 +2,13 @@ package com.wf.combinedassault.uav.multirotor;
 
 import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.ballistics.component.HullComponents;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.ballistics.hit.HitModel;
 import com.wf.combinedassault.ballistics.hit.VehicleHits;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Rotor {@code unit} pools of a multirotor as thrust points: body-frame position about their centroid, spin (+1 cw).

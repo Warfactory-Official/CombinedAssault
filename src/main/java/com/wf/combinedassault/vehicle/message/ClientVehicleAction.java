@@ -1,9 +1,13 @@
 package com.wf.combinedassault.vehicle.message;
 
-import net.minecraft.network.chat.Component;
+import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.vehicle.crew.CrewRole;
 import com.wf.combinedassault.vehicle.crew.CrewRules;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.SwitchableUnit;
+import com.wf.combinedassault.weapon.pojo.AimContext;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
@@ -13,10 +17,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.part.SwitchableUnit;
-import com.wf.combinedassault.weapon.pojo.AimContext;
 
 import java.util.ArrayList;
 import java.util.List;

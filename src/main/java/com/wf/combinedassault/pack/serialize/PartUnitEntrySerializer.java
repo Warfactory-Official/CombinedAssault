@@ -4,10 +4,10 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
 import com.wf.combinedassault.pack.PackTypes;
 import com.wf.combinedassault.pack.part.PartUnitEntry;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
 
 import java.lang.reflect.Type;
 

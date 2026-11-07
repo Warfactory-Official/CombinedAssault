@@ -1,5 +1,12 @@
 package com.wf.combinedassault.weapon.seeker;
 
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
+import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.VehicleMissile;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.wflib.grenade.api.SightBlocker;
+import com.wf.wflib.missile.api.SeekerDecoy;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -12,13 +19,6 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.PartEntity;
-import com.wf.wflib.grenade.api.SightBlocker;
-import com.wf.wflib.missile.api.SeekerDecoy;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.util.VectorUtil;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
-import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
-import com.wf.combinedassault.weapon.VehicleMissile;
 
 import java.util.Optional;
 

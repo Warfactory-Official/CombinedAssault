@@ -1,18 +1,18 @@
 package com.wf.combinedassault.dynamics.part;
 
+import com.wf.combinedassault.ballistics.hit.ClipRig;
+import com.wf.combinedassault.ballistics.hit.ModelRig;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.part.RotatableUnit;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import com.wf.combinedassault.ballistics.hit.ClipRig;
-import com.wf.combinedassault.ballistics.hit.ModelRig;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.vehicle.part.RotatableUnit;
 
 /**
  * Frames flagged {@code follows_clips} (frame {@code extras.combinedassault}) whose part, if any, is not a

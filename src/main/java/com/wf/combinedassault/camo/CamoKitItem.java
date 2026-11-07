@@ -1,5 +1,8 @@
 package com.wf.combinedassault.camo;
 
+import com.wf.combinedassault.camo.client.CamoBrush;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.item.VehicleItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.HolderLookup;
@@ -24,11 +27,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import com.wf.combinedassault.camo.client.CamoBrush;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.util.List;
-import com.wf.combinedassault.vehicle.item.VehicleItem;
 
 /**
  * Server re-traces the ray against hull collision cubes itself; client aim is advisory.

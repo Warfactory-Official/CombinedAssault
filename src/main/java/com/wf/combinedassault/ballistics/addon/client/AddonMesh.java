@@ -1,10 +1,11 @@
 package com.wf.combinedassault.ballistics.addon.client;
 
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
-import com.mojang.blaze3d.vertex.MeshData;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.*;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.addon.AddonFit;
+import com.wf.combinedassault.ballistics.addon.AddonKind;
+import com.wf.combinedassault.ballistics.addon.AddonMount;
+import com.wf.combinedassault.ballistics.addon.AddonMountState;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.client.renderer.RenderType;
@@ -12,11 +13,6 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.ballistics.addon.AddonFit;
-import com.wf.combinedassault.ballistics.addon.AddonKind;
-import com.wf.combinedassault.ballistics.addon.AddonMount;
-import com.wf.combinedassault.ballistics.addon.AddonMountState;
 
 /** One installed panel's geometry, panel frame, built from its state. CPU copy kept for the Iris replay. */
 public final class AddonMesh {

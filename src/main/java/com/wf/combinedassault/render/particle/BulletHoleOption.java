@@ -2,6 +2,7 @@ package com.wf.combinedassault.render.particle;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.wf.combinedassault.render.RenderParticles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
@@ -10,7 +11,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
-import com.wf.combinedassault.render.RenderParticles;
 
 public class BulletHoleOption implements ParticleOptions {
 

@@ -1,10 +1,10 @@
 package com.wf.combinedassault.ballistics.addon;
 
+import com.wf.combinedassault.ballistics.BallisticsContent;
 import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
-import com.wf.combinedassault.ballistics.BallisticsContent;
 
 /** What is installed on a mount point. Ordinal is the save/sync id. */
 public enum AddonFit {

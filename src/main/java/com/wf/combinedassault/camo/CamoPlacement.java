@@ -1,10 +1,10 @@
 package com.wf.combinedassault.camo;
 
+import com.wf.combinedassault.vehicle.util.VectorUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
-import com.wf.combinedassault.vehicle.util.VectorUtil;
 
 /**
  * Turns a hull hit into a piece. Shared by player strokes and the seeding command, server-side,

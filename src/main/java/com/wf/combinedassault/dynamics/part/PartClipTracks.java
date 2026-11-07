@@ -1,23 +1,18 @@
 package com.wf.combinedassault.dynamics.part;
 
-import net.minecraft.util.Mth;
-import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.aircraft.part.FlapUnit;
 import com.wf.combinedassault.ballistics.hit.ClipRig;
 import com.wf.combinedassault.ballistics.hit.GltfReader;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
-import com.wf.combinedassault.aircraft.part.FlapUnit;
 import com.wf.combinedassault.vehicle.part.LinkedHingeUnit;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import net.minecraft.util.Mth;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Part progress p in [0,1] per clip-driven track, ticked on both sides: the server poses hits by it, the client draws

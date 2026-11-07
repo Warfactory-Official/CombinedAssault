@@ -1,20 +1,21 @@
 package com.wf.combinedassault.tow;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.CombinedAssaultSystem;
 import com.wf.combinedassault.tow.gametest.TowGameTest;
+import com.wf.combinedassault.tow.net.TowCoupleMessage;
+import com.wf.combinedassault.tow.trial.TowTrials;
+import com.wf.combinedassault.vehicle.command.RootCommand;
 import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
-import java.util.Set;
+import com.wf.wflib.core.api.ServerTicks;
+import com.wf.wflib.core.api.TickOrder;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.command.RootCommand;
-import com.wf.combinedassault.tow.net.TowCoupleMessage;
-import com.wf.combinedassault.tow.trial.TowTrials;
-import com.wf.wflib.core.api.ServerTicks;
-import com.wf.wflib.core.api.TickOrder;
-import com.wf.combinedassault.CombinedAssaultSystem;
+
+import java.util.Set;
 
 public final class TowSystem implements CombinedAssaultSystem {
 

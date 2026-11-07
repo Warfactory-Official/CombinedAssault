@@ -1,11 +1,11 @@
 package com.wf.combinedassault.radar;
 
+import com.wf.combinedassault.CombinedAssault;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import com.wf.combinedassault.CombinedAssault;
 
 public final class RadarContent {
 

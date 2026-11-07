@@ -1,5 +1,6 @@
 package com.wf.combinedassault.ballistics;
 
+import com.wf.combinedassault.vehicle.item.VehicleItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -10,7 +11,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 
 import java.util.List;
-import com.wf.combinedassault.vehicle.item.VehicleItem;
 
 /**
  * {@code #combinedassault:all_tool}: satisfies every {@code <system>_tool} tag.

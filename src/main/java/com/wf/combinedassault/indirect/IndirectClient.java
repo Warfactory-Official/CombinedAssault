@@ -1,8 +1,8 @@
 package com.wf.combinedassault.indirect;
 
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Optional;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.indirect.client.*;
+import com.wf.wflib.map.api.client.WFMaps;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackLocationInfo;
 import net.minecraft.server.packs.PackSelectionConfig;
@@ -12,18 +12,15 @@ import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackCompatibility;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.world.flag.FeatureFlagSet;
-import net.neoforged.fml.ModList;
-import net.neoforged.neoforge.event.AddPackFindersEvent;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.indirect.client.CallForFireMapTool;
-import com.wf.combinedassault.indirect.client.FireMissionMapTool;
-import com.wf.combinedassault.indirect.client.IndirectFireInput;
-import com.wf.combinedassault.indirect.client.IndirectFireKeys;
-import com.wf.combinedassault.indirect.client.ShotClock;
-import com.wf.wflib.map.api.client.WFMaps;
+import net.neoforged.neoforge.event.AddPackFindersEvent;
+
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
 
 /** Server-unsafe half of {@link IndirectSystem}. */
 final class IndirectClient {

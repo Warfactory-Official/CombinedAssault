@@ -1,10 +1,10 @@
 package com.wf.combinedassault.vehicle;
 
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.aircraft.FixedWingVehicle;
 import com.wf.combinedassault.aircraft.RotaryWingVehicle;
 import com.wf.combinedassault.naval.ShipVehicle;
 import com.wf.combinedassault.naval.VesselVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.util.Set;
 

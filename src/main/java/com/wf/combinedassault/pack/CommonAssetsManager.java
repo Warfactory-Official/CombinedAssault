@@ -1,24 +1,20 @@
 package com.wf.combinedassault.pack;
 
-import com.wf.combinedassault.vehicle.api.VehicleCatalogue;
 import com.google.gson.JsonObject;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.wflib.packs.api.PackHost;
-import com.wf.wflib.packs.api.PackHosts;
-import com.wf.combinedassault.weapon.kit.HardwareKits;
 import com.wf.combinedassault.ballistics.hit.ModelData;
 import com.wf.combinedassault.ballistics.hit.ModelDataManager;
+import com.wf.combinedassault.vehicle.api.VehicleCatalogue;
+import com.wf.combinedassault.weapon.kit.HardwareKits;
+import com.wf.wflib.packs.api.PackHost;
+import com.wf.wflib.packs.api.PackHosts;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Pack defs, parsed: weapons + hardware kits -> vehicle models -> vehicles. One per JVM (both sides read the same

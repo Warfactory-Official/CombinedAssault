@@ -1,20 +1,20 @@
 package com.wf.combinedassault.aircraft.data;
 
 import com.google.gson.JsonObject;
-import net.minecraft.world.level.Level;
-import com.wf.combinedassault.vehicle.part.data.RopeUnitData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.aircraft.AircraftContent;
 import com.wf.combinedassault.aircraft.RotaryWingVehicle;
+import com.wf.combinedassault.dynamics.part.LandingGearUnit;
 import com.wf.combinedassault.uav.fpv.FpvFlight;
 import com.wf.combinedassault.uav.multirotor.MultirotorFlight;
-import com.wf.combinedassault.dynamics.part.LandingGearUnit;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.RopeUnit;
+import com.wf.combinedassault.vehicle.part.data.RopeUnitData;
+import net.minecraft.world.level.Level;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.aircraft.AircraftContent;
 
 public class RotaryWingVehicleData extends BaseVehicleData<RotaryWingVehicle> {
 

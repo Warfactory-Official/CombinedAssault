@@ -1,12 +1,12 @@
 package com.wf.combinedassault.weapon.part;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.vehicle.VehicleContent;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.probe.api.ProbeActions;
 import com.wf.wflib.probe.api.ProbeInventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import com.wf.combinedassault.vehicle.VehicleContent;
 
 /** Probe row: select weapon of an interactive weapon part ({@code arg} = {@link #arg}). Modding tool carried. */
 public final class WeaponActions {

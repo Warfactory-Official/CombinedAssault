@@ -1,11 +1,11 @@
 package com.wf.combinedassault.naval.trial;
 
+import com.wf.combinedassault.naval.ShipHydrodynamics;
+import com.wf.combinedassault.naval.ShipVehicle;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.fml.loading.FMLPaths;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.naval.ShipVehicle;
-import com.wf.combinedassault.naval.ShipHydrodynamics;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

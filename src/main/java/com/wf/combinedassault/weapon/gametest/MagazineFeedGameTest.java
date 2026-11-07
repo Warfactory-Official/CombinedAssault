@@ -1,11 +1,13 @@
 package com.wf.combinedassault.weapon.gametest;
 
+import com.mojang.authlib.GameProfile;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.RoundCount;
+import com.wf.combinedassault.weapon.WeaponContent;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.wflib.ammo.api.AmmoItems;
 import com.wf.wflib.magazine.api.MagContents;
 import com.wf.wflib.magazine.api.MagFill;
@@ -15,14 +17,18 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
-import com.wf.combinedassault.weapon.WeaponContent;
+import java.util.UUID;
 
 /** Humvee M2: {@code magazines} + {@code loose}. */
 @GameTestHolder(CombinedAssault.MOD_ID)
@@ -108,6 +114,40 @@ public class MagazineFeedGameTest {
         });
     }
 
+    @GameTest(template = "empty", timeoutTicks = 500)
+    public static void anUnfittedM2LeavesItsCansInTheStores(GameTestHelper helper) {
+        unfittedGunLeavesItsCans(helper, null);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 500)
+    public static void anM2HiddenByTheMk19LeavesItsCansInTheStores(GameTestHelper helper) {
+        unfittedGunLeavesItsCans(helper, "mk19");
+    }
+
+    /** Refit half: same gunner, same stores => proves the first half could have reloaded. */
+    private static void unfittedGunLeavesItsCans(GameTestHelper helper, @Nullable String kit) {
+        AbstractVehicle humvee = spawn(helper);
+        AbstractVehicleWeapon<?> m2 = m2(humvee);
+        fit(humvee, kit);
+        humvee.getItemStacks().set(0, apCan());
+        WeaponUnit unit = roof(humvee);
+        AbstractVehicle.Seat seat = humvee.seats.stream().filter(s -> s.partUnit == unit).findFirst().orElseThrow();
+        ServerPlayer gunner = FakePlayerFactory.get(helper.getLevel(), new GameProfile(UUID.randomUUID(), "gunner"));
+        helper.assertTrue(humvee.changeSeat(gunner, seat.seatIndex), "roof seat taken");
+        helper.startSequence()
+                .thenIdle(160)
+                .thenExecute(() -> {
+                    helper.assertTrue(m2.getRemainAmmo() == 0 && !humvee.getItemStacks().get(0).isEmpty(),
+                            "unfitted gun took the can: " + m2.getRemainAmmo() + " " + humvee.getItemStacks().get(0));
+                    fit(humvee, "m2");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(m2.getRemainAmmo() == 100, "refit M2 ammo " + m2.getRemainAmmo()))
+                .thenExecute(() -> {
+                    humvee.discard();
+                })
+                .thenSucceed();
+    }
+
     private static ItemStack apCan() {
         return MagFill.full(new ItemStack(MagazineItems.CAN_12_7X99.get()), AP);
     }
@@ -122,7 +162,17 @@ public class MagazineFeedGameTest {
                 .construct(helper.getLevel(), new Vec3(at.getX() + 0.5, at.getY(), at.getZ() + 0.5), 0, 0);
         vehicle.setDisplayId(HUMVEE);
         helper.getLevel().addFreshEntity(vehicle);
+        fit(vehicle, "m2");
         return vehicle;
+    }
+
+    private static WeaponUnit roof(AbstractVehicle vehicle) {
+        return (WeaponUnit) vehicle.getPartUnit("roof_mount").orElseThrow();
+    }
+
+    private static void fit(AbstractVehicle vehicle, @Nullable String kit) {
+        WeaponUnit unit = roof(vehicle);
+        unit.fitKit(kit == null ? -1 : unit.hardpoint().indexOf(CombinedAssault.modLocation(kit)));
     }
 
     private static AbstractVehicleWeapon<?> m2(AbstractVehicle vehicle) {

@@ -1,5 +1,10 @@
 package com.wf.combinedassault.dynamics.part;
 
+import com.wf.combinedassault.dynamics.part.data.LandingGearUnitData;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -9,15 +14,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.UnmodifiableView;
 import org.joml.Vector3f;
-import com.wf.combinedassault.dynamics.part.data.LandingGearUnitData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 
 public class LandingGearUnit extends SwitchableUnit<LandingGearUnitData> {
 

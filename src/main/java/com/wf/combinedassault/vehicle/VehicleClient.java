@@ -1,5 +1,10 @@
 package com.wf.combinedassault.vehicle;
 
+import com.wf.combinedassault.vehicle.audio.CabinAcoustics;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.client.VehicleNodes;
+import com.wf.combinedassault.vehicle.pose.client.SeatPoseAnim;
+import com.wf.wflib.audio.api.client.AudioMixer;
 import net.minecraft.client.player.LocalPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -8,11 +13,6 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
-import com.wf.combinedassault.vehicle.audio.CabinAcoustics;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.part.client.VehicleNodes;
-import com.wf.combinedassault.vehicle.pose.client.SeatPoseAnim;
-import com.wf.wflib.audio.api.client.AudioMixer;
 
 public final class VehicleClient {
 

@@ -1,8 +1,21 @@
 package com.wf.combinedassault.vehicle.part;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.wf.combinedassault.ballistics.pojo.DefenseStats;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.combinedassault.pack.sync.PartUnitSyncData;
+import com.wf.combinedassault.pack.sync.SyncDataEntry;
+import com.wf.combinedassault.pack.sync.SyncDataSerializers;
+import com.wf.combinedassault.vehicle.VehicleContent;
 import com.wf.combinedassault.vehicle.crew.CrewRole;
 import com.wf.combinedassault.vehicle.crew.CrewRules;
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.VehiclePart;
+import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
+import com.wf.combinedassault.vehicle.part.data.PartUnitData;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.wflib.geom.api.OBB;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -23,24 +36,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import com.wf.combinedassault.pack.sync.SyncDataSerializers;
-import com.wf.combinedassault.vehicle.part.data.PartUnitData;
-import com.wf.combinedassault.pack.sync.PartUnitSyncData;
-import com.wf.combinedassault.pack.sync.SyncDataEntry;
-import com.wf.combinedassault.vehicle.entity.VehiclePart;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
-import com.wf.combinedassault.ballistics.pojo.DefenseStats;
-import com.wf.wflib.geom.api.OBB;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
-import com.wf.combinedassault.vehicle.VehicleContent;
 
 public class PartUnit<T extends PartUnitData> implements INBTSerializable<CompoundTag> {
 

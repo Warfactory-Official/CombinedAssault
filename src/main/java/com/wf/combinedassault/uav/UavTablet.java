@@ -4,14 +4,14 @@ import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.wflib.cam.api.CameraChannels;
 import com.wf.wflib.cam.api.FeedTarget;
-import com.wf.wflib.pda.api.Pda;
-import com.wf.wflib.pda.api.PdaAlert;
 import com.wf.wflib.drone.api.PdaDrones;
 import com.wf.wflib.drone.api.RemoteBody;
+import com.wf.wflib.pda.api.Pda;
+import com.wf.wflib.pda.api.PdaAlert;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -23,14 +23,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 /** UAVs in the wflib PDA Drones app: link (sneak + use), {@link RemoteBody} (status, systems, ammo, CONNECT), low-fuel alert. */
 public final class UavTablet {

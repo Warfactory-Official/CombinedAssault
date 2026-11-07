@@ -1,5 +1,16 @@
 package com.wf.combinedassault.energy.gametest;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.energy.EnergyFluids;
+import com.wf.combinedassault.energy.GregTechCompat;
+import com.wf.combinedassault.energy.VehicleFuelTank;
+import com.wf.combinedassault.energy.VehicleResupply;
+import com.wf.combinedassault.energy.pojo.EnergyInfo;
+import com.wf.combinedassault.energy.pojo.FuelEntry;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.VehiclePart;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
@@ -19,17 +30,6 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.energy.EnergyFluids;
-import com.wf.combinedassault.energy.GregTechCompat;
-import com.wf.combinedassault.pack.CommonAssetsManager;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.energy.VehicleFuelTank;
-import com.wf.combinedassault.energy.VehicleResupply;
-import com.wf.combinedassault.vehicle.entity.VehiclePart;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.energy.pojo.EnergyInfo;
-import com.wf.combinedassault.energy.pojo.FuelEntry;
 
 import java.util.Optional;
 

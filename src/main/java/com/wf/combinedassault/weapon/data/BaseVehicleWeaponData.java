@@ -4,13 +4,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 import com.mojang.serialization.JsonOps;
 import com.wf.combinedassault.weapon.Backblast;
-import com.wf.wflib.audio.api.SoundSpec;
-import com.wf.wflib.barrel.api.BarrelSpec;
-import com.wf.wflib.barrel.api.BarrelTypes;
-import java.util.Optional;
 import com.wf.wflib.ammo.api.Ammo;
 import com.wf.wflib.ammo.api.AmmoItems;
 import com.wf.wflib.ammo.api.AmmoVariant;
+import com.wf.wflib.audio.api.SoundSpec;
+import com.wf.wflib.barrel.api.BarrelSpec;
+import com.wf.wflib.barrel.api.BarrelTypes;
 import com.wf.wflib.magazine.api.MagFill;
 import com.wf.wflib.magazine.api.Run;
 import net.minecraft.network.chat.Component;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /** Launcher only: the loaded WFLib round owns flight, warhead and damage. */
 public class BaseVehicleWeaponData {

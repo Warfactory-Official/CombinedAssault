@@ -1,12 +1,24 @@
 package com.wf.combinedassault.vehicle;
 
-import com.wf.combinedassault.vehicle.pose.gametest.SeatPoseGameTest;
-import com.wf.combinedassault.vehicle.part.gametest.PickupGameTest;
-import com.wf.combinedassault.vehicle.gametest.WreckGameTest;
-import com.wf.combinedassault.vehicle.part.gametest.AccessGameTest;
-import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
-import java.util.Set;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.CombinedAssaultSystem;
 import com.wf.combinedassault.vehicle.audio.VehicleSoundEvents;
+import com.wf.combinedassault.vehicle.command.RootCommand;
+import com.wf.combinedassault.vehicle.command.SpawnCommand;
+import com.wf.combinedassault.vehicle.command.SummonCommand;
+import com.wf.combinedassault.vehicle.compat.CreateCompat;
+import com.wf.combinedassault.vehicle.compat.sable.SableCompat;
+import com.wf.combinedassault.vehicle.crew.CrewCommand;
+import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
+import com.wf.combinedassault.vehicle.gametest.WreckGameTest;
+import com.wf.combinedassault.vehicle.light.IrSightMessage;
+import com.wf.combinedassault.vehicle.light.LightToggleMessage;
+import com.wf.combinedassault.vehicle.message.*;
+import com.wf.combinedassault.vehicle.part.AccessActions;
+import com.wf.combinedassault.vehicle.part.gametest.AccessGameTest;
+import com.wf.combinedassault.vehicle.part.gametest.PickupGameTest;
+import com.wf.combinedassault.vehicle.pose.SeatPoses;
+import com.wf.combinedassault.vehicle.pose.gametest.SeatPoseGameTest;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
@@ -14,26 +26,8 @@ import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.command.RootCommand;
-import com.wf.combinedassault.vehicle.command.SpawnCommand;
-import com.wf.combinedassault.vehicle.command.SummonCommand;
-import com.wf.combinedassault.vehicle.compat.CreateCompat;
-import com.wf.combinedassault.vehicle.compat.sable.SableCompat;
-import com.wf.combinedassault.vehicle.control.InputHandler;
-import com.wf.combinedassault.vehicle.crew.CrewCommand;
-import com.wf.combinedassault.vehicle.light.IrSightMessage;
-import com.wf.combinedassault.vehicle.light.LightToggleMessage;
-import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
-import com.wf.combinedassault.vehicle.message.ClientVehicleChangeDisplay;
-import com.wf.combinedassault.vehicle.message.ClientVehicleChangeSeat;
-import com.wf.combinedassault.vehicle.message.ClientVehicleMoveControl;
-import com.wf.combinedassault.vehicle.message.ServerEntityDataUpdate;
-import com.wf.combinedassault.vehicle.message.ServerVehicleChangeDisplay;
-import com.wf.combinedassault.vehicle.message.ServerVehicleSeatsChange;
-import com.wf.combinedassault.vehicle.part.AccessActions;
-import com.wf.combinedassault.vehicle.pose.SeatPoses;
-import com.wf.combinedassault.CombinedAssaultSystem;
+
+import java.util.Set;
 
 public final class VehicleSystem implements CombinedAssaultSystem {
 

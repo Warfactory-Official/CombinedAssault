@@ -1,11 +1,11 @@
 package com.wf.combinedassault.camo;
 
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.util.VectorUtil;
 
 /**
  * Vehicle under crosshair, hull-based rather than vanilla's entity pick. Vanilla only resolves an

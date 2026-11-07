@@ -1,9 +1,9 @@
 package com.wf.combinedassault.vehicle.event;
 
-import net.minecraft.world.entity.LivingEntity;
-import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import net.minecraft.world.entity.LivingEntity;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class VehicleFireEvent extends VehicleEvent {
 

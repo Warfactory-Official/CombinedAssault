@@ -1,13 +1,13 @@
 package com.wf.combinedassault.tow.client;
 
+import com.wf.combinedassault.tow.net.TowCoupleMessage;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.tow.net.TowCoupleMessage;
 
 /** Client sends only its own vehicle id; hitch/trailer/mode choice is server-side (coupling moves a vehicle the player isn't riding - not client-trustable). */
 public final class TowInput {

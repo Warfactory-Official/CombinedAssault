@@ -1,5 +1,10 @@
 package com.wf.combinedassault.aircraft.gametest;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.aircraft.FixedWingVehicle;
+import com.wf.combinedassault.aircraft.part.FlapUnit;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.wflib.testkit.api.ForcedChunks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -9,11 +14,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.pack.CommonAssetsManager;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.aircraft.FixedWingVehicle;
-import com.wf.combinedassault.aircraft.part.FlapUnit;
 
 /** MQ-9 flaps: stages 0/15/30, lift_gain 0.35, stall_shift 3, max_speed 2.0. */
 @PrefixGameTestTemplate(false)

@@ -1,15 +1,15 @@
 package com.wf.combinedassault.naval.data;
 
-import net.minecraft.world.level.Level;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.naval.ShipVehicle;
+import com.wf.combinedassault.naval.NavalContent;
 import com.wf.combinedassault.naval.Propeller;
 import com.wf.combinedassault.naval.ShipHydrodynamics;
+import com.wf.combinedassault.naval.ShipVehicle;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.naval.NavalContent;
 
 public class ShipVehicleData extends BaseVehicleData<ShipVehicle> {
 

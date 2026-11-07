@@ -1,23 +1,18 @@
 package com.wf.combinedassault.weapon.client;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.hit.VehicleHits;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
+import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.barrel.BarrelActions;
 import com.wf.combinedassault.weapon.barrel.GunBarrel;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.util.VectorUtil;
-import com.wf.combinedassault.ballistics.hit.VehicleHits;
-import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.pojo.AimContext;
-import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.wflib.barrel.api.BarrelSpec;
 import com.wf.wflib.barrel.api.BarrelState;
-import com.wf.wflib.probe.api.ProbeAction;
-import com.wf.wflib.probe.api.ProbeContext;
-import com.wf.wflib.probe.api.ProbeElement;
-import com.wf.wflib.probe.api.ProbeInfo;
-import com.wf.wflib.probe.api.ProbeNode;
-import com.wf.wflib.probe.api.ProbeProviders;
+import com.wf.wflib.probe.api.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -76,7 +71,7 @@ public final class BarrelNodes {
         BarrelSpec spec = barrel.spec();
         BarrelState state = barrel.state();
         info.title(barrel.weapon().getDisplayName());
-        int heat = state.glow() > 0 ? 0xFFFF5020 : state.haze() > 0 ? 0xFFFFA030 : 0xFF60C070;
+        int heat = state.glow() > 0 ? 0xFFFF5020 : state.haze() > 0 ? 0xFFFFA030 : 0xFFB4B4B4;
         info.bar((state.temp() - BarrelState.AMBIENT) / (spec.max() - BarrelState.AMBIENT), BAR_W, heat,
                 Component.translatable(KEY + "temp", Math.round(state.temp())));
         info.bar(1 - state.wear(), BAR_W, 0xFF90A0B0,

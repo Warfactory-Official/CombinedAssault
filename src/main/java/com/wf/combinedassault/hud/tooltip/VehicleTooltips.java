@@ -1,16 +1,16 @@
 package com.wf.combinedassault.hud.tooltip;
 
+import com.wf.combinedassault.energy.pojo.EnergyInfo;
 import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.pack.part.PartUnitEntry;
-import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.part.client.PartNames;
 import com.wf.combinedassault.weapon.data.BaseVehicleWeaponData;
 import com.wf.combinedassault.weapon.kit.HardwareKit;
 import com.wf.combinedassault.weapon.kit.HardwareKits;
-import com.wf.combinedassault.vehicle.part.client.PartNames;
-import com.wf.wflib.armor.api.hull.HullProfile;
-import com.wf.combinedassault.energy.pojo.EnergyInfo;
+import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
 import com.wf.combinedassault.weapon.pojo.WeaponInfo;
+import com.wf.wflib.armor.api.hull.HullProfile;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -22,11 +22,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 /** Spawn item: stats; Shift: weapon stations and hardpoints. Hardware item: fits, weapons, ammo / magazines. */
 @OnlyIn(Dist.CLIENT)

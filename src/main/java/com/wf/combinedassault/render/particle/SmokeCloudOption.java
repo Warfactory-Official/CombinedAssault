@@ -2,11 +2,11 @@ package com.wf.combinedassault.render.particle;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.wf.combinedassault.render.RenderParticles;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import com.wf.combinedassault.render.RenderParticles;
 
 public record SmokeCloudOption(boolean changing, int color, int endColor, float alpha, float endAlpha, int life, float size, float endSize, float gravity) implements ParticleOptions {
 

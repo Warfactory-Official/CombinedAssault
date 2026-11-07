@@ -1,9 +1,9 @@
 package com.wf.combinedassault.pack.serialize;
 
 import com.google.gson.*;
+import com.wf.combinedassault.weapon.pojo.WeaponInfo;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
-import com.wf.combinedassault.weapon.pojo.WeaponInfo;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;

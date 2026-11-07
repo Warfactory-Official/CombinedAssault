@@ -2,6 +2,11 @@ package com.wf.combinedassault.render;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.render.particle.BulletHoleOption;
+import com.wf.combinedassault.render.particle.DustSmokeOption;
+import com.wf.combinedassault.render.particle.SmokeCloudOption;
+import com.wf.combinedassault.render.particle.TrackDustOption;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
@@ -11,11 +16,6 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.jetbrains.annotations.NotNull;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.render.particle.BulletHoleOption;
-import com.wf.combinedassault.render.particle.DustSmokeOption;
-import com.wf.combinedassault.render.particle.SmokeCloudOption;
-import com.wf.combinedassault.render.particle.TrackDustOption;
 
 public class RenderParticles {
 

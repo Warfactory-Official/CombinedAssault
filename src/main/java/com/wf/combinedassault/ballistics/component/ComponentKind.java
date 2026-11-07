@@ -1,13 +1,13 @@
 package com.wf.combinedassault.ballistics.component;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.dynamics.part.TrackUnit;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.dynamics.part.TrackUnit;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
 
 import java.util.Locale;
 

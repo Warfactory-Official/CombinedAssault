@@ -2,11 +2,11 @@ package com.wf.combinedassault.cargo;
 
 import com.wf.wflib.ammo.api.Ammo;
 import com.wf.wflib.ammo.api.CartridgeItem;
+import com.wf.wflib.grenade.api.ChargeItem;
 import com.wf.wflib.magazine.api.MagContents;
 import com.wf.wflib.magazine.api.Magazine;
 import com.wf.wflib.magazine.api.MagazineItems;
 import com.wf.wflib.magazine.api.PodTubes;
-import com.wf.wflib.grenade.api.ChargeItem;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;

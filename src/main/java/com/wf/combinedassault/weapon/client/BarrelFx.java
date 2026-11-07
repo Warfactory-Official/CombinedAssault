@@ -1,13 +1,13 @@
 package com.wf.combinedassault.weapon.client;
 
-import com.wf.combinedassault.weapon.barrel.GunBarrel;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.render.particle.SmokeCloudOption;
-import com.wf.combinedassault.vehicle.util.VectorUtil;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
+import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.barrel.GunBarrel;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.pojo.AimContext;
-import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.wflib.barrel.api.BarrelState;
 import com.wf.wflib.barrel.api.client.BarrelGlow;
 import net.minecraft.client.Minecraft;

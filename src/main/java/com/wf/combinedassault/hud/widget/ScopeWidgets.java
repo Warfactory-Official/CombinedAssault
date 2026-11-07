@@ -1,29 +1,23 @@
 package com.wf.combinedassault.hud.widget;
 
-import com.wf.combinedassault.weapon.client.StationAds;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 import com.wf.combinedassault.hud.CaDraw;
 import com.wf.combinedassault.hud.HudCache;
 import com.wf.combinedassault.hud.HudSubjects;
 import com.wf.combinedassault.render.util.GuiHelper;
-import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
-import com.wf.combinedassault.weapon.data.VehicleMissileWeaponData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.RotatableUnit;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.VehicleMissile;
+import com.wf.combinedassault.weapon.client.StationAds;
+import com.wf.combinedassault.weapon.data.VehicleMissileWeaponData;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
 import com.wf.gemrender.ui.Canvas;
 import com.wf.gemrender.ui.TextBuffer;
-import com.wf.wflib.ui.api.Binder;
-import com.wf.wflib.ui.api.ColorProp;
-import com.wf.wflib.ui.api.ScreenProjection;
-import com.wf.wflib.ui.api.SubjectRef;
-import com.wf.wflib.ui.api.UiEval;
-import com.wf.wflib.ui.api.Widget;
-import com.wf.wflib.ui.api.WidgetDef;
+import com.wf.wflib.ui.api.*;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import org.joml.Quaternionf;
@@ -99,7 +93,7 @@ public final class ScopeWidgets {
                         }
                         if (unit.withFocusLocker() && unit.getFocusLockPos() != null) {
                             canvas.push().translate(px, py - 0.5f).rotate((float) (Math.PI / 4));
-                            CaDraw.crossHollow(canvas, 0, 0, 40, 8, 1, CaDraw.GREEN);
+                            CaDraw.crossHollow(canvas, 0, 0, 40, 8, 1, CaDraw.WHITE);
                             canvas.pop();
                             canvas.text(HudCache.translate("ui.focus_lock"), px + 25, py + 40, argb, true);
                         }
@@ -218,7 +212,7 @@ public final class ScopeWidgets {
                     rotation.transform(axisZ.set(0, 0, 1));
                     List<VehicleCubeOBB> hull = vehicle.getVehicleCubeOBBs();
                     for (int i = 0; i < hull.size(); i++) {
-                        box(canvas, hull.get(i), vx, vy, vz, 0, pt, CaDraw.GREEN);
+                        box(canvas, hull.get(i), vx, vy, vz, 0, pt, CaDraw.WHITE);
                     }
                     List<PartUnit<?>> parts = vehicle.getPartUnits();
                     for (int p = 0; p < parts.size(); p++) {
@@ -226,7 +220,7 @@ public final class ScopeWidgets {
                         if (part instanceof WeaponUnit weapon && !weapon.isSeat()) {
                             continue;
                         }
-                        int colour = part.getOwner() == player ? CaDraw.BLUE : CaDraw.GREEN;
+                        int colour = part.getOwner() == player ? CaDraw.BLUE : CaDraw.WHITE;
                         List<VehicleCubeOBB> boxes = part.getPartCubeOBBs();
                         for (int i = 0; i < boxes.size(); i++) {
                             VehicleCubeOBB obb = boxes.get(i);

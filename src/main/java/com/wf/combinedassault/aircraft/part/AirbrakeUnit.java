@@ -1,10 +1,10 @@
 package com.wf.combinedassault.aircraft.part;
 
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
 import com.wf.combinedassault.aircraft.part.data.AirbrakeUnitData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 
 public class AirbrakeUnit extends SwitchableUnit<AirbrakeUnitData> {
 

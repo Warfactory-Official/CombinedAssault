@@ -1,7 +1,7 @@
 package com.wf.combinedassault.vehicle.part.client;
 
-import com.wf.combinedassault.vehicle.part.data.PartUnitData;
 import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.part.data.PartUnitData;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 

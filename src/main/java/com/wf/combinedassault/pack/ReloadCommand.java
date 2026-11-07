@@ -1,11 +1,13 @@
 package com.wf.combinedassault.pack;
 
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.wflib.core.api.WFSystems;
-import com.wf.combinedassault.radar.RadarConfig;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.pack.client.ClientAssetsManager;
+import com.wf.combinedassault.radar.RadarConfig;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.core.api.WFSystems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.commands.CommandSourceStack;
@@ -21,8 +23,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.fml.loading.FMLLoader;
 import org.apache.commons.lang3.time.StopWatch;
-import com.wf.combinedassault.pack.client.ClientAssetsManager;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.util.ArrayList;
 import java.util.List;

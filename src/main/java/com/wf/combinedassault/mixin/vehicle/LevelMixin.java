@@ -1,5 +1,6 @@
 package com.wf.combinedassault.mixin.vehicle;
 
+import com.wf.combinedassault.vehicle.OversizedVehicles;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTypeTest;
@@ -9,7 +10,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import com.wf.combinedassault.vehicle.OversizedVehicles;
 
 import java.util.List;
 import java.util.function.Predicate;

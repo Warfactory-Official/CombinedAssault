@@ -3,15 +3,11 @@ package com.wf.combinedassault.naval.client;
 import com.wf.combinedassault.hud.CaDraw;
 import com.wf.combinedassault.hud.HudCache;
 import com.wf.combinedassault.hud.HudSubjects;
-import com.wf.combinedassault.naval.ShipVehicle;
 import com.wf.combinedassault.naval.ShipHydrodynamics;
+import com.wf.combinedassault.naval.ShipVehicle;
 import com.wf.gemrender.ui.Canvas;
 import com.wf.gemrender.ui.TextBuffer;
-import com.wf.wflib.ui.api.Binder;
-import com.wf.wflib.ui.api.SubjectRef;
-import com.wf.wflib.ui.api.UiEval;
-import com.wf.wflib.ui.api.Widget;
-import com.wf.wflib.ui.api.WidgetDef;
+import com.wf.wflib.ui.api.*;
 
 /**
  * Helm gauges beside the ship console: echo sounder (surface ships) and depth gauge (submarines).
@@ -22,11 +18,11 @@ public final class ShipWidgets {
     static final int GAUGE_H = 60;
     static final int GAUGE_TOP = 11;
     static final int GAUGE_PAD = 26;
-    static final int LABEL = 0x9966FF99;
-    static final int SCALE = 0x8800CC44;
-    static final int TRACK = 0x66003311;
+    static final int LABEL = 0xCCFFFFFF;
+    static final int SCALE = 0x80FFFFFF;
+    static final int TRACK = 0x66000000;
     static final int TRACK_WARN = 0x77553300;
-    static final int SHADE = 0x33000000;
+    static final int SHADE = 0x66000000;
 
     private ShipWidgets() {
     }
@@ -93,7 +89,7 @@ public final class ShipWidgets {
                     float limit = top + Math.round((draft + params.minKeelClearance) * perBlock);
                     canvas.fill(x - 3, limit, x + GAUGE_W + 3, limit + 1, CaDraw.AMBER);
                     boolean known = !Float.isNaN(clearance);
-                    int colour = !ship.afloat() || ship.aground() ? CaDraw.RED : ship.shallow() ? CaDraw.AMBER : CaDraw.GREEN;
+                    int colour = !ship.afloat() || ship.aground() ? CaDraw.RED : ship.shallow() ? CaDraw.AMBER : CaDraw.WHITE;
                     if (known) {
                         double shown = Math.min(Math.max(clearance, 0), range);
                         float seabed = top + Math.round((draft + shown) * perBlock);
@@ -147,7 +143,7 @@ public final class ShipWidgets {
                         float at = top + Math.round(mark * perBlock);
                         canvas.fill(x, at, x + 4, at + 1, SCALE);
                     }
-                    int colour = depth > params.crushDepth ? CaDraw.RED : depth > params.maxDepth ? CaDraw.AMBER : CaDraw.GREEN;
+                    int colour = depth > params.crushDepth ? CaDraw.RED : depth > params.maxDepth ? CaDraw.AMBER : CaDraw.WHITE;
                     float ordered = top + Math.round(Math.max(0, Math.min(1, ship.depthSetting() / crush)) * GAUGE_H);
                     canvas.fill(x + GAUGE_W, ordered - 1, x + GAUGE_W + 4, ordered + 2, LABEL);
                     float at = top + Math.round(Math.max(0, Math.min(1, depth / crush)) * GAUGE_H);

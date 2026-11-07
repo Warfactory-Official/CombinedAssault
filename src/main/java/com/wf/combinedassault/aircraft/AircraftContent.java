@@ -1,11 +1,11 @@
 package com.wf.combinedassault.aircraft;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.vehicle.VehicleContent;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.VehicleContent;
 
 public final class AircraftContent {
 

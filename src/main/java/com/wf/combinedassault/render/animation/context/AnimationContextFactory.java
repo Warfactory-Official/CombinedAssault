@@ -1,6 +1,5 @@
 package com.wf.combinedassault.render.animation.context;
 
-import net.minecraft.world.entity.Entity;
 import com.wf.combinedassault.aircraft.FixedWingVehicle;
 import com.wf.combinedassault.aircraft.RotaryWingVehicle;
 import com.wf.combinedassault.aircraft.client.FixedWingVehicleContext;
@@ -12,6 +11,7 @@ import com.wf.combinedassault.naval.client.VesselVehicleContext;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.entity.TrackedVehicle;
 import com.wf.combinedassault.vehicle.entity.WheeledVehicle;
+import net.minecraft.world.entity.Entity;
 
 @FunctionalInterface
 public interface AnimationContextFactory<E extends Entity, CTX extends EntityContext<E>> {

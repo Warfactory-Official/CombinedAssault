@@ -3,21 +3,8 @@ package com.wf.combinedassault.pack;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.pack.serialize.GsonUtil;
 import com.wf.combinedassault.pack.weapon.VehicleWeaponType;
-import com.wf.combinedassault.weapon.data.*;
 import com.wf.combinedassault.weapon.*;
-import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
-import com.wf.combinedassault.weapon.VehicleAerialBomb;
-import com.wf.combinedassault.weapon.VehicleCannon;
-import com.wf.combinedassault.weapon.VehicleDecoyFlare;
-import com.wf.combinedassault.weapon.VehicleGrenade;
-import com.wf.combinedassault.weapon.VehicleMissile;
-import com.wf.combinedassault.weapon.VehicleRocket;
-import com.wf.combinedassault.weapon.data.BaseVehicleWeaponData;
-import com.wf.combinedassault.weapon.data.VehicleAerialBombWeaponData;
-import com.wf.combinedassault.weapon.data.VehicleCannonWeaponData;
-import com.wf.combinedassault.weapon.data.VehicleGrenadeWeaponData;
-import com.wf.combinedassault.weapon.data.VehicleMissileWeaponData;
-import com.wf.combinedassault.weapon.data.VehicleRocketWeaponData;
+import com.wf.combinedassault.weapon.data.*;
 
 public class VehicleWeaponTypes {
 

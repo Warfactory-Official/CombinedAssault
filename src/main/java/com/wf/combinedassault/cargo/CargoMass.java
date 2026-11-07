@@ -1,7 +1,7 @@
 package com.wf.combinedassault.cargo;
 
-import net.minecraft.world.item.ItemStack;
 import com.wf.combinedassault.vehicle.entity.ContainerCraft;
+import net.minecraft.world.item.ItemStack;
 
 /** Hold mass ({@link ItemMass}), recounted on dirty + {@link #RECOUNT_INTERVAL} throttle. */
 public final class CargoMass {

@@ -1,8 +1,8 @@
 package com.wf.combinedassault.aircraft.client;
 
-import net.minecraft.util.Mth;
 import com.wf.combinedassault.aircraft.FixedWingVehicle;
 import com.wf.combinedassault.render.animation.context.VehicleContext;
+import net.minecraft.util.Mth;
 
 public class FixedWingVehicleContext extends VehicleContext<FixedWingVehicle> {
 

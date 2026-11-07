@@ -2,8 +2,8 @@ package com.wf.combinedassault.pack;
 
 import com.wf.combinedassault.pack.client.vehicle.VehicleDisplayType;
 import com.wf.combinedassault.pack.part.PartUnitType;
-import com.wf.combinedassault.vehicle.data.VehicleDataType;
 import com.wf.combinedassault.pack.weapon.VehicleWeaponType;
+import com.wf.combinedassault.vehicle.data.VehicleDataType;
 import com.wf.wflib.core.api.WFRegistry;
 
 public final class PackTypes {

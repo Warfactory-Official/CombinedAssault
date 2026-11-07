@@ -2,11 +2,11 @@ package com.wf.combinedassault.render.shader;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.wf.combinedassault.CombinedAssault;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
-import com.wf.combinedassault.CombinedAssault;
 
 import java.io.IOException;
 

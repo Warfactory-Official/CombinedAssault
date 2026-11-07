@@ -1,9 +1,9 @@
 package com.wf.combinedassault.tow;
 
-import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.physics.api.Coupling;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 /** Towed vehicle holds the coupling (not tractor: many hitches, one trailer-side link) => train = chain. */
 public final class TowLink implements Coupling {

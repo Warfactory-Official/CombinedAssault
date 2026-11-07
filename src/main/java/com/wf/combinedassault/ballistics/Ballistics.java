@@ -1,13 +1,13 @@
 package com.wf.combinedassault.ballistics;
 
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.armor.api.hull.HullOutcome;
+import com.wf.wflib.armor.api.hull.HullResult;
+import com.wf.wflib.damage.api.StrikeContext;
+import com.wf.wflib.damage.api.ThreatKind;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.wflib.damage.api.StrikeContext;
-import com.wf.wflib.damage.api.ThreatKind;
-import com.wf.wflib.armor.api.hull.HullOutcome;
-import com.wf.wflib.armor.api.hull.HullResult;
 
 /**
  * Only entry point stock damage calls into; see {@link com.wf.combinedassault.ballistics.DamageSystem}.

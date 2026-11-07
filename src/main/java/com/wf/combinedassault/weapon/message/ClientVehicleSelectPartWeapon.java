@@ -1,5 +1,9 @@
 package com.wf.combinedassault.weapon.message;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.vehicle.VehicleContent;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -8,10 +12,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
-import com.wf.combinedassault.vehicle.VehicleContent;
 
 public record ClientVehicleSelectPartWeapon(int vehicleEntityId, int partUnitIndex, int weaponIndex) implements CustomPacketPayload {
 

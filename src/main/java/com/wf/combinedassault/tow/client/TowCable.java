@@ -1,6 +1,12 @@
 package com.wf.combinedassault.tow.client;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.tow.HitchInfo;
+import com.wf.combinedassault.tow.TowLinks;
+import com.wf.combinedassault.tow.TowMode;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -8,13 +14,6 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.tow.HitchInfo;
-import com.wf.combinedassault.tow.TowLinks;
-import com.wf.combinedassault.tow.TowMode;
-
-import net.minecraft.resources.ResourceLocation;
 
 /**
  * Cable geometry, derived purely from the two vehicles + synced link (renderer-independent). Hitch mode draws nothing:

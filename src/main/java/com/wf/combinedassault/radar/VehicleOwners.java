@@ -1,5 +1,6 @@
 package com.wf.combinedassault.radar;
 
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.recon.api.OwnerSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -7,7 +8,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.scores.PlayerTeam;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;

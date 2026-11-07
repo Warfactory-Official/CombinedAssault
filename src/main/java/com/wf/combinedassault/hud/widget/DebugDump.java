@@ -2,9 +2,9 @@ package com.wf.combinedassault.hud.widget;
 
 import com.google.gson.annotations.SerializedName;
 import com.wf.combinedassault.ballistics.DebugCommand;
-import com.wf.combinedassault.weapon.data.BaseVehicleWeaponData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.weapon.data.BaseVehicleWeaponData;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.gemrender.ui.Canvas;
 import com.wf.wflib.ui.api.Binder;

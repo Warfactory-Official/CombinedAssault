@@ -1,5 +1,6 @@
 package com.wf.combinedassault.energy;
 
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -11,7 +12,6 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.wrapper.InvWrapper;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 /**
  * Refuelling and charging by hand.

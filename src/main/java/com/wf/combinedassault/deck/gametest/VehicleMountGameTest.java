@@ -1,6 +1,16 @@
 package com.wf.combinedassault.deck.gametest;
 
 import com.mojang.authlib.GameProfile;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.deck.VehicleHarness;
+import com.wf.combinedassault.deck.VehicleMounts;
+import com.wf.combinedassault.deck.pojo.MountPointInfo;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.VehicleContent;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.item.VehicleSpawnItem;
+import com.wf.combinedassault.vehicle.pojo.MountableInfo;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -13,21 +23,11 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.pack.CommonAssetsManager;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.item.VehicleSpawnItem;
-import com.wf.combinedassault.deck.VehicleHarness;
-import com.wf.combinedassault.deck.VehicleMounts;
-import com.wf.combinedassault.deck.pojo.MountPointInfo;
-import com.wf.combinedassault.vehicle.pojo.MountableInfo;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
-import com.wf.combinedassault.vehicle.VehicleContent;
 
 /**
  * Mount (emplacement) != park: park releases on engine start, controls taken, or hit; mount must survive all three.

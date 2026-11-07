@@ -1,10 +1,10 @@
 package com.wf.combinedassault.indirect;
 
-import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
+import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.pojo.AimContext;
-import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 /** Package boundary: world-facing calls in, pure arithmetic out. */
 public final class IndirectFire {

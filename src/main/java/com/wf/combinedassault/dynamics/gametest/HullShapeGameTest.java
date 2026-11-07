@@ -1,5 +1,18 @@
 package com.wf.combinedassault.dynamics.gametest;
 
+import com.google.gson.JsonObject;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.hit.GltfReader;
+import com.wf.combinedassault.ballistics.hit.HitModel;
+import com.wf.combinedassault.ballistics.hit.ModelData;
+import com.wf.combinedassault.ballistics.hit.ModelRig;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.physics.api.ConvexHull;
+import com.wf.wflib.physics.api.ConvexSweep;
+import com.wf.wflib.physics.api.SweptHull;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -8,26 +21,13 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.pack.CommonAssetsManager;
-import com.wf.combinedassault.ballistics.hit.GltfReader;
-import com.wf.combinedassault.ballistics.hit.ModelData;
-import com.wf.combinedassault.ballistics.hit.ModelRig;
-import com.google.gson.JsonObject;
 import org.joml.Matrix4f;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.wflib.physics.api.ConvexHull;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
-
-import java.util.Optional;
-import java.util.List;
-import java.util.ArrayList;
-import com.wf.combinedassault.ballistics.hit.HitModel;
-import com.wf.wflib.physics.api.SweptHull;
-import com.wf.wflib.physics.api.ConvexSweep;
 import org.joml.Quaternionf;
+import org.joml.Vector3f;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Convex collision hulls: the shapes a pack declares beside its structure model.

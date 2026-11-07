@@ -1,9 +1,9 @@
 package com.wf.combinedassault.tow.trial;
 
+import com.wf.combinedassault.vehicle.control.ControlUnit;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.control.ControlUnit;
 
 /** Scripted driver, not AI: lap-over-lap comparisons need identical inputs. Holds target SPEED, not
  * throttle, so a lap that loses speed on a rough sector isn't re-tested on an easier corner. */

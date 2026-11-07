@@ -1,27 +1,23 @@
 package com.wf.combinedassault.ballistics;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.CombinedAssaultSystem;
+import com.wf.combinedassault.ballistics.addon.AddonActions;
+import com.wf.combinedassault.ballistics.addon.AddonStrikes;
+import com.wf.combinedassault.ballistics.component.ArmorRepair;
+import com.wf.combinedassault.ballistics.component.SystemRepair;
 import com.wf.combinedassault.ballistics.component.gametest.RotorSystemsGameTest;
+import com.wf.combinedassault.ballistics.message.*;
+import com.wf.combinedassault.vehicle.VehicleTabs;
+import com.wf.combinedassault.vehicle.command.RootCommand;
 import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
-import java.util.Set;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.VehicleTabs;
-import com.wf.combinedassault.ballistics.addon.AddonActions;
-import com.wf.combinedassault.ballistics.addon.AddonStrikes;
-import com.wf.combinedassault.ballistics.component.ArmorRepair;
-import com.wf.combinedassault.ballistics.component.SystemRepair;
-import com.wf.combinedassault.ballistics.message.ServerAddonArmorSync;
-import com.wf.combinedassault.ballistics.message.ServerHitEffect;
-import com.wf.combinedassault.ballistics.message.ServerHitVehicleEvent;
-import com.wf.combinedassault.ballistics.message.ServerVehicleExplosion;
-import com.wf.combinedassault.ballistics.message.ServerVehicleHurtEntity;
-import com.wf.combinedassault.ballistics.message.ServerVehicleWarn;
-import com.wf.combinedassault.vehicle.command.RootCommand;
-import com.wf.combinedassault.CombinedAssaultSystem;
+
+import java.util.Set;
 
 public final class BallisticsSystem implements CombinedAssaultSystem {
 

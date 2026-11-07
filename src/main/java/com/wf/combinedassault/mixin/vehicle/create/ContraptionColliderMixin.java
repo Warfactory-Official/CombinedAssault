@@ -3,11 +3,11 @@ package com.wf.combinedassault.mixin.vehicle.create;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.contraptions.ContraptionCollider;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 @Mixin(ContraptionCollider.class)
 public class ContraptionColliderMixin {

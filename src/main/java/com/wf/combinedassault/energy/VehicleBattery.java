@@ -1,9 +1,9 @@
 package com.wf.combinedassault.energy;
 
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.IEnergyStorage;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 /**
  * A vehicle's swappable battery bay: one FE or GT battery item, physically in the slot, draining into

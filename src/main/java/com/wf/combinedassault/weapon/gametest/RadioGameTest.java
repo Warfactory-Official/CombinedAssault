@@ -6,6 +6,8 @@ import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.gametest.TestLanes;
 import com.wf.combinedassault.weapon.kit.Loadouts;
 import com.wf.wflib.drone.api.PdaDrones;
+import com.wf.wflib.pda.api.PdaContent;
+import com.wf.wflib.radio.api.RadioContent;
 import com.wf.wflib.radio.api.RadioTuning;
 import com.wf.wflib.radio.api.RadioVoice;
 import net.minecraft.gametest.framework.GameTest;
@@ -20,8 +22,6 @@ import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.UUID;
-import com.wf.wflib.pda.api.PdaContent;
-import com.wf.wflib.radio.api.RadioContent;
 
 @PrefixGameTestTemplate(false)
 public class RadioGameTest {

@@ -1,5 +1,7 @@
 package com.wf.combinedassault.energy;
 
+import com.wf.combinedassault.energy.pojo.EnergyInfo;
+import com.wf.combinedassault.energy.pojo.FuelEntry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -7,8 +9,6 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.energy.pojo.EnergyInfo;
-import com.wf.combinedassault.energy.pojo.FuelEntry;
 
 import java.util.ArrayList;
 import java.util.List;

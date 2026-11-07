@@ -1,0 +1,76 @@
+{
+  "use": [
+    "combinedassault:hud"
+  ],
+  "root": {
+    "type": "when",
+    "if": "ui.width >= 440",
+    "then": {
+      "type": "place",
+      "x": 4,
+      "y": "ui.height - 6",
+      "pivot": "bottom_left",
+      "child": {
+        "type": "column",
+        "gap": 1.5,
+        "children": [
+          {
+            "type": "key_hint",
+            "if": "!local.scope",
+            "label": "{tr:hud.combinedassault.hint.exit}",
+            "key": "key.combinedassault.leave_vehicle.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "!local.scope",
+            "label": "{tr:hud.combinedassault.hint.seat}",
+            "key": "key.combinedassault.change_seat.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "!local.scope",
+            "label": "{tr:hud.combinedassault.hint.view}",
+            "key": "key.combinedassault.switch_view.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "!local.scope",
+            "label": "{tr:hud.combinedassault.hint.free_look}",
+            "key": "key.combinedassault.free_camera.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "!local.scope",
+            "label": "{tr:hud.combinedassault.hint.inspect}",
+            "key": "key.combinedassault.inspect_vehicle.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "local.driver && !vehicle.none",
+            "label": "{tr:hud.combinedassault.hint.engine}",
+            "key": "key.combinedassault.toggle_engine.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "local.driver && fixed_wing.present",
+            "label": "{tr:hud.combinedassault.hint.gear}",
+            "key": "key.combinedassault.toggle_landing_gear.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "local.driver && fixed_wing.present",
+            "label": "{tr:hud.combinedassault.hint.airbrake}",
+            "key": "key.combinedassault.toggle_airbrake.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "local.driver && fixed_wing.present",
+            "label": "{tr:hud.combinedassault.hint.flaps}",
+            "key": "key.combinedassault.flaps_down.desc",
+            "key2": "key.combinedassault.flaps_up.desc"
+          }
+        ]
+      }
+    }
+  }
+}

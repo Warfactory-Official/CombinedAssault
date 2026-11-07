@@ -1,5 +1,13 @@
 package com.wf.combinedassault.camo;
 
+import com.wf.combinedassault.CombinedAssaultSystem;
+import com.wf.combinedassault.camo.client.CamoBrush;
+import com.wf.combinedassault.camo.client.VehicleCamoRenderer;
+import com.wf.combinedassault.camo.message.ClientCamoAction;
+import com.wf.combinedassault.camo.message.ServerCamoAction;
+import com.wf.combinedassault.camo.message.ServerCamoSync;
+import com.wf.combinedassault.vehicle.VehicleTabs;
+import com.wf.combinedassault.vehicle.command.RootCommand;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
@@ -7,14 +15,6 @@ import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import com.wf.combinedassault.vehicle.VehicleTabs;
-import com.wf.combinedassault.camo.client.CamoBrush;
-import com.wf.combinedassault.camo.client.VehicleCamoRenderer;
-import com.wf.combinedassault.camo.message.ClientCamoAction;
-import com.wf.combinedassault.camo.message.ServerCamoAction;
-import com.wf.combinedassault.camo.message.ServerCamoSync;
-import com.wf.combinedassault.vehicle.command.RootCommand;
-import com.wf.combinedassault.CombinedAssaultSystem;
 
 public final class CamoSystem implements CombinedAssaultSystem {
 

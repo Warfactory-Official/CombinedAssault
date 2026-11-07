@@ -1,10 +1,10 @@
 package com.wf.combinedassault.weapon.barrel;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.ballistics.hit.VehicleHits;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.wflib.barrel.api.BarrelTypes;
 import com.wf.wflib.core.api.WFLibContent;
 import com.wf.wflib.probe.api.ProbeActions;

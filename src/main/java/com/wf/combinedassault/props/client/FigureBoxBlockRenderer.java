@@ -2,6 +2,8 @@ package com.wf.combinedassault.props.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import com.wf.combinedassault.props.FigureBoxBlockEntity;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -15,8 +17,6 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import com.wf.combinedassault.props.FigureBoxBlockEntity;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 public class FigureBoxBlockRenderer implements BlockEntityRenderer<FigureBoxBlockEntity> {
 

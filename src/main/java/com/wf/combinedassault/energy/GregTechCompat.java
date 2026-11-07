@@ -1,5 +1,7 @@
 package com.wf.combinedassault.energy;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
@@ -7,8 +9,6 @@ import net.minecraft.world.level.Level;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.ItemCapability;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;

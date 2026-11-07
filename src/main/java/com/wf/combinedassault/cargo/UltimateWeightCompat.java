@@ -1,8 +1,8 @@
 package com.wf.combinedassault.cargo;
 
+import com.wf.combinedassault.CombinedAssault;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.ModList;
-import com.wf.combinedassault.CombinedAssault;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;

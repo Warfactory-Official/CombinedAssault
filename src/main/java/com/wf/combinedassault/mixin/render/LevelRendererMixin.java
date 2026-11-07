@@ -1,6 +1,7 @@
 package com.wf.combinedassault.mixin.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.GameRenderer;
@@ -11,7 +12,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import com.wf.combinedassault.vehicle.util.VectorUtil;
 
 @Mixin(LevelRenderer.class)
 public class LevelRendererMixin {

@@ -2,11 +2,13 @@ package com.wf.combinedassault.render.util;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.wf.combinedassault.vehicle.client.VehicleKeys;
+import com.wf.wflib.physics.api.ChunkCollisionCache;
+import com.wf.wflib.physics.api.SectionCollision;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.network.chat.Component;
@@ -16,9 +18,6 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import com.wf.combinedassault.vehicle.client.VehicleKeys;
-import com.wf.wflib.physics.api.ChunkCollisionCache;
-import com.wf.wflib.physics.api.SectionCollision;
 
 import java.util.List;
 

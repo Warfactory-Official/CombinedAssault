@@ -1,9 +1,9 @@
 package com.wf.combinedassault.camo.message;
 
-import net.minecraft.network.FriendlyByteBuf;
 import com.wf.combinedassault.camo.CamoKind;
 import com.wf.combinedassault.camo.CamoPiece;
 import com.wf.combinedassault.camo.pojo.CamoAction;
+import net.minecraft.network.FriendlyByteBuf;
 
 /**
  * Wire form of a resolved {@link CamoAction}: server states what it placed, not rays.

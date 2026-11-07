@@ -1,7 +1,11 @@
 package com.wf.combinedassault.energy;
 
+import com.wf.combinedassault.CombinedAssaultSystem;
 import com.wf.combinedassault.energy.gametest.VehicleBatteryGameTest;
 import com.wf.combinedassault.energy.gametest.VehicleEnergyGameTest;
+import com.wf.combinedassault.vehicle.VehicleContent;
+import com.wf.combinedassault.vehicle.VehicleTabs;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
 import net.minecraft.world.entity.EntityType;
 import net.neoforged.bus.api.IEventBus;
@@ -10,10 +14,6 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import com.wf.combinedassault.vehicle.VehicleTabs;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.CombinedAssaultSystem;
-import com.wf.combinedassault.vehicle.VehicleContent;
 
 public final class EnergySystem implements CombinedAssaultSystem {
 

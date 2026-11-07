@@ -1,31 +1,18 @@
 package com.wf.combinedassault.weapon;
 
-import com.wf.combinedassault.weapon.gametest.LoadoutGameTest;
-import com.wf.combinedassault.weapon.gametest.PylonGameTest;
-import com.wf.combinedassault.weapon.gametest.RadioGameTest;
-import com.wf.combinedassault.weapon.gametest.BombRoundsGameTest;
-import com.wf.combinedassault.weapon.gametest.MissileRoundsGameTest;
-import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
-import java.util.Set;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.CombinedAssaultSystem;
 import com.wf.combinedassault.vehicle.VehicleTabs;
-import com.wf.combinedassault.vehicle.event.VehicleFireEvent;
 import com.wf.combinedassault.vehicle.command.RootCommand;
+import com.wf.combinedassault.vehicle.event.VehicleFireEvent;
+import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
 import com.wf.combinedassault.weapon.barrel.BarrelActions;
 import com.wf.combinedassault.weapon.barrel.BarrelCommand;
 import com.wf.combinedassault.weapon.barrel.BarrelPacket;
+import com.wf.combinedassault.weapon.gametest.*;
 import com.wf.combinedassault.weapon.kit.Hardpoints;
 import com.wf.combinedassault.weapon.kit.Loadouts;
-import com.wf.combinedassault.weapon.message.ClientSelectRound;
-import com.wf.combinedassault.weapon.message.ClientVehicleSelectLoadout;
-import com.wf.combinedassault.weapon.message.ClientVehicleSelectPartWeapon;
-import com.wf.combinedassault.weapon.message.ClientVehicleSwitchWeapon;
-import com.wf.combinedassault.weapon.message.ServerVehicleFire;
+import com.wf.combinedassault.weapon.message.*;
 import com.wf.combinedassault.weapon.ordnance.GuidedRounds;
 import com.wf.combinedassault.weapon.ordnance.Ordnance;
 import com.wf.combinedassault.weapon.ordnance.RoundMarks;
@@ -33,7 +20,13 @@ import com.wf.combinedassault.weapon.part.BarrelCharge;
 import com.wf.combinedassault.weapon.part.BatteryActions;
 import com.wf.combinedassault.weapon.part.StationActions;
 import com.wf.combinedassault.weapon.part.WeaponActions;
-import com.wf.combinedassault.CombinedAssaultSystem;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+
+import java.util.Set;
 
 public final class WeaponSystem implements CombinedAssaultSystem {
 

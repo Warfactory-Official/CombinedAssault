@@ -1,14 +1,9 @@
 package com.wf.combinedassault.hud;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.hud.widget.AimWidgets;
-import com.wf.combinedassault.hud.widget.AmmoList;
-import com.wf.combinedassault.hud.widget.DebugDump;
-import com.wf.combinedassault.hud.widget.HitWidgets;
-import com.wf.combinedassault.radar.client.RadarWidgets;
-import com.wf.combinedassault.hud.widget.RangeScale;
-import com.wf.combinedassault.hud.widget.ScopeWidgets;
+import com.wf.combinedassault.hud.widget.*;
 import com.wf.combinedassault.naval.client.ShipWidgets;
+import com.wf.combinedassault.radar.client.RadarWidgets;
 import com.wf.wflib.ui.api.json.UiWidgetTypes;
 import com.wf.wflib.ui.api.json.WidgetReader;
 import net.minecraft.resources.ResourceLocation;

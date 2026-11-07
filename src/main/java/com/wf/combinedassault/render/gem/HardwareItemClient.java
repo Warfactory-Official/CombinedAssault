@@ -2,6 +2,8 @@ package com.wf.combinedassault.render.gem;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import com.wf.combinedassault.weapon.kit.HardwareItem;
+import com.wf.combinedassault.weapon.kit.HardwareKit;
 import com.wf.gemrender.asset.GemRenderModels;
 import com.wf.gemrender.asset.ModelCache;
 import com.wf.gemrender.direct.GemRenderItemRenderer;
@@ -14,8 +16,6 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector4f;
-import com.wf.combinedassault.weapon.kit.HardwareItem;
-import com.wf.combinedassault.weapon.kit.HardwareKit;
 
 import java.util.HashMap;
 import java.util.Map;

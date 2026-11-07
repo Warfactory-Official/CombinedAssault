@@ -2,15 +2,11 @@ package com.wf.combinedassault.weapon.kit;
 
 import com.google.gson.JsonObject;
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.aircraft.RotaryWingVehicle;
 import com.wf.combinedassault.pack.part.PartUnitEntry;
+import com.wf.combinedassault.uav.fpv.payload.*;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.aircraft.RotaryWingVehicle;
-import com.wf.combinedassault.uav.fpv.payload.FpvPayload;
-import com.wf.combinedassault.uav.fpv.payload.FpvPayloadType;
-import com.wf.combinedassault.uav.fpv.payload.FpvPayloadTypes;
-import com.wf.combinedassault.uav.fpv.payload.PayloadUnit;
-import com.wf.combinedassault.uav.fpv.payload.PayloadUnitData;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.weapon.pojo.LoadoutInfo;
 import com.wf.wflib.probe.api.ProbeActions;

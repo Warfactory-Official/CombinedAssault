@@ -1,9 +1,9 @@
 package com.wf.combinedassault.render.animation.graph.node;
 
 import com.maydaymemory.mae.basic.*;
-import org.joml.Vector3f;
 import com.wf.combinedassault.pack.IAnimationInstance;
 import com.wf.combinedassault.render.animation.context.VehicleContext;
+import org.joml.Vector3f;
 
 import java.util.Arrays;
 import java.util.HashSet;

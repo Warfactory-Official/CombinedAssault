@@ -1,26 +1,22 @@
 package com.wf.combinedassault.indirect.gametest;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
-import com.wf.wflib.testkit.api.ForcedChunks;
-import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.dynamics.PhysicsEngine;
+import com.wf.combinedassault.indirect.*;
 import com.wf.combinedassault.weapon.ordnance.Munitions;
 import com.wf.wflib.ammo.api.AmmoItems;
 import com.wf.wflib.round.api.KineticPreset;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 import com.wf.wflib.round.api.Rounds;
+import com.wf.wflib.testkit.api.ForcedChunks;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import com.wf.combinedassault.indirect.BallisticSolver;
-import com.wf.combinedassault.indirect.FireArc;
-import com.wf.combinedassault.indirect.FireSolution;
-import com.wf.combinedassault.indirect.RoundSpec;
-import com.wf.combinedassault.indirect.Trajectory;
-import com.wf.combinedassault.dynamics.PhysicsEngine;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * Everything else in this package assumes the closed form matches the round's actual flight. Checked

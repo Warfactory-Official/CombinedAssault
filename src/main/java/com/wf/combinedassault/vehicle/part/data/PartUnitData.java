@@ -1,16 +1,15 @@
 package com.wf.combinedassault.vehicle.part.data;
 
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.phys.Vec3;
 import com.wf.combinedassault.ballistics.pojo.DefenseStats;
-import com.wf.combinedassault.vehicle.pose.SeatPoses;
-import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.combinedassault.vehicle.crew.CrewRole;
+import com.wf.combinedassault.vehicle.pose.SeatPoses;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import com.wf.combinedassault.vehicle.crew.CrewRole;
-import java.util.Map;
 
 public class PartUnitData {
 

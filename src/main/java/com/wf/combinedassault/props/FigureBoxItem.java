@@ -1,5 +1,9 @@
 package com.wf.combinedassault.props;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.props.client.FigureBoxItemRenderer;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.item.VehicleItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.BlockPos;
@@ -31,13 +35,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.props.client.FigureBoxItemRenderer;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.util.List;
 import java.util.function.Consumer;
-import com.wf.combinedassault.vehicle.item.VehicleItem;
 
 public class FigureBoxItem extends VehicleItem {
 

@@ -1,6 +1,9 @@
 package com.wf.combinedassault.radar;
 
+import com.wf.combinedassault.CombinedAssaultSystem;
 import com.wf.combinedassault.pack.BuiltinPartUnits;
+import com.wf.combinedassault.radar.message.ClientRadarAction;
+import com.wf.combinedassault.radar.message.ServerBroadcastEntities;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
@@ -8,9 +11,6 @@ import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import com.wf.combinedassault.radar.message.ClientRadarAction;
-import com.wf.combinedassault.radar.message.ServerBroadcastEntities;
-import com.wf.combinedassault.CombinedAssaultSystem;
 
 public final class RadarSystem implements CombinedAssaultSystem {
 

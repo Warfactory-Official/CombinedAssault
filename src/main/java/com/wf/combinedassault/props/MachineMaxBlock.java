@@ -1,6 +1,7 @@
 package com.wf.combinedassault.props;
 
 import com.mojang.serialization.MapCodec;
+import com.wf.combinedassault.props.client.MachineMaxScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
@@ -21,7 +22,6 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import com.wf.combinedassault.props.client.MachineMaxScreen;
 
 import javax.annotation.Nullable;
 

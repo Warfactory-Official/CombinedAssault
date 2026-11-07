@@ -2,6 +2,11 @@ package com.wf.combinedassault.vehicle.compat;
 
 import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
 import com.simibubi.create.foundation.collision.CollisionList;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.wflib.physics.api.CollisionProvider;
+import com.wf.wflib.physics.api.CollisionProviders;
+import com.wf.wflib.physics.api.OrientedBoxes;
+import com.wf.wflib.physics.api.PhysicsBody;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -10,11 +15,6 @@ import net.neoforged.fml.ModList;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Quaternionf;
-import com.wf.wflib.physics.api.CollisionProvider;
-import com.wf.wflib.physics.api.CollisionProviders;
-import com.wf.wflib.physics.api.OrientedBoxes;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.wflib.physics.api.PhysicsBody;
 
 import java.util.ArrayList;
 import java.util.List;

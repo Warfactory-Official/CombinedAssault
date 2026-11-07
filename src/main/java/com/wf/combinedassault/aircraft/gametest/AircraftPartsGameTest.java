@@ -1,5 +1,15 @@
 package com.wf.combinedassault.aircraft.gametest;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.aircraft.FixedWingVehicle;
+import com.wf.combinedassault.aircraft.part.VariableSweepUnit;
+import com.wf.combinedassault.ballistics.component.HullComponents;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.DoorUnit;
+import com.wf.combinedassault.vehicle.part.LinkedHingeUnit;
+import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.wflib.testkit.api.ForcedChunks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -9,16 +19,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.ballistics.component.HullComponents;
-import com.wf.combinedassault.pack.CommonAssetsManager;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.aircraft.FixedWingVehicle;
-import com.wf.combinedassault.vehicle.part.DoorUnit;
-import com.wf.combinedassault.vehicle.part.LinkedHingeUnit;
-import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.aircraft.part.VariableSweepUnit;
 
 import java.util.Locale;
 import java.util.Optional;

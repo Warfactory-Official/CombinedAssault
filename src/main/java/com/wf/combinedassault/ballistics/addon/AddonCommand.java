@@ -1,5 +1,6 @@
 package com.wf.combinedassault.ballistics.addon;
 
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.round.api.KineticPreset;
 import com.wf.wflib.round.api.KineticPresets;
 import com.wf.wflib.round.api.RocketEntity;
@@ -14,7 +15,6 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.util.Locale;
 

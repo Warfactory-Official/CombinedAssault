@@ -1,9 +1,9 @@
 package com.wf.combinedassault.render.gem;
 
-import com.wf.combinedassault.weapon.barrel.GunBarrel;
 import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.barrel.GunBarrel;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.gemrender.gltf.NodeTable;
 import org.jetbrains.annotations.Nullable;
 

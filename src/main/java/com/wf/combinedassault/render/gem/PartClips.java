@@ -1,16 +1,15 @@
 package com.wf.combinedassault.render.gem;
 
+import com.wf.combinedassault.dynamics.part.PartClipTracks;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
 import com.wf.gemrender.gltf.GltfAnimation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.combinedassault.dynamics.part.PartClipTracks;
-import com.wf.combinedassault.vehicle.part.SwitchableUnit;
-
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;

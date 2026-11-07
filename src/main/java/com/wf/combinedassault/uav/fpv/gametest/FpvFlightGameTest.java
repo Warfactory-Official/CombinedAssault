@@ -1,16 +1,16 @@
 package com.wf.combinedassault.uav.fpv.gametest;
 
 import com.google.gson.JsonObject;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.aircraft.AircraftContent;
+import com.wf.combinedassault.aircraft.RotaryWingVehicle;
+import com.wf.combinedassault.uav.fpv.FpvFlight;
+import com.wf.combinedassault.vehicle.control.ControlUnit;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.util.Mth;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import com.wf.combinedassault.vehicle.control.ControlUnit;
 import org.joml.Vector3f;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.aircraft.RotaryWingVehicle;
-import com.wf.combinedassault.uav.fpv.FpvFlight;
-import com.wf.combinedassault.aircraft.AircraftContent;
 
 @PrefixGameTestTemplate(false)
 public class FpvFlightGameTest {

@@ -1,9 +1,10 @@
 package com.wf.combinedassault.render;
 
-import java.util.Set;
+import com.wf.combinedassault.CombinedAssaultSystem;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
-import com.wf.combinedassault.CombinedAssaultSystem;
+
+import java.util.Set;
 
 /** Client-only: models, renderers, particles, shaders, hit/wake fx, GemRender bridge. */
 public final class RenderSystem implements CombinedAssaultSystem {

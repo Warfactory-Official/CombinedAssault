@@ -1,8 +1,8 @@
 package com.wf.combinedassault.render.handler;
 
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 public class RenderLivingHandler {
 

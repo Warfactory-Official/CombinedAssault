@@ -1,25 +1,23 @@
 package com.wf.combinedassault.indirect.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.indirect.IndirectFireSpec;
 import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.indirect.IndirectFireSpec;
 import com.wf.combinedassault.vehicle.part.AccessActions;
-import com.wf.combinedassault.weapon.part.MissileHolderUnit;
 import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.weapon.VehicleMissile;
+import com.wf.combinedassault.weapon.part.MissileHolderUnit;
 import com.wf.combinedassault.weapon.part.WeaponBayUnit;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.pojo.AimContext;
 import com.wf.combinedassault.weapon.pojo.MissileSize;
-import com.wf.combinedassault.weapon.VehicleMissile;
 import com.wf.combinedassault.weapon.pojo.Station;
-import com.wf.wflib.missile.api.MissileEntity;
 import com.wf.wflib.magazine.api.MagazineItems;
 import com.wf.wflib.magazine.api.PodItem;
 import com.wf.wflib.magazine.api.PodTubes;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.GameType;
+import com.wf.wflib.missile.api.MissileEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
@@ -28,19 +26,17 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 
 /** M142: six GMLRS cells on the elevating pod, mixed-pod round selection, indirect fire on artillery only; M1129 hatches. */
 @PrefixGameTestTemplate(false)

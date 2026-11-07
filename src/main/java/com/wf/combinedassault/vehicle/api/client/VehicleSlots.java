@@ -2,10 +2,11 @@ package com.wf.combinedassault.vehicle.api.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import java.util.Optional;
-import net.minecraft.resources.ResourceLocation;
 import com.wf.combinedassault.pack.client.ClientAssetsManager;
 import com.wf.combinedassault.render.item.SlotQuad;
+import net.minecraft.resources.ResourceLocation;
+
+import java.util.Optional;
 
 /** Inventory-slot art of a vehicle, for items other mods make that stand for one. */
 public final class VehicleSlots {

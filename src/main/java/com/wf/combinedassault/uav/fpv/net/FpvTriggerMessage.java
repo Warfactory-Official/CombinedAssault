@@ -1,15 +1,15 @@
 package com.wf.combinedassault.uav.fpv.net;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.uav.fpv.payload.FpvTrigger;
+import com.wf.combinedassault.uav.fpv.payload.PayloadUnit;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.uav.fpv.payload.FpvTrigger;
-import com.wf.combinedassault.uav.fpv.payload.PayloadUnit;
 
 /**
  * Only message this feature adds; arming rides the host's vehicle-action packet instead. Server verifies

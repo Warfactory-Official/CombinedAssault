@@ -6,8 +6,6 @@ import com.wf.combinedassault.ballistics.component.VehicleSystems;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.armor.api.hull.HullWear;
 
-import java.util.List;
-
 /** Reads and restores a vehicle's systems around real damage calls; kill predicates are CA's own. */
 final class SystemsProbe {
 

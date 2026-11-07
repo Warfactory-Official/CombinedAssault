@@ -1,31 +1,27 @@
 package com.wf.combinedassault.pack;
 
-import com.wf.combinedassault.pack.part.PartUnitEntry;
-import com.wf.combinedassault.vehicle.part.data.PartMount;
-import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.hit.ModelData;
+import com.wf.combinedassault.ballistics.hit.ModelMounts;
+import com.wf.combinedassault.ballistics.hit.MountDefaults;
+import com.wf.combinedassault.pack.part.PartUnitEntry;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.part.data.PartMount;
+import com.wf.combinedassault.weapon.kit.HardwareKit;
+import com.wf.combinedassault.weapon.kit.HardwareKits;
+import com.wf.combinedassault.weapon.kit.Loadouts;
+import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
+import com.wf.combinedassault.weapon.pojo.WeaponInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.weapon.kit.HardwareKit;
-import com.wf.combinedassault.weapon.kit.HardwareKits;
-import com.wf.combinedassault.weapon.kit.Loadouts;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.ballistics.hit.ModelData;
-import com.wf.combinedassault.ballistics.hit.ModelMounts;
-import com.wf.combinedassault.weapon.pojo.WeaponInfo;
-import com.wf.combinedassault.ballistics.hit.MountDefaults;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class VehicleDataManager implements IVehicleDataManager {

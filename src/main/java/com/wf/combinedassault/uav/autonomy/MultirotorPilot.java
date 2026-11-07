@@ -1,7 +1,7 @@
 package com.wf.combinedassault.uav.autonomy;
 
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.aircraft.RotaryWingVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.geom.api.flight.Airframe;
 import com.wf.wflib.geom.api.flight.FlightAttitude;
 import net.minecraft.world.phys.Vec3;

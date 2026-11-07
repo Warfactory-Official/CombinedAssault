@@ -1,15 +1,15 @@
 package com.wf.combinedassault.camo.message;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.camo.pojo.CamoAction;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.combinedassault.camo.pojo.CamoAction;
 
 /** Camo edit the server accepted; broadcast to everyone watching the vehicle. */
 public class ServerCamoAction extends CamoAction implements CustomPacketPayload {

@@ -1,10 +1,10 @@
 package com.wf.combinedassault.vehicle.part.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.dynamics.part.SuspensionUnit;
 import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.dynamics.part.SuspensionUnit;
 import com.wf.wflib.testkit.api.ForcedChunks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestGenerator;

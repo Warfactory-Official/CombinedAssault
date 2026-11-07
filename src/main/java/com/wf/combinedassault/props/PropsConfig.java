@@ -1,9 +1,9 @@
 package com.wf.combinedassault.props;
 
+import com.wf.combinedassault.CombinedAssault;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.ModConfigSpec;
-import com.wf.combinedassault.CombinedAssault;
 
 import java.io.IOException;
 import java.nio.file.Files;

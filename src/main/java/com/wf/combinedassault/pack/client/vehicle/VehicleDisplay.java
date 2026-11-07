@@ -1,24 +1,25 @@
 package com.wf.combinedassault.pack.client.vehicle;
 
-import com.wf.combinedassault.render.model.BoneIndexProvider;
-import org.mozillaa.javascript.*;
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.pack.client.ClientAssetsManager;
+import com.wf.combinedassault.pack.client.ScriptManager;
+import com.wf.combinedassault.pack.client.animation.AnimationControllerDefinition;
 import com.wf.combinedassault.pack.script.ScriptContextFactory;
 import com.wf.combinedassault.render.animation.VehicleAnimationInstance;
-import com.wf.combinedassault.render.animation.compiler.*;
+import com.wf.combinedassault.render.animation.compiler.AnimationControllerCompiler;
+import com.wf.combinedassault.render.animation.compiler.PoseGraphCompiler;
 import com.wf.combinedassault.render.animation.context.AnimationContextFactory;
 import com.wf.combinedassault.render.animation.context.VehicleContext;
 import com.wf.combinedassault.render.animation.controller.AnimationController;
 import com.wf.combinedassault.render.animation.graph.node.ScriptPoseNode;
 import com.wf.combinedassault.render.animation.util.PoseHelper;
-import com.wf.combinedassault.pack.client.ClientAssetsManager;
-import com.wf.combinedassault.pack.client.ScriptManager;
-import com.wf.combinedassault.pack.client.animation.AnimationControllerDefinition;
+import com.wf.combinedassault.render.model.BoneIndexProvider;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import org.mozillaa.javascript.*;
 
-import java.util.*;
-import com.wf.combinedassault.render.animation.compiler.AnimationControllerCompiler;
-import com.wf.combinedassault.render.animation.compiler.PoseGraphCompiler;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 public class VehicleDisplay<E extends AbstractVehicle, CTX extends VehicleContext<E>> extends BaseDisplay {
 

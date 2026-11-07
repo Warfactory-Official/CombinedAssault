@@ -3,6 +3,7 @@ package com.wf.combinedassault.render.util;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
+import com.wf.combinedassault.CombinedAssault;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
@@ -13,7 +14,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
-import com.wf.combinedassault.CombinedAssault;
 
 public class RenderHelper {
 

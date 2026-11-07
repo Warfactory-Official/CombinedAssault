@@ -1,12 +1,12 @@
 package com.wf.combinedassault.render.animation.graph.node;
 
 import com.maydaymemory.mae.basic.Pose;
-import org.mozillaa.javascript.Function;
-import org.mozillaa.javascript.Scriptable;
-import org.mozillaa.javascript.Wrapper;
 import com.wf.combinedassault.pack.IAnimationInstance;
 import com.wf.combinedassault.pack.script.ScriptContextFactory;
 import com.wf.combinedassault.render.animation.util.PoseHelper;
+import org.mozillaa.javascript.Function;
+import org.mozillaa.javascript.Scriptable;
+import org.mozillaa.javascript.Wrapper;
 
 public class ScriptPoseNode implements PoseNode {
     

@@ -1,5 +1,8 @@
 package com.wf.combinedassault.render.shader;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.render.util.PostPassesGetter;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.VehicleConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.PostChain;
@@ -9,9 +12,6 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.render.util.PostPassesGetter;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 
 public class OverloadHandler implements ResourceManagerReloadListener {
 

@@ -2,13 +2,13 @@ package com.wf.combinedassault.render.util;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
+import com.wf.combinedassault.render.shader.ModShaders;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.ShaderInstance;
 import org.joml.Matrix4f;
-import com.wf.combinedassault.render.shader.ModShaders;
 
 public class GuiHelper {
 

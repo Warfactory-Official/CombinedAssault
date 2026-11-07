@@ -1,5 +1,14 @@
 package com.wf.combinedassault.props;
 
+import com.wf.combinedassault.pack.client.ClientAssetsManager;
+import com.wf.combinedassault.pack.client.vehicle.VehicleDisplay;
+import com.wf.combinedassault.props.client.DecorationItemRenderer;
+import com.wf.combinedassault.props.client.DecorationSelectScreen;
+import com.wf.combinedassault.props.message.ClientDecorationAction;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.item.VehicleItem;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.component.DataComponents;
@@ -22,19 +31,10 @@ import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector3f;
-import com.wf.combinedassault.props.client.DecorationItemRenderer;
-import com.wf.combinedassault.pack.client.ClientAssetsManager;
-import com.wf.combinedassault.pack.client.vehicle.VehicleDisplay;
-import com.wf.combinedassault.props.client.DecorationSelectScreen;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.props.message.ClientDecorationAction;
-import com.wf.combinedassault.vehicle.util.VectorUtil;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
-import com.wf.combinedassault.vehicle.item.VehicleItem;
 
 public class DecorationItem extends VehicleItem {
 

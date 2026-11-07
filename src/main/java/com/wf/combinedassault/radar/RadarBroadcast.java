@@ -1,7 +1,10 @@
 package com.wf.combinedassault.radar;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.wf.combinedassault.radar.message.ServerBroadcastEntities;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.RemoteTickEntity;
+import com.wf.wflib.missile.api.MissileEntity;
+import com.wf.wflib.missile.api.SeekerDecoy;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
@@ -12,11 +15,9 @@ import net.minecraft.world.entity.EntityType;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
-import com.wf.combinedassault.radar.message.ServerBroadcastEntities;
-import com.wf.combinedassault.vehicle.entity.RemoteTickEntity;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.wflib.missile.api.MissileEntity;
-import com.wf.wflib.missile.api.SeekerDecoy;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /** Beyond-render-range entities sent to players riding a vehicle, for radar. */
 public final class RadarBroadcast {

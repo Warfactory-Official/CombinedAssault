@@ -1,5 +1,13 @@
 package com.wf.combinedassault.uav.fpv.client;
 
+import com.wf.combinedassault.uav.fpv.net.FpvTriggerMessage;
+import com.wf.combinedassault.uav.fpv.payload.FpvPayloadTypes;
+import com.wf.combinedassault.uav.fpv.payload.PayloadUnit;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.client.VehicleKeys;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
+import com.wf.wflib.radio.api.client.RadioClient;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -7,14 +15,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
-import com.wf.combinedassault.vehicle.client.VehicleKeys;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.uav.fpv.net.FpvTriggerMessage;
-import com.wf.combinedassault.uav.fpv.payload.FpvPayloadTypes;
-import com.wf.combinedassault.uav.fpv.payload.PayloadUnit;
-import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.wflib.radio.api.client.RadioClient;
 
 /** Arm rides the host's vehicle-action packet (hardpoint is a switchable unit); fire needed one of its own. */
 public final class FpvClientInput {

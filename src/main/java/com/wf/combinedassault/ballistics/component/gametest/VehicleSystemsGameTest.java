@@ -1,5 +1,11 @@
 package com.wf.combinedassault.ballistics.component.gametest;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.BallisticsContent;
+import com.wf.combinedassault.ballistics.component.*;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.probe.api.ProbeActions;
 import com.wf.wflib.probe.api.ProbeJobs;
 import net.minecraft.core.BlockPos;
@@ -17,19 +23,9 @@ import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.ballistics.component.ComponentKind;
-import com.wf.combinedassault.ballistics.component.ComponentState;
-import com.wf.combinedassault.ballistics.component.HullComponents;
-import com.wf.combinedassault.ballistics.component.SystemRepair;
-import com.wf.combinedassault.ballistics.component.VehicleSystems;
-import com.wf.combinedassault.pack.CommonAssetsManager;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.util.List;
 import java.util.Optional;
-import com.wf.combinedassault.ballistics.BallisticsContent;
 
 @GameTestHolder(CombinedAssault.MOD_ID)
 @PrefixGameTestTemplate(false)

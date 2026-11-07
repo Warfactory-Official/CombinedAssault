@@ -1,13 +1,13 @@
 package com.wf.combinedassault.airdefense;
 
+import com.wf.combinedassault.CombinedAssaultSystem;
 import com.wf.combinedassault.airdefense.gametest.AirDefenseGameTest;
 import com.wf.combinedassault.airdefense.gametest.LaserGameTest;
 import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
-import java.util.Set;
-
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
-import com.wf.combinedassault.CombinedAssaultSystem;
+
+import java.util.Set;
 
 public final class AirDefenseSystem implements CombinedAssaultSystem {
 

@@ -2,6 +2,14 @@ package com.wf.combinedassault.pack.client;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.pack.OffSystemDefs;
+import com.wf.combinedassault.pack.PackTypes;
+import com.wf.combinedassault.pack.client.vehicle.BaseDisplay;
+import com.wf.combinedassault.pack.client.vehicle.VehicleDisplay;
+import com.wf.combinedassault.pack.script.ScriptContextFactory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
@@ -13,19 +21,11 @@ import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnmodifiableView;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.pack.OffSystemDefs;
-import com.wf.combinedassault.pack.PackTypes;
-import com.wf.combinedassault.pack.script.ScriptContextFactory;
-import com.wf.combinedassault.pack.client.vehicle.BaseDisplay;
-import com.wf.combinedassault.pack.client.vehicle.VehicleDisplay;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import com.google.gson.JsonObject;
-import com.wf.combinedassault.pack.CommonAssetsManager;
 import java.util.concurrent.ConcurrentHashMap;
 
 @OnlyIn(Dist.CLIENT)

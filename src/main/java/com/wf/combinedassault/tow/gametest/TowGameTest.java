@@ -1,5 +1,10 @@
 package com.wf.combinedassault.tow.gametest;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.tow.*;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.testkit.api.ForcedChunks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -16,15 +21,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.pack.CommonAssetsManager;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.tow.HitchInfo;
-import com.wf.combinedassault.tow.TowLink;
-import com.wf.combinedassault.tow.TowLinks;
-import com.wf.combinedassault.tow.TowMode;
-import com.wf.combinedassault.tow.TowSolver;
 
 import java.util.Locale;
 import java.util.Optional;

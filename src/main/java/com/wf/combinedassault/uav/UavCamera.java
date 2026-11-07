@@ -4,12 +4,8 @@ import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.wflib.cam.api.*;
 import com.wf.wflib.drone.api.DroneNetBlock;
-import com.wf.wflib.cam.api.CameraFeed;
-import com.wf.wflib.cam.api.CameraMode;
-import com.wf.wflib.cam.api.CameraSource;
-import com.wf.wflib.cam.api.CameraSources;
-import com.wf.wflib.cam.api.CameraSpec;
 import net.minecraft.world.phys.Vec3;
 
 /** UAV vehicle as a wflib camera feed (tablet preview): lens = first seat's sight, gimbal free. Small UAVs: drone-net catchable. */

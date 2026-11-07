@@ -1,24 +1,30 @@
 package com.wf.combinedassault.hud;
 
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.entity.NoneVehicle;
 import com.wf.combinedassault.aircraft.RotaryWingVehicle;
 import com.wf.combinedassault.naval.ShipVehicle;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
-import com.wf.combinedassault.vehicle.pojo.WarnType;
 import com.wf.combinedassault.radar.WarningReceiver;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.NoneVehicle;
+import com.wf.combinedassault.vehicle.pojo.WarnType;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.VehicleDecoyFlare;
+import com.wf.combinedassault.weapon.VehicleGrenade;
 import com.wf.combinedassault.weapon.VehicleMissile;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
+import com.wf.wflib.ammo.api.client.AmmoGlyph;
 import com.wf.wflib.ui.api.Signals;
 import com.wf.wflib.ui.api.Subject;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import static com.wf.combinedassault.hud.HudSubjects.*;
+
+import java.util.List;
 
 /** Every value CA's HUD layouts can read. Units: km/h, metres, percent, degrees, seconds. */
 public final class HudSignals {
@@ -131,6 +137,9 @@ public final class HudSignals {
         Signals.num(STATION, "zoom", WeaponUnit::getZoom);
         Signals.bool(STATION, "stabilizer", WeaponUnit::withStabilizer);
         Signals.bool(STATION, "focus_locked", u -> u.withFocusLocker() && u.getFocusLockPos() != null);
+        Signals.bool(STATION, "focus_locker", WeaponUnit::withFocusLocker);
+        Signals.bool(STATION, "flares", u -> independent(u, VehicleDecoyFlare.class));
+        Signals.bool(STATION, "smoke", u -> independent(u, VehicleGrenade.class));
         Signals.bool(STATION, "crt", u -> u.getOpticalSightType() == WeaponUnitData.OpticalSightType.CRT);
         Signals.bool(STATION, "optical_scope",
                 u -> u.getOpticalSightType() == WeaponUnitData.OpticalSightType.OPTICAL_SCOPE);
@@ -150,6 +159,21 @@ public final class HudSignals {
         });
     }
 
+    private static ItemStack shownRound(AbstractVehicleWeapon<?> w) {
+        return w instanceof VehicleMissile missile ? missile.currentRound()
+                : w.getLoadedRound().isEmpty() ? w.getSelectedRound() : w.getLoadedRound();
+    }
+
+    private static boolean independent(WeaponUnit unit, Class<?> type) {
+        List<AbstractVehicleWeapon<?>> weapons = unit.independentWeapons;
+        for (int i = 0; i < weapons.size(); i++) {
+            if (type.isInstance(weapons.get(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static void weapon(Subject<AbstractVehicleWeapon<?>> subject) {
         Signals.text(subject, "name", 48, HudCache::weaponName);
         Signals.num(subject, "ammo", AbstractVehicleWeapon::getRemainAmmo);
@@ -157,8 +181,9 @@ public final class HudSignals {
         Signals.num(subject, "reload", AbstractVehicleWeapon::getReloadTime);
         Signals.num(subject, "reload_max", w -> w.getData().getReload() == null ? 0 : w.getData().getReload().getTime());
         Signals.bool(subject, "reloading", w -> w.getReloadTime() > 0);
-        Signals.text(subject, "round", 24, w -> HudCache.roundLabel(w instanceof VehicleMissile missile
-                ? missile.currentRound() : w.getLoadedRound().isEmpty() ? w.getSelectedRound() : w.getLoadedRound()));
+        Signals.text(subject, "round", 24, w -> HudCache.roundLabel(shownRound(w)));
+        Signals.items(subject, "round_variants", w -> HudCache.roundVariants(shownRound(w)), AmmoGlyph.VARIANT);
+        Signals.num(subject, "round_variant_count", w -> HudCache.roundVariants(shownRound(w)).size());
         com.wf.combinedassault.weapon.client.BarrelHud.weapon(subject);
     }
 

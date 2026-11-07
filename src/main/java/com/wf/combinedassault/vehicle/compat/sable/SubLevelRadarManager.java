@@ -1,5 +1,7 @@
 package com.wf.combinedassault.vehicle.compat.sable;
 
+import com.wf.combinedassault.radar.RadarContent;
+import com.wf.combinedassault.radar.RadarMarkerEntity;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelObserver;
 import dev.ryanhcode.sable.companion.math.BoundingBox3dc;
@@ -11,10 +13,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3d;
-import com.wf.combinedassault.radar.RadarMarkerEntity;
 
 import java.util.*;
-import com.wf.combinedassault.radar.RadarContent;
 
 public class SubLevelRadarManager {
 

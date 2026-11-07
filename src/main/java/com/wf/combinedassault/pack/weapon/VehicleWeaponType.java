@@ -1,12 +1,12 @@
 package com.wf.combinedassault.pack.weapon;
 
 import com.google.gson.JsonElement;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.data.BaseVehicleWeaponData;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
-import com.wf.combinedassault.weapon.data.BaseVehicleWeaponData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
-import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 
 import javax.annotation.Nullable;
 

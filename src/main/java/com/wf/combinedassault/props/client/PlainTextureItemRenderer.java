@@ -2,6 +2,9 @@ package com.wf.combinedassault.props.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.props.PlainTextureItem;
+import com.wf.combinedassault.render.item.SlotQuad;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -13,11 +16,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.props.PlainTextureItem;
 
 import javax.annotation.Nonnull;
-import com.wf.combinedassault.render.item.SlotQuad;
 
 public class PlainTextureItemRenderer extends BlockEntityWithoutLevelRenderer {
 

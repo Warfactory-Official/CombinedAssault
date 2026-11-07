@@ -1,13 +1,13 @@
 package com.wf.combinedassault.weapon.barrel;
 
-import com.wf.combinedassault.pack.sync.SyncDataSerializers;
-import com.wf.combinedassault.pack.sync.PartUnitSyncData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.dynamics.part.PartClipTracks;
+import com.wf.combinedassault.pack.sync.PartUnitSyncData;
+import com.wf.combinedassault.pack.sync.SyncDataSerializers;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.pojo.AimContext;
-import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.wflib.barrel.api.BarrelSpec;
 import com.wf.wflib.barrel.api.BarrelState;
 import com.wf.wflib.barrel.api.Barrels;

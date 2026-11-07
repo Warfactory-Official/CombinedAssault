@@ -1,8 +1,18 @@
 package com.wf.combinedassault.weapon.gametest;
 
-import com.wf.wflib.missile.api.MissileEntity;
-import com.wf.wflib.missile.api.BeamSource;
-import com.wf.wflib.missile.api.SeekerMode;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.VehicleMissile;
+import com.wf.combinedassault.weapon.ordnance.GuidedRounds;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.wflib.countermeasure.api.Countermeasures;
+import com.wf.wflib.countermeasure.api.FlareEntity;
+import com.wf.wflib.countermeasure.api.SmokeGrenadeEntity;
+import com.wf.wflib.missile.api.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -13,23 +23,9 @@ import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.pack.CommonAssetsManager;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.wflib.countermeasure.api.Countermeasures;
-import com.wf.wflib.countermeasure.api.FlareEntity;
-import com.wf.wflib.countermeasure.api.SmokeGrenadeEntity;
-import com.wf.wflib.missile.api.MissilePreset;
-import com.wf.wflib.missile.api.MissilePresets;
-import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
-import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
-import com.wf.combinedassault.weapon.VehicleMissile;
 
 import java.util.Map;
 import java.util.Optional;
-import com.wf.combinedassault.weapon.ordnance.GuidedRounds;
 
 /** Vehicle missiles: seeker mapping, countermeasures, glide, beam riding. */
 @PrefixGameTestTemplate(false)

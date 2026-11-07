@@ -1,5 +1,6 @@
 package com.wf.combinedassault.camo;
 
+import com.wf.combinedassault.camo.pojo.CamoAction;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
@@ -11,14 +12,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import com.wf.combinedassault.camo.pojo.CamoAction;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Camo pieces for one vehicle + bone/block-state intern tables: a piece is a pair of shorts, not

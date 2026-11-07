@@ -1,9 +1,9 @@
 package com.wf.combinedassault.vehicle.data;
 
-import net.minecraft.world.level.Level;
+import com.wf.combinedassault.vehicle.VehicleContent;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.entity.WheeledVehicle;
-import com.wf.combinedassault.vehicle.VehicleContent;
+import net.minecraft.world.level.Level;
 
 public class WheeledVehicleData extends BaseVehicleData<WheeledVehicle> {
 

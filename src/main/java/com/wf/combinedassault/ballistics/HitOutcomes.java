@@ -1,8 +1,8 @@
 package com.wf.combinedassault.ballistics;
 
-import java.util.Locale;
-
 import com.wf.wflib.armor.api.hull.HullOutcome;
+
+import java.util.Locale;
 
 public final class HitOutcomes {
 

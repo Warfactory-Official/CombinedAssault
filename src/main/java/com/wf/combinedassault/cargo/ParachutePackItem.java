@@ -1,5 +1,7 @@
 package com.wf.combinedassault.cargo;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.vehicle.audio.VehicleSoundEvents;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -22,8 +24,6 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.AnvilUpdateEvent;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.audio.VehicleSoundEvents;
 
 import java.util.List;
 import java.util.Map;

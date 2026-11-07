@@ -1,8 +1,9 @@
 package com.wf.combinedassault.render.particle;
 
-import com.wf.combinedassault.render.model.VehicleModelInstance;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.wf.combinedassault.render.model.VehicleModelInstance;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -26,7 +27,6 @@ import net.neoforged.api.distmarker.OnlyIn;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 /** Decal pattern: adapted from TaCZ. */
 @OnlyIn(Dist.CLIENT)

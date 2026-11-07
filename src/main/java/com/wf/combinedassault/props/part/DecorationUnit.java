@@ -1,8 +1,20 @@
 package com.wf.combinedassault.props.part;
 
-import com.wf.combinedassault.render.model.VehicleModelInstance;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.combinedassault.pack.client.ClientAssetsManager;
+import com.wf.combinedassault.pack.client.vehicle.BaseDisplay;
+import com.wf.combinedassault.pack.sync.PartUnitSyncData;
+import com.wf.combinedassault.props.client.DecorationSettingsScreen;
+import com.wf.combinedassault.props.pojo.DecorationAction;
+import com.wf.combinedassault.render.gem.GemModels;
+import com.wf.combinedassault.render.model.VehicleModelInstance;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.part.data.PartUnitData;
+import com.wf.wflib.geom.api.OBB;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -16,20 +28,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.pack.client.ClientAssetsManager;
-import com.wf.combinedassault.pack.client.vehicle.BaseDisplay;
-import com.wf.combinedassault.props.client.DecorationSettingsScreen;
-import com.wf.combinedassault.render.gem.GemModels;
-import com.wf.combinedassault.vehicle.part.data.PartUnitData;
-import com.wf.combinedassault.pack.sync.PartUnitSyncData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.props.pojo.DecorationAction;
-import com.wf.wflib.geom.api.OBB;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 
 import java.util.ArrayList;
-import com.wf.combinedassault.vehicle.part.PartUnit;
 
 public class DecorationUnit extends PartUnit<PartUnitData> {
 

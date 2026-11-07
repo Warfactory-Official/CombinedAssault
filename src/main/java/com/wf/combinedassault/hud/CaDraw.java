@@ -4,13 +4,12 @@ import com.wf.gemrender.ui.Canvas;
 
 /** CA's HUD shapes on the canvas, matching the GuiGraphics primitives they replace. */
 public final class CaDraw {
-    public static final int GREEN = 0xDD00FF00;
     public static final int RED = 0xDDFF0000;
     public static final int BLUE = 0xDD00FFFF;
     public static final int WHITE = 0xDDFFFFFF;
     public static final int AMBER = 0xDDFFAA00;
-    public static final int RELOAD_ARC = 0xCCFF6040;
-    public static final int RELOAD_ARC_BG = 0x66162A18;
+    public static final int RELOAD_ARC = 0xCCFFFFFF;
+    public static final int RELOAD_ARC_BG = 0x66000000;
 
     private CaDraw() {
     }

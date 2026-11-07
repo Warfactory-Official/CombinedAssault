@@ -1,5 +1,11 @@
 package com.wf.combinedassault.vehicle;
 
+import com.wf.combinedassault.vehicle.command.RootCommand;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.item.VehicleItem;
+import com.wf.combinedassault.vehicle.part.DoorUnit;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -13,12 +19,6 @@ import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
-import com.wf.combinedassault.vehicle.command.RootCommand;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.item.VehicleItem;
-import com.wf.combinedassault.vehicle.part.DoorUnit;
-import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.vehicle.util.VectorUtil;
 
 public final class VehicleEvents {
 

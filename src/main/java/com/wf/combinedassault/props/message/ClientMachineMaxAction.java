@@ -1,5 +1,9 @@
 package com.wf.combinedassault.props.message;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.props.MachineMaxBlockEntity;
+import com.wf.combinedassault.vehicle.recipe.VehiclePrintingIngredient;
+import com.wf.combinedassault.vehicle.recipe.VehiclePrintingRecipe;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -10,10 +14,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.props.MachineMaxBlockEntity;
-import com.wf.combinedassault.vehicle.recipe.VehiclePrintingIngredient;
-import com.wf.combinedassault.vehicle.recipe.VehiclePrintingRecipe;
 
 import java.util.ArrayList;
 import java.util.List;

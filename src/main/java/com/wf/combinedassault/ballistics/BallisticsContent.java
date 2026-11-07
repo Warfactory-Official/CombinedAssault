@@ -1,12 +1,12 @@
 package com.wf.combinedassault.ballistics;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.addon.AddonArmorItem;
+import com.wf.combinedassault.ballistics.addon.AddonFit;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.ballistics.addon.AddonArmorItem;
-import com.wf.combinedassault.ballistics.addon.AddonFit;
 
 public final class BallisticsContent {
 

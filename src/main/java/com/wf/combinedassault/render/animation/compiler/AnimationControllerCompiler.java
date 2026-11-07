@@ -1,9 +1,9 @@
 package com.wf.combinedassault.render.animation.compiler;
 
-import com.wf.combinedassault.render.model.BoneIndexProvider;
+import com.wf.combinedassault.pack.client.animation.AnimationControllerDefinition;
 import com.wf.combinedassault.render.animation.context.BaseAnimationContext;
 import com.wf.combinedassault.render.animation.controller.AnimationController;
-import com.wf.combinedassault.pack.client.animation.AnimationControllerDefinition;
+import com.wf.combinedassault.render.model.BoneIndexProvider;
 
 public class AnimationControllerCompiler {
 

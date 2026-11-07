@@ -1,12 +1,12 @@
 package com.wf.combinedassault.pack;
 
-import com.wf.wflib.barrel.api.BarrelTypes;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.pack.weapon.VehicleWeaponIndex;
+import com.wf.wflib.barrel.api.BarrelTypes;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
 
 import java.util.List;
 import java.util.Map;

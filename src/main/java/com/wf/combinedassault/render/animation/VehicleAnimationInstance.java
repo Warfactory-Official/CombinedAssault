@@ -2,16 +2,16 @@ package com.wf.combinedassault.render.animation;
 
 import com.maydaymemory.mae.basic.DummyPose;
 import com.maydaymemory.mae.basic.Pose;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
-import org.jetbrains.annotations.NotNull;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.pack.IAnimationInstance;
 import com.wf.combinedassault.render.animation.context.BaseAnimationContext;
 import com.wf.combinedassault.render.animation.context.EntityContext;
 import com.wf.combinedassault.render.animation.controller.AnimationController;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class VehicleAnimationInstance<T extends BaseAnimationContext> implements IAnimationInstance<T> {
 

@@ -1,16 +1,16 @@
 package com.wf.combinedassault.weapon.part.data;
 
-import com.wf.combinedassault.vehicle.crew.WeaponLoading;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
-import net.minecraft.world.phys.Vec3;
+import com.wf.combinedassault.vehicle.crew.WeaponLoading;
+import com.wf.combinedassault.vehicle.part.data.RotatableUnitPojo;
 import com.wf.combinedassault.weapon.pojo.Bolt;
 import com.wf.combinedassault.weapon.pojo.Eject;
+import com.wf.combinedassault.weapon.pojo.IndirectFirePojo;
 import com.wf.combinedassault.weapon.pojo.WeaponInfo;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
-import com.wf.combinedassault.weapon.pojo.IndirectFirePojo;
-import com.wf.combinedassault.vehicle.part.data.RotatableUnitPojo;
 
 public class WeaponUnitPojo extends RotatableUnitPojo {
 

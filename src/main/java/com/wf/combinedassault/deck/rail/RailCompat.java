@@ -1,17 +1,17 @@
 package com.wf.combinedassault.deck.rail;
 
-import net.minecraft.world.entity.Entity;
-import net.minecraft.server.level.ServerLevel;
-import net.neoforged.fml.ModList;
-import org.jetbrains.annotations.Nullable;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.deck.HarnessCarrier;
 import com.wf.combinedassault.deck.DeckCarriers;
+import com.wf.combinedassault.deck.HarnessCarrier;
 import com.wf.combinedassault.deck.VehicleHarness;
 import com.wf.combinedassault.deck.pojo.MountPointInfo;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.core.api.ServerTicks;
 import com.wf.wflib.core.api.TickOrder;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.neoforged.fml.ModList;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Vehicles strapped to IR stock. Inert without IR: nothing registers, {@link FlatcarCarrier} never loads.

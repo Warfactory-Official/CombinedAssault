@@ -1,12 +1,12 @@
 package com.wf.combinedassault.vehicle.message;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.vehicle.control.ControlUnit;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.control.ControlUnit;
 
 public class ClientVehicleMoveControl implements CustomPacketPayload {
 

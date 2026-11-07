@@ -1,5 +1,9 @@
 package com.wf.combinedassault.pack.client;
 
+import com.wf.combinedassault.pack.client.animation.AnimationControllerDefinition;
+import com.wf.combinedassault.pack.client.vehicle.BaseDisplay;
+import com.wf.combinedassault.pack.client.vehicle.VehicleDisplay;
+import com.wf.combinedassault.pack.script.ScriptContextFactory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -7,10 +11,6 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 import org.mozillaa.javascript.Script;
-import com.wf.combinedassault.pack.script.ScriptContextFactory;
-import com.wf.combinedassault.pack.client.animation.AnimationControllerDefinition;
-import com.wf.combinedassault.pack.client.vehicle.BaseDisplay;
-import com.wf.combinedassault.pack.client.vehicle.VehicleDisplay;
 
 import java.util.ArrayList;
 import java.util.List;

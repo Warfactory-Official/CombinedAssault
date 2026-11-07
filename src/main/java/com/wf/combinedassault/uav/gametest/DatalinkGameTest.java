@@ -1,9 +1,9 @@
 package com.wf.combinedassault.uav.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.uav.UavCamera;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.gametest.TestLanes;
-import com.wf.combinedassault.uav.UavCamera;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.entity.decoration.ArmorStand;

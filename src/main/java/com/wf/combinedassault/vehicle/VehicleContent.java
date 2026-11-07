@@ -1,7 +1,10 @@
 package com.wf.combinedassault.vehicle;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.vehicle.entity.*;
+import com.wf.combinedassault.vehicle.item.ModdingToolItem;
+import com.wf.combinedassault.vehicle.item.VehicleSpawnItem;
+import com.wf.combinedassault.vehicle.recipe.VehiclePrintingSerializer;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -9,16 +12,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.entity.M1a2;
-import com.wf.combinedassault.vehicle.entity.NoneVehicle;
-import com.wf.combinedassault.vehicle.entity.TrackedVehicle;
-import com.wf.combinedassault.vehicle.entity.VehiclePart;
-import com.wf.combinedassault.vehicle.entity.WheeledVehicle;
-import com.wf.combinedassault.vehicle.item.ModdingToolItem;
-import com.wf.combinedassault.vehicle.item.VehicleSpawnItem;
-import com.wf.combinedassault.vehicle.recipe.VehiclePrintingSerializer;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class VehicleContent {
 

@@ -3,9 +3,10 @@ package com.wf.combinedassault.weapon.gametest;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.RoundCount;
+import com.wf.combinedassault.weapon.WeaponContent;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.wflib.ammo.api.AmmoItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -17,7 +18,6 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.List;
-import com.wf.combinedassault.weapon.WeaponContent;
 
 /** One gun per calibre: the pick loads, a different breech round goes back with its variant, stock counts kinds. */
 @GameTestHolder(CombinedAssault.MOD_ID)

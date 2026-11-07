@@ -1,7 +1,7 @@
 package com.wf.combinedassault.vehicle.entity;
 
-import net.minecraft.resources.ResourceLocation;
 import com.wf.combinedassault.CombinedAssault;
+import net.minecraft.resources.ResourceLocation;
 
 public interface ICustomVehicle {
 

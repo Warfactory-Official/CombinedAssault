@@ -1,11 +1,12 @@
 package com.wf.combinedassault.hud;
 
-import java.util.Set;
+import com.wf.combinedassault.CombinedAssaultSystem;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import com.wf.combinedassault.CombinedAssaultSystem;
+
+import java.util.Set;
 
 /** Client-only: vehicle HUD sources, overlays, first-person view handling. */
 public final class HudSystem implements CombinedAssaultSystem {

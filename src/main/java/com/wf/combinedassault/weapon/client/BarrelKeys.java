@@ -1,11 +1,11 @@
 package com.wf.combinedassault.weapon.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.barrel.BarrelPacket;
 import com.wf.combinedassault.weapon.barrel.GunBarrel;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
-import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.neoforged.bus.api.SubscribeEvent;

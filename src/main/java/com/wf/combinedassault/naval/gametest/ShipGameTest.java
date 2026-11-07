@@ -1,31 +1,29 @@
 package com.wf.combinedassault.naval.gametest;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.deck.VehicleHarness;
+import com.wf.combinedassault.naval.ShipVehicle;
+import com.wf.combinedassault.naval.trial.TrialCrew;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.VehicleContent;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.GameType;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.pack.CommonAssetsManager;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.naval.ShipVehicle;
-import com.wf.combinedassault.naval.trial.TrialCrew;
-import com.wf.combinedassault.deck.VehicleHarness;
 
 import java.util.List;
 import java.util.Optional;
-import com.wf.combinedassault.vehicle.VehicleContent;
 
 /**
  * Ships in a stone basin of still water. Pool template = the arena; nothing here writes outside it.

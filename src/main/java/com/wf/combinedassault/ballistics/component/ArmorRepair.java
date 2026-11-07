@@ -1,8 +1,8 @@
 package com.wf.combinedassault.ballistics.component;
 
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.wflib.armor.api.hull.HullWear;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.armor.api.hull.HullWear;
 import com.wf.wflib.probe.api.ProbeActions;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;

@@ -1,9 +1,9 @@
 package com.wf.combinedassault.mixin.vehicle;
 
+import com.wf.combinedassault.vehicle.entity.KnockBackModifier;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
-import com.wf.combinedassault.vehicle.entity.KnockBackModifier;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin implements KnockBackModifier {

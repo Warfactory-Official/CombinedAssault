@@ -1,7 +1,7 @@
 package com.wf.combinedassault.radar;
 
-import com.wf.combinedassault.vehicle.pojo.ReconRole;
 import com.wf.combinedassault.vehicle.part.data.RotatableUnitData;
+import com.wf.combinedassault.vehicle.pojo.ReconRole;
 
 public class RadarUnitData extends RotatableUnitData {
 

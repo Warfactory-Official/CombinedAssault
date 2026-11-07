@@ -1,15 +1,11 @@
 package com.wf.combinedassault.indirect.gametest;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.dynamics.PhysicsEngine;
+import com.wf.combinedassault.indirect.*;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.indirect.BallisticSolver;
-import com.wf.combinedassault.indirect.FireArc;
-import com.wf.combinedassault.indirect.FireSolution;
-import com.wf.combinedassault.indirect.ReachBand;
-import com.wf.combinedassault.indirect.RoundSpec;
-import com.wf.combinedassault.dynamics.PhysicsEngine;
 
 /** Range scale's window is a promise: a range inside it must lay without hitting a stop. */
 @PrefixGameTestTemplate(false)

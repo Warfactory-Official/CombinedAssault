@@ -1,7 +1,14 @@
 package com.wf.combinedassault.vehicle.item;
 
+import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.hud.tooltip.VehicleTooltips;
-import net.minecraft.world.item.TooltipFlag;
+import com.wf.combinedassault.naval.ShipPlacement;
+import com.wf.combinedassault.naval.data.ShipVehicleData;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.render.item.VehicleSpawnItemRenderer;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.util.VectorUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.component.DataComponents;
@@ -14,20 +21,13 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.util.VectorUtil;
-import com.wf.combinedassault.render.item.VehicleSpawnItemRenderer;
-import com.wf.combinedassault.pack.CommonAssetsManager;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.naval.data.ShipVehicleData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.naval.ShipPlacement;
 
 import java.util.List;
 import java.util.Locale;

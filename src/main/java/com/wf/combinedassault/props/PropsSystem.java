@@ -1,5 +1,12 @@
 package com.wf.combinedassault.props;
 
+import com.wf.combinedassault.CombinedAssaultSystem;
+import com.wf.combinedassault.props.client.FigureBoxBlockRenderer;
+import com.wf.combinedassault.props.message.ClientDecorationAction;
+import com.wf.combinedassault.props.message.ClientFigureBoxUpdate;
+import com.wf.combinedassault.props.message.ClientMachineMaxAction;
+import com.wf.combinedassault.props.message.ServerDecorationAction;
+import com.wf.combinedassault.vehicle.VehicleTabs;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
@@ -10,13 +17,6 @@ import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import com.wf.combinedassault.vehicle.VehicleTabs;
-import com.wf.combinedassault.props.client.FigureBoxBlockRenderer;
-import com.wf.combinedassault.props.message.ClientDecorationAction;
-import com.wf.combinedassault.props.message.ClientFigureBoxUpdate;
-import com.wf.combinedassault.props.message.ClientMachineMaxAction;
-import com.wf.combinedassault.props.message.ServerDecorationAction;
-import com.wf.combinedassault.CombinedAssaultSystem;
 
 public final class PropsSystem implements CombinedAssaultSystem {
 

@@ -1,5 +1,6 @@
 package com.wf.combinedassault.uav.fpv;
 
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -10,7 +11,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 /**
  * Impact detected from outside the vehicle, not the host's collision solver (solver stays explosion-agnostic).

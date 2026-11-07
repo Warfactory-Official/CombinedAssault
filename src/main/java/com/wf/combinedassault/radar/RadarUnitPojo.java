@@ -1,8 +1,8 @@
 package com.wf.combinedassault.radar;
 
 import com.google.gson.annotations.SerializedName;
-import com.wf.combinedassault.vehicle.pojo.ReconRole;
 import com.wf.combinedassault.vehicle.part.data.RotatableUnitPojo;
+import com.wf.combinedassault.vehicle.pojo.ReconRole;
 
 public class RadarUnitPojo extends RotatableUnitPojo {
 

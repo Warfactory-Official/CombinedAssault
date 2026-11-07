@@ -1,5 +1,8 @@
 package com.wf.combinedassault.ballistics.client;
 
+import com.wf.combinedassault.ballistics.message.ServerVehicleExplosion;
+import com.wf.combinedassault.hud.FirstPersonHandler;
+import com.wf.combinedassault.render.particle.SmokeCloudOption;
 import com.wf.wflib.audio.api.AudioCategory;
 import com.wf.wflib.audio.api.Blasts;
 import com.wf.wflib.audio.api.client.Sounds;
@@ -10,9 +13,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
-import com.wf.combinedassault.ballistics.message.ServerVehicleExplosion;
-import com.wf.combinedassault.hud.FirstPersonHandler;
-import com.wf.combinedassault.render.particle.SmokeCloudOption;
 
 public final class VehicleExplosionFx {
 

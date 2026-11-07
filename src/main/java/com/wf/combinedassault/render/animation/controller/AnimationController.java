@@ -1,8 +1,8 @@
 package com.wf.combinedassault.render.animation.controller;
 
+import com.wf.combinedassault.pack.client.animation.ParameterDefinition;
 import com.wf.combinedassault.render.animation.context.BaseAnimationContext;
 import com.wf.combinedassault.render.animation.graph.PoseGraph;
-import com.wf.combinedassault.pack.client.animation.ParameterDefinition;
 
 import java.util.Map;
 

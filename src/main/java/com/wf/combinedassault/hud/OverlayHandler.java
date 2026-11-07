@@ -1,5 +1,6 @@
 package com.wf.combinedassault.hud;
 
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
@@ -7,7 +8,6 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 
 import java.util.Set;
 

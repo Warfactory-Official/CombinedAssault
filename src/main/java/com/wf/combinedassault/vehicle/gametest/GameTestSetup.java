@@ -1,8 +1,8 @@
 package com.wf.combinedassault.vehicle.gametest;
 
-import net.neoforged.bus.api.IEventBus;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.wflib.core.api.WFSystems;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 
 /** A system registers its own gametest classes, so an off system runs none; {@code testsNeeding}: only when the named systems are on too. */

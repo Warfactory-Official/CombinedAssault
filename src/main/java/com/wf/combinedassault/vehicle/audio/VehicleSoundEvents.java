@@ -1,11 +1,11 @@
 package com.wf.combinedassault.vehicle.audio;
 
+import com.wf.combinedassault.CombinedAssault;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import com.wf.combinedassault.CombinedAssault;
 
 public class VehicleSoundEvents {
 

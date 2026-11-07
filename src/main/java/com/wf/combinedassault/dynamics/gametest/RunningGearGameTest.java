@@ -1,5 +1,14 @@
 package com.wf.combinedassault.dynamics.gametest;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.component.ComponentKind;
+import com.wf.combinedassault.ballistics.component.VehicleSystems;
+import com.wf.combinedassault.dynamics.part.SuspensionUnit;
+import com.wf.combinedassault.dynamics.part.TrackUnit;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.VehiclePart;
+import com.wf.combinedassault.vehicle.gametest.TestLanes;
+import com.wf.combinedassault.vehicle.part.PartUnit;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -14,15 +23,6 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.joml.Vector3f;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.ballistics.component.ComponentKind;
-import com.wf.combinedassault.ballistics.component.VehicleSystems;
-import com.wf.combinedassault.vehicle.entity.VehiclePart;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.gametest.TestLanes;
-import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.dynamics.part.SuspensionUnit;
-import com.wf.combinedassault.dynamics.part.TrackUnit;
 
 import java.util.List;
 import java.util.Locale;

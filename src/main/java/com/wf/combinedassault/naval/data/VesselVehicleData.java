@@ -1,10 +1,10 @@
 package com.wf.combinedassault.naval.data;
 
-import net.minecraft.world.level.Level;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.naval.NavalContent;
 import com.wf.combinedassault.naval.VesselVehicle;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.naval.NavalContent;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import net.minecraft.world.level.Level;
 
 public class VesselVehicleData extends BaseVehicleData<VesselVehicle> {
 

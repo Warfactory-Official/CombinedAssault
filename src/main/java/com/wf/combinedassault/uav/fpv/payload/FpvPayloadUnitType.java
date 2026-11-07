@@ -1,8 +1,8 @@
 package com.wf.combinedassault.uav.fpv.payload;
 
+import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.pack.part.PartUnitType;
 import com.wf.combinedassault.pack.serialize.GsonUtil;
-import com.wf.combinedassault.CombinedAssault;
 
 /** Hardpoint part-unit type; registered in {@code PartUnitTypes} with the rest. */
 public final class FpvPayloadUnitType {

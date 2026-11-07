@@ -1,8 +1,8 @@
 package com.wf.combinedassault.uav.autonomy;
 
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.aircraft.FixedWingVehicle;
 import com.wf.combinedassault.aircraft.RotaryWingVehicle;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.entity.TrackedVehicle;
 import com.wf.combinedassault.vehicle.entity.WheeledVehicle;
 import com.wf.combinedassault.vehicle.pojo.AutonomyInfo;

@@ -1,10 +1,10 @@
 package com.wf.combinedassault.pack.part;
 
 import com.google.gson.JsonElement;
-import net.minecraft.resources.ResourceLocation;
-import com.wf.combinedassault.vehicle.part.data.PartUnitData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.part.data.PartUnitData;
+import net.minecraft.resources.ResourceLocation;
 
 public record PartUnitType<T extends PartUnit<D>, D extends PartUnitData>(
         ResourceLocation id,

@@ -1,10 +1,10 @@
 package com.wf.combinedassault.weapon.part;
 
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
-import com.wf.combinedassault.weapon.part.data.WeaponBayUnitData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
+import com.wf.combinedassault.weapon.part.data.WeaponBayUnitData;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 
 public class WeaponBayUnit extends SwitchableUnit<WeaponBayUnitData> {
 

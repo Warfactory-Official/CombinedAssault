@@ -1,15 +1,24 @@
 package com.wf.combinedassault.vehicle.client;
 
-import com.wf.combinedassault.aircraft.AircraftConfig;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.wf.combinedassault.render.gem.GemRenderPreview;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.sighs.apricityui.init.Document;
 import com.sighs.apricityui.init.Element;
 import com.sighs.apricityui.render.Drawer;
 import com.sighs.apricityui.screen.ApricityScreen;
+import com.wf.combinedassault.aircraft.AircraftConfig;
+import com.wf.combinedassault.pack.client.ClientAssetsManager;
+import com.wf.combinedassault.pack.client.vehicle.BaseDisplay;
+import com.wf.combinedassault.render.gem.GemRenderPreview;
+import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.message.ClientVehicleChangeDisplay;
+import com.wf.combinedassault.vehicle.util.AuiTextHelper;
+import com.wf.combinedassault.weapon.client.VehicleWeaponSelectScreen;
+import com.wf.combinedassault.weapon.message.ClientVehicleSelectLoadout;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
@@ -20,20 +29,11 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
-import com.wf.combinedassault.pack.client.ClientAssetsManager;
-import com.wf.combinedassault.pack.client.vehicle.BaseDisplay;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.message.ClientVehicleChangeDisplay;
-import com.wf.combinedassault.weapon.message.ClientVehicleSelectLoadout;
-import com.wf.combinedassault.vehicle.util.AuiTextHelper;
-import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
-import com.wf.combinedassault.weapon.part.WeaponUnit;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import com.wf.combinedassault.weapon.client.VehicleWeaponSelectScreen;
 
 public class VehicleModdingToolScreen extends ApricityScreen {
 

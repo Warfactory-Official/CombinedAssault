@@ -1,8 +1,8 @@
 package com.wf.combinedassault.pack.part;
 
-import com.wf.combinedassault.vehicle.part.data.PartUnitData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.part.data.PartUnitData;
 
 public record PartUnitEntry<T extends PartUnit<D>, D extends PartUnitData>(
         PartUnitType<T, D> type,

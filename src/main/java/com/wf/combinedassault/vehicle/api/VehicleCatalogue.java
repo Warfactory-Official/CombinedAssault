@@ -1,18 +1,19 @@
 package com.wf.combinedassault.vehicle.api;
 
 import com.google.gson.JsonObject;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.BiConsumer;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.core.api.OrderedRegistry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import com.wf.combinedassault.pack.CommonAssetsManager;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.wflib.core.api.OrderedRegistry;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.function.BiConsumer;
 
 /** CombinedAssault's vehicle roster for other mods: ids, names, footprints, summon, def patches. Vehicles are pack data, not entity types. */
 public final class VehicleCatalogue {

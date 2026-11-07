@@ -1,9 +1,19 @@
 package com.wf.combinedassault.deck.gametest;
 
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.deck.VehicleHarness;
+import com.wf.combinedassault.dynamics.PhysicsTrace;
+import com.wf.combinedassault.naval.ShipVehicle;
+import com.wf.combinedassault.naval.trial.TrialCrew;
+import com.wf.combinedassault.pack.CommonAssetsManager;
+import com.wf.combinedassault.vehicle.data.BaseVehicleData;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.physics.api.DeckAttachment;
+import com.wf.wflib.physics.api.VehicleParenting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -12,16 +22,6 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
-import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.pack.CommonAssetsManager;
-import com.wf.combinedassault.vehicle.data.BaseVehicleData;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.naval.ShipVehicle;
-import com.wf.combinedassault.naval.trial.TrialCrew;
-import com.wf.combinedassault.dynamics.PhysicsTrace;
-import com.wf.wflib.physics.api.DeckAttachment;
-import com.wf.combinedassault.deck.VehicleHarness;
-import com.wf.wflib.physics.api.VehicleParenting;
 
 import java.text.NumberFormat;
 import java.util.List;

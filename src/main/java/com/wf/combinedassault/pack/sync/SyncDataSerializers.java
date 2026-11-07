@@ -1,5 +1,6 @@
 package com.wf.combinedassault.pack.sync;
 
+import com.wf.combinedassault.weapon.RoundCount;
 import com.wf.wflib.ammo.api.AmmoCodecs;
 import com.wf.wflib.barrel.api.BarrelState;
 import com.wf.wflib.magazine.api.MagContents;
@@ -11,7 +12,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
-import com.wf.combinedassault.weapon.RoundCount;
 
 import java.util.ArrayList;
 import java.util.List;

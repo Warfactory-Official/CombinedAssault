@@ -20,7 +20,6 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
 /**
  * Non-ballistic threats CA applies to a vehicle, each through its real entry point on a live (never ticked) vehicle:

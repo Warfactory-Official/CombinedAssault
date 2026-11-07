@@ -1,12 +1,12 @@
 package com.wf.combinedassault.radar;
 
+import com.wf.combinedassault.camo.CamoLayer;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.wflib.recon.api.Signature;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.phys.AABB;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.camo.CamoLayer;
-import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 
 /**
  * Signature = f(hull size, datapack {@code radar_cross_section}, engine state, camo layer); no new

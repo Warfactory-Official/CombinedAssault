@@ -9,10 +9,10 @@ import com.norwood.ahf.rig.HumanoidRig;
 import com.norwood.ahf.stance.AhfStances;
 import com.norwood.ahf.stance.Stance;
 import com.wf.combinedassault.CombinedAssault;
-import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.ThirdPersonRules;
 import com.wf.combinedassault.vehicle.crew.CrewRole;
 import com.wf.combinedassault.vehicle.crew.CrewRules;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -26,11 +26,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Rider pose = AHF {@link PoseLibrary} set per seat ({@code ride_lower} + {@code hold_upper}): server rig and client
