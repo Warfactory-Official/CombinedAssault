@@ -136,17 +136,17 @@
             "with_thermal_imager": true,
             "mounts": [
                 {
-                    "model": "combinedassault:models/weapon/locust/locust_yoke.gltf",
+                    "model": "combinedassault:models/weapon/locust/locust_yoke.glb",
                     "node": "laser_t"
                 },
                 {
-                    "model": "combinedassault:models/weapon/locust/locust_head.gltf",
+                    "model": "combinedassault:models/weapon/locust/locust_head.glb",
                     "node": "laser_pitch_t"
                 }
             ]
         }
     ],
-    "model": "combinedassault:models/ground/laser_trailer/laser_trailer.gltf",
+    "model": "combinedassault:models/ground/laser_trailer/laser_trailer.glb",
     "display": {
         "icon": "combinedassault:textures/slot/laser_trailer.png",
         "controller": "combinedassault:mim104_controller",

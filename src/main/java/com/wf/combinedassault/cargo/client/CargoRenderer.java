@@ -18,7 +18,7 @@ import org.joml.Quaternionf;
 @OnlyIn(Dist.CLIENT)
 public final class CargoRenderer {
 
-    private static final ResourceLocation CANOPY = CombinedAssault.modLocation("models/effect/cargo_parachute.gltf");
+    private static final ResourceLocation CANOPY = CombinedAssault.modLocation("models/effect/cargo_parachute.glb");
     /** Canopy rig: lines meet the load on a square this wide, blocks. */
     private static final float RIG_SPAN = 7.9f;
     /** Kg per canopy in a cluster. */

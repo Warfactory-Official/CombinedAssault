@@ -157,7 +157,7 @@
             "track_width": 0.623
         }
     ],
-    "model": "combinedassault:models/ground/t90/t90.gltf",
+    "model": "combinedassault:models/ground/t90/t90.glb",
     "display": {
         "icon": "combinedassault:textures/slot/t90.png",
         "controller": "combinedassault:t90_controller",
@@ -172,7 +172,7 @@
         "cabin_muffle": 0.85,
         "tab_index": 104,
         "track": {
-            "model": "combinedassault:models/effect/t90_track_link.gltf",
+            "model": "combinedassault:models/effect/t90_track_link.glb",
             "module_length": 0.1656
         },
         "variants": {

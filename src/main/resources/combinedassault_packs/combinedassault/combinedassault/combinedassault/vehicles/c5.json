@@ -123,7 +123,7 @@
             "drag_k": 2
         }
     ],
-    "model": "combinedassault:models/aircraft/c5/c5.gltf",
+    "model": "combinedassault:models/aircraft/c5/c5.glb",
     "display": {
         "icon": "combinedassault:textures/slot/c5.png",
         "controller": "combinedassault:c5_controller",

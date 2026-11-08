@@ -36,7 +36,7 @@
             "with_thermal_imager": true
         }
     ],
-    "model": "combinedassault:models/emplacement/oto127/oto127.gltf",
+    "model": "combinedassault:models/emplacement/oto127/oto127.glb",
     "display": {
         "icon": "combinedassault:textures/slot/oto127.png",
         "controller": "combinedassault:oto127_controller",

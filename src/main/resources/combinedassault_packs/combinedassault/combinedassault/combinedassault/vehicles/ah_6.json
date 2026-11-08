@@ -101,7 +101,7 @@
             "passenger_can_use_item": true
         }
     ],
-    "model": "combinedassault:models/aircraft/ah_6/ah_6.gltf",
+    "model": "combinedassault:models/aircraft/ah_6/ah_6.glb",
     "display": {
         "icon": "combinedassault:textures/slot/ah_6.png",
         "controller": "combinedassault:ah_6_controller",

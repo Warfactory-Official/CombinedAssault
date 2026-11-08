@@ -126,7 +126,7 @@
             "drag_k": 2
         }
     ],
-    "model": "combinedassault:models/aircraft/b2a/b2a.gltf",
+    "model": "combinedassault:models/aircraft/b2a/b2a.glb",
     "display": {
         "icon": "combinedassault:textures/slot/b2a.png",
         "controller": "combinedassault:b2a_controller",

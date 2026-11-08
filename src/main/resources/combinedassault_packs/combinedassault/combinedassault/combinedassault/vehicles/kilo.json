@@ -112,7 +112,7 @@
             "is_seat": true
         }
     ],
-    "model": "combinedassault:models/ships/kilo/kilo.gltf",
+    "model": "combinedassault:models/ships/kilo/kilo.glb",
     "display": {
         "cabin_muffle": 0.9,
         "icon": "combinedassault:textures/slot/kilo.png",

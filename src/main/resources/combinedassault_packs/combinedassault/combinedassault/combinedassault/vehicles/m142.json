@@ -178,7 +178,7 @@
             "max_extension": 0.2
         }
     ],
-    "model": "combinedassault:models/ground/m142/m142.gltf",
+    "model": "combinedassault:models/ground/m142/m142.glb",
     "display": {
         "icon": "combinedassault:textures/slot/m142.png",
         "controller": "combinedassault:m142_controller",

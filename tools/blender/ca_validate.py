@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check a pack glTF the way the game loads it (ModelRig, ConvexHull, GemRender materials). No Blender needed.
 
-    python3 tools/blender/ca_validate.py <model.gltf> [...]      exit 1 on any error
+    python3 tools/blender/ca_validate.py <model.glb|.gltf> [...]      exit 1 on any error
 
 Pack root = the folder above assets/<ns>/models/. Also imported by the Blender add-on (vocabularies, post-export check).
 """
@@ -60,6 +60,41 @@ COMPONENTS = {5120: "b", 5121: "B", 5122: "h", 5123: "H", 5125: "I", 5126: "f"}
 WIDTH = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4, "MAT4": 16}
 
 
+GLB_MAGIC = 0x46546C67
+
+
+def read_container(path):
+    """(json, BIN chunk or None) of a .gltf or .glb."""
+    with open(path, "rb") as source:
+        data = source.read()
+    if len(data) < 12 or struct.unpack_from("<I", data, 0)[0] != GLB_MAGIC:
+        return json.loads(data.decode("utf-8")), None
+    length, kind = struct.unpack_from("<II", data, 12)
+    if kind != 0x4E4F534A:
+        raise ValueError("GLB: first chunk is not JSON")
+    document = json.loads(data[20:20 + length].decode("utf-8"))
+    at = 20 + length
+    if at + 8 <= len(data):
+        size, kind = struct.unpack_from("<II", data, at)
+        if kind == 0x004E4942:
+            return document, data[at + 8:at + 8 + size]
+    return document, None
+
+
+def write_glb(path, document, binary):
+    """GLB with `binary` as the BIN chunk; buffer 0 carries no uri / extras."""
+    for key in ("uri", "extras"):
+        document["buffers"][0].pop(key, None)
+    document["buffers"][0]["byteLength"] = len(binary)
+    text = json.dumps(document, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    text += b" " * (-len(text) % 4)
+    binary = binary + b"\0" * (-len(binary) % 4)
+    total = 12 + 8 + len(text) + 8 + len(binary)
+    with open(path, "wb") as out:
+        out.write(struct.pack("<III", GLB_MAGIC, 2, total) + struct.pack("<II", len(text), 0x4E4F534A) + text
+                  + struct.pack("<II", len(binary), 0x004E4942) + binary)
+
+
 def pack_of(gltf_path):
     """(pack root, namespace) from .../assets/<ns>/models/...; (None, None) outside a pack."""
     parts = os.path.abspath(gltf_path).split(os.sep)
@@ -112,8 +147,7 @@ class Model:
     def __init__(self, path):
         self.path = path
         self.root, self.ns = pack_of(path)
-        with open(path, encoding="utf-8") as source:
-            self.gltf = json.load(source)
+        self.gltf, self.binary = read_container(path)
         self.errors, self.warnings, self.notes = [], [], []
         self.buffers = [self.load_buffer(i, b) for i, b in enumerate(self.gltf.get("buffers", []))]
         nodes = self.gltf.get("nodes", [])
@@ -129,6 +163,8 @@ class Model:
             path = os.path.join(os.path.dirname(self.path), uri)
         else:
             location = buffer.get("extras", {}).get(RESOURCE)
+            if location is None and index == 0 and self.binary is not None:
+                return self.binary
             if location is None:
                 self.errors.append("buffer %d has neither uri nor extras.%s" % (index, RESOURCE))
                 return None

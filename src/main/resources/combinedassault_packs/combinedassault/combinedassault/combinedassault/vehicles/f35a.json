@@ -158,7 +158,7 @@
             "drag_k": 2
         }
     ],
-    "model": "combinedassault:models/aircraft/f35a/f35a.gltf",
+    "model": "combinedassault:models/aircraft/f35a/f35a.glb",
     "display": {
         "icon": "combinedassault:textures/slot/f35a.png",
         "controller": "combinedassault:f35a_controller",

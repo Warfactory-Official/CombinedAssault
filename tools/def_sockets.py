@@ -388,17 +388,17 @@ SIGHT_CLEAR = 0.03
 SIGHT_EYE_BACK = 0.12
 #: model -> station targets; "" = kit model; (target, {"x"|"y"|"z": bolt frame m}) overrides that coordinate
 SIGHT_TARGETS = {
-    "combinedassault:models/weapon/m2/m2.gltf": [""],
-    "combinedassault:models/weapon/kord/kord.gltf": [""],
-    "combinedassault:models/weapon/mk19/mk19.gltf": [""],
+    "combinedassault:models/weapon/m2/m2.glb": [""],
+    "combinedassault:models/weapon/kord/kord.glb": [""],
+    "combinedassault:models/weapon/mk19/mk19.glb": [""],
     # PGO-9 eyepiece: LENSES centre - relief
-    "combinedassault:models/weapon/spg9/spg9.gltf": [("", {"x": -0.149, "y": 0.048, "z": 0.885})],
-    "combinedassault:models/aircraft/ch47/ch47.gltf": ["door_gun_r", "door_gun_l", "ramp_gun"],
-    "combinedassault:models/aircraft/mh60l/mh60l.gltf": ["door_gun_r", "door_gun_l"],
-    "combinedassault:models/aircraft/w3/w3.gltf": ["door_gun"],
-    "combinedassault:models/ground/m1a2/m1a2.gltf": ["loader_machine_gun"],
-    "combinedassault:models/ground/merkava/merkava.gltf": ["anti_aircraft_machine_gun"],
-    "combinedassault:models/ground/centauro/centauro.gltf": ["mg_l", "mg_r"],
+    "combinedassault:models/weapon/spg9/spg9.glb": [("", {"x": -0.149, "y": 0.048, "z": 0.885})],
+    "combinedassault:models/aircraft/ch47/ch47.glb": ["door_gun_r", "door_gun_l", "ramp_gun"],
+    "combinedassault:models/aircraft/mh60l/mh60l.glb": ["door_gun_r", "door_gun_l"],
+    "combinedassault:models/aircraft/w3/w3.glb": ["door_gun"],
+    "combinedassault:models/ground/m1a2/m1a2.glb": ["loader_machine_gun"],
+    "combinedassault:models/ground/merkava/merkava.glb": ["anti_aircraft_machine_gun"],
+    "combinedassault:models/ground/centauro/centauro.glb": ["mg_l", "mg_r"],
 }
 
 
@@ -471,7 +471,7 @@ def cmd_sights(args):
 LENS_SEGMENTS = 24
 #: model -> (target, bolt frame centre, radius m); disc faces the eye (-Z)
 LENSES = {
-    "combinedassault:models/weapon/spg9/spg9.gltf": [("", (-0.149, 0.048, 0.953), 0.026)],
+    "combinedassault:models/weapon/spg9/spg9.glb": [("", (-0.149, 0.048, 0.953), 0.026)],
 }
 
 

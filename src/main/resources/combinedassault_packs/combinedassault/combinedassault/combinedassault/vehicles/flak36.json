@@ -25,7 +25,7 @@
   ],
   "mountable": {"enabled": true, "tags": ["emplacement"]},
   "towing": {"towable": {"enabled": true, "tags": [], "modes": ["sling"]}},
-  "model": "combinedassault:models/emplacement/flak36/flak36.gltf",
+  "model": "combinedassault:models/emplacement/flak36/flak36.glb",
   "display": {
     "icon": "combinedassault:textures/slot/flak36.png",
     "tab_index": 606,

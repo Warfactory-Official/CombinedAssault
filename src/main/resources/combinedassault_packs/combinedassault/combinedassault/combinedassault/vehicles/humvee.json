@@ -116,7 +116,7 @@
             },
             "mounts": [
                 {
-                    "model": "combinedassault:models/ground/humvee/humvee_turret.gltf",
+                    "model": "combinedassault:models/ground/humvee/humvee_turret.glb",
                     "node": "roof_mount"
                 }
             ],
@@ -212,7 +212,7 @@
             "max_extension": 0.2
         }
     ],
-    "model": "combinedassault:models/ground/humvee/humvee.gltf",
+    "model": "combinedassault:models/ground/humvee/humvee.glb",
     "display": {
         "icon": "combinedassault:textures/slot/humvee.png",
         "controller": "combinedassault:humvee_controller",

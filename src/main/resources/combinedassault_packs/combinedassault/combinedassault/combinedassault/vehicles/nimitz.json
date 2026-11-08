@@ -100,7 +100,7 @@
             "is_seat": true
         }
     ],
-    "model": "combinedassault:models/ships/nimitz/nimitz.gltf",
+    "model": "combinedassault:models/ships/nimitz/nimitz.glb",
     "display": {
         "cabin_muffle": 0.8,
         "icon": "combinedassault:textures/slot/nimitz.png",

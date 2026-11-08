@@ -185,7 +185,7 @@
             "drag_k": 2
         }
     ],
-    "model": "combinedassault:models/aircraft/a10/a10.gltf",
+    "model": "combinedassault:models/aircraft/a10/a10.glb",
     "display": {
         "icon": "combinedassault:textures/slot/a10.png",
         "controller": "combinedassault:a10_controller",

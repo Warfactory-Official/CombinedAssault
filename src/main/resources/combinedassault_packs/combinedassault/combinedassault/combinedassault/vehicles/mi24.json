@@ -185,7 +185,7 @@
             "is_seat": true
         }
     ],
-    "model": "combinedassault:models/aircraft/mi24/mi24.gltf",
+    "model": "combinedassault:models/aircraft/mi24/mi24.glb",
     "display": {
         "icon": "combinedassault:textures/slot/mi24.png",
         "controller": "combinedassault:mi24_controller",

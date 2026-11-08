@@ -43,7 +43,7 @@
   ],
   "mountable": {"enabled": true, "tags": ["emplacement"]},
   "towing": {"towable": {"enabled": true, "tags": [], "modes": ["sling"]}},
-  "model": "combinedassault:models/emplacement/spg9/spg9.gltf",
+  "model": "combinedassault:models/emplacement/spg9/spg9.glb",
   "display": {
     "icon": "combinedassault:textures/slot/spg9.png",
     "tab_index": 605,

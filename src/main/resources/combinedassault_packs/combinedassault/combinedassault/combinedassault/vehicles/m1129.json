@@ -55,7 +55,7 @@
             "render_bone": "mortar",
             "mounts": [
                 {
-                    "model": "combinedassault:models/weapon/m252/m252_tube.gltf",
+                    "model": "combinedassault:models/weapon/m252/m252_tube.glb",
                     "node": "mortar_m252"
                 }
             ],
@@ -228,7 +228,7 @@
             "max_extension": 0.2
         }
     ],
-    "model": "combinedassault:models/ground/m1129/m1129.gltf",
+    "model": "combinedassault:models/ground/m1129/m1129.glb",
     "display": {
         "icon": "combinedassault:textures/slot/m1129.png",
         "controller": "combinedassault:m1129_controller",

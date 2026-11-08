@@ -1,4 +1,4 @@
-// node tools/blockbench/compare_roundtrip.mjs <original.gltf> <original.bin> <exported.gltf>
+// node tools/blockbench/compare_roundtrip.mjs <original.glb> <exported.glb>
 // Exported model vs its source after Import -> Export: node extras, world transforms, images, collider faces,
 // drawn triangles, clips.
 import assert from 'node:assert/strict';
@@ -6,11 +6,11 @@ import fs from 'node:fs';
 import {createRequire} from 'node:module';
 
 const ca = createRequire(import.meta.url)('./combinedassault.js');
-const [originalPath, originalBin, exportedPath] = process.argv.slice(2);
-const a = JSON.parse(fs.readFileSync(originalPath, 'utf8'));
-const b = JSON.parse(fs.readFileSync(exportedPath, 'utf8'));
-const binA = [fs.readFileSync(originalBin)];
-const binB = [fs.readFileSync(exportedPath.replace(/\.gltf$/, '.bin'))];
+const [originalPath, exportedPath] = process.argv.slice(2);
+const {gltf: a, bin: originalBin} = ca.readContainer(fs.readFileSync(originalPath));
+const {gltf: b, bin: exportedBin} = ca.readContainer(fs.readFileSync(exportedPath));
+const binA = [originalBin];
+const binB = [exportedBin];
 
 function worlds(gltf) {
 	const out = new Map();

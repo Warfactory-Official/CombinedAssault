@@ -34,7 +34,7 @@
             ]
         }
     ],
-    "model": "combinedassault:models/emplacement/krupp_c34/krupp_c34.gltf",
+    "model": "combinedassault:models/emplacement/krupp_c34/krupp_c34.glb",
     "display": {
         "icon": "combinedassault:textures/slot/krupp_c34.png",
         "controller": "combinedassault:krupp_c34_controller",

@@ -126,23 +126,27 @@ test('paths and resource locations', () => {
 	assert.equal(ca.resourceLocationOf('C:\\packs\\demo\\', 'C:\\packs\\demo\\assets\\wf\\textures\\a\\b.png'), 'wf:textures/a/b.png');
 	assert.equal(ca.resourceLocationOf('/packs/demo', '/packs/other/assets/wf/textures/b.png'), null);
 	assert.equal(ca.resourceLocationOf('/packs/demo', '/packs/demo/assets/b.png'), null);
-	const p = ca.packPaths('/packs/demo/', 'wf', '/air/jet/f16.gltf');
-	assert.equal(p.gltf, '/packs/demo/assets/wf/models/air/jet/f16.gltf');
-	assert.equal(p.bin, '/packs/demo/assets/wf/models/air/jet/f16.bin');
-	assert.equal(p.binLocation, 'wf:models/air/jet/f16.bin');
+	const p = ca.packPaths('/packs/demo/', 'wf', '/air/jet/f16.glb');
+	assert.equal(p.glb, '/packs/demo/assets/wf/models/air/jet/f16.glb');
 	assert.equal(p.textureDir, '/packs/demo/assets/wf/textures/air/jet');
 	assert.equal(p.textureLocation, 'wf:textures/air/jet');
 	assert.equal(ca.packPaths('/p', 'wf', 'f16').textureLocation, 'wf:textures');
 });
 
-test('finishGltf: buffer split into .bin, no uri left', () => {
+test('finishGltf: buffer = bare byteLength, no uri; .glb round trip', () => {
 	const raw = fixture();
 	const embedded = Buffer.from(raw.buffers[0].uri.split(',')[1], 'base64');
 	const out = ca.finishGltf(raw, options());
-	assert.equal(out.paths.bin, `${ROOT}/assets/combinedassault/models/ground/test/tank.bin`);
+	assert.equal(out.paths.glb, `${ROOT}/assets/combinedassault/models/ground/test/tank.glb`);
 	assert.ok(out.bin.equals(embedded));
-	assert.deepEqual(out.gltf.buffers, [{byteLength: embedded.length,
-		extras: {resourceLocation: 'combinedassault:models/ground/test/tank.bin'}}]);
+	assert.deepEqual(out.gltf.buffers, [{byteLength: embedded.length}]);
+	const glb = ca.writeGlb(JSON.parse(JSON.stringify(out.gltf)), out.bin);
+	assert.equal(glb.length % 4, 0);
+	assert.equal(glb.readUInt32LE(8), glb.length);
+	const back = ca.readContainer(glb);
+	assert.deepEqual(back.gltf, out.gltf);
+	assert.ok(back.bin.subarray(0, out.bin.length).equals(out.bin));
+	assert.deepEqual(ca.readContainer(Buffer.from(JSON.stringify(out.gltf))).bin, null);
 	assert.ok(!JSON.stringify(out.gltf).includes('"uri"'));
 	for (const view of out.gltf.bufferViews) assert.ok(view.byteOffset + view.byteLength <= out.bin.length);
 });
@@ -237,7 +241,7 @@ test('finishGltf: unknown texture name fails fast', () => {
 const HUMVEE = path.join(repo, 'src/main/resources/combinedassault_packs/combinedassault/assets/combinedassault/models/ground/humvee/humvee');
 
 test('splitExtras -> mergeExtras returns every shipped humvee node extras verbatim', () => {
-	const gltf = JSON.parse(fs.readFileSync(HUMVEE + '.gltf', 'utf8'));
+	const {gltf} = ca.readContainer(fs.readFileSync(HUMVEE + '.glb'));
 	for (const node of gltf.nodes) {
 		const extras = node.extras || {};
 		assert.deepEqual(ca.mergeExtras(extras, ca.splitExtras(extras)), extras, node.name);
@@ -247,7 +251,7 @@ test('splitExtras -> mergeExtras returns every shipped humvee node extras verbat
 test('mergeExtras: panel owns role keys, unknown keys pass through', () => {
 	const raw = {combinedassaultRole: 'light', gemrenderHidden: true, genHulls: {node: 'body', locked: true},
 		combinedassault: {kind: 'search', color: '#ffffff', index: 2}, custom: 1};
-	assert.deepEqual(ca.mergeExtras(raw, {role: 'socket', field: 'light', index: 3}), {
+	assert.deepEqual(ca.mergeExtras(raw, {role: 'socket', field: 'light', index: 3, light_kind: 'search', light_color: '#ffffff'}), {
 		combinedassaultRole: 'light', gemrenderHidden: true, genHulls: {node: 'body'}, custom: 1,
 		combinedassault: {kind: 'search', color: '#ffffff', index: 3},
 	});
@@ -256,6 +260,24 @@ test('mergeExtras: panel owns role keys, unknown keys pass through', () => {
 	assert.deepEqual(ca.mergeExtras({combinedassaultRole: 'collider', combinedassault: {solid: true}}, {role: 'collider', locked: true}),
 		{combinedassaultRole: 'collider', gemrenderHidden: true, genHulls: {locked: true}, combinedassault: {solid: true}});
 	assert.throws(() => ca.splitExtras({combinedassaultRole: 'wing_tip'}), /wing_tip/);
+});
+
+test('panel keys: light socket, unit / spin / road wheel / follows clips / hidden round trip', () => {
+	const light = {combinedassaultRole: 'light', gemrenderHidden: true,
+		combinedassault: {kind: 'search', color: '#eef4ff', range: 90, intensity: 3000, inner: 2, outer: 5, shadow: false, cookie: 'a:b', index: 1}};
+	const props = ca.splitExtras(light);
+	assert.deepEqual(props, {role: 'socket', field: 'light', index: 1, light_kind: 'search', light_color: '#eef4ff', light_range: 90,
+		light_intensity: 3000, light_inner: 2, light_outer: 5, light_shadow: false, light_cookie: 'a:b'});
+	assert.deepEqual(ca.nodeExtras(props), light);
+	assert.deepEqual(ca.nodeExtras({role: 'socket', field: 'light'}),
+		{combinedassaultRole: 'light', gemrenderHidden: true, combinedassault: {kind: 'head'}});
+	const wheel = {combinedassault: {road_wheel: true, unit: 'FL', spin: 'cw'}, gemrenderHidden: true};
+	assert.deepEqual(ca.splitExtras(wheel), {role: 'none', hidden: true, road_wheel: true, unit: 'FL', spin: 'cw'});
+	assert.deepEqual(ca.nodeExtras(ca.splitExtras(wheel)), wheel);
+	assert.deepEqual(ca.mergeExtras(wheel, {role: 'none'}), {});
+	const frame = {combinedassaultRole: 'part', combinedassaultInterface: 'door', combinedassault: {follows_clips: true, unit: 'R1'}};
+	assert.deepEqual(ca.nodeExtras(ca.splitExtras(frame)), frame);
+	assert.ok(!('road_wheel' in (ca.nodeExtras({role: 'part', interface: 'x', road_wheel: true}).combinedassault || {})));
 });
 
 test('quatToEuler matches three.js decompositions', () => {
@@ -300,8 +322,8 @@ test('hull: polygon loops, plane groups, game refusals', () => {
 });
 
 test('planImport: shipped humvee', () => {
-	const gltf = JSON.parse(fs.readFileSync(HUMVEE + '.gltf', 'utf8'));
-	const plan = ca.planImport(gltf, [fs.readFileSync(HUMVEE + '.bin')], {frame: 'ZYX', mesh: 'XYZ'});
+	const {gltf, bin} = ca.readContainer(fs.readFileSync(HUMVEE + '.glb'));
+	const plan = ca.planImport(gltf, [bin], {frame: 'ZYX', mesh: 'XYZ'});
 	assert.deepEqual(plan.warnings, []);
 	const entry = name => plan.entries.find(e => e.name === name);
 	assert.equal(entry('humvee').kind, 'group');
@@ -412,3 +434,54 @@ if (failures) {
 	process.exit(1);
 }
 console.log('all passed');
+
+test('convexHull: cube corners + interior point -> 6 quads; sphere-ish keeps all', () => {
+	const corners = [];
+	for (const x of [0, 2]) for (const y of [0, 3]) for (const z of [0, 4]) corners.push([x, y, z]);
+	const hull = ca.convexHull([...corners, [1, 1, 1], [1, 1.5, 2]]);
+	assert.equal(hull.points.length, 8);
+	assert.equal(hull.loops.length, 6);
+	assert.ok(hull.loops.every(l => l.length === 4));
+	assert.deepEqual(ca.hullProblems(hull.points, hull.loops), []);
+	const octa = ca.convexHull([[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]);
+	assert.equal(octa.loops.length, 8);
+	assert.deepEqual(ca.hullProblems(octa.points, octa.loops), []);
+	assert.throws(() => ca.convexHull([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]]), /flat/);
+});
+
+test('prismAround: thinnest axis, circumscribed, valid hull', () => {
+	const tyre = [];
+	for (const x of [-1, 1]) for (const y of [-3, 3]) for (const z of [-3, 3]) tyre.push([x, y, z]);
+	const prism = ca.prismAround(tyre, 12);
+	assert.equal(prism.points.length, 24);
+	assert.equal(prism.loops.length, 14);
+	assert.ok(prism.points.slice(0, 12).every(p => p[0] === -1));
+	const radius = Math.hypot(...[prism.points[0][1], prism.points[0][2]]);
+	assert.ok(Math.abs(radius - Math.hypot(3, 3) / Math.cos(Math.PI / 12)) < 1e-9 || radius >= Math.hypot(3, 3));
+	assert.deepEqual(ca.hullProblems(prism.points, prism.loops), []);
+});
+
+test('coplanarGroups: triangulated box bottom -> one plane', () => {
+	const bottom = [[[0, 0, 0], [1, 0, 0], [1, 0, 1]], [[0, 0, 0], [1, 0, 1], [0, 0, 1]], [[0, 1, 0], [1, 1, 0], [1, 1, 1]]];
+	const ids = ca.coplanarGroups(bottom);
+	assert.equal(ids[0], ids[1]);
+	assert.notEqual(ids[0], ids[2]);
+});
+
+test('material tags mirror the Blender add-on', () => {
+	assert.equal(ca.taggedName('hull_armor_50', 120, 'steel', false), 'hull_armor_120');
+	assert.equal(ca.taggedName('tyre', 0, 'rubber', false), 'tyre_rubber');
+	assert.equal(ca.taggedName('hull_armor_50_rubber', 0, 'steel', true), 'hull_decor');
+	assert.equal(ca.stripTags('a_rubber_glass_armor_5'), 'a');
+	assert.deepEqual(ca.materialTags('seat_fabric_armor_2.5'), {armor: 2.5, surface: 'soft', decor: false});
+	assert.deepEqual(ca.materialTags('plain'), {armor: 0, surface: 'steel', decor: false});
+	assert.equal(ca.taggedName('', 0, 'steel', false), 'material');
+});
+
+test('scale-valued sockets', () => {
+	assert.deepEqual(ca.scaleForValue('bolt', 1.5), [1, 1, 1.5]);
+	assert.deepEqual(ca.scaleForValue('propeller', 2), [2, 2, 2]);
+	assert.equal(ca.valueOfScale('station', [1, 1, 0.4]), 0.4);
+	assert.equal(ca.valueOfScale('cargo_bay', [2, 2, 2]), 2);
+	assert.equal(ca.valueOfScale('bolt', undefined), 1);
+});

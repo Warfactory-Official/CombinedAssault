@@ -194,7 +194,7 @@
             "is_seat": true
         }
     ],
-    "model": "combinedassault:models/aircraft/mh60l/mh60l.gltf",
+    "model": "combinedassault:models/aircraft/mh60l/mh60l.glb",
     "display": {
         "icon": "combinedassault:textures/slot/mh60l.png",
         "controller": "combinedassault:mh60l_controller",

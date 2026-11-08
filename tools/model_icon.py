@@ -19,6 +19,8 @@ import sys
 import numpy as np
 from PIL import Image
 
+import glb
+
 PACK = "src/main/resources/combinedassault_packs/combinedassault"
 NS = "combinedassault"
 SIZE = 256
@@ -112,8 +114,8 @@ def part_mounts(rig):
             if mount.get("weapon", first) != first:
                 continue
             gltf = resource(mount["model"])
-            blob = open(os.path.splitext(gltf)[0] + ".bin", "rb").read()
-            out.setdefault(mount["node"], []).append((json.load(open(gltf)), blob))
+            doc, blob = glb.read(gltf)
+            out.setdefault(mount["node"], []).append((doc, blob))
     return out
 
 
@@ -133,9 +135,8 @@ def sheets(doc):
 
 
 def render(rig):
-    (path,) = glob.glob(os.path.join(PACK, "assets", NS, "models", "*", rig, f"{rig}.gltf"))
-    doc = json.load(open(path))
-    blob = open(os.path.join(os.path.dirname(path), f"{rig}.bin"), "rb").read()
+    (path,) = glob.glob(os.path.join(PACK, "assets", NS, "models", "*", rig, f"{rig}.glb"))
+    doc, blob = glb.read(path)
     tris, uvs, mats, grafted = gather(doc, blob, part_mounts(rig))
     maps = sheets(doc)
     for offset, mount_doc in grafted:

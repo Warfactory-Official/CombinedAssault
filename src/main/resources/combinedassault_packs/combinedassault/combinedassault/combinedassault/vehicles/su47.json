@@ -159,7 +159,7 @@
             "drag_k": 2
         }
     ],
-    "model": "combinedassault:models/aircraft/su47/su47.gltf",
+    "model": "combinedassault:models/aircraft/su47/su47.glb",
     "display": {
         "icon": "combinedassault:textures/slot/su47.png",
         "controller": "combinedassault:su47_controller",

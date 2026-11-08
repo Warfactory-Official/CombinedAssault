@@ -164,7 +164,7 @@
             "track_width": 0.575
         }
     ],
-    "model": "combinedassault:models/ground/merkava/merkava.gltf",
+    "model": "combinedassault:models/ground/merkava/merkava.glb",
     "display": {
         "icon": "combinedassault:textures/slot/merkava.png",
         "controller": "combinedassault:merkava_controller",
@@ -179,7 +179,7 @@
         "cabin_muffle": 0.85,
         "tab_index": 103,
         "track": {
-            "model": "combinedassault:models/effect/merkava_track_link.gltf",
+            "model": "combinedassault:models/effect/merkava_track_link.glb",
             "module_length": 0.296
         },
         "variants": {

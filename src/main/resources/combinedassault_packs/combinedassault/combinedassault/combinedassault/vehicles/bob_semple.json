@@ -212,7 +212,7 @@
             "track_width": 0.59
         }
     ],
-    "model": "combinedassault:models/ground/bob_semple/bob_semple.gltf",
+    "model": "combinedassault:models/ground/bob_semple/bob_semple.glb",
     "display": {
         "icon": "combinedassault:textures/slot/bob_semple.png",
         "controller": "combinedassault:bob_semple_controller",
@@ -292,7 +292,7 @@
         },
         "tab_index": 105,
         "track": {
-            "model": "combinedassault:models/effect/bob_semple_track_link.gltf",
+            "model": "combinedassault:models/effect/bob_semple_track_link.glb",
             "module_length": 0.1402
         },
         "variants": {

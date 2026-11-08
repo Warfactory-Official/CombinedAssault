@@ -178,7 +178,7 @@
             "drag_k": 2
         }
     ],
-    "model": "combinedassault:models/aircraft/f22a/f22a.gltf",
+    "model": "combinedassault:models/aircraft/f22a/f22a.glb",
     "display": {
         "icon": "combinedassault:textures/slot/f22a.png",
         "controller": "combinedassault:f22a_controller",

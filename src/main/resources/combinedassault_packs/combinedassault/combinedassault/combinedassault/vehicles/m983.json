@@ -193,7 +193,7 @@
             "max_extension": 0.2
         }
     ],
-    "model": "combinedassault:models/ground/m983/m983.gltf",
+    "model": "combinedassault:models/ground/m983/m983.glb",
     "display": {
         "icon": "combinedassault:textures/slot/m983.png",
         "controller": "combinedassault:m983_controller",

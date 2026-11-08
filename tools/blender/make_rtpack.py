@@ -21,12 +21,9 @@ for v in ("bl", "bb"):
     name = "humvee_" + v
     d = os.path.join(OUT, "assets/rttest/models/ground", name)
     os.makedirs(d)
-    g = json.load(open(SRC + "/assets/combinedassault/models/ground/humvee/humvee.gltf"))
-    g["buffers"][0]["extras"]["resourceLocation"] = "rttest:models/ground/%s/%s.bin" % (name, name)
-    json.dump(g, open(os.path.join(d, name + ".gltf"), "w"))
-    shutil.copy(SRC + "/assets/combinedassault/models/ground/humvee/humvee.bin", os.path.join(d, name + ".bin"))
+    shutil.copy(SRC + "/assets/combinedassault/models/ground/humvee/humvee.glb", os.path.join(d, name + ".glb"))
     veh = open(SRC + "/combinedassault/combinedassault/vehicles/humvee.json").read().replace(
-        "combinedassault:models/ground/humvee/humvee.gltf", "rttest:models/ground/%s/%s.gltf" % (name, name))
+        "combinedassault:models/ground/humvee/humvee.glb", "rttest:models/ground/%s/%s.glb" % (name, name))
     os.makedirs(os.path.join(OUT, "combinedassault/rttest/vehicles"), exist_ok=True)
     open(os.path.join(OUT, "combinedassault/rttest/vehicles", name + ".json"), "w").write(veh)
 print(OUT)

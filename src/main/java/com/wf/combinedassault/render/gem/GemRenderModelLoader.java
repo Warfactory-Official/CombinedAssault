@@ -2,12 +2,12 @@ package com.wf.combinedassault.render.gem;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.render.model.VehicleModel;
 import com.wf.gemrender.asset.GemRenderModels;
 import com.wf.gemrender.asset.ModelCache;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
+import com.wf.wflib.geom.api.Glb;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -15,7 +15,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
 import java.io.IOException;
-import java.io.Reader;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -55,8 +55,8 @@ public final class GemRenderModelLoader {
     private static List<ResourceLocation> images(ResourceManager resources, ResourceLocation asset) {
         List<ResourceLocation> out = new ArrayList<>();
         resources.getResource(asset).ifPresent(resource -> {
-            try (Reader reader = resource.openAsReader()) {
-                JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+            try (InputStream stream = resource.open()) {
+                JsonObject root = Glb.json(stream.readAllBytes());
                 if (!root.has("images")) {
                     return;
                 }

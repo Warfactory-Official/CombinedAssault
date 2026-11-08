@@ -15,6 +15,7 @@ import sys
 
 import numpy as np
 
+import glb
 import mqo
 
 PACK = os.path.join(os.path.dirname(__file__), "..", "src", "main", "resources", "combinedassault_packs", "combinedassault")
@@ -88,8 +89,7 @@ def clips(vid, gltf_path, bin_path, parts):
     """parts: {part: ({node: on (x, y, z) degrees}, {node: off (x, y, z)})} -> one clip per part."""
     with open(os.path.join(PACK, "combinedassault", NS, "vehicles", f"{vid}.json")) as f:
         types = {p["id"]: p["type"].split(":")[-1] for p in json.load(f)["parts"]}
-    with open(gltf_path) as f:
-        rest = {n.get("name"): n.get("rotation", [0, 0, 0, 1]) for n in json.load(f)["nodes"]}
+    rest = {n.get("name"): n.get("rotation", [0, 0, 0, 1]) for n in glb.read(gltf_path)[0]["nodes"]}
     for part, (on, off) in parts.items():
         def pose(side, node):
             return axis_angle(*side[node]) if node in side else rest[node]
@@ -127,7 +127,7 @@ def model(vid):
         location = json.load(f)["model"]
     ns, path = location.split(":")
     gltf = os.path.join(PACK, "assets", ns, path)
-    return gltf, gltf[:-len(".gltf")] + ".bin"
+    return gltf, None
 
 
 if __name__ == "__main__":

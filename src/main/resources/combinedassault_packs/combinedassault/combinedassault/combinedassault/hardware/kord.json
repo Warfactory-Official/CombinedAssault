@@ -1,5 +1,5 @@
 {
-  "model": "combinedassault:models/weapon/kord/kord.gltf",
+  "model": "combinedassault:models/weapon/kord/kord.glb",
   "weapons": ["combinedassault:kord"],
   "fits": ["pintle", "tripod"],
   "install_ticks": 120,

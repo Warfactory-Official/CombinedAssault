@@ -223,7 +223,7 @@
             "door_for_seat_id": "loader_machine_gun"
         }
     ],
-    "model": "combinedassault:models/ground/m1a2/m1a2.gltf",
+    "model": "combinedassault:models/ground/m1a2/m1a2.glb",
     "display": {
         "icon": "combinedassault:textures/slot/m1a2.png",
         "controller": "combinedassault:m1a2_controller",
@@ -238,7 +238,7 @@
         "cabin_muffle": 0.85,
         "tab_index": 101,
         "track": {
-            "model": "combinedassault:models/effect/m1a2_track_link.gltf",
+            "model": "combinedassault:models/effect/m1a2_track_link.glb",
             "module_length": 0.2849
         },
         "variants": {

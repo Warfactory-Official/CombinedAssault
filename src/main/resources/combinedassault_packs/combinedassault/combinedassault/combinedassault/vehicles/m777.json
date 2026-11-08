@@ -144,7 +144,7 @@
       "part": "gun"
     }
   },
-  "model": "combinedassault:models/ground/m777/m777.gltf",
+  "model": "combinedassault:models/ground/m777/m777.glb",
   "display": {
     "icon": "combinedassault:textures/slot/m777.png",
     "controller": "combinedassault:m777_controller",

@@ -1,5 +1,5 @@
 {
-  "model": "combinedassault:models/weapon/spg9/spg9.gltf",
+  "model": "combinedassault:models/weapon/spg9/spg9.glb",
   "weapons": ["combinedassault:spg9"],
   "fits": ["tripod"],
   "install_ticks": 160,

@@ -230,7 +230,7 @@
             "is_seat": true
         }
     ],
-    "model": "combinedassault:models/aircraft/ch47/ch47.gltf",
+    "model": "combinedassault:models/aircraft/ch47/ch47.glb",
     "display": {
         "icon": "combinedassault:textures/slot/ch47.png",
         "controller": "combinedassault:ch47_controller",

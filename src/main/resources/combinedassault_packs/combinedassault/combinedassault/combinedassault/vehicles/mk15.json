@@ -47,7 +47,7 @@
             ]
         }
     ],
-    "model": "combinedassault:models/emplacement/mk15/mk15.gltf",
+    "model": "combinedassault:models/emplacement/mk15/mk15.glb",
     "display": {
         "icon": "combinedassault:textures/slot/mk15.png",
         "controller": "combinedassault:mk15_controller",

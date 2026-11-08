@@ -145,14 +145,11 @@ def build(textures):
     return scene, body, collider, engine, flap
 
 
-def accessor(gltf, pack, index):
+def accessor(gltf, blob, index):
     """Float accessor -> list of tuples (or floats for SCALAR)."""
     import struct
     acc = gltf["accessors"][index]
     view = gltf["bufferViews"][acc["bufferView"]]
-    ns, path = gltf["buffers"][view["buffer"]]["extras"]["resourceLocation"].split(":", 1)
-    with open(os.path.join(pack, "assets", ns, path), "rb") as source:
-        blob = source.read()
     width = {"SCALAR": 1, "VEC3": 3, "VEC4": 4}[acc["type"]]
     start = view.get("byteOffset", 0) + acc.get("byteOffset", 0)
     stride = view.get("byteStride", 4 * width)
@@ -237,9 +234,8 @@ def run():
     result = bpy.ops.combinedassault.export()
     check("export finished", result == {"FINISHED"}, str(result))
 
-    gltf_path = os.path.join(pack, "assets/combinedassault/models/test/tank/tank.gltf")
-    with open(gltf_path, encoding="utf-8") as source:
-        gltf = json.load(source)
+    gltf_path = os.path.join(pack, "assets/combinedassault/models/test/tank/tank.glb")
+    gltf, binary = T.ca_validate.read_container(gltf_path)
     nodes = {node["name"]: node for node in gltf["nodes"]}
 
     def resolves(rl):
@@ -252,8 +248,11 @@ def run():
     check("texture lands under textures/<model dir>",
           any(i["extras"]["resourceLocation"].startswith("combinedassault:textures/test/tank/") for i in images))
     buffers = gltf["buffers"]
-    check("buffers carry resourceLocation, no uri",
-          all("uri" not in b and resolves(b["extras"]["resourceLocation"]) for b in buffers), str(buffers))
+    check("one embedded buffer, no uri, no extras",
+          len(buffers) == 1 and "uri" not in buffers[0] and "extras" not in buffers[0] and binary is not None
+          and buffers[0]["byteLength"] == len(binary), str(buffers))
+    check("staging .gltf/.bin removed", not os.path.exists(gltf_path[:-4] + ".gltf")
+          and not os.path.exists(gltf_path[:-4] + ".bin"))
     check("frames, collider, hit module, socket, hinge exported",
           all(n in nodes for n in ("tank", "hull_body", "engine_block", "socket_seat_driver", "left_flap_mount",
                                    "left_flap")), str(sorted(nodes)))
@@ -291,8 +290,8 @@ def run():
     check("clip turns both pivots", sorted(rotations) == ["left_flap", "right_flap"], str(sorted(rotations)))
     if "left_flap" in rotations:
         sampler = rotations["left_flap"]
-        times = accessor(gltf, pack, sampler["input"])
-        values = accessor(gltf, pack, sampler["output"])
+        times = accessor(gltf, binary, sampler["input"])
+        values = accessor(gltf, binary, sampler["output"])
         end = values[-1]
         want = (math.sin(math.radians(15)), 0, 0, math.cos(math.radians(15)))
         check("clip starts at 0, ends at its length", abs(times[0]) < 1e-6 and abs(times[-1] - 1.0) < 1e-3,
@@ -336,17 +335,16 @@ def roundtrip(model):
     fresh_scene()
     pack = tempfile.mkdtemp(prefix="combinedassault_rt_")
     base = os.path.join(PACK, "assets/combinedassault")
-    with open(os.path.join(base, "models", model + ".gltf"), encoding="utf-8") as source:
-        images = [i["extras"][T.RESOURCE].split(":", 1)[1][:-4] for i in json.load(source).get("images", [])]
+    images = [i["extras"][T.RESOURCE].split(":", 1)[1][:-4]
+              for i in T.ca_validate.read_container(os.path.join(base, "models", model + ".glb"))[0].get("images", [])]
     os.makedirs(os.path.join(pack, "assets/combinedassault/textures", os.path.dirname(model)), exist_ok=True)
-    for rel in [os.path.join("models", model + ".gltf"), os.path.join("models", model + ".bin")] + [
+    for rel in [os.path.join("models", model + ".glb")] + [
             stem + suffix + ".png" for stem in images for suffix in ("", "_damaged", "_wrecked", "_paint")]:
         if os.path.isfile(os.path.join(base, rel)):
             os.makedirs(os.path.dirname(os.path.join(pack, "assets/combinedassault", rel)), exist_ok=True)
             shutil.copy(os.path.join(base, rel), os.path.join(pack, "assets/combinedassault", rel))
-    path = os.path.join(pack, "assets/combinedassault/models", model + ".gltf")
-    with open(path, encoding="utf-8") as source:
-        original = json.load(source)
+    path = os.path.join(pack, "assets/combinedassault/models", model + ".glb")
+    original, _ = T.ca_validate.read_container(path)
     texture_dir = os.path.join(pack, "assets/combinedassault/textures", os.path.dirname(model))
     before = sorted(os.listdir(texture_dir))
     result = bpy.ops.combinedassault.import_model(filepath=path)
@@ -360,8 +358,7 @@ def roundtrip(model):
     check("%s imported scene passes the check" % model, not errors, str(errors[:5]))
     result = bpy.ops.combinedassault.export()
     check("%s re-exported" % model, result == {"FINISHED"}, str(result))
-    with open(path, encoding="utf-8") as source:
-        out = json.load(source)
+    out, _ = T.ca_validate.read_container(path)
     want = {n["name"]: n.get("extras", {}) for n in original["nodes"]}
     got = {n["name"]: n.get("extras", {}) for n in out["nodes"]}
     lost = [k for k in want if want[k] != got.get(k)]
@@ -387,8 +384,7 @@ def roundtrip(model):
     settings.namespace = "copyns"
     elsewhere = os.path.join(pack, "assets/copyns/textures")
     bpy.ops.combinedassault.export()
-    with open(T.pack_paths(scene)[0], encoding="utf-8") as source:
-        copy = json.load(source)
+    copy, _ = T.ca_validate.read_container(T.pack_paths(scene)[0])
     check("%s saved elsewhere keeps the pack textures" % model, images(copy) == images(original),
           "%s -> %s" % (images(original), images(copy)))
     check("%s saved elsewhere makes no texture folder" % model, not os.path.exists(elsewhere), elsewhere)
@@ -397,9 +393,8 @@ def roundtrip(model):
 
 def validator_refuses():
     """Hand-broken copies of a good model: each caught."""
-    good = os.path.join(PACK, "assets/combinedassault/models/ground/humvee/humvee.gltf")
-    with open(good, encoding="utf-8") as source:
-        base = json.load(source)
+    good = os.path.join(PACK, "assets/combinedassault/models/ground/humvee/humvee.glb")
+    base, binary = T.ca_validate.read_container(good)
     errors, _, _ = T.ca_validate.validate(good)
     check("validator passes the shipped humvee", not errors, str(errors))
     folder = os.path.dirname(good)
@@ -407,10 +402,9 @@ def validator_refuses():
     def broken(what, edit, expect):
         gltf = json.loads(json.dumps(base))
         edit(gltf)
-        path = os.path.join(folder, "_validator_case.gltf")
+        path = os.path.join(folder, "_validator_case.glb")
         try:
-            with open(path, "w", encoding="utf-8") as out:
-                json.dump(gltf, out)
+            T.ca_validate.write_glb(path, gltf, binary)
             errors, _, _ = T.ca_validate.validate(path)
         finally:
             os.remove(path)
@@ -464,9 +458,8 @@ def texture_setup(work):
     settings.model_path = "test/skin/skin"
     result = bpy.ops.combinedassault.export()
     check("textured export finished", result == {"FINISHED"}, str(result))
-    gltf_path = os.path.join(pack, "assets/combinedassault/models/test/skin/skin.gltf")
-    with open(gltf_path, encoding="utf-8") as source:
-        gltf = json.load(source)
+    gltf_path = os.path.join(pack, "assets/combinedassault/models/test/skin/skin.glb")
+    gltf, _ = T.ca_validate.read_container(gltf_path)
     written = gltf["materials"][0]
     check("cut-out written as MASK 0.5", written.get("alphaMode") == "MASK" and written.get("alphaCutoff", 0.5) == 0.5,
           str(written))
@@ -501,8 +494,7 @@ def player_reference():
     settings.pack_root = pack
     settings.model_path = "test/ref/ref"
     bpy.ops.combinedassault.export()
-    with open(os.path.join(pack, "assets/combinedassault/models/test/ref/ref.gltf"), encoding="utf-8") as source:
-        names = [n["name"] for n in json.load(source)["nodes"]]
+    names = [n["name"] for n in T.ca_validate.read_container(os.path.join(pack, "assets/combinedassault/models/test/ref/ref.glb"))[0]["nodes"]]
     check("reference never exported", not any("player" in n for n in names), str(names))
     shutil.rmtree(pack)
 
@@ -552,8 +544,7 @@ def passenger_cameras():
     settings.pack_root = pack
     settings.model_path = "test/cam/cam"
     bpy.ops.combinedassault.export()
-    with open(os.path.join(pack, "assets/combinedassault/models/test/cam/cam.gltf"), encoding="utf-8") as source:
-        written = json.load(source)
+    written, _ = T.ca_validate.read_container(os.path.join(pack, "assets/combinedassault/models/test/cam/cam.glb"))
     check("cameras never exported", "cameras" not in written and not any(n["name"].startswith("view_") for n in written["nodes"]))
     shutil.rmtree(pack)
 
@@ -678,8 +669,7 @@ def authoring(work):
     result = bpy.ops.combinedassault.export()
     check("authoring export finished", result == {"FINISHED"}, str(result))
     path = T.pack_paths(scene)[0]
-    with open(path, encoding="utf-8") as source:
-        gltf = json.load(source)
+    gltf, _ = T.ca_validate.read_container(path)
     nodes = {n["name"]: n for n in gltf["nodes"]}
     meta = lambda name: nodes[name].get("extras", {}).get(T.META)
     check("rotor unit + spin exported", meta("rotor_fl") == {"system": "rotor", "unit": "FL", "spin": "cw"},
@@ -720,18 +710,16 @@ def material_tags():
 
 
 def validator_refuses_new():
-    good = os.path.join(PACK, "assets/combinedassault/models/ground/humvee/humvee.gltf")
-    with open(good, encoding="utf-8") as source:
-        base = json.load(source)
+    good = os.path.join(PACK, "assets/combinedassault/models/ground/humvee/humvee.glb")
+    base, binary = T.ca_validate.read_container(good)
     folder = os.path.dirname(good)
 
     def broken(what, edit, expect):
         gltf = json.loads(json.dumps(base))
         edit(gltf)
-        path = os.path.join(folder, "_validator_case.gltf")
+        path = os.path.join(folder, "_validator_case.glb")
         try:
-            with open(path, "w", encoding="utf-8") as out:
-                json.dump(gltf, out)
+            T.ca_validate.write_glb(path, gltf, binary)
             errors, _, _ = T.ca_validate.validate(path)
         finally:
             os.remove(path)

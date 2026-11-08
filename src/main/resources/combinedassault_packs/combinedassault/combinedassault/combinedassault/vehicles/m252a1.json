@@ -56,7 +56,7 @@
             ]
         }
     },
-    "model": "combinedassault:models/emplacement/m252a1/m252a1.gltf",
+    "model": "combinedassault:models/emplacement/m252a1/m252a1.glb",
     "display": {
         "icon": "combinedassault:textures/slot/m252a1.png",
         "controller": "combinedassault:m252a1_controller",

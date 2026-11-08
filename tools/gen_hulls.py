@@ -36,6 +36,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import convert_pack  # noqa: E402
+import glb  # noqa: E402
 import mqo  # noqa: E402
 
 PACK = "src/main/resources/combinedassault_packs/combinedassault"
@@ -60,10 +61,12 @@ def asset(ns_path, kind="assets"):
 
 def gltf_nodes(model_rl):
     path = asset(model_rl)
-    doc = read_json(path)
+    doc, chunk = glb.read(path)
     buffers = []
     for b in doc["buffers"]:
-        if "uri" in b:
+        if not buffers and chunk is not None and "uri" not in b and "resourceLocation" not in b.get("extras", {}):
+            buffers.append(chunk)
+        elif "uri" in b:
             buffers.append(open(os.path.join(os.path.dirname(path), b["uri"]), "rb").read())
         else:
             buffers.append(open(asset(b["extras"]["resourceLocation"]), "rb").read())

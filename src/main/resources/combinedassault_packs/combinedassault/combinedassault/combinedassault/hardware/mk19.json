@@ -1,5 +1,5 @@
 {
-  "model": "combinedassault:models/weapon/mk19/mk19.gltf",
+  "model": "combinedassault:models/weapon/mk19/mk19.glb",
   "weapons": ["combinedassault:mk19"],
   "fits": ["pintle", "tripod"],
   "install_ticks": 120,

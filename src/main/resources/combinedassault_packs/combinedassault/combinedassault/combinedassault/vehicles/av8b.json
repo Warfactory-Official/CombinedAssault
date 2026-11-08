@@ -182,7 +182,7 @@
             }
         }
     ],
-    "model": "combinedassault:models/aircraft/av8b/av8b.gltf",
+    "model": "combinedassault:models/aircraft/av8b/av8b.glb",
     "display": {
         "icon": "combinedassault:textures/slot/av8b.png",
         "controller": "combinedassault:av8b_controller",

@@ -194,7 +194,7 @@
             "is_seat": true
         }
     ],
-    "model": "combinedassault:models/aircraft/w3/w3.gltf",
+    "model": "combinedassault:models/aircraft/w3/w3.glb",
     "display": {
         "icon": "combinedassault:textures/slot/w3.png",
         "controller": "combinedassault:w3_controller",

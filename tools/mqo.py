@@ -5,9 +5,30 @@ normals smoothed per triangle within `facet`. Part = `$name` object + following 
 """
 import json
 import math
+import os
 import re
 
 import numpy as np
+
+import glb
+
+def _load(gltf_path, bin_path):
+    """(document, buffer 0 bytes): a .glb carries its buffer; bin_path ignored."""
+    if glb.is_glb(gltf_path):
+        doc, chunk = glb.read(gltf_path)
+        return doc, bytearray(chunk or b"")
+    with open(gltf_path) as f:
+        doc = json.load(f)
+    with open(bin_path, "rb") as f:
+        return doc, bytearray(f.read())
+
+
+def _store(gltf_path, bin_path, doc, blob):
+    if glb.is_glb(gltf_path):
+        glb.write(gltf_path, doc, bytes(blob))
+        return
+    _store(gltf_path, bin_path, doc, blob)
+
 
 _OBJECT = re.compile(r'^Object "([^"]*)" \{(.*?)^\}', re.S | re.M)
 _VERTS = re.compile(r'vertex \d+ \{(.*?)\}', re.S)
@@ -203,10 +224,7 @@ class GltfWriter:
         self.doc["buffers"][0]["byteLength"] = len(self.blob)
         if extras:
             self.doc["asset"]["extras"] = extras
-        with open(bin_path, "wb") as f:
-            f.write(self.blob)
-        with open(gltf_path, "w") as f:
-            json.dump(self.doc, f, separators=(",", ":"))
+        _store(gltf_path, bin_path, self.doc, self.blob)
 
 
 def append_hit_nodes(gltf_path, bin_path, pieces):
@@ -214,8 +232,7 @@ def append_hit_nodes(gltf_path, bin_path, pieces):
     Faces: convex index loops, fanned. POSITION + indices only."""
     for name, _, _ in pieces:
         assert name.startswith("hit_"), name
-    with open(gltf_path) as f:
-        doc = json.load(f)
+    doc = _load(gltf_path, bin_path)[0]
     root = doc["nodes"][doc["scenes"][doc.get("scene", 0)]["nodes"][0]]
     assert not any(k in root for k in ("translation", "rotation", "scale", "matrix")), "root moved"
     append_nodes(gltf_path, bin_path, [{"name": name, "mesh": (points, faces)} for name, points, faces in pieces])
@@ -225,10 +242,7 @@ def append_nodes(gltf_path, bin_path, nodes):
     """Append nodes: dicts {name, parent: node name (absent = scene root), local translation, rotation (xyzw),
     scale, mesh: (points, faces) in node space}. Faces: convex index loops, fanned. POSITION + indices only.
     A node name already present => AssertionError."""
-    with open(gltf_path) as f:
-        doc = json.load(f)
-    with open(bin_path, "rb") as f:
-        blob = bytearray(f.read())
+    doc, blob = _load(gltf_path, bin_path)
     root = doc["scenes"][doc.get("scene", 0)]["nodes"][0]
     names = [n.get("name") for n in doc["nodes"]]
 
@@ -264,10 +278,7 @@ def append_nodes(gltf_path, bin_path, nodes):
         names.append(spec["name"])
         doc["nodes"][parent].setdefault("children", []).append(len(doc["nodes"]) - 1)
     doc["buffers"][0]["byteLength"] = len(blob)
-    with open(bin_path, "wb") as f:
-        f.write(blob)
-    with open(gltf_path, "w") as f:
-        json.dump(doc, f, separators=(",", ":"))
+    _store(gltf_path, bin_path, doc, blob)
 
 
 def hinge_keys(axis, degrees, seconds):
@@ -331,10 +342,7 @@ def append_clip(gltf_path, bin_path, name, channels, absolute=False):
     """Append animation `name`: channels [(node name, path, times, values)], LINEAR. A rotation channel's node must
     rest at identity (the clip replaces it) unless `absolute` (values already include the rest). Existing clip `name`
     => AssertionError."""
-    with open(gltf_path) as f:
-        doc = json.load(f)
-    with open(bin_path, "rb") as f:
-        blob = bytearray(f.read())
+    doc, blob = _load(gltf_path, bin_path)
     assert name not in [a.get("name") for a in doc.get("animations", [])], f"{gltf_path}: clip {name} exists"
     names = [n.get("name") for n in doc["nodes"]]
 
@@ -361,21 +369,14 @@ def append_clip(gltf_path, bin_path, name, channels, absolute=False):
         targets.append({"sampler": len(samplers) - 1, "target": {"node": index, "path": path}})
     doc.setdefault("animations", []).append({"name": name, "channels": targets, "samplers": samplers})
     doc["buffers"][0]["byteLength"] = len(blob)
-    with open(bin_path, "wb") as f:
-        f.write(blob)
-    with open(gltf_path, "w") as f:
-        json.dump(doc, f, separators=(",", ":"))
+    _store(gltf_path, bin_path, doc, blob)
 
 
 def read_markers(gltf_path, bin_path, prefix="socket_"):
     """`prefix` nodes of an existing glTF as append_nodes specs, so a restage can put them back; [] if none."""
-    import os
     if not os.path.exists(gltf_path):
         return []
-    with open(gltf_path) as f:
-        doc = json.load(f)
-    with open(bin_path, "rb") as f:
-        blob = f.read()
+    doc, blob = _load(gltf_path, bin_path)
     parent_of = {c: i for i, n in enumerate(doc["nodes"]) for c in n.get("children", [])}
     root = doc["scenes"][doc.get("scene", 0)]["nodes"][0]
 

@@ -123,7 +123,7 @@
             "flight_mode": "stabilized"
         }
     ],
-    "model": "combinedassault:models/aircraft/mavic/mavic.gltf",
+    "model": "combinedassault:models/aircraft/mavic/mavic.glb",
     "display": {
         "icon": "combinedassault:textures/slot/quadcopter.png",
         "controller": "combinedassault:quadcopter_controller",

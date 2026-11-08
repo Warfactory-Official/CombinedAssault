@@ -120,7 +120,7 @@
             "protect_passenger": false
         }
     ],
-    "model": "combinedassault:models/ships/riverine/riverine.gltf",
+    "model": "combinedassault:models/ships/riverine/riverine.glb",
     "display": {
         "cabin_muffle": 0.2,
         "icon": "combinedassault:textures/slot/riverine.png",

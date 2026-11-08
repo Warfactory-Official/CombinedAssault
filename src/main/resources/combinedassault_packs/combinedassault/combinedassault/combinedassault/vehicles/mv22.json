@@ -135,7 +135,7 @@
         {"id": "troop_10", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true},
         {"id": "troop_11", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true}
     ],
-    "model": "combinedassault:models/aircraft/mv22/mv22.gltf",
+    "model": "combinedassault:models/aircraft/mv22/mv22.glb",
     "display": {
         "icon": "combinedassault:textures/slot/mv22.png",
         "controller": "combinedassault:mv22_controller",

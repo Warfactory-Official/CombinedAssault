@@ -127,7 +127,7 @@
             "is_seat": true
         }
     ],
-    "model": "combinedassault:models/aircraft/ka52/ka52.gltf",
+    "model": "combinedassault:models/aircraft/ka52/ka52.glb",
     "display": {
         "icon": "combinedassault:textures/slot/ka52.png",
         "controller": "combinedassault:ka52_controller",

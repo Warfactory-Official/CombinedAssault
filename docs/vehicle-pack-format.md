@@ -14,7 +14,7 @@ Every field the mod reads from a pack: unit, default. Defaults from the deserial
 <pack>/combinedassault/<ns>/weapons/<path>.json       weapon def (§5)
 <pack>/combinedassault/<ns>/hardware/<path>.json      hardware kit (§21)
 <pack>/combinedassault/<ns>/decorations/<path>.json   {model, icon} (§6.8)
-<pack>/assets/<ns>/models/**.gltf|.bin|.glb           vehicle glTF: drawn, rigged, collided, hit (§6)
+<pack>/assets/<ns>/models/**.glb|.gltf(+.bin)          vehicle glTF: drawn, rigged, collided, hit (§6); shipped .glb
 <pack>/assets/<ns>/textures/**.png                    model images, slot icons, paint masks, damage tiles
 <pack>/assets/<ns>/animation_controllers/<id>.json
 <pack>/assets/<ns>/scripts/<id>.js
@@ -85,7 +85,7 @@ Every field the mod reads from a pack: unit, default. Defaults from the deserial
 | field | type | default | notes |
 | --- | --- | --- | --- |
 | `max_health` | float | `100` | |
-| `model` | id | *required* | glTF asset, `<ns>:models/…/x.gltf` ([§6](#6-model-display-recipes)) |
+| `model` | id | *required* | glTF asset, `<ns>:models/…/x.glb` ([§6](#6-model-display-recipes)) |
 | `display` | object | — | client half: icon, controller, sounds ([§6.1](#61-display)) |
 | `hitbox` | bool | `true` | `false` => no hit mesh: colliders are the hit surface, default pools only |
 | `center_offset` | Vec3 | `[0,0,0]` | the point the hull rotates about, and the origin of the deck frame; glTF `pivot` socket |
@@ -605,6 +605,8 @@ One glTF per vehicle (`model`): drawn by GemRender, and the only skeleton. Frame
 | `combinedassaultInterface` | role target: part id (frames, part sockets) or entry id (`era`, `slat`, `mount_point`, `hitch`) |
 | `combinedassault` | role parameters; unknown key => load error |
 | `gemrenderHidden` | `true` => not drawn (colliders, sockets, hit modules) |
+
+Container: shipped models are `.glb`: images `extras.resourceLocation` (no `uri`), buffer 0 = BIN chunk (no `uri`, no `extras`). `.gltf` + `.bin` (buffer `extras.resourceLocation`) also loads.
 
 ### 6.1 `display`
 
@@ -1285,7 +1287,7 @@ Unmanned launcher: [§18](#18-air-defence).
 - Part `deploy` (switchable, probe node "Trails": Deploy trails / Stow for towing): clip `deploy` 4 s, trails + stabilisers tow -> ground. Colliders follow the clip: frames `04_REAR_TRAIL_L/R`, `05_FRONT_STABILIZER_L/R` (`follows_clips`, generic parts `trail_l/r`, `stab_l/r`).
 - `towable.stowed_by: deploy` => deployed trails block coupling. `gun.needs_on: deploy` => stowed gun fires nothing (any part: `needs_on` = switchable id that must be on; unknown / non-switchable id => load error).
 - `screens` (vehicle level): `{"<id>": {"layout", "kind"? "gun_computer" | "dash", "part"?, "max_fps"? 20, "units_width"? 192}}` binds the model's `screen_<id>` slot mesh (material `extras.textureSlot: "screen_<id>"`, textured quad, UVs 0..1 across the screen) to a layout. Pose, bone, size, normal = the mesh. Drawn unlit through GemRender direct path (`GemScreens`, after the body). Binding without slot => error log, skipped; `screen_*` slot without binding => warning. `gun_computer`: `part` default = first weapon part. `dash` (any vehicle): subject `dash` = `speed` km/h, `rpm`, `max_rpm` (NaN without transmission), `fuel` 0..1, `gear` (R / N / 1..), `check_engine` / `check_tires` (engine / wheel cell worse than PRISTINE), `handbrake`, `engine_on`; layout `combinedassault:dash`. Layout: `scaling: absolute` + `size: [w, h]` (design size); fitted into the quad, bars where aspect differs. m777: `screen_computer` on `traverse`, layout `combinedassault:gun_computer` (subject `computer`: state STOWED / UNLOADED / LOADING / READY, elevation, azimuth, level-ground range + time of flight, round, load progress, crew, hull pitch / roll, stops).
-- Model: black display case + dead screen + buttons cut from `30_CONTROLS_AND_SIGHTS_mesh`; `screen_computer` quad added to `m777.gltf` / `.bin` directly. warty `build_m777.py` has the cut but not the quad, outputs not regenerated => a regen drops the screen quad.
+- Model: black display case + dead screen + buttons cut from `30_CONTROLS_AND_SIGHTS_mesh`; `screen_computer` quad added to `m777.glb` directly. warty `build_m777.py` has the cut but not the quad, outputs not regenerated => a regen drops the screen quad.
 - Clip `gun.fire` 1.2 s: recoil group (barrel, brake, yoke) slides 1.0 m back along the bore in 0.16 s, 0.04 s hold, 1.0 s run-out (smoothstep).
 - `crew.required`: `gun` gunner, `loader` + `assistant` loaders; `loading: manual` => one loader to load, both => reload * `crew.loaderReloadMultiplier`.
 
@@ -1485,7 +1487,7 @@ Gun = kit def; vehicle part = typed `hardpoint`. Fitted / taken off in the field
 
 ```json
 // combinedassault/<ns>/hardware/m2.json
-{"model": "combinedassault:models/weapon/m2/m2.gltf", "weapons": ["combinedassault:gun_12.7mm"],
+{"model": "combinedassault:models/weapon/m2/m2.glb", "weapons": ["combinedassault:gun_12.7mm"],
  "fits": ["pintle", "tripod"], "install_ticks": 120, "station": {"optical_sight_type": "operator", "zoom_max": 2}}
 
 // vehicle part (type combinedassault:weapon, no weapons)

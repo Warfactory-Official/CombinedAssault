@@ -112,7 +112,7 @@
             }
         }
     ],
-    "model": "combinedassault:models/aircraft/mq9/mq9.gltf",
+    "model": "combinedassault:models/aircraft/mq9/mq9.glb",
     "display": {
         "icon": "combinedassault:textures/slot/mq9.png",
         "controller": "combinedassault:mq9_controller",

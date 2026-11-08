@@ -8,6 +8,7 @@ colliders as hidden mesh nodes, defs under combinedassault/<ns>/. Report on stdo
 every structure pivot the display node misses by > 0.02.
 """
 import base64
+import glb
 import json
 import math
 import os
@@ -79,11 +80,13 @@ def quat(r):
 class Gltf:
     def __init__(self, path, read_asset):
         self.path = path
-        self.doc = json.load(open(path))
+        self.doc, chunk = glb.read(path)
         self.read_asset = read_asset
         self.buffers = []
         for b in self.doc['buffers']:
-            if 'uri' in b and b['uri'].startswith('data:'):
+            if not self.buffers and chunk is not None and 'uri' not in b and 'resourceLocation' not in b.get('extras', {}):
+                self.buffers.append(bytearray(chunk))
+            elif 'uri' in b and b['uri'].startswith('data:'):
                 self.buffers.append(bytearray(base64.b64decode(b['uri'].split(',', 1)[1])))
             elif 'uri' in b:
                 self.buffers.append(bytearray(open(os.path.join(os.path.dirname(path), b['uri']), 'rb').read()))
@@ -255,6 +258,11 @@ class Gltf:
         self.buffers[0] = buf
 
     def save(self, out_path, write_asset):
+        if glb.is_glb(out_path):
+            if len(self.buffers) != 1:
+                raise ValueError('save: a .glb holds one buffer')
+            glb.write(out_path, self.doc, self.buffers[0])
+            return
         for i, b in enumerate(self.doc['buffers']):
             b['byteLength'] = len(self.buffers[i])
             if 'uri' in b and not b['uri'].startswith('data:'):

@@ -51,12 +51,12 @@ public class HumveeMountGameTest {
     private static final ResourceLocation M2 = CombinedAssault.modLocation("gun_12.7mm");
     private static final ResourceLocation KORD = CombinedAssault.modLocation("kord");
     private static final ResourceLocation B32 = ResourceLocation.fromNamespaceAndPath("wflib", "12.7x108/ball");
-    /** Vehicle frame: {mk19,m2}.gltf socket_bolt_0 tip on the roof mount. */
+    /** Vehicle frame: {mk19,m2}.glb socket_bolt_0 tip on the roof mount. */
     private static final Vec3 MK19_MUZZLE = new Vec3(0, 2.4552, 1.31462);
     private static final Vec3 M2_MUZZLE = new Vec3(0, 2.3904, 1.84415);
-    /** kord.gltf socket_bolt_0 tip: M2's + (1.25459 - 1.06205) barrel length. */
+    /** kord.glb socket_bolt_0 tip: M2's + (1.25459 - 1.06205) barrel length. */
     private static final Vec3 KORD_MUZZLE = new Vec3(0, 2.3904, 2.03673);
-    /** humvee.gltf roof_mount: the yaw axis. */
+    /** humvee.glb roof_mount: the yaw axis. */
     private static final Vec3 YAW_AXIS = new Vec3(0, 0, -0.0162);
     private static final double EPS = 1e-3;
 
@@ -117,7 +117,7 @@ public class HumveeMountGameTest {
         mk19.getVehicle().discard();
         m2.getVehicle().discard();
         if (!same) {
-            helper.fail("humvee_turret.gltf station differs or unread: seat " + seat + ", view " + view + ", exit " + exit);
+            helper.fail("humvee_turret.glb station differs or unread: seat " + seat + ", view " + view + ", exit " + exit);
             return;
         }
         helper.succeed();

@@ -204,7 +204,7 @@
             "sweep_end": 2.6
         }
     ],
-    "model": "combinedassault:models/aircraft/tornado/tornado.gltf",
+    "model": "combinedassault:models/aircraft/tornado/tornado.glb",
     "display": {
         "icon": "combinedassault:textures/slot/tornado.png",
         "controller": "combinedassault:tornado_controller",

@@ -175,7 +175,7 @@
             "is_seat": false
         }
     ],
-    "model": "combinedassault:models/aircraft/su33/su33.gltf",
+    "model": "combinedassault:models/aircraft/su33/su33.glb",
     "display": {
         "icon": "combinedassault:textures/slot/su33.png",
         "controller": "combinedassault:su33_controller",

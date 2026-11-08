@@ -45,7 +45,24 @@ const DEFAULTS = {
 	system: 'engine', side: 'none',
 	meta_system: 'auto', skip: false, swept: 'auto', health: 0,
 	limit_pitch: false, x_rot_min: -90, x_rot_max: 90, limit_yaw: false, y_rot_min: -180, y_rot_max: 180,
+	hidden: false, follows_clips: false, unit: '', spin: 'none', road_wheel: false,
+	light_kind: 'head', light_color: '', light_range: 0, light_intensity: 0, light_inner: 0, light_outer: 0,
+	light_shadow: true, light_cookie: '',
 };
+const LIGHT_KINDS = {head: 'Headlight (driver toggles)', search: 'Searchlight (other crew toggle)'};
+// VehicleLight.Kind defaults: color, range (blocks), inner / outer half angle (deg).
+const LIGHT_KIND_DEFAULTS = {head: {color: 0xFFF1D8, range: 40, inner: 12, outer: 32}, search: {color: 0xEEF4FF, range: 96, inner: 2.5, outer: 6}};
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+/** Light socket keys: kind always, the rest only when set (0 / empty / on = the kind's default). */
+function lightMeta(s) {
+	const meta = {kind: s.light_kind};
+	if (HEX_COLOR.test(s.light_color)) meta.color = s.light_color;
+	for (const key of ['range', 'intensity', 'inner', 'outer']) if (s['light_' + key] > 0) meta[key] = s['light_' + key];
+	if (!s.light_shadow) meta.shadow = false;
+	if (s.light_cookie) meta.cookie = s.light_cookie;
+	return meta;
+}
 
 function settingsOf(props) {
 	return Object.assign({}, DEFAULTS, props || {});
@@ -59,7 +76,7 @@ function nodeExtras(props) {
 	const meta = {};
 	if (role !== 'none') extras[ROLE] = role === 'socket' ? s.field : role;
 	if (role === 'part' || role === 'pitch' || (role === 'socket' && s.interface)) extras[INTERFACE] = s.interface;
-	if (SHAPES.includes(role) || role === 'socket') extras[HIDDEN] = true;
+	if (SHAPES.includes(role) || role === 'socket' || s.hidden) extras[HIDDEN] = true;
 	if (role === 'collider') {
 		if (s.main) meta.main = true;
 		if (s.deck) meta.deck = true;
@@ -70,13 +87,18 @@ function nodeExtras(props) {
 		if (s.locked) extras.genHulls = {locked: true};
 	} else if (role === 'socket') {
 		if (s.index >= 0) meta.index = s.index;
+		if (s.field === 'light') Object.assign(meta, lightMeta(s));
 	} else {
 		if (role === 'hit') meta.system = s.system;
 		else if (s.meta_system !== 'auto') meta.system = s.meta_system;
 		if (s.side !== 'none') meta.side = s.side;
 		if (s.skip) meta.skip = true;
 		if (s.swept !== 'auto') meta.swept = s.swept === 'on';
+		if (s.unit) meta.unit = s.unit;
+		if (s.spin !== 'none') meta.spin = s.spin;
 		if (s.health > 0) meta.health = s.health;
+		if (role === 'none' && s.road_wheel) meta.road_wheel = true;
+		if (FRAMES.includes(role) && s.follows_clips) meta.follows_clips = true;
 		if ((role === 'part' || role === 'pitch') && s.limit_pitch) {
 			meta.x_rot_min = s.x_rot_min;
 			meta.x_rot_max = s.x_rot_max;
@@ -92,11 +114,12 @@ function nodeExtras(props) {
 
 // Meta keys the panel writes; every other `combinedassault` key (light kind, color, ...) passes through.
 const OWNED_META = ['main', 'deck', 'solid', 'world', 'name', 'hit', 'index', 'system', 'side', 'skip', 'swept', 'health',
-	'x_rot_min', 'x_rot_max', 'y_rot_min', 'y_rot_max'];
+	'x_rot_min', 'x_rot_max', 'y_rot_min', 'y_rot_max', 'unit', 'spin', 'road_wheel', 'follows_clips',
+	'kind', 'color', 'range', 'intensity', 'inner', 'outer', 'shadow', 'cookie'];
 // Explicit default in a source file: kept verbatim while the panel leaves it at that default.
 const META_DEFAULTS = {
 	collider: {main: false, deck: false, solid: true, world: true, hit: false},
-	surface: {skip: false, health: 0},
+	surface: {skip: false, health: 0, road_wheel: false, follows_clips: false},
 };
 
 /** Node extras -> panel settings (non-default keys only). Unknown role => throws. */
@@ -105,7 +128,10 @@ function splitExtras(extras) {
 	const m = e[META] || {};
 	const s = {};
 	const role = e[ROLE];
-	if (role === undefined) s.role = 'none';
+	if (role === undefined) {
+		s.role = 'none';
+		if (e[HIDDEN]) s.hidden = true;
+	}
 	else if (FRAMES.includes(role) || SHAPES.includes(role)) s.role = role;
 	else if (SOCKET_FIELDS.includes(role)) {
 		s.role = 'socket';
@@ -118,12 +144,23 @@ function splitExtras(extras) {
 		if (e.genHulls && e.genHulls.locked) s.locked = true;
 	} else if (s.role === 'socket') {
 		if (typeof m.index === 'number') s.index = m.index;
+		if (s.field === 'light') {
+			if (m.kind) s.light_kind = m.kind;
+			if (m.color) s.light_color = m.color;
+			for (const key of ['range', 'intensity', 'inner', 'outer']) if (m[key]) s['light_' + key] = m[key];
+			if (m.shadow === false) s.light_shadow = false;
+			if (m.cookie) s.light_cookie = m.cookie;
+		}
 	} else {
 		if (m.system !== undefined) s[s.role === 'hit' ? 'system' : 'meta_system'] = m.system;
 		if (m.side) s.side = m.side;
 		if (m.skip) s.skip = true;
 		if (m.swept !== undefined) s.swept = m.swept ? 'on' : 'off';
+		if (m.unit) s.unit = m.unit;
+		if (m.spin) s.spin = m.spin;
 		if (m.health) s.health = m.health;
+		if (m.road_wheel) s.road_wheel = true;
+		if (m.follows_clips) s.follows_clips = true;
 		if ('x_rot_min' in m || 'x_rot_max' in m) Object.assign(s, {limit_pitch: true, x_rot_min: m.x_rot_min, x_rot_max: m.x_rot_max});
 		if ('y_rot_min' in m || 'y_rot_max' in m) Object.assign(s, {limit_yaw: true, y_rot_min: m.y_rot_min, y_rot_max: m.y_rot_max});
 	}
@@ -146,7 +183,7 @@ function mergeExtras(raw, props) {
 	delete out[ROLE];
 	delete out[INTERFACE];
 	delete out[META];
-	if (role !== 'none') delete out[HIDDEN];
+	delete out[HIDDEN];
 	if (out.genHulls) {
 		delete out.genHulls.locked;
 		if (!Object.keys(out.genHulls).length) delete out.genHulls;
@@ -185,7 +222,7 @@ function slashes(path) {
 }
 
 function cleanModelPath(model) {
-	return slashes(model.trim()).replace(/^\/+/, '').replace(/\.gltf$/i, '');
+	return slashes(model.trim()).replace(/^\/+/, '').replace(/\.(glb|gltf)$/i, '');
 }
 
 function packPaths(packRoot, ns, model) {
@@ -194,9 +231,7 @@ function packPaths(packRoot, ns, model) {
 	const assets = `${root}/assets/${ns}`;
 	const dir = modelPath.includes('/') ? modelPath.slice(0, modelPath.lastIndexOf('/')) : '';
 	return {
-		gltf: `${assets}/models/${modelPath}.gltf`,
-		bin: `${assets}/models/${modelPath}.bin`,
-		binLocation: `${ns}:models/${modelPath}.bin`,
+		glb: `${assets}/models/${modelPath}.glb`,
 		textureDir: `${assets}/textures${dir ? '/' + dir : ''}`,
 		textureLocation: `${ns}:textures${dir ? '/' + dir : ''}`,
 	};
@@ -219,6 +254,42 @@ function pngName(name) {
 
 function decodeDataUri(uri) {
 	return Buffer.from(uri.slice(uri.indexOf(',') + 1), 'base64');
+}
+
+const GLB_MAGIC = 0x46546C67;
+const CHUNK_JSON = 0x4E4F534A;
+const CHUNK_BIN = 0x004E4942;
+
+/** .glb -> {gltf, bin (BIN chunk or null)}; a .gltf (JSON text) -> {gltf, bin: null}. */
+function readContainer(data) {
+	const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
+	if (buf.length < 12 || buf.readUInt32LE(0) !== GLB_MAGIC) return {gltf: JSON.parse(buf.toString('utf8')), bin: null};
+	const jsonLength = buf.readUInt32LE(12);
+	if (buf.readUInt32LE(16) !== CHUNK_JSON) throw new Error('GLB: first chunk is not JSON');
+	const gltf = JSON.parse(buf.toString('utf8', 20, 20 + jsonLength));
+	const at = 20 + jsonLength;
+	const bin = at + 8 <= buf.length && buf.readUInt32LE(at + 4) === CHUNK_BIN
+		? buf.subarray(at + 8, at + 8 + buf.readUInt32LE(at)) : null;
+	return {gltf, bin};
+}
+
+/** glTF JSON + BIN chunk -> .glb bytes; buffer 0 has neither uri nor extras. */
+function writeGlb(gltf, bin) {
+	if (gltf.buffers) gltf.buffers[0] = {byteLength: bin.length};
+	const text = Buffer.from(JSON.stringify(gltf), 'utf8');
+	const json = Buffer.concat([text, Buffer.alloc((4 - text.length % 4) % 4, 0x20)]);
+	const binary = Buffer.concat([bin, Buffer.alloc((4 - bin.length % 4) % 4)]);
+	const head = Buffer.alloc(20);
+	head.writeUInt32LE(GLB_MAGIC, 0);
+	head.writeUInt32LE(2, 4);
+	head.writeUInt32LE(12 + 8 + json.length + (gltf.buffers ? 8 + binary.length : 0), 8);
+	head.writeUInt32LE(json.length, 12);
+	head.writeUInt32LE(CHUNK_JSON, 16);
+	if (!gltf.buffers) return Buffer.concat([head, json]);
+	const chunk = Buffer.alloc(8);
+	chunk.writeUInt32LE(binary.length, 0);
+	chunk.writeUInt32LE(CHUNK_BIN, 4);
+	return Buffer.concat([head, json, chunk, binary]);
 }
 
 const UUID = 'combinedassaultUuid';
@@ -367,7 +438,7 @@ function finishGltf(gltf, opts) {
 		const uri = buffers[0].uri || '';
 		if (!uri.startsWith('data:')) throw new Error('glTF buffer is not embedded');
 		bin = decodeDataUri(uri);
-		gltf.buffers = [{byteLength: bin.length, extras: {resourceLocation: paths.binLocation}}];
+		gltf.buffers = [{byteLength: bin.length}];
 	}
 
 	const state = {gltf, bin, materials: new Map(), kept: new Set()};
@@ -971,6 +1042,145 @@ function planImport(gltf, buffers, orders) {
 	return {entries, materials: [...materials.values()], clips, warnings};
 }
 
+// ---------------------------------------------------------------- authoring helpers (operators of the Blender add-on)
+
+/** Mesh socket starters, px, Blockbench frame (nose +Z): era / slat 1 block quad facing the nose; lens 0.1 block quad
+ * facing the eye; track = side-view loop, path = outline. */
+const SOCKET_SHAPES = {
+	era: {points: [[-8, -8, 0], [8, -8, 0], [8, 8, 0], [-8, 8, 0]], loops: [[0, 1, 2, 3]]},
+	slat: {points: [[-8, -8, 0], [8, -8, 0], [8, 8, 0], [-8, 8, 0]], loops: [[0, 1, 2, 3]]},
+	sight_lens: {points: [[0.8, -0.8, 0], [-0.8, -0.8, 0], [-0.8, 0.8, 0], [0.8, 0.8, 0]], loops: [[0, 1, 2, 3]]},
+	track: {points: [[0, 3.2, 32], [0, 9.6, 36.8], [0, 16, 32], [0, 16, -32], [0, 9.6, -36.8], [0, 3.2, -32]], loops: [[0, 1, 2, 3, 4, 5]]},
+};
+
+/** Node scale a scale-valued socket stores for `value` (glTF axes): length on Z, radius / size on all. */
+function scaleForValue(field, value) {
+	if (['bolt', 'eject', 'station'].includes(field)) return [1, 1, value];
+	return [value, value, value];
+}
+
+/** Inverse of scaleForValue; 1 = unset. */
+function valueOfScale(field, scale) {
+	if (!scale) return 1;
+	return ['bolt', 'eject', 'station'].includes(field) ? scale[2] : (scale[0] + scale[1] + scale[2]) / 3;
+}
+
+/** hull_into: convex hull of points (welded), coplanar triangles merged. {points, loops}; loops CCW from outside. */
+function convexHull(input) {
+	const welded = weld(input, HULL_EPS).points;
+	const n = welded.length;
+	const length = v => Math.hypot(v[0], v[1], v[2]);
+	const normal = (a, b, c) => cross(sub(welded[b], welded[a]), sub(welded[c], welded[a]));
+	if (n < 4) throw new Error('hull needs at least 4 distinct points');
+	const i0 = welded.reduce((best, p, i) => p[0] < welded[best][0] ? i : best, 0);
+	const far = (score, skip) => welded.reduce((best, p, i) => skip.includes(i) ? best : (score(p) > score(welded[best]) || skip.includes(best) ? i : best), skip.includes(0) ? 1 : 0);
+	const i1 = far(p => length(sub(p, welded[i0])), [i0]);
+	const i2 = far(p => length(cross(sub(welded[i1], welded[i0]), sub(p, welded[i0]))), [i0, i1]);
+	const i3 = far(p => Math.abs(dot(normal(i0, i1, i2), sub(p, welded[i0]))), [i0, i1, i2]);
+	if (Math.abs(dot(normal(i0, i1, i2), sub(welded[i3], welded[i0]))) < HULL_EPS * 1e-2) throw new Error('hull points are flat');
+	const centre = [0, 1, 2].map(j => (welded[i0][j] + welded[i1][j] + welded[i2][j] + welded[i3][j]) / 4);
+	const outward = (a, b, c) => dot(normal(a, b, c), sub(centre, welded[a])) > 0 ? [a, c, b] : [a, b, c];
+	let faces = [outward(i0, i1, i2), outward(i0, i1, i3), outward(i0, i2, i3), outward(i1, i2, i3)];
+	for (let p = 0; p < n; p++) {
+		if ([i0, i1, i2, i3].includes(p)) continue;
+		const visible = faces.filter(f => {
+			const m = normal(f[0], f[1], f[2]);
+			return dot(m, sub(welded[p], welded[f[0]])) / (length(m) || 1) > HULL_EPS;
+		});
+		if (!visible.length) continue;
+		const edges = new Set(visible.flatMap(f => [[f[0], f[1]], [f[1], f[2]], [f[2], f[0]]].map(e => e.join('>'))));
+		const kept = faces.filter(f => !visible.includes(f));
+		for (const key of edges) {
+			const [a, b] = key.split('>').map(Number);
+			if (!edges.has(`${b}>${a}`)) kept.push([a, b, p]);
+		}
+		faces = kept;
+	}
+	const used = [...new Set(faces.flat())];
+	const index = new Map(used.map((v, i) => [v, i]));
+	const points = used.map(v => welded[v]);
+	const tris = faces.flat().map(v => index.get(v));
+	return {points, loops: polygonLoops(points, planeGroups(points, tris))};
+}
+
+/** gen_hulls `cylinder`: circumscribed prism round points, axis = thinnest extent. {points, loops}. */
+function prismAround(input, sides) {
+	const lo = [0, 1, 2].map(a => Math.min(...input.map(p => p[a])));
+	const hi = [0, 1, 2].map(a => Math.max(...input.map(p => p[a])));
+	const axis = [0, 1, 2].reduce((best, a) => hi[a] - lo[a] < hi[best] - lo[best] ? a : best, 0);
+	const u = (axis + 1) % 3;
+	const w = (axis + 2) % 3;
+	const mid = [0, 1, 2].map(a => (lo[a] + hi[a]) / 2);
+	const radius = Math.max(...input.map(p => Math.hypot(p[u] - mid[u], p[w] - mid[w]))) / Math.cos(Math.PI / sides);
+	const points = [];
+	for (const end of [lo[axis], hi[axis]]) {
+		for (let k = 0; k < sides; k++) {
+			const v = [0, 0, 0];
+			v[axis] = end;
+			v[u] = mid[u] + radius * Math.cos(2 * Math.PI * k / sides);
+			v[w] = mid[w] + radius * Math.sin(2 * Math.PI * k / sides);
+			points.push(v);
+		}
+	}
+	const ring = [...Array(sides).keys()];
+	const loops = [ring.slice().reverse(), ring.map(k => sides + k)]
+		.concat(ring.map(k => [k, (k + 1) % sides, sides + (k + 1) % sides, sides + k]));
+	return {points, loops};
+}
+
+/** Group id per polygon (arrays of 3D points): polygons on one plane share an id. */
+function coplanarGroups(polygons) {
+	const planes = [];
+	return polygons.map(poly => {
+		let n = [0, 0, 0];
+		for (let k = 0; k < poly.length; k++) {
+			const a = poly[k];
+			const b = poly[(k + 1) % poly.length];
+			n = [n[0] + (a[1] - b[1]) * (a[2] + b[2]), n[1] + (a[2] - b[2]) * (a[0] + b[0]), n[2] + (a[0] - b[0]) * (a[1] + b[1])];
+		}
+		const length = Math.hypot(...n);
+		if (length < 1e-9) return -1;
+		n = n.map(x => x / length);
+		const d = dot(n, poly[0]);
+		let id = planes.findIndex(q => dot(q.n, n) > 0.99985 && Math.abs(q.d - d) < HULL_EPS);
+		if (id < 0) id = planes.push({n, d}) - 1;
+		return id;
+	});
+}
+
+const ARMOR = /armou?r[_ ]?(\d+(?:\.\d+)?)/i;
+const DECOR = /(?:^|[_ .])decor(?:$|[_ .])/i;
+const SURFACE_WORDS = {rubber: 'rubber', glass: 'glass', soft: 'soft|fabric|cloth|canvas'};
+const SURFACE = Object.fromEntries(Object.entries(SURFACE_WORDS)
+	.map(([key, words]) => [key, new RegExp(`(?:^|[_ .])(?:${words})(?:$|[_ .])`, 'gi')]));
+
+function stripTags(name) {
+	let out = name.replace(new RegExp(ARMOR.source, 'gi'), '');
+	for (const pattern of [new RegExp(DECOR.source, 'gi'), ...Object.values(SURFACE)]) {
+		out = out.replace(pattern, '_').replace(pattern, '_');
+	}
+	return out.replace(/_+/g, '_').replace(/^[_ .]+|[_ .]+$/g, '') || 'material';
+}
+
+/** SurfaceMaterial.of: first matching token in declaration order; steel when none. */
+function surfaceOf(name) {
+	return Object.keys(SURFACE).find(key => new RegExp(SURFACE[key].source, 'i').test(name)) || 'steel';
+}
+
+/** `<stem>_decor` or `<stem>[_<surface>][_armor_<mm>]`: the tokens the game reads from a material name. */
+function taggedName(name, armor, surface, decor) {
+	let stem = stripTags(name);
+	if (decor) return stem + '_decor';
+	if (surface !== 'steel') stem += '_' + surface;
+	return stem + (armor > 0 ? `_armor_${armor}` : '');
+}
+
+/** {armor mm, surface, decor} as the game reads the name. */
+function materialTags(name) {
+	const armor = name.match(ARMOR);
+	return {armor: armor ? parseFloat(armor[1]) : 0, surface: surfaceOf(name), decor: DECOR.test(name)};
+}
+
 const VIEW_FIELDS = ['seat', 'view', 'sight', 'camera', 'camera_zoomed'];
 
 /** Preview camera at a socket: eye = origin, looks along `forward` (unit); px. */
@@ -981,7 +1191,8 @@ function viewAngle(eye, forward) {
 const api = {
 	VIEW_FIELDS, viewAngle,
 	SYSTEMS, SOCKET_FIELDS, MESH_FIELDS, UNTARGETED, ROLES, DEFAULTS, CLIP_NAME,
-	nodeExtras, splitExtras, mergeExtras, quantiseCutoff, alphaModeOf, packPaths, resourceLocationOf, finishGltf, prune,
+	SOCKET_SHAPES, scaleForValue, valueOfScale, convexHull, prismAround, coplanarGroups, stripTags, surfaceOf, taggedName, materialTags,
+	lightMeta, readContainer, writeGlb, nodeExtras, splitExtras, mergeExtras, quantiseCutoff, alphaModeOf, packPaths, resourceLocationOf, finishGltf, prune,
 	weld, polygonLoops, planeGroups, hullProblems, materialSource, openEdges, readAccessor, repack, quatToEuler, decompose, planImport,
 };
 if (typeof Plugin === 'undefined') {
@@ -1140,7 +1351,7 @@ function checkNode(node, rig) {
 		}
 		if (kind === 'cube') errors.push('socket must be a locator, a group or (era/slat/track/sight_lens) a mesh');
 		if (SCALED_FIELDS[s.field] && !(node[SCALE_PROP] && node[SCALE_PROP].some(v => v !== 1))) {
-			warnings.push(`${s.field} reads its size from node scale (always 1 from Blockbench): set ${SCALED_FIELDS[s.field]} in the vehicle json`);
+			warnings.push(`${s.field} reads its size (${SCALED_FIELDS[s.field]}) from node scale: set Value in the panel (now 1)`);
 		}
 	}
 	if (role === 'none' && kind === 'locator') warnings.push('locator has no role: it exports as an empty node');
@@ -1268,6 +1479,7 @@ function meshGroups(mesh) {
 		const texture = face.getTexture();
 		const name = texture instanceof Texture ? texture.name : null;
 		const kept = face[FACE_MATERIAL] && table[face[FACE_MATERIAL]] || null;
+		const slotted = !!(kept && kept.source && kept.source.extras && kept.source.extras.textureSlot);
 		const key = `${name}|${face[FACE_MATERIAL] || ''}`;
 		if (!groups.has(key)) groups.set(key, {texture: name, material: kept, positions: [], normals: [], uvs: [], indices: []});
 		const g = groups.get(key);
@@ -1281,6 +1493,7 @@ function meshGroups(mesh) {
 			g.normals.push(...(keep && stored.corners[k] || flat));
 			const uv = face.uv[k] || [0, 0];
 			if (texture instanceof Texture) g.uvs.push(uv[0] / texture.getUVWidth(), uv[1] / texture.getUVHeight());
+			else if (slotted) g.uvs.push(uv[0], uv[1]);
 		}
 		for (let k = 1; k + 1 < order.length; k++) g.indices.push(first, first + k, first + k + 1);
 	}
@@ -1341,7 +1554,7 @@ function exportDialog() {
 			namespace: {label: 'Namespace', type: 'text', value: Project.ca_namespace || 'combinedassault'},
 			model_path: {label: 'Model path', type: 'text', value: Project.ca_model_path
 				|| 'ground/' + (Project.name || 'untitled').toLowerCase().replace(/[^a-z0-9_.-]+/g, '_'),
-				description: 'Under assets/<namespace>/models/, without .gltf'},
+				description: 'Under assets/<namespace>/models/, without .glb'},
 			info: {type: 'info', text: '1 block = 16 px. Nose toward south (+Z), left side toward east (+X).'},
 		},
 		onConfirm(result) {
@@ -1369,7 +1582,7 @@ function exportDialog() {
 }
 
 async function writePack(packRoot, ns, modelPath, warnings) {
-	const fs = fsModule('fs', {scope: packRoot, message: 'Write the model, its .bin and textures into the pack folder'});
+	const fs = fsModule('fs', {scope: packRoot, message: 'Write the model and textures into the pack folder'});
 	if (!fs) throw new Error('No permission to write into the pack folder');
 	if (!fs.existsSync(packRoot + '/pack.mcmeta')) warnings.push(`${packRoot} has no pack.mcmeta: is it the pack folder?`);
 	const textures = {};
@@ -1377,25 +1590,25 @@ async function writePack(packRoot, ns, modelPath, warnings) {
 	const {gltf, polygons, meshes} = await compileTagged();
 	const out = finishGltf(gltf, {packRoot, namespace: ns, modelPath, textures, polygons, meshes});
 	const mkdir = path => fs.mkdirSync(path.slice(0, path.lastIndexOf('/')), {recursive: true});
-	mkdir(out.paths.gltf);
-	fs.writeFileSync(out.paths.bin, out.bin);
+	mkdir(out.paths.glb);
 	for (const w of out.writes) {
 		mkdir(w.path);
 		fs.writeFileSync(w.path, w.data);
 	}
-	fs.writeFileSync(out.paths.gltf, JSON.stringify(out.gltf));
+	fs.writeFileSync(out.paths.glb, writeGlb(out.gltf, out.bin));
 	const rows = Object.keys(out.locations).map(name => {
 		const written = out.writes.some(w => w.path.endsWith('/' + pngName(name)));
 		return `<li>${escapeHtml(name)} -> ${escapeHtml(out.locations[name])} (${written ? 'written' : 'in place'})</li>`;
 	}).join('');
 	showReport('CombinedAssault: exported', [], warnings,
-		`<p>Wrote ${escapeHtml(out.paths.gltf)}<br>and ${escapeHtml(out.paths.bin)}</p><p>Textures:</p><ul>${rows}</ul>`
+		`<p>Wrote ${escapeHtml(out.paths.glb)}</p><p>Textures:</p><ul>${rows}</ul>`
 		+ `<p>Vehicle json: <code>"model": "${escapeHtml(ns)}:${escapeHtml(modelPath)}"</code>. In game: /reload.</p>`);
 }
 
 // ---------------------------------------------------------------- role panel
 
 const show = (...roles) => r => roles.includes(r.role);
+const isLight = r => r.role === 'socket' && r.field === 'light';
 
 function roleForm() {
 	const systemOptions = Object.fromEntries(SYSTEMS.map(s => [s, s]));
@@ -1437,6 +1650,31 @@ function roleForm() {
 		limit_yaw: {label: 'Limit yaw', type: 'checkbox', condition: show('part'), description: 'y_rot_min/max (degrees)'},
 		y_rot_min: {label: 'y_rot_min', type: 'number', condition: r => r.role === 'part' && r.limit_yaw},
 		y_rot_max: {label: 'y_rot_max', type: 'number', condition: r => r.role === 'part' && r.limit_yaw},
+		hidden: {label: 'Hidden in game', type: 'checkbox', condition: show('none'),
+			description: 'Not drawn (gemrenderHidden); shapes and sockets always'},
+		unit: {label: 'Unit', type: 'text', condition: show('none', 'body', 'part', 'pitch', 'hit', 'hit_surface'),
+			description: 'Pool split by name (FL, R1); inherited; HUD ROTR FL'},
+		spin: {label: 'Spin', type: 'select', condition: show('none', 'body', 'part', 'pitch', 'hit', 'hit_surface'),
+			description: 'Rotor unit turn direction seen from above; inherited; required on rotor units',
+			options: {none: 'Inherit', cw: 'Clockwise', ccw: 'Counter-clockwise'}},
+		road_wheel: {label: 'Road wheel', type: 'checkbox', condition: show('none'),
+			description: 'Rides the nearest track: own spring probe under it, lower run follows'},
+		follows_clips: {label: 'Colliders follow clips', type: 'checkbox', condition: show('body', 'part', 'pitch'),
+			description: 'Colliders and hit nodes under this frame move with the part clip each tick (part must not be rotatable, e.g. generic); else colliders stay at rest pose'},
+		scale_value: {label: 'Value', type: 'number', min: 0, step: 0.01, value: 1,
+			condition: r => r.role === 'socket' && !!SCALED_FIELDS[r.field],
+			description: 'Node scale the game reads as a size (bolt barrel length, eject speed, station round length, propeller radius, cargo bay size)'},
+		light_kind: {label: 'Light kind', type: 'select', condition: isLight, options: LIGHT_KINDS},
+		light_color: {label: 'Colour', type: 'text', condition: isLight, description: '#rrggbb; empty = the kind\'s colour'},
+		light_range: {label: 'Range', type: 'number', min: 0, condition: isLight, description: 'Blocks; 0 = kind default'},
+		light_intensity: {label: 'Intensity', type: 'number', min: 0, condition: isLight,
+			description: 'Irradiance ~1 at sqrt(intensity) blocks; 0 = kind default'},
+		light_inner: {label: 'Inner', type: 'number', min: 0, max: 88.9, condition: isLight,
+			description: 'Full-bright half angle, deg; 0 = kind default'},
+		light_outer: {label: 'Outer', type: 'number', min: 0, max: 88.9, condition: isLight,
+			description: 'Cone half angle, deg (< 89); 0 = kind default'},
+		light_shadow: {label: 'Shadow', type: 'checkbox', condition: isLight},
+		light_cookie: {label: 'Cookie', type: 'text', condition: isLight, description: 'Beam pattern texture, ns:path; empty = none'},
 		meta_system: {label: 'Hit system', type: 'select', condition: show('none', 'body', 'part', 'pitch', 'hit_surface'),
 			description: 'Which system a hit here damages; inherited by everything inside',
 			options: Object.assign({auto: 'Auto (inherited)', none: 'None (surface only)'}, systemOptions)},
@@ -1464,7 +1702,13 @@ function writeSettings(nodes, result) {
 	const groups = nodes.filter(n => n instanceof Group);
 	const elements = nodes.filter(n => !(n instanceof Group));
 	Undo.initEdit({groups, elements});
-	nodes.forEach(n => { n[PROP] = Object.assign({}, value); });
+	nodes.forEach(n => {
+		n[PROP] = Object.assign({}, value);
+		if (n instanceof Locator) {
+			const field = value.role === 'socket' ? value.field || DEFAULTS.field : null;
+			n[SCALE_PROP] = field && SCALED_FIELDS[field] && result.scale_value > 0 ? scaleForValue(field, result.scale_value) : [1, 1, 1];
+		}
+	});
 	Undo.finishEdit('Change CombinedAssault role');
 }
 
@@ -1487,7 +1731,8 @@ function buildPanel() {
 	selectionListener = () => {
 		const node = selectedNodes()[0];
 		if (!node) return;
-		form.setValues(caOf(node));
+		const s = caOf(node);
+		form.setValues(Object.assign({scale_value: node instanceof Locator && SCALED_FIELDS[s.field] ? valueOfScale(s.field, node[SCALE_PROP]) : 1}, s));
 	};
 	Blockbench.on('update_selection', selectionListener);
 }
@@ -1498,30 +1743,6 @@ function insertionGroup() {
 	const node = selectedNodes()[0];
 	if (!node) return Group.all.find(g => roleOf(g) === 'body') || null;
 	return node instanceof Group ? node : node.parent instanceof Group ? node.parent : null;
-}
-
-function addSocketDialog() {
-	new Dialog({
-		id: 'ca_add_socket',
-		title: 'Add socket',
-		form: {
-			field: {label: 'Socket', type: 'select', options: Object.fromEntries(SOCKET_FIELDS.filter(f => !MESH_FIELDS.includes(f)).map(f => [f, f]))},
-			interface: {label: 'Interface', type: 'text', condition: r => !UNTARGETED.includes(r.field),
-				description: 'Part id (seat, view, sight, bolt...) or entry id (mount_point, hitch)'},
-			info: {type: 'info', text: 'Placed at the pivot of the selected group. Move it into place afterwards.'},
-		},
-		onConfirm(result) {
-			const parent = insertionGroup();
-			const origin = parent ? parent.origin.slice() : [0, 0, 0];
-			Undo.initEdit({elements: [], outliner: true});
-			const name = ['socket', result.field, UNTARGETED.includes(result.field) ? '' : result.interface].filter(Boolean).join('_');
-			const locator = new Locator({name, from: origin});
-			locator[PROP] = {role: 'socket', field: result.field, interface: UNTARGETED.includes(result.field) ? '' : result.interface};
-			locator.addTo(parent || undefined).init();
-			locator.select();
-			Undo.finishEdit('Add CombinedAssault socket', {elements: [locator], outliner: true});
-		},
-	}).show();
 }
 
 /** Model-space px position of a node's pivot. */
@@ -1661,14 +1882,378 @@ function addPlayerDialog() {
 	}).show();
 }
 
+// ---------------------------------------------------------------- authoring tools (Blender add-on operators)
+
+/** Model-space px corners of a cube / vertices of a mesh element. */
+function elementPoints(element) {
+	const object = element.mesh;
+	object.updateWorldMatrix(true, false);
+	const local = element instanceof Cube
+		? [0, 1].flatMap(x => [0, 1].flatMap(y => [0, 1].map(z => [
+			(x ? element.to[0] + element.inflate : element.from[0] - element.inflate) - element.origin[0],
+			(y ? element.to[1] + element.inflate : element.from[1] - element.inflate) - element.origin[1],
+			(z ? element.to[2] + element.inflate : element.from[2] - element.inflate) - element.origin[2]])))
+		: Object.values(element.vertices);
+	return local.map(v => {
+		const w = object.localToWorld(new THREE.Vector3(v[0], v[1], v[2]));
+		Project.model_3d.worldToLocal(w);
+		return [w.x, w.y, w.z];
+	});
+}
+
+/** Drawn (untagged) cube / mesh descendants of a group, with the group itself when it is one: model-space px. */
+function drawnPoints(node) {
+	if (!(node instanceof Group)) return exported(node) && roleOf(node) === 'none' ? elementPoints(node) : [];
+	return node.children.flatMap(child => child instanceof Group ? drawnPoints(child)
+		: (child instanceof Cube || child instanceof Mesh) && exported(child) && roleOf(child) === 'none' ? elementPoints(child) : []);
+}
+
+/** Mesh element with `points` (model-space px) as faces `loops`, pivot at their centre. */
+function addMesh(name, points, loops, parent, props, extras) {
+	const origin = [0, 1, 2].map(a => (Math.min(...points.map(p => p[a])) + Math.max(...points.map(p => p[a]))) / 2);
+	const vertices = {};
+	points.forEach((p, i) => { vertices[`v${i}`] = p.map((v, a) => v - origin[a]); });
+	const faces = {};
+	loops.forEach((loop, i) => { faces[`f${i}`] = {vertices: loop.map(v => `v${v}`), texture: false}; });
+	const mesh = new Mesh({name, origin, vertices, faces});
+	mesh[PROP] = props;
+	if (extras) mesh[EXTRAS_PROP] = extras;
+	if (SHAPES.includes(props.role) || props.role === 'socket') mesh.visibility = false;
+	mesh.addTo(parent || undefined).init();
+	return mesh;
+}
+
+function withUndo(label, elements, groups, body) {
+	Undo.initEdit({elements, groups, outliner: true});
+	const made = body();
+	Undo.finishEdit(label, {elements: made.filter(n => !(n instanceof Group)), groups: made.filter(n => n instanceof Group), outliner: true});
+	return made;
+}
+
+function addSocketDialog() {
+	new Dialog({
+		id: 'ca_add_socket',
+		title: 'Add socket',
+		form: {
+			field: {label: 'Socket', type: 'select', options: Object.fromEntries(SOCKET_FIELDS.map(f => [f, f]))},
+			interface: {label: 'Interface', type: 'text', condition: r => !UNTARGETED.includes(r.field),
+				description: 'Part id (seat, view, sight, bolt...) or entry id (mount_point, hitch)'},
+			index: {label: 'Index', type: 'number', value: -1, min: -1, step: 1, description: '-1 = none; n = the n-th of a list (bolts, exhausts)'},
+			info: {type: 'info', text: 'Placed at the pivot of the selected group. Move it into place afterwards. era / slat / track / sight_lens are meshes: a starter quad / loop.'},
+		},
+		onConfirm(result) {
+			const parent = insertionGroup();
+			const origin = parent ? parent.origin.slice() : [0, 0, 0];
+			const targeted = !UNTARGETED.includes(result.field);
+			const name = ['socket', result.field, targeted ? result.interface : '', result.index >= 0 ? String(result.index) : ''].filter(Boolean).join('_');
+			const props = {role: 'socket', field: result.field, interface: targeted ? result.interface : ''};
+			if (result.index >= 0) props.index = result.index;
+			const made = withUndo('Add CombinedAssault socket', [], [], () => {
+				let node;
+				if (MESH_FIELDS.includes(result.field)) {
+					const shape = SOCKET_SHAPES[result.field];
+					node = addMesh(name, shape.points.map(p => p.map((v, a) => v + origin[a])), shape.loops, parent, props);
+				} else {
+					node = new Locator({name, from: origin});
+					node[PROP] = props;
+					node.addTo(parent || undefined).init();
+				}
+				node.select();
+				return [node];
+			});
+			return made;
+		},
+	}).show();
+}
+
+function selectedElements() {
+	return selectedNodes().filter(n => n instanceof Cube || n instanceof Mesh);
+}
+
+/** make_hull: convex hull of the selected cubes / meshes as a collider, in the first one's frame. */
+function makeHull() {
+	const sources = selectedElements();
+	if (!sources.length) return Blockbench.showQuickMessage('Select cubes or meshes first', 2000);
+	const {points, loops} = convexHull(sources.flatMap(elementPoints));
+	withUndo('CombinedAssault convex hull', [], [], () => {
+		const parent = frameOf(sources[0].parent) || sources[0].parent;
+		const mesh = addMesh(sources[0].name + '_hull', points, loops, parent instanceof Group ? parent : undefined, {role: 'collider'});
+		mesh.select();
+		return [mesh];
+	});
+}
+
+/** make_hinge: <name>_mount (the hinge frame, at the pivot of the selection) -> <name> (identity), selection moved into it. */
+function makeHingeDialog() {
+	new Dialog({
+		id: 'ca_make_hinge',
+		title: 'Make hinge',
+		form: {
+			name: {label: 'Node name', type: 'text', value: 'hinge', description: 'The node a part clip or script turns'},
+			part: {label: 'Part id', type: 'text', value: '', description: 'Non-empty: the pivot is that part\'s frame'},
+			info: {type: 'info', text: 'Pivot at the first selected node\'s group pivot. Rotate <name>_mount to aim the hinge axis, then key the clip on <name>.'},
+		},
+		onConfirm(result) {
+			const movers = selectedNodes();
+			if (!movers.length) return Blockbench.showQuickMessage('Select the nodes the hinge turns first', 2000);
+			const parent = movers[0].parent instanceof Group ? movers[0].parent : undefined;
+			const origin = pivotOf(movers[0]);
+			withUndo('CombinedAssault hinge', movers.filter(n => !(n instanceof Group)), movers.filter(n => n instanceof Group), () => {
+				const mount = new Group({name: result.name + '_mount', origin}).addTo(parent).init();
+				const pivot = new Group({name: result.name, origin}).addTo(mount).init();
+				if (result.part) pivot[PROP] = {role: 'part', interface: result.part};
+				movers.forEach(n => n.addTo(pivot));
+				pivot.select();
+				return [mount, pivot, ...movers];
+			});
+		},
+	}).show();
+}
+
+/** merge_coplanar: faces of the selected collider meshes on one plane get one face tag (= one hull face on export). */
+function mergeCoplanar() {
+	const colliders = selectedNodes().filter(n => n instanceof Mesh && roleOf(n) === 'collider');
+	if (!colliders.length) return Blockbench.showQuickMessage('Select collider meshes first', 2000);
+	let merged = 0;
+	Undo.initEdit({elements: colliders});
+	for (const mesh of colliders) {
+		const faces = Object.values(mesh.faces).filter(f => f.vertices.length >= 3);
+		const ids = coplanarGroups(faces.map(f => f.vertices.map(k => mesh.vertices[k])));
+		const base = 1 + Math.max(-1, ...faces.map(f => f[FACE_TAG]));
+		const sizes = new Map();
+		ids.forEach(id => sizes.set(id, (sizes.get(id) || 0) + 1));
+		faces.forEach((face, i) => {
+			const shared = ids[i] >= 0 && sizes.get(ids[i]) > 1;
+			face[FACE_TAG] = shared ? base + ids[i] : -1;
+			if (shared) merged++;
+		});
+	}
+	Undo.finishEdit('CombinedAssault merge coplanar faces', {elements: colliders});
+	Blockbench.showQuickMessage(`${merged} face(s) joined into shared planes`, 2500);
+}
+
+/** key_clip: a start / end key of part clip <clip> on the selected nodes (offsets from rest). */
+function keyClipDialog() {
+	new Dialog({
+		id: 'ca_key_clip',
+		title: 'Key part clip',
+		form: {
+			clip: {label: 'Clip', type: 'text', value: 'door', description: 'Part id, or <part id>.<suffix> for more clips on one part'},
+			end: {label: 'Key', type: 'select', options: {start: 'Start (progress 0: default state)', end: 'End (progress 1: other state)'}, value: 'start'},
+			seconds: {label: 'Length s', type: 'number', value: 0.6, min: 0.01, description: 'End key time; a switchable\'s open / close time'},
+			position: {label: 'Position offset', type: 'vector', dimensions: 3, value: [0, 0, 0], description: 'Ignored at Start (rest)'},
+			rotation: {label: 'Rotation offset', type: 'vector', dimensions: 3, value: [0, 0, 0], description: 'Degrees; ignored at Start (rest)'},
+		},
+		onConfirm(result) {
+			if (!CLIP_NAME.test(result.clip)) return Blockbench.showMessageBox({title: 'Key part clip', message: 'clip name: <part id>[.<suffix>], part id lowercase a-z 0-9 _'});
+			const nodes = selectedNodes().filter(n => n instanceof Group || n instanceof Locator);
+			if (!nodes.length) return Blockbench.showQuickMessage('Select groups or locators first', 2000);
+			const time = result.end === 'end' ? result.seconds : 0;
+			Undo.initEdit({animations: Animator.animations.slice()});
+			let animation = Animator.animations.find(a => a.name === result.clip);
+			if (!animation) animation = new Animation({name: result.clip, length: Math.max(result.seconds, 0.1), loop: 'once'}).add(false);
+			if (time > animation.length) animation.length = time;
+			for (const node of nodes) {
+				const animator = animation.getBoneAnimator(node);
+				for (const channel of ['position', 'rotation']) {
+					const value = result.end === 'end' ? result[channel] : [0, 0, 0];
+					for (const old of (animator.keyframes || []).filter(k => k.channel === channel && Math.abs(k.time - time) < 1e-3)) old.remove();
+					animator.addKeyframe({channel, time, interpolation: 'linear', data_points: [{x: value[0], y: value[1], z: value[2]}]});
+				}
+			}
+			animation.select();
+			Undo.finishEdit('CombinedAssault key part clip', {animations: [animation]});
+		},
+	}).show();
+}
+
+/** assign_armor: the selected mesh faces get a copy of their material named `<stem>[_surface]_armor_<mm>`. */
+function assignArmorDialog() {
+	new Dialog({
+		id: 'ca_assign_armor',
+		title: 'Assign armour to faces',
+		form: {mm: {label: 'mm RHA', type: 'number', value: 100, min: 0}},
+		onConfirm(result) {
+			const mesh = Mesh.selected[0];
+			const faces = mesh ? mesh.getSelectedFaces().map(k => mesh.faces[k]) : [];
+			if (!faces.length) return Blockbench.showQuickMessage('Select mesh faces first (face select mode)', 2500);
+			Undo.initEdit({elements: [mesh]});
+			Project.ca_materials = Project.ca_materials || {};
+			for (const face of faces) {
+				const texture = face.getTexture();
+				const baseKey = face[FACE_MATERIAL];
+				const base = baseKey && Project.ca_materials[baseKey];
+				const baseName = base && base.name !== undefined ? base.name : texture instanceof Texture ? texture.name.replace(/\.png$/i, '') : 'material';
+				const name = taggedName(baseName, result.mm, surfaceOf(baseName), false);
+				const key = `armor|${name}`;
+				if (!Project.ca_materials[key]) {
+					const rgba = texture instanceof Texture
+						? texture.canvas.getContext('2d').getImageData(0, 0, texture.canvas.width, texture.canvas.height).data : null;
+					Project.ca_materials[key] = base ? Object.assign(JSON.parse(JSON.stringify(base)), {name})
+						: {name, alphaMode: rgba ? alphaModeOf(rgba) : 'OPAQUE', alphaCutoff: 0.5, doubleSided: false, source: {}};
+				}
+				face[FACE_MATERIAL] = key;
+			}
+			Undo.finishEdit('CombinedAssault assign armour', {elements: [mesh]});
+			Blockbench.showQuickMessage(`${faces.length} face(s) at ${result.mm} mm`, 2500);
+		},
+	}).show();
+}
+
+/** Armour mm / surface / decor of the selected texture, as its name (the game reads them from the material name). */
+function tagTextureDialog() {
+	const texture = Texture.selected || Texture.all[0];
+	if (!texture) return Blockbench.showQuickMessage('Load a texture first', 2000);
+	const tags = materialTags(texture.name);
+	new Dialog({
+		id: 'ca_tag_texture',
+		title: `Material tags: ${texture.name}`,
+		form: {
+			armor: {label: 'Armour mm', type: 'number', value: tags.armor, min: 0},
+			surface: {label: 'Hit effect', type: 'select', value: tags.surface,
+				options: {steel: 'Steel (sparks, holes)', rubber: 'Rubber (black bits, dust, no hole)', glass: 'Glass (shards, glint, no hole)', soft: 'Soft (dust, fibres, no hole)'}},
+			decor: {label: 'Decor', type: 'checkbox', value: tags.decor, description: 'Never hit; shots pass'},
+			info: {type: 'info', text: 'Renames the texture; the material is named after it. Whole texture: for single faces use Assign armour to faces.'},
+		},
+		onConfirm(result) {
+			const stem = taggedName(texture.name.replace(/\.png$/i, ''), result.armor, result.surface, result.decor);
+			Undo.initEdit({textures: [texture]});
+			texture.name = /\.png$/i.test(texture.name) ? stem + '.png' : stem;
+			texture.updateMaterial && texture.updateMaterial();
+			Undo.finishEdit('CombinedAssault material tags', {textures: [texture]});
+		},
+	}).show();
+}
+
+/** hit_cylinder: a hit_surface prism round each selected group's drawn subtree, child of it. */
+function hitCylinderDialog() {
+	new Dialog({
+		id: 'ca_hit_cylinder',
+		title: 'Make hit cylinder',
+		form: {
+			sides: {label: 'Sides', type: 'number', value: 12, min: 3, max: 64, step: 1},
+			surface: {label: 'Material', type: 'select', value: 'rubber', options: {rubber: 'rubber', glass: 'glass', soft: 'soft', '': 'None (steel)'}},
+			info: {type: 'info', text: 'Tyres: tread detail is noise. Regenerable by tools/gen_hulls.py --hit-cylinder. Built in model axes: keep the group\'s ancestors unrotated.'},
+		},
+		onConfirm(result) {
+			const groups = selectedNodes().filter(n => n instanceof Group && ['none', 'part', 'pitch'].includes(roleOf(n)));
+			if (!groups.length) return Blockbench.showQuickMessage('Select model / part / pitch groups first', 2000);
+			withUndo('CombinedAssault hit cylinder', [], groups, () => {
+				const made = [];
+				for (const group of groups) {
+					const points = drawnPoints(group);
+					if (points.length < 3) { Blockbench.showQuickMessage(`${group.name}: nothing drawn`, 2000); continue; }
+					const {points: ring, loops} = prismAround(points, result.sides);
+					const mesh = addMesh('hit_' + group.name, ring, loops, group, {role: 'hit_surface'}, {genHulls: {node: group.name, hit: true}});
+					if (result.surface) {
+						Project.ca_materials = Project.ca_materials || {};
+						Project.ca_materials[result.surface] = Project.ca_materials[result.surface]
+							|| {name: result.surface, alphaMode: 'OPAQUE', alphaCutoff: 0.5, doubleSided: false, source: {}};
+						Object.values(mesh.faces).forEach(f => { f[FACE_MATERIAL] = result.surface; });
+					}
+					made.push(mesh);
+				}
+				return made;
+			});
+		},
+	}).show();
+}
+
+/** add_screen: quad facing the rider (-Z), UVs 0..1, material with textureSlot screen_<id>. */
+function addScreenDialog() {
+	new Dialog({
+		id: 'ca_add_screen',
+		title: 'Add screen',
+		form: {
+			screen: {label: 'Screen id', type: 'text', value: 'dash', description: '`screens` key; slot = screen_<id>'},
+			width: {label: 'Width (blocks)', type: 'number', value: 0.2, min: 0.01, step: 0.01},
+			height: {label: 'Height (blocks)', type: 'number', value: 0.15, min: 0.01, step: 0.01},
+		},
+		onConfirm(result) {
+			const slot = 'screen_' + result.screen;
+			const parent = insertionGroup();
+			const origin = parent ? parent.origin.slice() : [0, 0, 0];
+			const w = result.width * PX / 2;
+			const h = result.height * PX / 2;
+			Project.ca_materials = Project.ca_materials || {};
+			Project.ca_materials[slot] = {name: slot, alphaMode: 'OPAQUE', alphaCutoff: 0.5, doubleSided: false,
+				source: {extras: {textureSlot: slot}}};
+			withUndo('CombinedAssault screen', [], [], () => {
+				const mesh = addMesh(slot, [[w, -h, 0], [-w, -h, 0], [-w, h, 0], [w, h, 0]].map(p => p.map((v, a) => v + origin[a])),
+					[[0, 1, 2, 3]], parent, {role: 'none'});
+				const face = Object.values(mesh.faces)[0];
+				face[FACE_MATERIAL] = slot;
+				face.uv = {v0: [0, 0], v1: [1, 0], v2: [1, 1], v3: [0, 1]};
+				mesh.select();
+				return [mesh];
+			});
+		},
+	}).show();
+}
+
+// Light preview: a cone outline per light socket, beam along the socket's +Z; never exported.
+const PREVIEW = 'ca_light_preview';
+
+function lightCone(meta) {
+	const kind = LIGHT_KIND_DEFAULTS[meta.kind || 'head'] || LIGHT_KIND_DEFAULTS.head;
+	const reach = (meta.range || kind.range) * PX;
+	const outer = meta.outer || kind.outer;
+	const inner = meta.inner || Math.min(kind.inner, outer);
+	const colour = HEX_COLOR.test(meta.color || '') ? parseInt(meta.color.slice(1), 16) : kind.color;
+	return {reach, outer, inner, colour};
+}
+
+function clearLightPreviews() {
+	for (const locator of Locator.all) {
+		const object = locator.scene_object;
+		if (!object) continue;
+		for (const child of object.children.filter(c => c.name === PREVIEW)) {
+			object.remove(child);
+			child.geometry.dispose();
+			child.material.dispose();
+		}
+	}
+}
+
+function previewLights() {
+	clearLightPreviews();
+	let made = 0;
+	for (const locator of Locator.all) {
+		const s = caOf(locator);
+		if (roleOf(locator) !== 'socket' || s.field !== 'light' || locator.export === false || !locator.scene_object) continue;
+		const cone = lightCone(lightMeta(s));
+		const vertices = [];
+		for (const angle of [cone.outer, cone.inner]) {
+			const radius = cone.reach * Math.tan(Math.min(angle, 88.9) * Math.PI / 180);
+			for (let k = 0; k < 24; k++) {
+				const a = 2 * Math.PI * k / 24;
+				const b = 2 * Math.PI * (k + 1) / 24;
+				vertices.push(radius * Math.cos(a), radius * Math.sin(a), cone.reach, radius * Math.cos(b), radius * Math.sin(b), cone.reach);
+			}
+			if (angle === cone.outer) for (let k = 0; k < 4; k++) {
+				const a = Math.PI / 2 * k;
+				vertices.push(0, 0, 0, radius * Math.cos(a), radius * Math.sin(a), cone.reach);
+			}
+		}
+		const geometry = new THREE.BufferGeometry();
+		geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+		const lines = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({color: cone.colour}));
+		lines.name = PREVIEW;
+		locator.scene_object.add(lines);
+		made++;
+	}
+	Canvas.updateView && Canvas.updateView({elements: [], element_aspects: {transform: true}});
+	Blockbench.showQuickMessage(made ? `${made} light(s)` : 'no light sockets in the model', 2000);
+}
+
 // ---------------------------------------------------------------- import
 
-const PACK_MODEL = /^(.*)\/assets\/([^/]+)\/models\/(.+)\.gltf$/i;
+const PACK_MODEL = /^(.*)\/assets\/([^/]+)\/models\/(.+)\.(glb|gltf)$/i;
 
 function importDialog() {
-	Blockbench.import({resource_id: 'combinedassault_model', extensions: ['gltf'], type: 'CombinedAssault pack model',
+	Blockbench.import({resource_id: 'combinedassault_model', extensions: ['glb', 'gltf'], type: 'CombinedAssault pack model',
 		readtype: 'text'}, files => {
-		importPackModel(slashes(files[0].path), files[0].content).catch(err => {
+		importPackModel(slashes(files[0].path)).catch(err => {
 			console.error(err);
 			Blockbench.showMessageBox({title: 'Import failed', message: String(err && err.message || err)});
 		});
@@ -1686,13 +2271,13 @@ function waitForTexture(texture) {
 	});
 }
 
-async function importPackModel(path, content) {
+async function importPackModel(path) {
 	const match = path.match(PACK_MODEL);
-	if (!match) throw new Error('Pick a .gltf inside <pack>/assets/<namespace>/models/');
+	if (!match) throw new Error('Pick a .glb or .gltf inside <pack>/assets/<namespace>/models/');
 	const [, packRoot, ns, modelPath] = match;
-	const fs = fsModule('fs', {scope: packRoot, message: 'Read the model, its .bin and textures from the pack folder'});
+	const fs = fsModule('fs', {scope: packRoot, message: 'Read the model and textures from the pack folder'});
 	if (!fs) throw new Error('No permission to read the pack folder');
-	const gltf = JSON.parse(content || fs.readFileSync(path, 'utf8'));
+	const {gltf, bin: chunk} = readContainer(fs.readFileSync(path));
 	const dir = path.slice(0, path.lastIndexOf('/'));
 	const fileOf = (location, uri) => {
 		if (location) {
@@ -1703,6 +2288,7 @@ async function importPackModel(path, content) {
 	};
 	const buffers = (gltf.buffers || []).map(b => {
 		if (b.uri && b.uri.startsWith('data:')) return decodeDataUri(b.uri);
+		if (!b.uri && !(b.extras && b.extras.resourceLocation) && chunk) return chunk;
 		const file = fileOf(b.extras && b.extras.resourceLocation, b.uri);
 		if (!file) throw new Error('a buffer has neither resourceLocation nor uri');
 		return fs.readFileSync(file);
@@ -1773,6 +2359,9 @@ async function importPackModel(path, content) {
 				if (f.uv && texture) {
 					face.uv = {};
 					f.vertices.forEach((v, k) => { face.uv[`v${v}`] = [f.uv[k][0] * texture.uv_width, f.uv[k][1] * texture.uv_height]; });
+				} else if (f.uv && material && material.kept.source && material.kept.source.extras && material.kept.source.extras.textureSlot) {
+					face.uv = {};
+					f.vertices.forEach((v, k) => { face.uv[`v${v}`] = f.uv[k].slice(); });
 				}
 				if (f.tag !== undefined) face[FACE_TAG] = f.tag;
 				faces[`f${i}`] = face;
@@ -1864,13 +2453,27 @@ Plugin.register('combinedassault', {
 			keybind: new Keybind({key: 'pageup', ctrl: true}),
 			click: () => nextPassengerView(-1),
 		});
-		actions = [importAction, validate, exportAction, socket, player, passenger, nextView, previousView];
-		menu = new BarMenu('combinedassault', [importAction, exportAction, validate, '_', socket, player, '_', passenger, nextView, previousView], {name: 'CombinedAssault'});
+		const tool = (id, name, icon, click) => new Action(id, {name, icon, category: 'edit', condition: () => !!Project, click});
+		const hull = tool('ca_make_hull', 'Make convex hull', 'change_history', makeHull);
+		const hinge = tool('ca_make_hinge', 'Make hinge...', 'swap_horiz', makeHingeDialog);
+		const merge = tool('ca_merge_coplanar', 'Merge coplanar faces', 'join_full', mergeCoplanar);
+		const keyClip = tool('ca_key_clip', 'Key part clip...', 'key', keyClipDialog);
+		const armor = tool('ca_assign_armor', 'Assign armour to faces...', 'shield', assignArmorDialog);
+		const tagTexture = tool('ca_tag_texture', 'Material tags (armour, hit effect, decor)...', 'sell', tagTextureDialog);
+		const hitCylinder = tool('ca_hit_cylinder', 'Make hit cylinder...', 'trip_origin', hitCylinderDialog);
+		const screen = tool('ca_add_screen', 'Add screen...', 'tv', addScreenDialog);
+		const lights = new Action('ca_preview_lights', {name: 'Preview lights', icon: 'flashlight_on', category: 'view',
+			condition: () => !!Project, click: previewLights});
+		actions = [importAction, validate, exportAction, socket, player, passenger, nextView, previousView,
+			hull, hinge, merge, keyClip, armor, tagTexture, hitCylinder, screen, lights];
+		menu = new BarMenu('combinedassault', [importAction, exportAction, validate, '_', socket, hinge, screen, '_', hull, merge, hitCylinder, '_',
+			keyClip, '_', tagTexture, armor, '_', player, passenger, nextView, previousView, lights], {name: 'CombinedAssault'});
 		MenuBar.update();
 		buildPanel();
 	},
 	onunload() {
 		Blockbench.removeListener('update_selection', selectionListener);
+		clearLightPreviews();
 		if (panel) panel.delete();
 		if (menu) {
 			menu.delete();

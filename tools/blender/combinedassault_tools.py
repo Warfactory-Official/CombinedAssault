@@ -362,14 +362,14 @@ def style_collider(obj):
 
 
 def pack_paths(scene):
-    """(gltf path, texture dir, namespace, assets/<ns> dir)."""
+    """(glb path, texture dir, namespace, assets/<ns> dir)."""
     settings = scene.combinedassault_export
     root = bpy.path.abspath(settings.pack_root)
     ns = settings.namespace
     model = settings.model_path.strip("/")
-    gltf = os.path.join(root, "assets", ns, "models", model + ".gltf")
+    glb = os.path.join(root, "assets", ns, "models", model + ".glb")
     textures = os.path.join(root, "assets", ns, "textures", os.path.dirname(model))
-    return gltf, textures, ns, os.path.join(root, "assets", ns)
+    return glb, textures, ns, os.path.join(root, "assets", ns)
 
 
 def resource_location(ns, root_dir, path):
@@ -754,13 +754,18 @@ def import_pack_model(context, path):
     root, ns = ca_validate.pack_of(path)
     if root is None:
         raise ValueError("not inside <pack>/assets/<namespace>/models/: " + path)
-    with open(path, encoding="utf-8") as source:
-        gltf = json.load(source)
+    gltf, binary = ca_validate.read_container(path)
+    folder = bpy.app.tempdir or os.path.dirname(path)
+    temp = os.path.join(folder, "combinedassault_import.gltf")
+    temp_bin = os.path.join(folder, "combinedassault_import.bin")
     for entry in gltf.get("images", []) + gltf.get("buffers", []):
         location = entry.get("extras", {}).get(RESOURCE)
         if "uri" not in entry and location:
             entry["uri"] = ca_validate.resolve(root, location).replace(os.sep, "/")
-    temp = os.path.join(bpy.app.tempdir or os.path.dirname(path), "combinedassault_import.gltf")
+    if binary is not None and gltf.get("buffers") and "uri" not in gltf["buffers"][0]:
+        with open(temp_bin, "wb") as out:
+            out.write(binary)
+        gltf["buffers"][0]["uri"] = os.path.basename(temp_bin)
     with open(temp, "w", encoding="utf-8") as out:
         json.dump(gltf, out)
     objects, materials = set(bpy.data.objects), set(bpy.data.materials)
@@ -770,6 +775,8 @@ def import_pack_model(context, path):
         model = ca_validate.Model(temp)
     finally:
         os.remove(temp)
+        if os.path.isfile(temp_bin):
+            os.remove(temp_bin)
     new_objects = [obj for obj in bpy.data.objects if obj not in objects]
     new_materials = [m for m in bpy.data.materials if m not in materials]
     by_node = {re.sub(r"\.\d{3}$", "", obj.name): obj for obj in new_objects}
@@ -1109,7 +1116,7 @@ class CombinedAssaultExportSettings(PropertyGroup):
                               description="Folder holding pack.mcmeta and assets/")
     namespace: StringProperty(name="Namespace", default="combinedassault")
     model_path: StringProperty(name="Model path", default="aircraft/untitled/untitled",
-                               description="Under assets/<ns>/models/, without .gltf")
+                               description="Under assets/<ns>/models/, without .glb")
     note: StringProperty(name="Last check", default="", options={"SKIP_SAVE"})
 
 
@@ -1472,8 +1479,10 @@ class COMBINEDASSAULT_OT_export(Operator):
         while not os.path.isdir(folder):
             made.append(folder)
             folder = os.path.dirname(folder)
-        written = export_gltf(context, gltf_path, texture_dir)
-        relocate(gltf_path, ns, assets, scene, written)
+        staging = os.path.splitext(gltf_path)[0] + ".gltf"
+        written = export_gltf(context, staging, texture_dir)
+        relocate(staging, ns, assets, scene, written)
+        pack_glb(staging, gltf_path)
         for folder in made:
             if os.listdir(folder):
                 break
@@ -1487,6 +1496,16 @@ class COMBINEDASSAULT_OT_export(Operator):
                                                                    len(warnings))
         self.report({"INFO"}, "wrote " + gltf_path)
         return {"FINISHED"}
+
+
+def pack_glb(staging, glb_path):
+    """Staged .gltf + .bin -> one .glb (images stay resourceLocation references); staging files removed."""
+    document, _ = ca_validate.read_container(staging)
+    bin_path = os.path.splitext(staging)[0] + ".bin"
+    with open(bin_path, "rb") as source:
+        ca_validate.write_glb(glb_path, document, source.read())
+    os.remove(staging)
+    os.remove(bin_path)
 
 
 def export_gltf(context, gltf_path, texture_dir):
@@ -1530,8 +1549,8 @@ class COMBINEDASSAULT_OT_import(Operator, ImportHelper):
     bl_label = "Import pack model"
     bl_options = {"REGISTER", "UNDO"}
 
-    filename_ext = ".gltf"
-    filter_glob: StringProperty(default="*.gltf", options={"HIDDEN"})
+    filename_ext = ".glb"
+    filter_glob: StringProperty(default="*.glb;*.gltf", options={"HIDDEN"})
 
     def execute(self, context):
         try:
@@ -1815,7 +1834,7 @@ class COMBINEDASSAULT_OT_preview_lights(Operator):
 
 
 def menu_import(self, context):
-    self.layout.operator(COMBINEDASSAULT_OT_import.bl_idname, text="combinedassault pack model (.gltf)")
+    self.layout.operator(COMBINEDASSAULT_OT_import.bl_idname, text="combinedassault pack model (.glb / .gltf)")
 
 
 # ---------------------------------------------------------------- panels

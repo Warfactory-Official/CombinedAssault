@@ -126,7 +126,7 @@
             "is_seat": true
         }
     ],
-    "model": "combinedassault:models/aircraft/ah64d/ah64d.gltf",
+    "model": "combinedassault:models/aircraft/ah64d/ah64d.glb",
     "display": {
         "icon": "combinedassault:textures/slot/ah64d.png",
         "controller": "combinedassault:ah64d_controller",
