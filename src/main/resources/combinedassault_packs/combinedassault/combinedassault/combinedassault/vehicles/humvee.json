@@ -4,10 +4,22 @@
         "brake_force": 6500,
         "forward_force": 7200,
         "backward_force": 3600,
-        "max_speed_forward": 0.6,
+        "max_speed_forward": 1.39,
         "max_speed_backward": 0.2,
+        "steer_fade_speed": 0.6,
         "turn_step": 0.25,
-        "max_turn": 2.5
+        "max_turn": 2.5,
+        "transmission": {
+            "shift": "manual",
+            "gears": [2.48, 1.65, 1.25, 1.0],
+            "idle_rpm": 700,
+            "max_rpm": 3400,
+            "shift_ticks": 6,
+            "lever": [[12, -16], [0, 0], [12, -8], [-12, -8], [12, 8], [-12, 8]]
+        }
+    },
+    "screens": {
+        "dash": {"layout": "combinedassault:dash", "kind": "dash"}
     },
     "max_health": 260,
     "armor": {

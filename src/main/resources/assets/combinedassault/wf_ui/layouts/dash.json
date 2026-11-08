@@ -1,0 +1,49 @@
+{
+  "scaling": "absolute",
+  "size": [160, 124],
+  "use": ["combinedassault:hud"],
+  "constants": {
+    "face": "#ff101010",
+    "lamp_off": "#ff2a2a2a",
+    "needle": "#ffff5a1f",
+    "lit": "dash.engine_on",
+    "speed_angle": "225 - min(dash.speed, 140) / 140 * 270",
+    "rpm_angle": "225 - min(dash.rpm, dash.max_rpm) / dash.max_rpm * 270",
+    "redline": "225 - 0.9 * 270",
+    "fuel_angle": "180 - dash.fuel * 180"
+  },
+  "root": {"type": "stack", "children": [
+    {"type": "rect", "w": 160, "h": 124, "color": "$face"},
+
+    {"type": "place", "x": 40, "y": 42, "child": {"type": "dial", "radius": 34, "from": -45, "to": 225,
+      "minor_step": 9.642857, "minor_color": "$scale", "major_step": 38.571428, "major_length": 5, "major_color": "$label",
+      "accent_step": 0, "accent_color": "$label",
+      "band_from": "-45", "band_to": "-45", "band_offset": 0, "band_size": 2, "band_color": "#00000000",
+      "needles": [{"value": "$lit ? $speed_angle : 225", "inner": 3, "outer": 30, "size": 2, "color": "$needle"}]}},
+    {"type": "place", "x": 40, "y": 56, "pivot": "center", "child": {"type": "text", "text": "{round(dash.speed)}", "color": "$white"}},
+    {"type": "place", "x": 40, "y": 66, "pivot": "center", "child": {"type": "text", "text": "km/h", "color": "$scale", "scale": "0.6"}},
+
+    {"type": "place", "x": 120, "y": 42, "child": {"type": "dial", "radius": 34, "from": -45, "to": 225,
+      "minor_step": 13.5, "minor_color": "$scale", "major_step": 27, "major_length": 5, "major_color": "$label",
+      "accent_step": 0, "accent_color": "$label",
+      "band_from": "-45", "band_to": "$redline", "band_offset": -7, "band_size": 2, "band_color": "$red",
+      "needles": [{"value": "$lit ? $rpm_angle : 225", "inner": 3, "outer": 30, "size": 2, "color": "$needle"}]}},
+    {"type": "place", "x": 120, "y": 60, "pivot": "center", "child": {"type": "text", "text": "x1000 rpm", "color": "$scale", "scale": "0.6"}},
+
+    {"type": "place", "x": 50, "y": 104, "child": {"type": "dial", "radius": 18, "from": 0, "to": 180,
+      "minor_step": 22.5, "minor_color": "$scale", "major_step": 90, "major_length": 3, "major_color": "$label",
+      "accent_step": 0, "accent_color": "$label",
+      "band_from": "135", "band_to": "180", "band_offset": 0, "band_size": 2, "band_color": "$red",
+      "needles": [{"value": "$lit ? $fuel_angle : 180", "inner": 2, "outer": 16, "size": 2, "color": "$white"}]}},
+    {"type": "place", "x": 34, "y": 108, "pivot": "center", "child": {"type": "text", "text": "E", "color": "$scale", "scale": "0.6"}},
+    {"type": "place", "x": 66, "y": 108, "pivot": "center", "child": {"type": "text", "text": "F", "color": "$scale", "scale": "0.6"}},
+
+    {"type": "place", "x": 80, "y": 34, "pivot": "center", "child": {"type": "text", "text": "{dash.gear}",
+      "color": "$lit ? $white : $lamp_off", "scale": "1.4"}},
+
+    {"type": "place", "x": 116, "y": 88, "pivot": "top", "child": {"type": "column", "gap": 3, "children": [
+      {"type": "text", "text": "CHECK ENGINE", "color": "$lit && dash.check_engine ? $amber : $lamp_off", "scale": "0.6"},
+      {"type": "text", "text": "CHECK TIRES", "color": "$lit && dash.check_tires ? $amber : $lamp_off", "scale": "0.6"},
+      {"type": "text", "text": "BRAKE", "color": "$lit && dash.handbrake ? $red : $lamp_off", "scale": "0.6"}]}}
+  ]}
+}

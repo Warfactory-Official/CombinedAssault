@@ -11,6 +11,7 @@ import com.wf.combinedassault.uav.fpv.FpvFlight;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.crew.CrewRules;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.GroundVehicle;
 import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
 import com.wf.combinedassault.vehicle.message.ClientVehicleChangeSeat;
 import com.wf.combinedassault.vehicle.message.ClientVehicleMoveControl;
@@ -117,6 +118,13 @@ public class InputHandler {
                     sendToggleLandingGear(vehicle);
                 } else if (matchesKey(TOGGLE_AIRBRAKE, key, scanCode)) {
                     sendToggleAirbrake(vehicle);
+                } else if (vehicle instanceof GroundVehicle ground && ground.transmission != null
+                        && (matchesKey(SHIFT_UP, key, scanCode) || matchesKey(SHIFT_DOWN, key, scanCode))) {
+                    if (!ground.automatic() && player.equals(vehicle.controlUnit.getOperator())) {
+                        if (!ground.selectGear(matchesKey(SHIFT_UP, key, scanCode) ? 1 : -1)) {
+                            instance.sendMessage("tips.gear.reverse_moving");
+                        }
+                    }
                 } else if (matchesKey(FLAPS_DOWN, key, scanCode) || matchesKey(FLAPS_UP, key, scanCode)) {
                     sendFlapStep(vehicle, matchesKey(FLAPS_DOWN, key, scanCode) ? 1 : -1);
                 } else if (matchesKey(FIRE_CONTROL_LOCK, key, scanCode)) {
@@ -288,6 +296,9 @@ public class InputHandler {
                 controlUnit.functionalDown = FUNCTIONAL_DOWN.isDown();
                 controlUnit.functionalLeft = FUNCTIONAL_LEFT.isDown();
                 controlUnit.functionalRight = FUNCTIONAL_RIGHT.isDown();
+                if (vehicle instanceof GroundVehicle ground) {
+                    controlUnit.gearRequest = ground.selectedGear;
+                }
                 instance.tickCockpitPilot();
                 if (instance.cockpitPilot()) {
                     if (vehicle instanceof FixedWingVehicle) {
@@ -429,6 +440,7 @@ public class InputHandler {
         control.functionalUp = controlUnit.functionalUp;
         control.functionalDown = controlUnit.functionalDown;
         control.functionalLeft = controlUnit.functionalLeft;
+        control.gearRequest = controlUnit.gearRequest;
         control.functionalRight = controlUnit.functionalRight;
         control.xRot = controlUnit.xRot;
         control.xRotKeep = controlUnit.xRotKeep;

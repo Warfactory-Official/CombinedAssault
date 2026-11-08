@@ -11,10 +11,20 @@ public class ScreenInfo {
 
     public static final String SLOT_PREFIX = "screen_";
 
+    public enum Kind {
+        /** {@code computer} subject of a weapon part. */
+        @SerializedName("gun_computer") GUN_COMPUTER,
+        /** {@code dash} subject: speed, rpm, gear, fuel, warning lights. */
+        @SerializedName("dash") DASH
+    }
+
     @SerializedName("layout")
     public ResourceLocation layout;
 
-    /** Weapon part the screen reports on; null => first weapon part. */
+    @SerializedName("kind")
+    public Kind kind = Kind.GUN_COMPUTER;
+
+    /** {@link Kind#GUN_COMPUTER}: weapon part the screen reports on; null => first weapon part. */
     @SerializedName("part")
     @Nullable
     public String part;

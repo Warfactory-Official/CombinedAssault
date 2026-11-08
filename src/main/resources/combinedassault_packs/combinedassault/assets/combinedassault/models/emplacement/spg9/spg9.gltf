@@ -191,9 +191,9 @@
   {
    "name": "socket_seat_gun",
    "translation": [
-    0.6000000238418579,
-    0.9100000262260437,
-    -0.6000000238418579
+    0.0,
+    0.56,
+    -0.95
    ],
    "extras": {
     "combinedassaultRole": "seat",
@@ -217,9 +217,9 @@
   {
    "name": "socket_view_gun",
    "translation": [
-    0.6000000238418579,
-    0.9100000262260437,
-    -0.6000000238418579
+    0.0,
+    0.56,
+    -0.95
    ],
    "extras": {
     "combinedassaultRole": "view",

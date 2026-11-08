@@ -6,6 +6,7 @@ import com.wf.combinedassault.vehicle.entity.TrackedVehicle;
 import java.util.OptionalDouble;
 
 public class TrackedVehicleContext extends VehicleContext<TrackedVehicle> {
+    private final DriverControls controls = new DriverControls();
 
     private float leftTrackDisplacement;
     private float rightTrackDisplacement;
@@ -26,6 +27,7 @@ public class TrackedVehicleContext extends VehicleContext<TrackedVehicle> {
     public void tick() {
         super.tick();
         this.advanceTrackProgress();
+        controls.update(entity, (this.currentTimeMillis() - this.lastRenderTime()) / 1000f);
     }
 
     public void advanceTrackProgress() {
@@ -74,7 +76,10 @@ public class TrackedVehicleContext extends VehicleContext<TrackedVehicle> {
         return switch (source) {
             case "left_wheel_rotation" -> getLeftWheelDegrees(paramValue);
             case "right_wheel_rotation" -> getRightWheelDegrees(paramValue);
-            default -> super.getBindingValue(source, param);
+            default -> {
+                float control = controls.value(source);
+                yield Float.isNaN(control) ? super.getBindingValue(source, param) : control;
+            }
         };
     }
 

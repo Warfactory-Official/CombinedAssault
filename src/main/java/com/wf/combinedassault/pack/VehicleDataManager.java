@@ -131,7 +131,16 @@ public class VehicleDataManager implements IVehicleDataManager {
             HardwareKits.Hardpoint hardpoint = unit.getHardpoint();
             Map<ResourceLocation, WeaponUnitData> out = new java.util.LinkedHashMap<>();
             for (HardwareKit kit : hardpoint.kits()) {
-                JsonObject station = HardwareKits.station(parts.get(unit.getId()), kit, hardpoint.overrides().get(kit.id()));
+                JsonObject part = parts.get(unit.getId());
+                JsonObject station = HardwareKits.station(part, kit, hardpoint.overrides().get(kit.id()));
+                String kitId = kit.id().toString();
+                if (part.has("kit_seats") && part.getAsJsonObject("kit_seats").has(kitId)) {
+                    part.getAsJsonObject("kit_seats").getAsJsonObject(kitId).entrySet()
+                            .forEach(e -> station.add(e.getKey(), e.getValue()));
+                }
+                if (part.has("kit_views") && part.getAsJsonObject("kit_views").has(kitId)) {
+                    station.add("operator_view_offset", part.getAsJsonObject("kit_views").get(kitId));
+                }
                 WeaponUnitData variant = (WeaponUnitData) entry.type().parseAndCreate(station).data();
                 variant.initFrames(unit.getRawStructureGroup(), unit.getRawPitchGroup());
                 boolean ownBolts = kit.station().has("bolts") || hardpoint.overrides().containsKey(kit.id())

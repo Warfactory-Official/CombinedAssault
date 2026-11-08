@@ -21,7 +21,9 @@
     1,
     68,
     69,
-    70
+    70,
+    71,
+    72
    ]
   },
   {
@@ -759,6 +761,56 @@
    ],
    "extras": {
     "combinedassaultRole": "sight_lens"
+   }
+  },
+  {
+   "name": "socket_seat",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.55,
+    0.456,
+    -0.54,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "seat"
+   }
+  },
+  {
+   "name": "socket_view",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.55,
+    0.456,
+    -0.54,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "view"
    }
   }
  ],

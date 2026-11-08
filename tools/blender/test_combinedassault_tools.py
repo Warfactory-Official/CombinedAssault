@@ -49,6 +49,24 @@ def vocabulary():
     armor = re.search(r'ARMOR = Pattern.compile\("(.*?)"\)', java("ballistics/hit/ModelDataManager.java")).group(1)
     check("armour pattern == ModelDataManager.ARMOR", armor.replace("\\\\", "\\") == T.ARMOR.pattern, armor)
 
+    def strings(source, name):
+        body = re.search(name + r"\s*=\s*Set\.of\((.*?)\);", source, re.S).group(1)
+        return set(re.findall(r'"([a-z_]+)"', body))
+    manager = java("ballistics/hit/ModelDataManager.java")
+    V = T.ca_validate
+    check("hit keys == ModelDataManager.HIT_KEYS", strings(manager, "HIT_KEYS") == V.HIT_KEYS)
+    check("frame keys == ModelDataManager.FRAME_KEYS", strings(manager, "FRAME_KEYS") == V.FRAME_KEYS)
+    check("collider keys == ModelRig.COLLIDER_KEYS",
+          strings(java("ballistics/hit/ModelRig.java"), "COLLIDER_KEYS") == V.COLLIDER_KEYS)
+    light = java("vehicle/light/VehicleLight.java")
+    check("light keys == VehicleLight.KEYS", strings(light, "KEYS") == V.LIGHT_KEYS)
+    kinds = {k.lower(): (int(c, 16), float(r), float(i), float(a.rstrip("F")), float(b))
+             for k, c, r, i, a, b in re.findall(r"([A-Z]+)\(0x([0-9A-F]{6}), ([\d.]+), ([\d.]+), ([\d.F]+), ([\d.]+)\)", light)}
+    check("light kinds == VehicleLight.Kind", kinds == V.LIGHT_KINDS, str(kinds))
+    surfaces = {k.lower(): w for k, w in re.findall(r'([A-Z]+)\(token\("([a-z|]+)"\)\)',
+                                                    java("ballistics/hit/SurfaceMaterial.java"))}
+    check("surface tokens == SurfaceMaterial", surfaces == V.SURFACES, str(surfaces))
+
 
 def box(name, location, size):
     bpy.ops.mesh.primitive_cube_add(location=location)
@@ -283,9 +301,15 @@ def run():
     materials = [m["name"] for m in gltf["materials"]]
     check("armour material exported", "paint_armor_80" in materials, str(materials))
 
-    roundtrip("ground/humvee/humvee", ["humvee"])
-    roundtrip("aircraft/c5/c5", ["c5"])
-    roundtrip("ground/t90/t90", ["t90"])
+    roundtrip("ground/humvee/humvee")
+    roundtrip("aircraft/c5/c5")
+    roundtrip("ground/t90/t90")
+    roundtrip("aircraft/mavic/mavic")
+    roundtrip("ground/m777/m777")
+    roundtrip("ground/m142/m142")
+    authoring(work)
+    material_tags()
+    validator_refuses_new()
     validator_refuses()
     texture_setup(work)
     player_reference()
@@ -307,14 +331,16 @@ def fresh_scene():
         T.register()
 
 
-def roundtrip(model, textures):
+def roundtrip(model):
     """Pack model copied to a temp pack -> import -> export in place: same roles, extras, materials, textures."""
     fresh_scene()
     pack = tempfile.mkdtemp(prefix="combinedassault_rt_")
     base = os.path.join(PACK, "assets/combinedassault")
+    with open(os.path.join(base, "models", model + ".gltf"), encoding="utf-8") as source:
+        images = [i["extras"][T.RESOURCE].split(":", 1)[1][:-4] for i in json.load(source).get("images", [])]
+    os.makedirs(os.path.join(pack, "assets/combinedassault/textures", os.path.dirname(model)), exist_ok=True)
     for rel in [os.path.join("models", model + ".gltf"), os.path.join("models", model + ".bin")] + [
-            os.path.join("textures", os.path.dirname(model), t + suffix + ".png") for t in textures
-            for suffix in ("", "_damaged", "_wrecked", "_paint")]:
+            stem + suffix + ".png" for stem in images for suffix in ("", "_damaged", "_wrecked", "_paint")]:
         if os.path.isfile(os.path.join(base, rel)):
             os.makedirs(os.path.dirname(os.path.join(pack, "assets/combinedassault", rel)), exist_ok=True)
             shutil.copy(os.path.join(base, rel), os.path.join(pack, "assets/combinedassault", rel))
@@ -568,6 +594,168 @@ def part_model():
     root.combinedassault.target = "gun"
     errors, _ = T.check_scene(scene)
     check("frame in a part model refused", any("gun" in e and "part model" in e for e in errors), str(errors))
+
+
+def authoring(work):
+    """Rotor unit / spin, follows_clips, light overrides, hit cylinder, screen, mesh sockets: exported keys,
+    validator clean, light preview."""
+    fresh_scene()
+    scene = bpy.context.scene
+    root = bpy.data.objects.new("heli", None)
+    scene.collection.objects.link(root)
+    root.combinedassault.role = "BODY"
+    hull = box("hull", (0, 0, 1), (2, 4, 1))
+    hull.parent = root
+    collider = box("hull_box", (0, 0, 1), (2, 4, 1))
+    collider.parent = root
+    collider.combinedassault.role = "COLLIDER"
+    rotor = box("rotor_fl", (1, -1, 2), (1.5, 1.5, 0.05))
+    rotor.parent = root
+    rotor.combinedassault.meta_system = "rotor"
+    rotor.combinedassault.meta_unit = "FL"
+    _, warnings = T.check_scene(scene)
+    check("rotor unit without spin warned", any("rotor_fl" in w and "spin" in w for w in warnings), str(warnings))
+    rotor.combinedassault.meta_spin = "CW"
+    _, warnings = T.check_scene(scene)
+    check("rotor unit with spin not warned", not any("spin" in w for w in warnings), str(warnings))
+    trail = bpy.data.objects.new("trail", None)
+    scene.collection.objects.link(trail)
+    trail.parent = root
+    trail.combinedassault.role = "PART"
+    trail.combinedassault.target = "trail"
+    trail.combinedassault.follows_clips = True
+    wheel = box("wheel", (1, 1.5, 0.4), (0.3, 0.8, 0.8))
+    wheel.parent = root
+    select(wheel)
+    result = bpy.ops.combinedassault.hit_cylinder(sides=8, surface="rubber")
+    check("hit cylinder made", result == {"FINISHED"}, str(result))
+    hit = scene.objects.get("hit_wheel")
+    check("hit cylinder is a hit surface child of its node", hit is not None and hit.parent == wheel
+          and hit.combinedassault.role == "HIT_SURFACE")
+    points = [hit.matrix_world @ v.co for v in hit.data.vertices]
+    radius = max(math.hypot(p.y - 1.5, p.z - 0.4) for p in points)
+    check("hit cylinder round the thinnest axis (X), circumscribed",
+          max(abs(p.x - 1) for p in points) < 0.15 + 1e-5 and len(hit.data.polygons) == 10
+          and radius >= math.hypot(0.4, 0.4) - 1e-5, "r %.4f" % radius)
+    scene.cursor.location = (0, -1.5, 1.6)
+    select(hull)
+    bpy.ops.combinedassault.add_socket(field="light", index=-1)
+    lamp = scene.objects["socket_light"]
+    lamp.combinedassault.light_kind = "SEARCH"
+    lamp.combinedassault.light_use_color = True
+    lamp.combinedassault.light_color = (1.0, 0.5, 0.0)
+    lamp.combinedassault.light_outer = 8.0
+    lamp.combinedassault.light_shadow = False
+    lamp.combinedassault.light_inner = 9.0
+    errors, _ = T.check_scene(scene)
+    check("light inner > outer refused", any("socket_light" in e and "inner" in e for e in errors), str(errors))
+    lamp.combinedassault.light_inner = 0.0
+    scene.cursor.location = (0, 1.5, 1)
+    bpy.ops.combinedassault.add_socket(field="era", target="front_era", index=-1)
+    era = scene.objects["socket_era_front_era"]
+    check("era socket is a quad mesh", era.type == "MESH" and len(era.data.polygons) == 1)
+    scene.cursor.location = (0.3, 0.5, 1.5)
+    select(hull)
+    bpy.ops.combinedassault.add_screen(screen="dash", width=0.2, height=0.1)
+    screen = scene.objects["screen_dash"]
+    check("screen quad has UVs and a slot material", screen.data.uv_layers
+          and screen.data.materials[0].combinedassault.texture_slot == "screen_dash")
+    errors, warnings = T.check_scene(scene)
+    check("authoring scene passes the check", not errors, str(errors))
+    lights = T.preview_lights(scene)
+    bpy.context.view_layer.update()
+    check("one preview spot per light socket", len(lights) == 1 and lights[0].parent == lamp)
+    beam = lights[0].matrix_world.to_3x3() @ Vector((0, 0, -1))
+    check("preview beam along the socket's -Y (nose)", (beam - Vector((0, -1, 0))).length < 1e-5, str(beam))
+    check("preview cone = 2 x outer", abs(math.degrees(lights[0].data.spot_size) - 16) < 1e-3)
+
+    pack = os.path.join(work, "authoring_pack")
+    os.makedirs(pack, exist_ok=True)
+    settings = scene.combinedassault_export
+    settings.pack_root = pack + os.sep
+    settings.namespace = "test"
+    settings.model_path = "aircraft/heli/heli"
+    result = bpy.ops.combinedassault.export()
+    check("authoring export finished", result == {"FINISHED"}, str(result))
+    path = T.pack_paths(scene)[0]
+    with open(path, encoding="utf-8") as source:
+        gltf = json.load(source)
+    nodes = {n["name"]: n for n in gltf["nodes"]}
+    meta = lambda name: nodes[name].get("extras", {}).get(T.META)
+    check("rotor unit + spin exported", meta("rotor_fl") == {"system": "rotor", "unit": "FL", "spin": "cw"},
+          str(meta("rotor_fl")))
+    check("follows_clips exported", meta("trail") == {"follows_clips": True}, str(meta("trail")))
+    check("light overrides exported", meta("socket_light") == {"kind": "search", "color": "#ff8000", "outer": 8.0,
+                                                               "shadow": False}, str(meta("socket_light")))
+    check("hit cylinder exported with genHulls", nodes["hit_wheel"].get("extras") == {
+        T.ROLE: "hit_surface", T.HIDDEN: True, "genHulls": {"node": "wheel", "hit": True}},
+        str(nodes["hit_wheel"].get("extras")))
+    materials = {m["name"]: m for m in gltf["materials"]}
+    check("hit cylinder material exported", "rubber" in materials, str(list(materials)))
+    check("screen slot exported", materials.get("screen_dash", {}).get("extras") == {"textureSlot": "screen_dash"},
+          str(materials.get("screen_dash")))
+    check("preview lights never exported", not any(n.startswith(T.LIGHT_PREFIX) for n in nodes), str(list(nodes)))
+    errors, _, _ = T.ca_validate.validate(path)
+    check("validator passes the authoring export", not errors, str(errors))
+
+
+def material_tags():
+    """Armour / hit effect / decor fields read and rename the material name."""
+    fresh_scene()
+    material = bpy.data.materials.new("tyre")
+    settings = material.combinedassault
+    settings.surface = "RUBBER"
+    check("surface renames", material.name == "tyre_rubber", material.name)
+    settings.armor_mm = 20
+    check("armour renames, keeps surface", material.name == "tyre_rubber_armor_20", material.name)
+    check("fields read the name", (settings.armor_mm, settings.surface, settings.decor) == (20.0, "RUBBER", False))
+    settings.decor = True
+    check("decor drops plate and effect", material.name == "tyre_decor", material.name)
+    settings.surface = "GLASS"
+    check("effect clears decor", material.name == "tyre_glass", material.name)
+    material.name = "visor_fabric"
+    check("name typed by hand is read", settings.surface == "SOFT", settings.surface)
+    copy = T.armor_material(material, 5)
+    check("armour copy keeps the base's effect", copy.name == "visor_soft_armor_5", copy.name)
+
+
+def validator_refuses_new():
+    good = os.path.join(PACK, "assets/combinedassault/models/ground/humvee/humvee.gltf")
+    with open(good, encoding="utf-8") as source:
+        base = json.load(source)
+    folder = os.path.dirname(good)
+
+    def broken(what, edit, expect):
+        gltf = json.loads(json.dumps(base))
+        edit(gltf)
+        path = os.path.join(folder, "_validator_case.gltf")
+        try:
+            with open(path, "w", encoding="utf-8") as out:
+                json.dump(gltf, out)
+            errors, _, _ = T.ca_validate.validate(path)
+        finally:
+            os.remove(path)
+        check("validator refuses " + what, any(expect in e for e in errors), str(errors[:3]))
+
+    light = next(i for i, n in enumerate(base["nodes"]) if n.get("extras", {}).get(T.ROLE) == "light")
+    plain = next(i for i, n in enumerate(base["nodes"]) if "mesh" in n and not n.get("extras", {}).get(T.ROLE))
+    pitch = next((i for i, n in enumerate(base["nodes"]) if n.get("extras", {}).get(T.ROLE) == "part"), None)
+    broken("a light colour that is not #rrggbb", lambda g: g["nodes"][light]["extras"][T.META].update(color="red"),
+           "#rrggbb")
+    broken("a light inner past outer", lambda g: g["nodes"][light]["extras"][T.META].update(inner=40, outer=30),
+           "inner <= outer")
+    broken("an unknown light key", lambda g: g["nodes"][light]["extras"][T.META].update(beam=1), "unknown key")
+    broken("an unknown node key", lambda g: g["nodes"][plain].setdefault("extras", {}).setdefault(T.META, {}).update(
+        armour=5), "unknown key")
+    broken("a bad spin", lambda g: g["nodes"][plain].setdefault("extras", {}).setdefault(T.META, {}).update(
+        spin="left"), "spin")
+    broken("a bad system", lambda g: g["nodes"][plain].setdefault("extras", {}).setdefault(T.META, {}).update(
+        system="engines"), "system")
+
+    def yaw_on_pitch(g):
+        g["nodes"][pitch]["extras"].update({T.ROLE: "pitch"})
+        g["nodes"][pitch]["extras"].setdefault(T.META, {}).update(y_rot_min=-10)
+    broken("yaw limits on a pitch frame", yaw_on_pitch, "yaw limits")
 
 
 if __name__ == "__main__":

@@ -40,6 +40,11 @@ public final class MountDefaults {
     private static final String MISSILE_HOLDER = "combinedassault:missile_holder";
     /** Track outline vertex weld, blocks. */
     private static final float WELD = 1.0e-4f;
+    /** Node-only def keys -> socket role. */
+    private static final Map<String, String> NODE_ONLY_PART = Map.of("seat_offset", "seat", "seat_rot", "seat",
+            "owner_view_offset", "view", "operator_view_offset", "view", "optical_sight_offset", "sight");
+    private static final Map<String, String> NODE_ONLY_VIEW = Map.of("third_person_center_offset", "camera",
+            "third_person_center_offset_zoomed", "camera_zoomed");
 
     /**
      * @param repeated   json keys equal to what the glTF gives: redundant
@@ -70,6 +75,7 @@ public final class MountDefaults {
     }
 
     public static Result apply(String vehicleId, JsonObject source, ModelMounts mounts) {
+        nodeOnly(vehicleId, source);
         MountDefaults defaults = new MountDefaults(vehicleId, source.deepCopy(), mounts);
         for (ModelMounts.Mount mount : mounts.mounts()) {
             defaults.accept(mount);
@@ -82,6 +88,28 @@ public final class MountDefaults {
                 List.copyOf(defaults.relative));
     }
 
+    private static void nodeOnly(String vehicleId, JsonObject vehicle) {
+        if (vehicle.has("view_info")) {
+            JsonObject view = vehicle.getAsJsonObject("view_info");
+            NODE_ONLY_VIEW.forEach((key, role) -> {
+                if (view.has(key)) {
+                    throw new IllegalArgumentException(vehicleId + ": view_info." + key + " is node-only: a " + role + " socket");
+                }
+            });
+        }
+        if (vehicle.has("parts")) {
+            for (JsonElement element : vehicle.getAsJsonArray("parts")) {
+                JsonObject part = element.getAsJsonObject();
+                NODE_ONLY_PART.forEach((key, role) -> {
+                    if (part.has(key)) {
+                        throw new IllegalArgumentException(vehicleId + ": part " + part.get("id").getAsString() + " " + key
+                                + " is node-only: a " + role + " socket");
+                    }
+                });
+            }
+        }
+    }
+
     private void accept(ModelMounts.Mount mount) {
         String field = mount.role().key();
         String target = mount.target();
@@ -89,13 +117,17 @@ public final class MountDefaults {
         switch (field) {
             case "seat" -> {
                 JsonObject part = part(mount, target);
-                put(part, "seat_offset", vec(origin), target + ".seat_offset");
-                put(part, "seat_rot", angle(euler(mount.rotation())[0]), target + ".seat_rot");
+                if (mount.kit() != null) {
+                    relative.add(new Relative(target, "seat", 0, mount));
+                } else {
+                    put(part, "seat_offset", vec(origin), target + ".seat_offset");
+                    put(part, "seat_rot", angle(euler(mount.rotation())[0]), target + ".seat_rot");
+                }
             }
             case "dismount" -> put(part(mount, target), "dismount_offset", vec(origin), target + ".dismount_offset");
             case "view" -> {
                 JsonObject part = part(mount, target);
-                if (weapon(part)) {
+                if (mount.kit() != null || weapon(part)) {
                     relative.add(new Relative(target, "view", 0, mount));
                 } else {
                     put(part, "owner_view_offset", vec(origin), target + ".owner_view_offset");
@@ -359,7 +391,7 @@ public final class MountDefaults {
     public record Relative(String part, String field, int index, ModelMounts.Mount mount) {
     }
 
-    /** @param values part id -> json keys the json left out; {@code kit_bolts} / {@code kit_ejects} / {@code kit_sights}: kit id -> bolts / ejects / sight */
+    /** @param values part id -> json keys the json left out; {@code kit_bolts} / {@code kit_ejects} / {@code kit_sights} / {@code kit_views} / {@code kit_seats}: kit id -> bolts / ejects / sight / view / {@code seat_offset}+{@code seat_rot} */
     public record Resolved(Map<String, JsonObject> values, List<String> repeated, List<String> overridden) {
     }
 
@@ -426,6 +458,13 @@ public final class MountDefaults {
                                 .computeIfAbsent(r.mount.kit(), k -> new TreeMap<>())).put(r.index, eject);
                 continue;
             }
+            if (r.field.equals("seat")) {
+                JsonObject seat = new JsonObject();
+                seat.add("seat_offset", vec(r.mount.origin()));
+                seat.add("seat_rot", angle(euler(r.mount.rotation())[0]));
+                kitEntries(values, r.part, "kit_seats").add(r.mount.kit(), seat);
+                continue;
+            }
             if (r.field.equals("sight_lens")) {
                 JsonObject part = values.computeIfAbsent(r.part, k -> new JsonObject());
                 if (r.mount.kit() == null) {
@@ -460,10 +499,7 @@ public final class MountDefaults {
                 JsonElement offset = vec(new Vector3f(r.mount.origin()).sub(pivot));
                 JsonObject part = values.computeIfAbsent(r.part, k -> new JsonObject());
                 if (r.mount.kit() != null) {
-                    if (!part.has("kit_sights")) {
-                        part.add("kit_sights", new JsonObject());
-                    }
-                    part.getAsJsonObject("kit_sights").add(r.mount.kit(), offset);
+                    kitEntries(values, r.part, r.field.equals("view") ? "kit_views" : "kit_sights").add(r.mount.kit(), offset);
                 } else {
                     part.add(r.field.equals("view") ? "operator_view_offset" : "optical_sight_offset", offset);
                 }
@@ -507,6 +543,14 @@ public final class MountDefaults {
             }
         }
         return new Resolved(values, repeated, overridden);
+    }
+
+    private static JsonObject kitEntries(Map<String, JsonObject> values, String part, String key) {
+        JsonObject keys = values.computeIfAbsent(part, k -> new JsonObject());
+        if (!keys.has(key)) {
+            keys.add(key, new JsonObject());
+        }
+        return keys.getAsJsonObject(key);
     }
 
     private static JsonArray ejectList(String vehicleId, String part, TreeMap<Integer, JsonElement> byIndex) {

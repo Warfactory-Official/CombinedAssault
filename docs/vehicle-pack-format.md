@@ -118,9 +118,7 @@ Every field the mod reads from a pack: unit, default. Defaults from the deserial
 
 | field | type | default |
 | --- | --- | --- |
-| `third_person_center_offset` | Vec3 | `[0,3,0]` |
 | `third_person_distance` | float | `3` |
-| `third_person_center_offset_zoomed` | Vec3 | `[0,5,0]` |
 | `third_person_distance_zoomed` | float | `0` |
 | `passenger_view_rot.rot_by_vehicle_in_third_person` | bool | `false` |
 | `passenger_view_rot.rot_by_vehicle_in_operator` | bool | `true` |
@@ -276,6 +274,7 @@ carrier's.
 | `brake_force`, `forward_force`, `backward_force` | float | — | N |
 | `max_speed_forward`, `max_speed_backward` | float | — |
 | `turn_step`, `max_turn` | float | — |
+| `steer_fade_speed` | float | `max_speed_forward` | b/t where steering = 1/2; above holds 1/2 |
 | `track_size` | float | `0.1` |
 
 **`tracked_vehicle`**
@@ -288,6 +287,20 @@ carrier's.
 | `track_size` | float | `0.3` |
 
 Both ground types also take a top-level `landing_gear_part_id` where applicable.
+
+**`transmission`** (both ground types, in `attributes`; absent => direct drive)
+
+| field | type | default | notes |
+| --- | --- | --- | --- |
+| `shift` | enum | `automatic` | `automatic`, `manual`. Server `transmission.automaticOnly` => all automatic. Manual with a non-player driver (autopilot, NPC) shifts itself |
+| `gears` | float[] | *required* | forward ratios, first first, strictly descending |
+| `idle_rpm`, `max_rpm` | float | `700`, `3400` | |
+| `shift_ticks` | int | `6` | clutch open (no drive) per shift |
+| `lever` | `[x, z]`[] | none | degrees per position R, N, 1..n (length = gears + 2) |
+
+- Gear g: top speed = `max_speed_forward * gears[last] / gears[g-1]`; drive = forward force / acceleration x `gears[g-1] / gears[0]`. R = `max_speed_backward`, backward force / acceleration. rpm = idle..max over 0..gear top; rev limiter at top.
+- Automatic: W / S = throttle / brake by travel; stopped, the other pedal selects R / 1; upshift > 0.9 gear top, downshift < 0.8 lower gear top. Manual: W throttle (in R: backward), S brake; `shift_up` / `shift_down` (default `]` / `[`); R only while stopped. Throttle off in gear => engine braking 5 % of brake. Handbrake (`up`, Space): wheeled only.
+- Synced: gear, pedals (throttle / brake / handbrake), rpm (as engine speed, audio `RPM`).
 
 **`rotary_wing_vehicle`** — plus top-level `landing_gear_part_id`
 
@@ -380,13 +393,10 @@ that type adds — there is no nested `data` object.
 | `render_bone` | string | `suspension`: its `part` frame node; else none | glTF node that is this part: hidden when detached (drawn by the part entity instead); suspension travel moves it |
 | `detachable` | bool | `true` | may be blown off as its own entity; `suspension` at 0 health on a live vehicle pops off, repair refits |
 | `is_seat` | bool | `true` | **defaults to true** — a part that is not a seat must say so |
-| `seat_rot` | float | — | |
-| `seat_offset` | Vec3 | `[0,0,0]` | where the rider's eyes go |
 | `dismount_offset` | Vec3 | none | |
 | `pose` | string | driver seat: `drive` (`pilot` on aircraft); else `sit` | rider pose: `sit` / `drive` / `pilot` / `stand` / `kneel` (`assets/combinedassault/player_animator/seat_*.json`, AHF pose set: drawn = hit rig); unknown => load error |
 | `protect_passenger` | bool | vehicle `protect_passenger` | seat override; `false` on exposed stations (shipped `stand` seats) => AHF rig hits land |
 | `passenger_can_use_item` | bool | `false` | |
-| `owner_view_offset` | Vec3 | none | camera position when operating this part; weapon => load error (`operator_view_offset`) |
 | `sensor` | string | none | seat: weapon part id whose sight it looks through and slews (SCOPE; WSO); fires nothing; reticle = boresight. Spotter seated => owner's SCOPE view-only, other views stop aiming it. `crew.required` => only this seat aims the station (empty => holds); station seat fires (SPG-9: `sight` aims, `gun` fires + loads) |
 | `crew_roles` | enum[] | derived | `driver`, `gunner`, `commander`, `loader`; gate stations under server config `crew.required`; driver seat always. Absent => seat 0 `driver` (+ `gunner` if a weapon station), other weapon seat `gunner`, else `commander`. Driver = first occupied `driver` seat (`crew.required` off: none occupied => seat 0 drives too); boarding takes an empty `driver` seat first; free seat probe node boards that seat |
 | `display_id` | id | — | |
@@ -420,8 +430,6 @@ that type adds — there is no nested `data` object.
 | `cold_launch_time_tick` | int | `0` | ejects before ignition when non-zero |
 | `cold_launch_velocity` | Vec3 | `[0,-1,0]` | |
 | `parent_weapon_unit_aim` | bool | `false` | slaved to the parent station's aim |
-| `optical_sight_offset` | Vec3 | `[0,0,0]` | |
-| `operator_view_offset` | Vec3 | `[0,0,0]` | |
 | `operator_on_weapon_unit` | bool | `true` | |
 | `fire_control_sensor_type` | enum | `none` | `none`, `ir`, `rf`, `eo`, `loc`, `ccip`. `loc`: no shot until coordinates are entered (`N`) |
 | `indirect_fire` | object | absent | absent => direct fire only. `{}` enables laying ([§9](#9-indirect-fire)); `map` (`false`): operator orders fire missions on the map; `launch_elevation` (`45`): degrees up a self-guided round leaves at |
@@ -605,7 +613,7 @@ Vehicle def `display` block; client only.
 | field | notes |
 | --- | --- |
 | `icon` | slot texture; `tools/model_icon.py <rig>` renders it from the model |
-| `controller` | `assets/<ns>/animation_controllers/<id>.json`; graph nodes `merge`, `blend`, `layered_blend`, `additive`, `script`, `bone_binding` |
+| `controller` | `assets/<ns>/animation_controllers/<id>.json`; graph nodes `merge`, `blend`, `layered_blend`, `additive`, `script`, `bone_binding`. Ground `special_bindings` sources: `throttle_pedal`, `brake_pedal`, `handbrake` (0..1, eased 0.12 s), `gear_lever_x` / `gear_lever_z` (degrees, transmission `lever`; H gate: crosses at N's x); multiplier = degrees at 1. Missing bones skipped |
 | `engine` | engine audio ([§6.10](#610-audio)) |
 | `cabin_muffle` | 0..1, default `0`: outside sound low-passed for a first-person rider of a protected seat; own door open x0.25, others x(1 - 0.5 open fraction) |
 | `tab_index` | creative tab order |
@@ -777,14 +785,14 @@ Damaged systems (every 3 ticks, 160 blocks), at a live hit node of that system (
 
 ### 6.7 Sockets
 
-Role nodes read at load (rest pose, vehicle frame). Each fills a vehicle def key the def leaves out; a key the def has wins (a list wins whole). Unknown part or id => load error. Load log: `json repeats its glTF mounts` (equal: delete from def), `json overrides` (differs).
+Role nodes read at load (rest pose, vehicle frame). Each fills a vehicle def key the def leaves out; a key the def has wins (a list wins whole). Node-only roles (`seat`, `view`, `sight`, `camera`, `camera_zoomed`): def key => load error. Unknown part or id => load error. Load log: `json repeats its glTF mounts` (equal: delete from def), `json overrides` (differs).
 
 | role | interface | def key | from the node |
 | --- | --- | --- | --- |
-| `seat` | part | part `seat_offset`, `seat_rot` | origin = rider eye; yaw |
+| `seat` | part | node-only | origin = rider eye (first-person eye absent `view`); yaw. None: part origin |
 | `dismount` | part | part `dismount_offset` | origin |
-| `view` | part | weapon: `operator_view_offset`; else `owner_view_offset` | origin |
-| `sight` | part | `optical_sight_offset` (weapon only); `handling: manual` => ADS eye | origin |
+| `view` | part | node-only | origin = first-person eye. Weapon without: part pivot |
+| `sight` | part | node-only (weapon only); `handling: manual` => ADS eye | origin |
 | `sight_lens` | part | none: lens mesh of the station `optic` (weapon only); drawn | the mesh itself |
 | `bolt` | part | part `bolts` (by `index`) | origin = breech, +Z = bore, Z scale = `barrel_length` |
 | `eject` | part | part `ejects` (by its bolt's `index`; 0..n-1) | origin = case port, +Z = throw, Z scale = speed (blocks/s); pitch frame, rest pose (recoil clips ignored) |
@@ -795,7 +803,7 @@ Role nodes read at load (rest pose, vehicle frame). Each fills a vehicle def key
 | `exhaust` | — | `energy_info.engine_particle_offsets` (by `index`) | origin |
 | `vortex`, `smoke` | — | `attributes.vortex_offsets` / `aerobatic_smoke_offsets` (by `index`) | origin |
 | `afterburner` | — | `attributes.afterburner_offsets` (by `index`) | origin |
-| `camera`, `camera_zoomed` | — | `view_info.third_person_center_offset[_zoomed]` | origin |
+| `camera`, `camera_zoomed` | — | node-only | origin = third-person orbit centre. None: `[0,3,0]` / `[0,5,0]` |
 | `light` | — | none: GemRender spot | posed frame; beam +Z, cookie up +Y |
 | `propeller` | — | `attributes.propellers` (ship) | origin = hub; mean scale = radius |
 | `station` | part (`missile_holder`) | holder station (by `index`) | origin = round centre, +Z = nose, Z scale = length (launch = origin − length/2 along +Z); rides the holder's `part` frame |
@@ -809,7 +817,7 @@ Role nodes read at load (rest pose, vehicle frame). Each fills a vehicle def key
 - Weapon view / sight: relative to the part frame; bolt, eject: in its `pitch` frame (none: `part`).
 - Addon `bone` = the socket's frame name.
 - `light` keys (`combinedassault.*`): `kind` `head` (default) \| `search`, `color` `#rrggbb`, `range`, `intensity` (E ~1 at `sqrt(intensity)` blocks), `inner`/`outer` half-angle deg (`0 < inner <= outer < 89`), `shadow`, `cookie`. Defaults per kind: `VehicleLight.Kind`. Toggle key (default `\`): driver -> `head`, other crew -> `search`; vehicle with one kind => that kind. Destroyed => off.
-- Part `mounts` model: its part-target sockets with no interface => the carrying part. Kit mount `bolt` / `eject` / `sight` / `sight_lens` replace the part's while that kit is fitted.
+- Part `mounts` model: its part-target sockets with no interface => the carrying part. Kit mount `seat` / `view` / `bolt` / `eject` / `sight` / `sight_lens` replace the part's while that kit is fitted.
 - Mount model state nodes (posable, by name; carrying part's current weapon): `ammo_can` shown while rounds remain or reloading; `round@<k>` while remaining > k; `barrel@<variant>` (`standard` = no variant, weapon `barrel.variants`) while that barrel is on and not being changed. Drawn only; hits use the rest pose.
 - Station sockets (gunner seat, view) belong in a mount, not the shared hull model: an unarmed sibling then loads.
 - Model shared by two vehicles: its sockets apply to both; a part one lacks fails that one's load => per-vehicle offsets in the def.
@@ -1195,7 +1203,7 @@ that says nothing here cannot tow and cannot be towed.
 | --- | --- | --- | --- |
 | `id` | string | `""` | unique within the vehicle; a saved coupling records it |
 | `name` | string | `""` | translation key for the readout; falls back to the id |
-| `offset` | Vec3 | `[0,0,0]` | where the joint is, in the vehicle's own frame, like `seat_offset` |
+| `offset` | Vec3 | `[0,0,0]` | where the joint is, in the vehicle's own frame, like a `seat` socket |
 | `modes` | enum[] | `["hitch"]` | which couplings this point makes: `hitch`, `cable`, `sling` |
 | `accepts` | string[] | `[]` | vehicle ids, or `#tag` against the towed vehicle's own tags. Empty accepts anything towable |
 | `max_mass` | float | `0` | heaviest train this point will take, kg. Zero is no limit |
@@ -1276,7 +1284,7 @@ Unmanned launcher: [§18](#18-air-defence).
 - Rest = tow stance, `x_rot` 4.4 (eye height at the lunette). Elevation `-40`..`5`.
 - Part `deploy` (switchable, probe node "Trails": Deploy trails / Stow for towing): clip `deploy` 4 s, trails + stabilisers tow -> ground. Colliders follow the clip: frames `04_REAR_TRAIL_L/R`, `05_FRONT_STABILIZER_L/R` (`follows_clips`, generic parts `trail_l/r`, `stab_l/r`).
 - `towable.stowed_by: deploy` => deployed trails block coupling. `gun.needs_on: deploy` => stowed gun fires nothing (any part: `needs_on` = switchable id that must be on; unknown / non-switchable id => load error).
-- `screens` (vehicle level): `{"<id>": {"layout", "part"?, "max_fps"? 20, "units_width"? 192}}` binds the model's `screen_<id>` slot mesh (material `extras.textureSlot: "screen_<id>"`, textured quad, UVs 0..1 across the screen) to a layout. Pose, bone, size, normal = the mesh. Drawn unlit through GemRender direct path (`GemScreens`, after the body). Binding without slot => error log, skipped; `screen_*` slot without binding => warning. `part` default = first weapon part. Layout: `scaling: absolute` + `size: [w, h]` (design size); fitted into the quad, bars where aspect differs. m777: `screen_computer` on `traverse`, layout `combinedassault:gun_computer` (subject `computer`: state STOWED / UNLOADED / LOADING / READY, elevation, azimuth, level-ground range + time of flight, round, load progress, crew, hull pitch / roll, stops).
+- `screens` (vehicle level): `{"<id>": {"layout", "kind"? "gun_computer" | "dash", "part"?, "max_fps"? 20, "units_width"? 192}}` binds the model's `screen_<id>` slot mesh (material `extras.textureSlot: "screen_<id>"`, textured quad, UVs 0..1 across the screen) to a layout. Pose, bone, size, normal = the mesh. Drawn unlit through GemRender direct path (`GemScreens`, after the body). Binding without slot => error log, skipped; `screen_*` slot without binding => warning. `gun_computer`: `part` default = first weapon part. `dash` (any vehicle): subject `dash` = `speed` km/h, `rpm`, `max_rpm` (NaN without transmission), `fuel` 0..1, `gear` (R / N / 1..), `check_engine` / `check_tires` (engine / wheel cell worse than PRISTINE), `handbrake`, `engine_on`; layout `combinedassault:dash`. Layout: `scaling: absolute` + `size: [w, h]` (design size); fitted into the quad, bars where aspect differs. m777: `screen_computer` on `traverse`, layout `combinedassault:gun_computer` (subject `computer`: state STOWED / UNLOADED / LOADING / READY, elevation, azimuth, level-ground range + time of flight, round, load progress, crew, hull pitch / roll, stops).
 - Model: black display case + dead screen + buttons cut from `30_CONTROLS_AND_SIGHTS_mesh`; `screen_computer` quad added to `m777.gltf` / `.bin` directly. warty `build_m777.py` has the cut but not the quad, outputs not regenerated => a regen drops the screen quad.
 - Clip `gun.fire` 1.2 s: recoil group (barrel, brake, yoke) slides 1.0 m back along the bore in 0.16 s, 0.04 s hold, 1.0 s run-out (smoothstep).
 - `crew.required`: `gun` gunner, `loader` + `assistant` loaders; `loading: manual` => one loader to load, both => reload * `crew.loaderReloadMultiplier`.
@@ -1500,7 +1508,7 @@ Gun = kit def; vehicle part = typed `hardpoint`. Fitted / taken off in the field
 | `fitted` | kit at first spawn; absent / null = empty |
 | `overrides` | kit id -> station keys for this vehicle only, + `vehicle_name` (lang key: vehicle display name while fitted) |
 
-- Station keys: `pose`, `seat_offset`, `seat_rot`, `dismount_offset`, `protect_passenger`, `passenger_can_use_item`, `crew_roles`, `rot_info`, `bolts`, `ejects`, `ammo_capacity`, `firing_mode`, `optical_sight_offset`, `operator_view_offset`, `operator_on_weapon_unit`, `fire_control_sensor_type`, `optical_sight_type`, `with_*`, `loading`, `zoom_min`, `zoom_max`, `crosshair_style`, `handling`, `optic`. Other key => load error.
+- Station keys: `pose`, `dismount_offset`, `protect_passenger`, `passenger_can_use_item`, `crew_roles`, `rot_info`, `bolts`, `ejects`, `ammo_capacity`, `firing_mode`, `operator_on_weapon_unit`, `fire_control_sensor_type`, `optical_sight_type`, `with_*`, `loading`, `zoom_min`, `zoom_max`, `crosshair_style`, `handling`, `optic`. Other key => load error.
 - Merge: part (glTF sockets applied) < kit `station` < hardpoint override; objects (`rot_info`) merge by key, else replace.
 - No kit => no gun: `currentWeaponId` null, kit mounts hidden and unhit, never fires. Seat switch cycles within the fitted kit; modding tool swaps refused.
 - Item `combinedassault:hardware`, component `combinedassault:hardware_kit` = kit id; name lang `hardware.<ns>.<path>`; drawn from the kit model. Recipes: result `{"id": "combinedassault:hardware", "components": {"combinedassault:hardware_kit": "<kit>"}}`.

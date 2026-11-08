@@ -12,8 +12,13 @@ Install: `python3 tools/blender/build_addon.py` -> `build/combinedassault_tools.
 | task | where |
 |---|---|
 | open a pack model | File > Import > combinedassault pack model, or Scene tab > Import pack model. Pick `assets/<ns>/models/**.gltf` inside the pack; Export then writes back to that file |
-| roles (body, part, collider, seat...) | Object tab > combinedassault |
-| texture | Material tab > Set up texture (PNG): Image Texture -> Base Color, pixel-sharp; Transparency Solid / Cut-out / See-through |
+| roles (body, part, collider, seat...) | Object tab > combinedassault: every §6 node key (frame limits, `follows_clips`; hit `system` / `side` / `unit` / `spin` / `health` / `swept` / `skip` / `road_wheel`; collider flags; socket `index`, light keys; scale-valued sockets show their value field) |
+| texture | Material tab > Set up texture (PNG): Image Texture -> Base Color, pixel-sharp; Transparency Solid / Cut-out / See-through; damage / paint siblings listed |
+| armour, hit effect, decor | Material tab: Armour mm / Hit effect / Decor = views of the material name (editing renames). Assign armour to faces (edit mode): per-face copy |
+| socket | Scene tab > Add socket (3D cursor): `era` / `slat` quad, `sight_lens` quad, `track` loop as starter meshes; `cargo_bay` cube / `propeller` circle drawn at the value size |
+| tyre hit surface | Scene tab > Make hit cylinder: circumscribed prism `hit_surface` child per selected node (= `gen_hulls.py --hit-cylinder`, regenerable by it) |
+| screen | Scene tab > Add screen: `screen_<id>` quad (UV 0..1, faces the rider) + material `textureSlot`; bind in vehicle `screens` |
+| lights | Scene tab > Preview lights: Blender spot per `light` socket (kind defaults resolved). Rebuilt per call; never exported |
 | player size | Scene tab > Player standing / Player seated (at the 3D cursor; seated: cursor on the seat socket). Never exported |
 | passenger views | Scene tab > Create passenger cameras: one camera per `seat` / `view` / `sight` / `camera` / `camera_zoomed` socket (eye = origin, -Y at yaw 0, 70 deg vertical); Previous / Next / per-socket buttons look through. Rebuilt per call; never exported |
 | check | Scene tab > Check vehicle; red lines in Object / Material tabs |
@@ -26,10 +31,12 @@ Install: `python3 tools/blender/build_addon.py` -> `build/combinedassault_tools.
 - Scene tab > Merge coplanar faces: selected colliders, dissolve at 1e-3 rad (fixes the "share a plane" warning).
 - Colliders round-trip face for face (one glTF primitive per face). One triangulated primitive => the game regroups
   by plane and sliver triangles fail its 1e-4 flatness (EMB4 hulls are convex only to ~2e-3 per sliver).
+- Object tab: mount state node names (`ammo_can`, `round@<k>`, `barrel@<variant>`) labelled.
 - Material problems the exporter would hide: texture not on Base Color, Base Color through Mix nodes, second UV map,
   Mapping node, never-saved image, Alpha linked with Transparency Auto.
 - Test: `blender -b --factory-startup --python "$PWD/tools/blender/test_combinedassault_tools.py"` (Flatpak:
-  absolute path; its `/tmp` is private). Round-trips the Humvee and C-5.
+  absolute path; its `/tmp` is private). Round-trips Humvee, C-5, T-90, Mavic, M777, M142; vocabularies parsed from the
+Java sources.
 
 ## Blockbench plugin (`tools/blockbench/combinedassault.js`)
 
@@ -62,9 +69,10 @@ Install: Blockbench 5.1 desktop > File > Plugins > Load Plugin from File. Menu a
 ## Validator (`tools/blender/ca_validate.py`)
 
 `python3 tools/blender/ca_validate.py <model.gltf>...`; exit 1 on any error. No Blender needed. Mirrors `ModelRig`
-(roles, body, frames, collider keys, hulls), GemRender materials (resourceLocation, PNG, TEXCOORD_0 only,
-cutoff 0 / 0.1 / 0.5) and clip names. `sight_lens` mesh: drawn, UV not required. No body node => part / display model: rig rules skipped. Shipped pack:
-53 models, 0 errors.
+(roles, body, frames, collider keys, hulls), `ModelDataManager` (node keys, `system`, `spin`, no yaw on `pitch`),
+`VehicleLight.read`, GemRender materials (resourceLocation, PNG, TEXCOORD_0 only, cutoff 0 / 0.1 / 0.5, `textureSlot`
+mesh UVs) and clip names. `sight_lens` mesh: drawn, UV not required. No body node => part / display model: rig rules
+skipped. Shipped pack: 67 models, 0 errors.
 
 ## Player reference
 

@@ -36,6 +36,44 @@
                         "source": "steering_angle",
                         "axis": "y",
                         "multiplier": -4.33
+                    },
+                    {
+                        "bones": [
+                            "pedal_throttle"
+                        ],
+                        "source": "throttle_pedal",
+                        "axis": "x",
+                        "multiplier": -18.0
+                    },
+                    {
+                        "bones": [
+                            "pedal_brake"
+                        ],
+                        "source": "brake_pedal",
+                        "axis": "x",
+                        "multiplier": -18.0
+                    },
+                    {
+                        "bones": [
+                            "handbrake"
+                        ],
+                        "source": "handbrake",
+                        "axis": "x",
+                        "multiplier": -30.0
+                    },
+                    {
+                        "bones": [
+                            "gear_lever"
+                        ],
+                        "source": "gear_lever_x",
+                        "axis": "x"
+                    },
+                    {
+                        "bones": [
+                            "gear_lever"
+                        ],
+                        "source": "gear_lever_z",
+                        "axis": "z"
                     }
                 ]
             }

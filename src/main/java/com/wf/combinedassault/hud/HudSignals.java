@@ -5,7 +5,10 @@ import com.wf.combinedassault.naval.ShipVehicle;
 import com.wf.combinedassault.radar.WarningReceiver;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.GroundVehicle;
 import com.wf.combinedassault.vehicle.entity.NoneVehicle;
+import com.wf.combinedassault.vehicle.entity.WheeledVehicle;
+import com.wf.combinedassault.vehicle.light.VehicleLight;
 import com.wf.combinedassault.vehicle.pojo.WarnType;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.VehicleDecoyFlare;
@@ -95,6 +98,12 @@ public final class HudSignals {
         Signals.num(VEHICLE, "roll", v -> v.getViewZRot(partialTick()));
         Signals.num(VEHICLE, "yaw", v -> v.getViewYRot(partialTick()));
         Signals.bool(VEHICLE, "none", v -> v instanceof NoneVehicle);
+        Signals.bool(VEHICLE, "ground", v -> v instanceof GroundVehicle);
+        Signals.bool(VEHICLE, "wheeled", v -> v instanceof WheeledVehicle);
+        Signals.bool(VEHICLE, "manual", v -> v instanceof GroundVehicle g
+                && g.transmission != null && !g.automatic());
+        Signals.bool(VEHICLE, "lights", v -> !VehicleLight.of(v).isEmpty());
+        Signals.bool(VEHICLE, "hitches", v -> !v.towing.hitches.isEmpty());
         Signals.bool(VEHICLE, "ship", v -> v instanceof ShipVehicle);
         Signals.items(VEHICLE, "systems", HudCache::systems, SYSTEM);
         Signals.num(VEHICLE, "system_count", v -> HudCache.systems(v).size());

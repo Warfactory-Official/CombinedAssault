@@ -31,6 +31,17 @@ SHAPE_ROLES = {"collider", "hit", "hit_surface"}
 ROLES = FRAME_ROLES | SHAPE_ROLES | set(SOCKET_FIELDS)
 # ModelRig.COLLIDER_KEYS.
 COLLIDER_KEYS = {"main", "deck", "solid", "world", "name", "hit"}
+# ModelDataManager.HIT_KEYS (untagged, frame, hit, hit_surface nodes); FRAME_KEYS on frames too.
+HIT_KEYS = {"system", "side", "unit", "spin", "health", "swept", "skip", "index", "road_wheel"}
+FRAME_KEYS = {"x_rot_min", "x_rot_max", "y_rot_min", "y_rot_max", "follows_clips"}
+SPINS = ("cw", "ccw")
+# VehicleLight.KEYS; Kind -> (color, range, intensity, inner, outer).
+LIGHT_KEYS = {"kind", "color", "range", "intensity", "inner", "outer", "shadow", "cookie", "index"}
+LIGHT_KINDS = {"head": (0xFFF1D8, 40.0, 300.0, 12.0, 32.0), "search": (0xEEF4FF, 96.0, 4000.0, 2.5, 6.0)}
+# SurfaceMaterial tokens (`_ . space` delimited); untagged = steel.
+SURFACES = {"rubber": "rubber", "glass": "glass", "soft": "soft|fabric|cloth|canvas"}
+# GltfImporter.TEXTURE_SLOT.
+TEXTURE_SLOT = "textureSlot"
 ROLE = "combinedassaultRole"
 INTERFACE = "combinedassaultInterface"
 META = "combinedassault"
@@ -234,8 +245,48 @@ def roles(model):
                     model.errors.append("collider %s: %s" % (name, problem))
         if role == "hit" and meta.get("system") not in SYSTEMS:
             model.errors.append("hit module %s: system '%s' not one of %s" % (name, meta.get("system"), SYSTEMS))
+        if role == "light":
+            for problem in light_problems(meta):
+                model.errors.append("light %s: %s" % (name, problem))
+    for i, node in enumerate(nodes):
+        extras = node.get("extras", {})
+        role = extras.get(ROLE, "")
+        if role and role not in FRAME_ROLES | {"hit", "hit_surface"}:
+            continue
+        name = node.get("name", "node %d" % i)
+        meta = extras.get(META, {})
+        allowed = HIT_KEYS | (FRAME_KEYS if role in FRAME_ROLES else set())
+        unknown = sorted(set(meta) - allowed)
+        if unknown:
+            model.errors.append("node %s: unknown key(s) %s" % (name, ", ".join(unknown)))
+        system = meta.get("system")
+        if system is not None and system != "none" and system not in SYSTEMS:
+            model.errors.append("node %s: system '%s' not one of %s or none" % (name, system, SYSTEMS))
+        if "spin" in meta and str(meta["spin"]).lower() not in SPINS:
+            model.errors.append("node %s: spin '%s' not cw / ccw" % (name, meta["spin"]))
+        if role == "pitch" and any(k.startswith("y_rot_") for k in meta):
+            model.errors.append("pitch frame %s sets y_rot_*: yaw limits go on the part frame" % name)
     if len(mains) > 1:
         model.errors.append("more than one main collider: %s" % ", ".join(mains))
+
+
+def light_problems(meta):
+    """VehicleLight.read refusals."""
+    problems = ["unknown key %s" % k for k in sorted(set(meta) - LIGHT_KEYS)]
+    kind = str(meta.get("kind", "head")).lower()
+    if kind not in LIGHT_KINDS:
+        return problems + ["kind '%s' not one of %s" % (kind, sorted(LIGHT_KINDS))]
+    if "color" in meta and not re.fullmatch(r"#[0-9a-fA-F]{6}", str(meta["color"])):
+        problems.append("color %s; expected #rrggbb" % meta["color"])
+    _, _, _, inner, outer = LIGHT_KINDS[kind]
+    for key in ("range", "intensity", "inner", "outer"):
+        if key in meta and not (isinstance(meta[key], (int, float)) and math.isfinite(meta[key]) and meta[key] > 0):
+            problems.append("%s %s; expected > 0" % (key, meta[key]))
+    outer = meta.get("outer", outer)
+    inner = meta.get("inner", min(inner, outer))
+    if isinstance(inner, (int, float)) and isinstance(outer, (int, float)) and (outer >= 89 or inner > outer):
+        problems.append("need 0 < inner <= outer < 89, got %s, %s" % (inner, outer))
+    return problems
 
 
 def frame_is_body(model, i):
@@ -395,7 +446,7 @@ def materials(model):
                 model.errors.append("material %s: %s points at no image" % (name, key))
             else:
                 used.add(texture["source"])
-        if pbr.get("baseColorTexture") is None:
+        if pbr.get("baseColorTexture") is None and TEXTURE_SLOT not in material.get("extras", {}):
             model.warnings.append("material %s has no base colour texture: drawn in its flat colour" % name)
         mode = material.get("alphaMode", "OPAQUE")
         cutoff = material.get("alphaCutoff", 0.5)
@@ -418,6 +469,10 @@ def materials(model):
                 gltf["materials"][material].get("pbrMetallicRoughness", {}).get("baseColorTexture") is not None
             if textured and "TEXCOORD_0" not in primitive.get("attributes", {}):
                 model.errors.append("mesh %s: textured but has no UV map" % mesh.get("name", "?"))
+            slot = material is not None and TEXTURE_SLOT in gltf["materials"][material].get("extras", {})
+            if slot and "TEXCOORD_0" not in primitive.get("attributes", {}):
+                model.errors.append("mesh %s: texture slot %s but no UV map (0..1 across the screen)"
+                                    % (mesh.get("name", "?"), gltf["materials"][material]["extras"][TEXTURE_SLOT]))
 
 
 def animations(model):

@@ -1,6 +1,7 @@
 package com.wf.combinedassault.vehicle.data;
 
 import com.google.gson.annotations.SerializedName;
+import com.wf.combinedassault.vehicle.drive.Transmission;
 
 public class TrackedVehicleDataPojo extends BaseVehicleDataPojo {
 
@@ -32,6 +33,10 @@ public class TrackedVehicleDataPojo extends BaseVehicleDataPojo {
 
         @SerializedName("track_size")
         public float trackSize = 0.3f;
+
+        /** Null => direct drive. */
+        @SerializedName("transmission")
+        public Transmission transmission;
 
     }
 

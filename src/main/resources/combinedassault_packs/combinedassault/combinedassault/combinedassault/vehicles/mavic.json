@@ -41,11 +41,6 @@
         "max_payload": 0.5
     },
     "view_info": {
-        "third_person_center_offset": [
-            0,
-            3,
-            0
-        ],
         "third_person_distance": 7
     },
     "energy_info": {
@@ -71,19 +66,10 @@
             "id": "sighting_system",
             "name": "sighting_system",
             "type": "combinedassault:weapon",
-            "seat_offset": [
-                0,
-                2,
-                0.2
-            ],
             "operator_on_weapon_unit": false,
             "rot_info": {
                 "x_rot_speed": 9,
-                "y_rot_speed": 9,
-                "x_rot_max": 90,
-                "x_rot_min": -35,
-                "y_rot_max": 45,
-                "y_rot_min": -45
+                "y_rot_speed": 9
             },
             "optical_sight_type": "crt",
             "with_ir": true,

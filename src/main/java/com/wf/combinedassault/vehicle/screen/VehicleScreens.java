@@ -34,7 +34,7 @@ public final class VehicleScreens {
         public final String[] slots;
         public final ScreenInfo[] infos;
         public final GemRenderGltfModel.SlotFrame[] frames;
-        public final GunComputer[] views;
+        public final ScreenView[] views;
         public final ResourceLocation[] textures;
 
         private State(GemRenderGltfModel model, int count) {
@@ -43,7 +43,7 @@ public final class VehicleScreens {
             slots = new String[count];
             infos = new ScreenInfo[count];
             frames = new GemRenderGltfModel.SlotFrame[count];
-            views = new GunComputer[count];
+            views = new ScreenView[count];
             textures = new ResourceLocation[count];
         }
 
@@ -91,8 +91,9 @@ public final class VehicleScreens {
         for (Map.Entry<String, ScreenInfo> entry : vehicle.screens.entrySet()) {
             String slot = ScreenInfo.SLOT_PREFIX + entry.getKey();
             GemRenderGltfModel.SlotFrame frame = model.slotFrame(slot);
-            WeaponUnit unit = weapon(vehicle, entry.getValue().part);
-            if (frame == null || unit == null) {
+            boolean dash = entry.getValue().kind == ScreenInfo.Kind.DASH;
+            WeaponUnit unit = dash ? null : weapon(vehicle, entry.getValue().part);
+            if (frame == null || !dash && unit == null) {
                 CombinedAssault.LOGGER.error("{}: screen {} skipped: {}", id, entry.getKey(),
                         frame == null ? "model has no textured quad in slot " + slot : "no weapon part");
                 continue;
@@ -100,7 +101,7 @@ public final class VehicleScreens {
             state.slots[n] = slot;
             state.infos[n] = entry.getValue();
             state.frames[n] = frame;
-            state.views[n] = new GunComputer(vehicle, unit);
+            state.views[n] = dash ? new DashView(vehicle) : new GunComputer(vehicle, unit);
             n++;
         }
         return n == state.count ? state : shrink(state, n);

@@ -12,7 +12,7 @@ import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.wflib.ui.api.Signals;
 import com.wf.wflib.ui.api.Subject;
-import com.wf.wflib.ui.api.UiContext;
+import com.wf.combinedassault.vehicle.screen.ScreenView;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec2;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
  * Figures of one gun's built-in computer, refreshed by the renderer at most every {@link #REFRESH_NANOS}; signals
  * read the fields. Range / flight: level ground at the breech height, round in the breech (else the default round).
  */
-public final class GunComputer implements UiContext {
+public final class GunComputer implements ScreenView {
     public static final Subject<GunComputer> SUBJECT = Subject.register("computer", GunComputer.class);
     private static final long REFRESH_NANOS = 40_000_000L;
 
@@ -56,6 +56,7 @@ public final class GunComputer implements UiContext {
         this.unit = unit;
     }
 
+    @Override
     public void refresh(float partialTick) {
         long now = System.nanoTime();
         if (now - refreshed < REFRESH_NANOS) {

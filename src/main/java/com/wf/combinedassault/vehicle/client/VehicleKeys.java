@@ -6,6 +6,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.settings.IKeyConflictContext;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.client.settings.KeyModifier;
 import org.lwjgl.glfw.GLFW;
@@ -28,8 +29,10 @@ public class VehicleKeys {
     public static final KeyMapping TOGGLE_ENGINE = key("toggle_engine", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_I);
     public static final KeyMapping TOGGLE_LANDING_GEAR = key("toggle_landing_gear", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_G);
     public static final KeyMapping TOGGLE_AIRBRAKE = key("toggle_airbrake", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_CONTROL);
-    public static final KeyMapping FLAPS_DOWN = key("flaps_down", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_BRACKET);
-    public static final KeyMapping FLAPS_UP = key("flaps_up", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_BRACKET);
+    public static final KeyMapping FLAPS_DOWN = key("flaps_down", Domain.AIR, GLFW.GLFW_KEY_RIGHT_BRACKET);
+    public static final KeyMapping FLAPS_UP = key("flaps_up", Domain.AIR, GLFW.GLFW_KEY_LEFT_BRACKET);
+    public static final KeyMapping SHIFT_UP = key("shift_up", Domain.GROUND, GLFW.GLFW_KEY_RIGHT_BRACKET);
+    public static final KeyMapping SHIFT_DOWN = key("shift_down", Domain.GROUND, GLFW.GLFW_KEY_LEFT_BRACKET);
     public static final KeyMapping TOGGLE_HOVER_MODE = key("toggle_hover_mode", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z);
     public static final KeyMapping TOGGLE_RADAR = key("toggle_radar", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_3);
     public static final KeyMapping CYCLE_SIGHT_MODE = key("cycle_sight_mode", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_4);
@@ -61,13 +64,33 @@ public class VehicleKeys {
 
     private static final KeyMapping[] ALL_KEYS = {
             FORWARD, BACKWARD, LEFT, RIGHT, UP, DOWN, LEFT_YAW, RIGHT_YAW, FUNCTIONAL_UP, FUNCTIONAL_DOWN, FUNCTIONAL_LEFT, FUNCTIONAL_RIGHT,
-            TOGGLE_ENGINE, TOGGLE_LANDING_GEAR, TOGGLE_AIRBRAKE, FLAPS_DOWN, FLAPS_UP, TOGGLE_HOVER_MODE, TOGGLE_RADAR, CYCLE_SIGHT_MODE,
+            TOGGLE_ENGINE, TOGGLE_LANDING_GEAR, TOGGLE_AIRBRAKE, FLAPS_DOWN, FLAPS_UP, SHIFT_UP, SHIFT_DOWN, TOGGLE_HOVER_MODE, TOGGLE_RADAR, CYCLE_SIGHT_MODE,
             MAIN_WEAPON_SHOOT, SECONDARY_WEAPON_SHOOT, SECONDARY_WEAPON_SWITCH, SWITCH_AMMO,
             MAGNIFICATION_CHANGE, FIRE_CONTROL_LOCK, PRESET_COORDINATE_INPUT, DECOY_FLARE_LAUNCH, SMOKE_GRENADE_LAUNCH, TOGGLE_SEEKER, TOGGLE_WEAPON_BAY,
             SWITCH_VIEW, SWITCH_SCOPE, FREE_CAMERA, OPEN_INVENTORY, LEAVE_VEHICLE, INSPECT_VEHICLE, OPEN_PARACHUTE,
             CHANGE_SEAT, TOGGLE_AEROBATIC_SMOKE,
             TOGGLE_COLLISION_DEBUG
     };
+
+    /** In game; ground and air keys share defaults without a conflict between them. */
+    private enum Domain implements IKeyConflictContext {
+        GROUND, AIR;
+
+        @Override
+        public boolean isActive() {
+            return KeyConflictContext.IN_GAME.isActive();
+        }
+
+        @Override
+        public boolean conflicts(IKeyConflictContext other) {
+            return other == this || other == KeyConflictContext.IN_GAME;
+        }
+    }
+
+    private static KeyMapping key(String name, Domain domain, int key) {
+        return new KeyMapping("key.combinedassault." + name + ".desc", domain, KeyModifier.NONE,
+                InputConstants.Type.KEYSYM, key, "key.category.combinedassault");
+    }
 
     private static KeyMapping key(String name, InputConstants.Type type, int key) {
         return new KeyMapping("key.combinedassault." + name + ".desc",

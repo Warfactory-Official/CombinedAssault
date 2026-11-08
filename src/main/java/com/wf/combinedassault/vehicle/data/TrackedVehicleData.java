@@ -1,6 +1,7 @@
 package com.wf.combinedassault.vehicle.data;
 
 import com.wf.combinedassault.vehicle.VehicleContent;
+import com.wf.combinedassault.vehicle.drive.Transmission;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.entity.TrackedVehicle;
 import net.minecraft.world.level.Level;
@@ -15,6 +16,7 @@ public class TrackedVehicleData extends BaseVehicleData<TrackedVehicle> {
     public float turnAcceleration;
     public float maxTurn;
     public float trackSize;
+    public Transmission transmission;
 
     @Override
     public AbstractVehicle fromCustom(Level level) {
@@ -31,6 +33,10 @@ public class TrackedVehicleData extends BaseVehicleData<TrackedVehicle> {
         this.turnAcceleration = pojo.attributes.turnAcceleration;
         this.maxTurn = pojo.attributes.maxTurn;
         this.trackSize = pojo.attributes.trackSize;
+        this.transmission = pojo.attributes.transmission;
+        if (transmission != null) {
+            transmission.validate();
+        }
     }
 
     public void inject(TrackedVehicle vehicle) {
@@ -42,6 +48,7 @@ public class TrackedVehicleData extends BaseVehicleData<TrackedVehicle> {
         vehicle.turnAcceleration = this.turnAcceleration;
         vehicle.maxTurn = this.maxTurn;
         vehicle.trackSize = this.trackSize;
+        vehicle.transmission = this.transmission;
     }
 
 }

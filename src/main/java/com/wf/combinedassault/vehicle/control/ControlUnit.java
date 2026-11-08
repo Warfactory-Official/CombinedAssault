@@ -41,6 +41,9 @@ public class ControlUnit {
     public float reportedXRot;
     public float reportedYRot;
     public float reportedZRot;
+    /** Manual gearbox: gear the driver selected (sticky), {@link #NO_GEAR} until the first shift. */
+    public byte gearRequest = NO_GEAR;
+    public static final byte NO_GEAR = Byte.MIN_VALUE;
     /** Server: seq of the input in effect (ack); client: seq of this input. -1 none. */
     public int seq = -1;
     /** Server: arrived, not yet consumed; one per tick. Cap: past it the oldest is dropped (client reconciles). */
@@ -101,6 +104,7 @@ public class ControlUnit {
         turnX = 0;
         turnY = 0;
         reported = false;
+        gearRequest = NO_GEAR;
     }
 
     /** No keys, attitude held. */
@@ -134,6 +138,7 @@ public class ControlUnit {
         reportedXRot = controlUnit.reportedXRot;
         reportedYRot = controlUnit.reportedYRot;
         reportedZRot = controlUnit.reportedZRot;
+        gearRequest = controlUnit.gearRequest;
         seq = controlUnit.seq;
     }
 
@@ -166,6 +171,7 @@ public class ControlUnit {
         reportedXRot = message.reportedXRot;
         reportedYRot = message.reportedYRot;
         reportedZRot = message.reportedZRot;
+        gearRequest = message.gearRequest;
         seq = message.seq;
         return true;
     }

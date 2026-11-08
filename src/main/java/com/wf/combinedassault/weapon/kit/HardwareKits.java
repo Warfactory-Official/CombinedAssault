@@ -17,9 +17,9 @@ import java.util.*;
 public final class HardwareKits {
 
     /** Weapon part keys a kit {@code station} or a hardpoint override may set; anything else => load error. */
-    public static final Set<String> STATION_KEYS = Set.of("pose", "seat_offset", "seat_rot", "dismount_offset",
+    public static final Set<String> STATION_KEYS = Set.of("pose", "dismount_offset",
             "protect_passenger", "passenger_can_use_item", "crew_roles", "rot_info", "bolts", "ejects", "ammo_capacity",
-            "firing_mode", "optical_sight_offset", "operator_view_offset", "operator_on_weapon_unit",
+            "firing_mode", "operator_on_weapon_unit",
             "fire_control_sensor_type", "optical_sight_type", "with_stabilizer", "with_focus_locker",
             "with_thermal_imager", "with_night_vision", "with_ir", "loading", "zoom_min", "zoom_max", "crosshair_style",
             "handling", "optic");

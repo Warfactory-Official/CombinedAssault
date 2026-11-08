@@ -31,6 +31,7 @@ public final class VehicleConfig {
     private static final ModConfigSpec.ConfigValue<List<? extends String>> THIRD_PERSON_DENY;
     private static final ModConfigSpec.IntValue LEAD_LOAD_TICKS;
     private static final ModConfigSpec.IntValue ALTITUDE_VIEW_FLOOR;
+    private static final ModConfigSpec.BooleanValue AUTOMATIC_ONLY;
     private static volatile Common common = new Common(false, 1.0, true, true, true, 1.0);
     private static volatile Server server = new Server(0.6, List.of("ground", "aircraft", "naval"), List.of(), List.of(), 40, 0);
 
@@ -68,6 +69,10 @@ public final class VehicleConfig {
         THIRD_PERSON_DENY = builder.comment("Vehicle ids refused regardless of class or allow.")
                 .defineListAllowEmpty("deny", List.of(), () -> "", value -> value instanceof String);
         builder.pop();
+        builder.push("transmission");
+        AUTOMATIC_ONLY = builder.comment("Every gearbox shifts itself, whatever its pack transmission.shift says.")
+                .define("automaticOnly", false);
+        builder.pop();
         LEAD_LOAD_TICKS = builder.comment("Players moving faster than 1 block/tick (riding or flying): load the chunks their view will reach",
                         "within this many ticks ahead of time, capped at one view distance. 0 = off.")
                 .defineInRange("leadLoadTicks", 40, 0, 400);
@@ -86,6 +91,11 @@ public final class VehicleConfig {
 
     public static Server server() {
         return server;
+    }
+
+    /** Live: server config syncs to clients, which predict the drive. */
+    public static boolean automaticOnly() {
+        return AUTOMATIC_ONLY.get();
     }
 
     public static ModConfigSpec.BooleanValue crewRequired() {

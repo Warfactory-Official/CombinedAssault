@@ -1,5 +1,6 @@
 package com.wf.combinedassault.vehicle.entity;
 
+import com.wf.combinedassault.vehicle.drive.Transmission;
 import com.wf.combinedassault.ballistics.component.VehicleMobility;
 import com.wf.combinedassault.dynamics.PhysicsEngine;
 import com.wf.combinedassault.pack.IAnimationEntity;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class TrackedVehicle extends AbstractVehicle
+public class TrackedVehicle extends GroundVehicle
         implements IAnimationEntity<TrackedVehicle, TrackedVehicleContext> {
 
     public static final EntityDataAccessor<Float> FORWARD_SPEED = SynchedEntityData.defineId(TrackedVehicle.class, EntityDataSerializers.FLOAT);
@@ -79,6 +80,7 @@ public class TrackedVehicle extends AbstractVehicle
         entityData.set(TURN_SPEED, buf.readFloat());
     }
 
+    @Override
     public float getForwardSpeed() {
         return this.entityData.get(FORWARD_SPEED);
     }
@@ -119,6 +121,9 @@ public class TrackedVehicle extends AbstractVehicle
         double grip = PhysicsEngine.TYRE_GRIP * PhysicsEngine.G;
         sideways = slide <= grip ? Vec3.ZERO : sideways.scale((slide - grip) / slide);
         if (!hasPower()) {
+            if (transmission != null) {
+                drivetrain(transmission, vf, maxSpeedForward, maxSpeedBackward, false);
+            }
             entityData.set(FORWARD_SPEED, vf);
             entityData.set(TURN_SPEED, 0f);
             return new Vec3(0, 0, 0);
@@ -132,7 +137,18 @@ public class TrackedVehicle extends AbstractVehicle
         float brake = brakeAcceleration / load;
         float turn = turnAcceleration / load;
 
-        if (controlUnit.forward || controlUnit.backward) {
+        if (transmission != null) {
+            drivetrain(transmission, vf, maxSpeedForward, maxSpeedBackward, false);
+            if (braking || engineBraking) {
+                float stop = braking ? brake : brake * ENGINE_BRAKE;
+                vf = vf > 0 ? Math.max(0, vf - stop) : Math.min(0, vf + stop);
+            } else if (push > 0) {
+                vf = Math.max(vf, Math.min(pushCap, vf + forwardAcceleration * pushScale * strain / load));
+            } else if (push < 0) {
+                vf = Math.min(vf, Math.max(-pushCap, vf - backwardAcceleration * strain / load));
+            }
+        } else if (controlUnit.forward || controlUnit.backward) {
+            setPedals((controlUnit.forward ? THROTTLE : 0) | (controlUnit.backward ? BRAKE : 0));
             if (controlUnit.forward) {
                 if (vf < 0) {
                     vf += brake;
@@ -170,8 +186,11 @@ public class TrackedVehicle extends AbstractVehicle
         }
         entityData.set(TURN_SPEED, vt);
 
+        if (transmission == null && !(controlUnit.forward || controlUnit.backward)) {
+            setPedals(0);
+        }
         if (hasTraction() || (isInWater() && canWade)) {
-            if (controlUnit.backward) {
+            if (transmission != null ? getGear() == Transmission.REVERSE : controlUnit.backward) {
                 vt *= -1;
             }
             this.turnBy(vt + Math.abs(vf) / maxSpeedForward * vt / 5);
@@ -190,6 +209,9 @@ public class TrackedVehicle extends AbstractVehicle
 
     @Override
     protected void tickEngineSpeed() {
+        if (transmission != null) {
+            return;
+        }
         super.tickEngineSpeed();
         float engineSpeed = getEngineSpeed();
         if (controlUnit.forward || controlUnit.backward || controlUnit.left || controlUnit.right) {

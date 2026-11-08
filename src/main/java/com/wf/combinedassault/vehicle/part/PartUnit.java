@@ -235,11 +235,7 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
     }
 
     public Vec3 worldOwnerViewPosition(float partialTick) {
-        float eyeHeight = getOwner() == null ? 2 : owner.getEyeHeight();
-        if (ownerViewOffset == null) {
-            return worldPosition(new Vec3(0, eyeHeight, 0), partialTick);
-        }
-        return worldPosition(ownerViewOffset, partialTick);
+        return worldPosition(ownerViewOffset == null ? seatOffset : ownerViewOffset, partialTick);
     }
 
     /**

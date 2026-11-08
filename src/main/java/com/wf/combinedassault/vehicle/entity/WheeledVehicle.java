@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class WheeledVehicle extends AbstractVehicle implements IAnimationEntity<WheeledVehicle, WheeledVehicleContext> {
+public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<WheeledVehicle, WheeledVehicleContext> {
 
     public static final EntityDataAccessor<Float> FORWARD_SPEED = SynchedEntityData.defineId(WheeledVehicle.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Float> TURN_ANGLE = SynchedEntityData.defineId(WheeledVehicle.class, EntityDataSerializers.FLOAT);
@@ -42,6 +42,7 @@ public class WheeledVehicle extends AbstractVehicle implements IAnimationEntity<
     public float backwardForce = 4000f;
     public float maxSpeedForward = 0.5f;
     public float maxSpeedBackward = 0.2f;
+    public float steerFadeSpeed = 0.5f;
     public float turnStep = 0.1f;
     public float maxTurn = 2f;
     public float trackSize = 0.1f;
@@ -148,7 +149,12 @@ public class WheeledVehicle extends AbstractVehicle implements IAnimationEntity<
         }
 
         Vec3 propulsiveForce = Vec3.ZERO;
-        if (controlUnit.forward) {
+        if (transmission != null) {
+            Vec3 heading = vehicleDirection.normalize();
+            double along = velocity.dot(heading);
+            drivetrain(transmission, along, maxSpeedForward, maxSpeedBackward, handbrake);
+            propulsiveForce = heading.scale(transmissionForce(along, powerScale * mobility.speedScale()));
+        } else if (controlUnit.forward) {
             if (motion != 0 && angle > 90) {
                 propulsiveForce = vehicleDirection.normalize().scale(brakeForce);
             } else {
@@ -165,6 +171,9 @@ public class WheeledVehicle extends AbstractVehicle implements IAnimationEntity<
                 }
             }
         }
+        if (transmission == null) {
+            setPedals((controlUnit.forward ? THROTTLE : 0) | (controlUnit.backward ? BRAKE : 0) | (handbrake ? HANDBRAKE : 0));
+        }
 
         // Tyre force ~ wheels down: steering and drive through 1 of 8 wheels rolled an M983 over (terrain WEAVE).
         float share = isInWater() && canWade ? 1 : physicsEngine.tractionShare();
@@ -177,7 +186,7 @@ public class WheeledVehicle extends AbstractVehicle implements IAnimationEntity<
 
         float turnStep = (float) Math.toDegrees(Math.atan2(motion * share
                 * (turnAngle / maxTurn)
-                * (1 - motion / maxSpeedForward * 0.5)
+                * (1 - Math.min(motion / steerFadeSpeed, 1) * 0.5)
                 * (loseTraction ? 0.8 : 1), bodyDepth));
         // Yaw <= grip / speed (v*w <= grip*g); uncapped: m1129 at full lock ~1 g lateral, wheel friction rolled it.
         if (!handbrake && motion > 1.0e-3) {
@@ -211,8 +220,23 @@ public class WheeledVehicle extends AbstractVehicle implements IAnimationEntity<
         return Vec3.ZERO;
     }
 
+    /** {@link #drivetrain}'s command as force along the heading. */
+    private double transmissionForce(double along, double driveScale) {
+        float perForce = (float) PhysicsHelper.accelerationPerTick(1, physicsEngine.mass);
+        if (braking || engineBraking) {
+            return -Math.signum(along) * Math.min(brakeForce * (braking ? 1 : ENGINE_BRAKE), Math.abs(along) / perForce);
+        }
+        if (push != 0 && push * along < pushCap) {
+            return push * (push > 0 ? forwardForce * pushScale : backwardForce) * driveScale;
+        }
+        return 0;
+    }
+
     @Override
     protected void tickEngineSpeed() {
+        if (transmission != null) {
+            return;
+        }
         super.tickEngineSpeed();
         float engineSpeed = getEngineSpeed();
         if (controlUnit.forward || controlUnit.backward) {
@@ -311,6 +335,7 @@ public class WheeledVehicle extends AbstractVehicle implements IAnimationEntity<
         loseTraction = buf.readBoolean();
     }
 
+    @Override
     public float getForwardSpeed() {
         return this.entityData.get(FORWARD_SPEED);
     }

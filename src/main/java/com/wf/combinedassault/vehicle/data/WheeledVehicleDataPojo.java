@@ -1,6 +1,7 @@
 package com.wf.combinedassault.vehicle.data;
 
 import com.google.gson.annotations.SerializedName;
+import com.wf.combinedassault.vehicle.drive.Transmission;
 
 public class WheeledVehicleDataPojo extends BaseVehicleDataPojo {
 
@@ -24,6 +25,10 @@ public class WheeledVehicleDataPojo extends BaseVehicleDataPojo {
         @SerializedName("max_speed_backward")
         public float maxSpeedBackward;
 
+        /** Blocks/tick where steering is halved; NaN => {@code max_speed_forward}. */
+        @SerializedName("steer_fade_speed")
+        public float steerFadeSpeed = Float.NaN;
+
         @SerializedName("turn_step")
         public float turnStep;
 
@@ -32,6 +37,10 @@ public class WheeledVehicleDataPojo extends BaseVehicleDataPojo {
 
         @SerializedName("track_size")
         public float trackSize = 0.1f;
+
+        /** Null => direct drive. */
+        @SerializedName("transmission")
+        public Transmission transmission;
 
     }
 

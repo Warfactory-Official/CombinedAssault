@@ -973,7 +973,8 @@
     85,
     86,
     87,
-    88
+    88,
+    90
    ],
    "extras": {
     "combinedassaultRole": "body"
@@ -994,10 +995,17 @@
    ],
    "extras": {
     "combinedassaultRole": "part",
-    "combinedassaultInterface": "sighting_system"
+    "combinedassaultInterface": "sighting_system",
+    "combinedassault": {
+     "x_rot_min": -35,
+     "x_rot_max": 90,
+     "y_rot_min": -45,
+     "y_rot_max": 45
+    }
    },
    "children": [
-    89
+    89,
+    91
    ]
   },
   {
@@ -1245,6 +1253,57 @@
    "extras": {
     "gemrenderHidden": true,
     "combinedassaultRole": "sight",
+    "combinedassaultInterface": "sighting_system"
+   }
+  },
+  {
+   "name": "socket_camera",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    3.0,
+    0.0,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "camera"
+   }
+  },
+  {
+   "name": "socket_seat_sighting_system",
+   "matrix": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    1.86125,
+    -0.16,
+    1.0
+   ],
+   "extras": {
+    "gemrenderHidden": true,
+    "combinedassaultRole": "seat",
     "combinedassaultInterface": "sighting_system"
    }
   }

@@ -52,6 +52,63 @@
           },
           {
             "type": "key_hint",
+            "if": "local.driver && vehicle.ground",
+            "label": "{tr:hud.combinedassault.hint.drive}",
+            "key": "key.combinedassault.forward.desc",
+            "key2": "key.combinedassault.backward.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "local.driver && vehicle.ground",
+            "label": "{tr:hud.combinedassault.hint.steer}",
+            "key": "key.combinedassault.left.desc",
+            "key2": "key.combinedassault.right.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "local.driver && vehicle.wheeled",
+            "label": "{tr:hud.combinedassault.hint.handbrake}",
+            "key": "key.combinedassault.up.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "local.driver && vehicle.manual",
+            "label": "{tr:hud.combinedassault.hint.shift}",
+            "key": "key.combinedassault.shift_up.desc",
+            "key2": "key.combinedassault.shift_down.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "local.driver && vehicle.lights",
+            "label": "{tr:hud.combinedassault.hint.lights}",
+            "key": "key.combinedassault.toggle_lights.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "local.driver && vehicle.hitches",
+            "label": "{tr:hud.combinedassault.hint.tow}",
+            "key": "key.combinedassault.tow_couple.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "local.driver && vehicle.rotary",
+            "label": "{tr:hud.combinedassault.hint.hover}",
+            "key": "key.combinedassault.toggle_hover_mode.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "local.driver && fixed_wing.present",
+            "label": "{tr:hud.combinedassault.hint.aerobatic_smoke}",
+            "key": "key.combinedassault.toggle_aerobatic_smoke.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "!local.scope && !vehicle.none",
+            "label": "{tr:hud.combinedassault.hint.storage}",
+            "key": "key.combinedassault.open_inventory.desc"
+          },
+          {
+            "type": "key_hint",
             "if": "local.driver && fixed_wing.present",
             "label": "{tr:hud.combinedassault.hint.gear}",
             "key": "key.combinedassault.toggle_landing_gear.desc"

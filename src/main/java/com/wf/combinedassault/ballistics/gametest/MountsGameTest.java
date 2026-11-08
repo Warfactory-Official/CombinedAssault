@@ -24,7 +24,7 @@ public class MountsGameTest {
         return new GltfReader.Node(name, parent, world, world, new float[0], new int[0], new int[0], role, iface, new JsonObject());
     }
 
-    /** Seat facing port on a turret frame, a 1 x 0.5 panel facing aft on the body; the def keeps its own seat offset. */
+    /** Seat facing port on a turret frame, a 1 x 0.5 panel facing aft on the body; a def seat_offset is refused. */
     @GameTest(template = TEMPLATE, timeoutTicks = 100)
     public static void aMarkerFillsWhatTheJsonLeavesOut(GameTestHelper helper) {
         Matrix4f turret = new Matrix4f().translation(0, 2, 0);
@@ -44,14 +44,26 @@ public class MountsGameTest {
                 new ModelMounts.Mount(3, "socket_era_aft", NodeRole.ERA, "aft", -1, panel.getTranslation(new Vector3f()),
                         new Quaternionf(), new Vector3f(1), quad, null));
         JsonObject vehicle = JsonParser.parseString("""
+                {"parts": [{"id": "turret", "type": "combinedassault:weapon"}]}""")
+                .getAsJsonObject();
+        ModelMounts model = new ModelMounts(links, mounts, List.of(), rig);
+        JsonObject authored = JsonParser.parseString("""
                 {"parts": [{"id": "turret", "type": "combinedassault:weapon", "seat_offset": [9, 9, 9]}]}""")
                 .getAsJsonObject();
+        try {
+            MountDefaults.apply("test", authored, model);
+            helper.fail("def seat_offset accepted");
+            return;
+        } catch (IllegalArgumentException expected) {
+        }
 
-        MountDefaults.Result result = MountDefaults.apply("test", vehicle, new ModelMounts(links, mounts, List.of(), rig));
+        MountDefaults.Result result = MountDefaults.apply("test", vehicle, model);
         JsonObject part = result.vehicle().getAsJsonArray("parts").get(0).getAsJsonObject();
         JsonObject era = result.vehicle().getAsJsonArray("addon_armor").get(0).getAsJsonObject();
         String got = part.get("seat_offset") + " rot " + part.get("seat_rot") + ", era " + era;
-        if (!part.get("seat_offset").toString().equals("[9,9,9]") || !result.overridden().contains("turret.seat_offset")
+        var seatAt = part.getAsJsonArray("seat_offset");
+        if (Math.abs(seatAt.get(0).getAsFloat() - 0.5f) > 1.0e-4 || Math.abs(seatAt.get(1).getAsFloat() - 3) > 1.0e-4
+                || Math.abs(seatAt.get(2).getAsFloat()) > 1.0e-4
                 || Math.abs(part.get("seat_rot").getAsFloat() + 90) > 1.0e-3
                 || !era.get("normal").toString().equals("[0.0,0.0,-1.0]") || !era.get("up").toString().equals("[0.0,1.0,0.0]")
                 || Math.abs(era.get("width").getAsFloat() - 1) > 1.0e-4 || Math.abs(era.get("height").getAsFloat() - 0.5f) > 1.0e-4

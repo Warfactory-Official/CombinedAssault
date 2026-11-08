@@ -68,6 +68,9 @@ public final class ModelDataManager {
         return out;
     }
 
+    private static final Set<NodeRole> KIT_ROLES = EnumSet.of(NodeRole.SEAT, NodeRole.VIEW, NodeRole.BOLT, NodeRole.EJECT,
+            NodeRole.SIGHT, NodeRole.SIGHT_LENS, NodeRole.HIT, NodeRole.HIT_SURFACE);
+
     static ModelData build(ResourceLocation id, JsonObject vehicle) throws IOException {
         if (!vehicle.has("model")) {
             throw new IllegalArgumentException("no model");
@@ -111,10 +114,9 @@ public final class ModelDataManager {
                 }
                 wheels.add(new ModelMounts.Wheel(node.name(), node.origin()));
             }
-            if (kitOf.get(i) != null && role != null && role != NodeRole.BOLT && role != NodeRole.EJECT && role != NodeRole.SIGHT
-                    && role != NodeRole.SIGHT_LENS && role != NodeRole.HIT && role != NodeRole.HIT_SURFACE) {
+            if (kitOf.get(i) != null && role != null && !KIT_ROLES.contains(role)) {
                 throw new IllegalArgumentException(source + ": node " + node.name() + " (" + role.key()
-                        + ") in the mount of kit " + kitOf.get(i) + "; kit mounts carry bolt, eject, sight, sight_lens, hit and hit_surface nodes only");
+                        + ") in the mount of kit " + kitOf.get(i) + "; kit mounts carry " + KIT_ROLES + " nodes only");
             }
             if (role == NodeRole.LIGHT) {
                 lights.add(VehicleLight.read(i, node.name(), node.meta()));

@@ -1,5 +1,5 @@
-"""Author a combinedassault glTF vehicle in Blender: import a pack model, frames, colliders, hit modules, sockets,
-armour, hinges, part clips, texture set-up, player reference, check, export. Every role is written into the node's
+"""Author a combinedassault glTF vehicle in Blender: import a pack model, frames, colliders, hit modules, hit cylinders,
+sockets, lights, screens, armour / hit effect tags, hinges, part clips, texture set-up, player reference, check, export. Every role is written into the node's
 glTF `extras` (docs/vehicle-pack-format.md §6); extras the panels do not show survive import -> export.
 
 Frame: 1 unit = 1 block, world origin = vehicle origin, nose toward -Y, port +X, up +Z. The glTF exporter's
@@ -18,7 +18,7 @@ import struct
 
 import bmesh
 import bpy
-from bpy.props import (BoolProperty, EnumProperty, FloatProperty, IntProperty, PointerProperty,
+from bpy.props import (BoolProperty, EnumProperty, FloatProperty, FloatVectorProperty, IntProperty, PointerProperty,
                        StringProperty)
 from bpy.types import Operator, Panel, PropertyGroup
 from bpy_extras.io_utils import ImportHelper
@@ -43,11 +43,19 @@ META = ca_validate.META
 HIDDEN = ca_validate.HIDDEN
 RESOURCE = ca_validate.RESOURCE
 # combinedassault meta keys the panels own; any other key rides through from import (raw_extras).
-OWNED_META = {"main", "deck", "solid", "world", "name", "hit", "index", "system", "side", "skip", "swept", "health",
-              "road_wheel",
-              "x_rot_min", "x_rot_max", "y_rot_min", "y_rot_max"}
+OWNED_META = ca_validate.COLLIDER_KEYS | ca_validate.HIT_KEYS | ca_validate.FRAME_KEYS | ca_validate.LIGHT_KEYS
 ARMOR = re.compile(r"(?i)armou?r[_ ]?(\d+(?:\.\d+)?)")
 DECOR = re.compile(r"(?i)(?:^|[_ .])decor(?:$|[_ .])")
+SURFACE_ITEMS = [("STEEL", "Steel", "Sparks, holes"), ("RUBBER", "Rubber", "Black bits, dust, no hole"),
+                 ("GLASS", "Glass", "Shards, glint, no hole"), ("SOFT", "Soft", "Dust, fibres, no hole (fabric)")]
+SURFACE = {key: re.compile(r"(?i)(?:^|[_ .])(?:%s)(?:$|[_ .])" % words) for key, words in ca_validate.SURFACES.items()}
+# Socket fields whose node scale is a value: (axis label, meaning). glTF Z scale = Blender Y scale.
+SCALE_FIELDS = {"bolt": ("Y", "barrel_length"), "eject": ("Y", "throw speed b/s"), "station": ("Y", "round length"),
+                "propeller": ("mean", "radius"), "cargo_bay": ("all", "full size")}
+# Mount model state nodes (by name), drawn while the carrying part's current weapon...
+STATE_NODES = [(re.compile(r"^ammo_can$"), "has rounds or is reloading"),
+               (re.compile(r"^round@(\d+)$"), "has more than {0} rounds"),
+               (re.compile(r"^barrel@(\w+)$"), "carries barrel variant {0}, not being changed")]
 
 PLANAR_EPS = 1.0e-4
 CONVEX_EPS = 1.0e-4
@@ -235,6 +243,12 @@ def check_object(obj, depsgraph=None, part_model=False):
             _, faces = faces_of(obj, depsgraph)
             if open_edges(faces):
                 warnings.append("hit module is open: a shot can enter without crossing it")
+    if role == "SOCKET" and settings.field == "light":
+        errors += ca_validate.light_problems(light_meta(settings))
+    if role in ("NONE", "BODY", "PART", "PITCH", "HIT", "HIT_SURFACE") and settings.meta_unit:
+        system, spin = inherited(obj, "system"), inherited(obj, "spin")
+        if system in ("rotor", "tail_rotor") and not spin:
+            warnings.append("rotor unit %s has no spin (cw / ccw) on it or above" % settings.meta_unit)
     if role == "SOCKET":
         if settings.field in UNTARGETED and settings.target:
             errors.append("socket %s takes no interface" % settings.field)
@@ -255,6 +269,21 @@ def check_object(obj, depsgraph=None, part_model=False):
         errors.append("is posed by a script but its local transform is not identity: a pose replaces it. "
                       "Use Make hinge")
     return errors, warnings
+
+
+def inherited(obj, key):
+    """Effective `system` / `spin` hit override: nearest set value at or above obj; "" when none."""
+    while obj is not None:
+        settings = obj.combinedassault
+        if key == "system":
+            value = settings.system if role_of(obj) == "HIT" else "" if settings.meta_system == "AUTO" \
+                else settings.meta_system
+        else:
+            value = "" if settings.meta_spin == "NONE" else settings.meta_spin.lower()
+        if value:
+            return value
+        obj = obj.parent
+    return ""
 
 
 def check_scene(scene, depsgraph=None):
@@ -294,7 +323,9 @@ def check_scene(scene, depsgraph=None):
 def used_materials(scene):
     seen = []
     for obj in scene.objects:
-        if obj.type == "MESH" and role_of(obj) not in ("COLLIDER", "HIT", "SOCKET") and not obj.combinedassault.reference:
+        # Hidden shapes: material = name tokens only, never drawn.
+        if obj.type == "MESH" and role_of(obj) not in ("COLLIDER", "HIT", "HIT_SURFACE", "SOCKET") \
+                and not obj.combinedassault.reference:
             for slot in obj.material_slots:
                 if slot.material is not None and slot.material not in seen:
                     seen.append(slot.material)
@@ -376,6 +407,8 @@ def node_extras(obj):
     elif role == "SOCKET":
         if settings.index >= 0:
             meta["index"] = settings.index
+        if settings.field == "light":
+            meta.update(light_meta(settings))
     else:
         if role == "HIT":
             meta["system"] = settings.system
@@ -387,6 +420,10 @@ def node_extras(obj):
             meta["skip"] = True
         if settings.meta_swept != "AUTO":
             meta["swept"] = settings.meta_swept == "ON"
+        if settings.meta_unit:
+            meta["unit"] = settings.meta_unit
+        if settings.meta_spin != "NONE":
+            meta["spin"] = settings.meta_spin.lower()
         if settings.meta_health > 0:
             meta["health"] = round(settings.meta_health, 3)
         if role == "NONE" and settings.meta_road_wheel:
@@ -397,9 +434,27 @@ def node_extras(obj):
         if role == "PART" and settings.limit_yaw:
             meta["y_rot_min"] = round(settings.y_rot_min, PLACES)
             meta["y_rot_max"] = round(settings.y_rot_max, PLACES)
+        if role in FRAMES and settings.follows_clips:
+            meta["follows_clips"] = True
     if meta:
         extras[META] = meta
     return extras
+
+
+def light_meta(settings):
+    """Light socket keys; kind always written, others only when set (0 / off = the kind's default)."""
+    meta = {"kind": settings.light_kind.lower()}
+    if settings.light_use_color:
+        meta["color"] = "#%02x%02x%02x" % tuple(round(max(0.0, min(1.0, c)) * 255) for c in settings.light_color)
+    for key in ("range", "intensity", "inner", "outer"):
+        value = getattr(settings, "light_" + key)
+        if value > 0:
+            meta[key] = round(value, PLACES)
+    if not settings.light_shadow:
+        meta["shadow"] = False
+    if settings.light_cookie:
+        meta["cookie"] = settings.light_cookie
+    return meta
 
 
 def merged_extras(obj):
@@ -407,7 +462,9 @@ def merged_extras(obj):
     raw = json.loads(obj.combinedassault.raw_extras or "{}")
     for key in (ROLE, INTERFACE, HIDDEN):
         raw.pop(key, None)
-    meta = {k: v for k, v in raw.pop(META, {}).items() if k not in OWNED_META}
+    # `index` outside sockets: no panel, kept as imported.
+    owned = OWNED_META if obj.combinedassault.role == "SOCKET" else OWNED_META - {"index"}
+    meta = {k: v for k, v in raw.pop(META, {}).items() if k not in owned}
     hulls = {k: v for k, v in raw.pop("genHulls", {}).items() if k != "locked"}
     out = node_extras(obj)
     if meta:
@@ -463,6 +520,10 @@ def relocate(gltf_path, ns, assets, scene=None, written=()):
     for image in bpy.data.images:
         images.setdefault(image.name, image)
         images.setdefault(os.path.splitext(image.name)[0], image)
+    # The exporter may name an image after its file (imported `Mavic3Pro_basecolor_2k` -> mavic3pro_basecolor_512).
+    for image in bpy.data.images:
+        if image_file(image):
+            images.setdefault(os.path.splitext(os.path.basename(image_file(image)))[0], image)
     for entry in gltf.get("images", []):
         uri = entry.get("uri")
         if uri is None or uri.startswith("data:"):
@@ -599,6 +660,9 @@ def material_out(source, material):
         cutoff = material.get("alphaCutoff", 0.5)
         material["alphaCutoff"] = min(ca_validate.CUTOUTS, key=lambda c: abs(c - cutoff))
     raw = json.loads(settings.raw_extras or "{}")
+    raw.pop(ca_validate.TEXTURE_SLOT, None)
+    if settings.texture_slot:
+        raw[ca_validate.TEXTURE_SLOT] = settings.texture_slot
     if raw:
         material["extras"] = {**raw, **material.get("extras", {})}
 
@@ -634,6 +698,16 @@ def apply_extras(obj, extras):
         settings.role = "SOCKET"
         settings.field = role
         settings.index = meta.get("index", -1)
+        if role == "light":
+            settings.light_kind = str(meta.get("kind", "head")).upper()
+            settings.light_use_color = "color" in meta
+            if "color" in meta:
+                hex_ = meta["color"].lstrip("#")
+                settings.light_color = tuple(int(hex_[i:i + 2], 16) / 255 for i in (0, 2, 4))
+            for key in ("range", "intensity", "inner", "outer"):
+                setattr(settings, "light_" + key, meta.get(key, 0.0))
+            settings.light_shadow = meta.get("shadow", True)
+            settings.light_cookie = meta.get("cookie", "")
         return
     if role.upper() not in {key for key, _, _ in ROLE_ITEMS}:
         settings.hidden = bool(extras.get(HIDDEN))
@@ -660,6 +734,9 @@ def apply_extras(obj, extras):
     if "swept" in meta:
         settings.meta_swept = "ON" if meta["swept"] else "OFF"
     settings.meta_health = meta.get("health", 0.0)
+    settings.meta_unit = meta.get("unit", "")
+    settings.meta_spin = str(meta.get("spin", "none")).upper()
+    settings.follows_clips = bool(meta.get("follows_clips"))
     settings.meta_road_wheel = bool(meta.get("road_wheel"))
     if "x_rot_min" in meta or "x_rot_max" in meta:
         settings.limit_pitch = True
@@ -717,6 +794,7 @@ def import_pack_model(context, path):
         cutoff = source.get("alphaCutoff", 0.5)
         settings.cutoff = "%.1f" % min(ca_validate.CUTOUTS, key=lambda c: abs(c - cutoff))
         settings.raw_extras = json.dumps(source["extras"]) if source.get("extras") else ""
+        settings.texture_slot = source.get("extras", {}).get(ca_validate.TEXTURE_SLOT, "")
     export = context.scene.combinedassault_export
     export.pack_root = root + os.sep
     export.namespace = ns
@@ -820,13 +898,18 @@ def setup_texture(material, image, alpha):
 # ---------------------------------------------------------------- player reference
 
 
-def add_player_reference(context, seated):
-    """Boxes at the 3D cursor (feet / seat point), facing the nose (-Y); never exported or checked."""
-    name = "player_seated" if seated else "player_standing"
+def reference_collection(scene):
     collection = bpy.data.collections.get("combinedassault reference")
     if collection is None:
         collection = bpy.data.collections.new("combinedassault reference")
-        context.scene.collection.children.link(collection)
+        scene.collection.children.link(collection)
+    return collection
+
+
+def add_player_reference(context, seated):
+    """Boxes at the 3D cursor (feet / seat point), facing the nose (-Y); never exported or checked."""
+    name = "player_seated" if seated else "player_standing"
+    collection = reference_collection(context.scene)
     root = bpy.data.objects.new(name, None)
     root.empty_display_type = "SINGLE_ARROW"
     root.empty_display_size = ca_reference.EYE
@@ -870,10 +953,7 @@ def add_view_cameras(context):
         bpy.data.objects.remove(old)
         if data.users == 0:
             bpy.data.cameras.remove(data)
-    collection = bpy.data.collections.get("combinedassault reference")
-    if collection is None:
-        collection = bpy.data.collections.new("combinedassault reference")
-        scene.collection.children.link(collection)
+    collection = reference_collection(scene)
     made = []
     for socket in sorted(scene.objects, key=lambda obj: obj.name):
         if role_of(socket) != "SOCKET" or socket.combinedassault.field not in VIEW_FIELDS or socket.combinedassault.reference:
@@ -943,6 +1023,11 @@ class CombinedAssaultObjectSettings(PropertyGroup):
     limit_yaw: BoolProperty(name="Limit yaw", description="y_rot_min/max; part frame", default=False)
     y_rot_min: FloatProperty(name="y_rot_min", default=-180.0)
     y_rot_max: FloatProperty(name="y_rot_max", default=180.0)
+    follows_clips: BoolProperty(
+        name="Colliders follow clips",
+        description="Colliders and hit nodes under this frame move with the part clip each tick (part must not be "
+                    "rotatable, e.g. generic); else colliders stay at rest pose",
+        default=False)
     # Hit module.
     system: EnumProperty(name="System", items=[(s, s, "") for s in SYSTEMS], default="engine")
     side: EnumProperty(name="Side", items=[("NONE", "None", ""), ("LEFT", "Left", ""), ("RIGHT", "Right", "")],
@@ -962,13 +1047,51 @@ class CombinedAssaultObjectSettings(PropertyGroup):
         items=[("AUTO", "Auto", "Rotor systems spin"), ("ON", "On", ""), ("OFF", "Off", "")],
         default="AUTO")
     meta_health: FloatProperty(name="Health", description="0 = system default", default=0.0, min=0.0)
+    meta_unit: StringProperty(name="Unit", description="Pool split by name (FL, R1); inherited; HUD ROTR FL",
+                              default="")
+    meta_spin: EnumProperty(
+        name="Spin", description="Rotor unit turn direction seen from above; inherited; required on rotor units",
+        items=[("NONE", "Inherit", ""), ("CW", "Clockwise", ""), ("CCW", "Counter-clockwise", "")], default="NONE")
+    # Light socket; 0 = the kind's default (VehicleLight.Kind).
+    light_kind: EnumProperty(
+        name="Kind", items=[("HEAD", "Headlight", "Driver toggles"), ("SEARCH", "Searchlight", "Other crew toggle")],
+        default="HEAD")
+    light_use_color: BoolProperty(name="Colour", description="Off: the kind's colour", default=False)
+    light_color: FloatVectorProperty(name="Colour", subtype="COLOR_GAMMA", size=3, min=0.0, max=1.0,
+                                     default=(1.0, 0.945, 0.847))
+    light_range: FloatProperty(name="Range", description="Blocks; 0 = kind default", default=0.0, min=0.0)
+    light_intensity: FloatProperty(name="Intensity",
+                                   description="Irradiance ~1 at sqrt(intensity) blocks; 0 = kind default",
+                                   default=0.0, min=0.0)
+    light_inner: FloatProperty(name="Inner", description="Full-bright half angle, deg; 0 = kind default",
+                               default=0.0, min=0.0, max=88.9)
+    light_outer: FloatProperty(name="Outer", description="Cone half angle, deg (< 89); 0 = kind default",
+                               default=0.0, min=0.0, max=88.9)
+    light_shadow: BoolProperty(name="Shadow", default=True)
+    light_cookie: StringProperty(name="Cookie", description="Beam pattern texture, ns:path; empty = none",
+                                 default="")
     meta_road_wheel: BoolProperty(
         name="Road wheel", description="Rides the nearest track: own spring probe under it, lower run follows",
         default=False)
 
 
 class CombinedAssaultMaterialSettings(PropertyGroup):
-    armor_mm: FloatProperty(name="Armour (mm RHA)", default=0.0, min=0.0, soft_max=1500.0)
+    # Views of the material name (the game reads its tokens); setting one renames the material.
+    armor_mm: FloatProperty(name="Armour (mm RHA)", min=0.0, soft_max=1500.0,
+                            description="Plate thickness on these faces; 0 = the vehicle's aspect value",
+                            get=lambda self: material_tags(self.id_data.name)[0],
+                            set=lambda self, value: retag(self, armor=value))
+    decor: BoolProperty(name="Decor", description="Drawn only: never hit, never in generated colliders",
+                        get=lambda self: material_tags(self.id_data.name)[2],
+                        set=lambda self, value: retag(self, decor=value))
+    surface: EnumProperty(name="Hit effect", description="What a strike on these faces looks like",
+                          items=SURFACE_ITEMS,
+                          get=lambda self: [k for k, _, _ in SURFACE_ITEMS].index(material_tags(self.id_data.name)[1]),
+                          set=lambda self, value: retag(self, surface=SURFACE_ITEMS[value][0]))
+    texture_slot: StringProperty(
+        name="Screen slot", description="extras.textureSlot: screen_<id> drawn by the vehicle's `screens` binding "
+                                        "(UVs 0..1 across the screen); empty = ordinary material",
+        default="")
     alpha: EnumProperty(
         name="Transparency", description="glTF alphaMode written on export",
         items=[("AUTO", "Auto", "Whatever the exporter derives from the nodes"),
@@ -1042,10 +1165,18 @@ class COMBINEDASSAULT_OT_add_socket(Operator):
     index: IntProperty(name="Index", default=-1, min=-1)
 
     def execute(self, context):
-        obj = bpy.data.objects.new("_".join(x for x in ("socket", self.field, self.target,
-                                                       str(self.index) if self.index >= 0 else "") if x), None)
-        obj.empty_display_type = "ARROWS"
-        obj.empty_display_size = 0.5
+        name = "_".join(x for x in ("socket", self.field, self.target, str(self.index) if self.index >= 0 else "")
+                        if x)
+        if self.field in MESH_FIELDS:
+            data = bpy.data.meshes.new(name)
+            data.from_pydata(*SOCKET_MESHES[self.field])
+            data.update()
+            obj = bpy.data.objects.new(name, data)
+            obj.display_type = "WIRE"
+            obj.show_in_front = True
+        else:
+            obj = bpy.data.objects.new(name, None)
+            obj.empty_display_type, obj.empty_display_size = SOCKET_EMPTIES.get(self.field, ("ARROWS", 0.5))
         context.collection.objects.link(obj)
         obj.matrix_world = context.scene.cursor.matrix
         settings = obj.combinedassault
@@ -1064,6 +1195,20 @@ class COMBINEDASSAULT_OT_add_socket(Operator):
 
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
+
+
+# Mesh socket starters, Blender frame (nose -Y). era / slat: 1 x 1 quad facing the nose (normal = winding); lens:
+# 0.1 quad facing the eye (+Y); track: side-view loop (YZ plane), path = outline.
+SOCKET_MESHES = {
+    "era": ([(-0.5, 0, -0.5), (0.5, 0, -0.5), (0.5, 0, 0.5), (-0.5, 0, 0.5)], [], [(0, 1, 2, 3)]),
+    "slat": ([(-0.5, 0, -0.5), (0.5, 0, -0.5), (0.5, 0, 0.5), (-0.5, 0, 0.5)], [], [(0, 1, 2, 3)]),
+    "sight_lens": ([(0.05, 0, -0.05), (-0.05, 0, -0.05), (-0.05, 0, 0.05), (0.05, 0, 0.05)], [], [(0, 1, 2, 3)]),
+    "track": ([(0, -2.0, 0.2), (0, -2.3, 0.6), (0, -2.0, 1.0), (0, 2.0, 1.0), (0, 2.3, 0.6), (0, 2.0, 0.2)], [],
+              [(0, 1, 2, 3, 4, 5)]),
+}
+# Empty look where the node's scale is a value (SCALE_FIELDS): drawn size at scale 1 = that value.
+SOCKET_EMPTIES = {"cargo_bay": ("CUBE", 0.5), "propeller": ("CIRCLE", 1.0), "light": ("CONE", 0.3),
+                  "center_of_mass": ("SPHERE", 0.15)}
 
 
 class COMBINEDASSAULT_OT_make_hinge(Operator):
@@ -1231,20 +1376,51 @@ class COMBINEDASSAULT_OT_assign_armor(Operator):
 
 def strip_tags(name):
     name = ARMOR.sub("", name)
-    name = DECOR.sub("_", name)
+    for pattern in [DECOR] + list(SURFACE.values()):
+        # Overlapping delimiters: `a_rubber_glass` needs a second pass per token.
+        name = pattern.sub("_", pattern.sub("_", name))
     return re.sub(r"_+", "_", name).strip("_ .") or "material"
 
 
+def surface_of(name):
+    """SurfaceMaterial.of: first matching token, in declaration order; STEEL when none."""
+    return next((key.upper() for key, pattern in SURFACE.items() if pattern.search(name)), "STEEL")
+
+
+def tagged_name(name, armor, surface, decor):
+    """`<stem>_decor` or `<stem>[_<surface>][_armor_<mm>]`: the tokens the game reads from a material name."""
+    stem = strip_tags(name)
+    if decor:
+        return stem + "_decor"
+    if surface != "STEEL":
+        stem += "_" + surface.lower()
+    return stem + ("_armor_%g" % armor if armor > 0 else "")
+
+
+def material_tags(name):
+    """(armor mm, surface, decor) as the game reads the name."""
+    armor = ARMOR.search(name)
+    return float(armor.group(1)) if armor else 0.0, surface_of(name), bool(DECOR.search(name))
+
+
+def retag(settings, armor=None, surface=None, decor=None):
+    """Rename the owning material; armour / surface set => decor off."""
+    material = settings.id_data
+    old_armor, old_surface, old_decor = material_tags(material.name)
+    if decor is None:
+        decor = old_decor and armor is None and surface is None
+    material.name = tagged_name(material.name, old_armor if armor is None else armor,
+                                old_surface if surface is None else surface, decor)
+
+
 def armor_material(base, mm):
-    """`<base>_armor_<mm>` (a copy of base, so the look is unchanged); mm 0 = the untagged base."""
-    stem = strip_tags(base.name) if base else "material"
-    name = stem if mm <= 0 else "%s_armor_%s" % (stem, ("%g" % mm))
+    """Copy of base (look unchanged) named with plate mm (0 = none), base's hit effect kept, decor dropped."""
+    name = tagged_name(base.name if base else "material", mm, surface_of(base.name) if base else "STEEL", False)
     existing = bpy.data.materials.get(name)
     if existing is not None:
         return existing
     material = base.copy() if base else bpy.data.materials.new(name)
     material.name = name
-    material.combinedassault.armor_mm = mm
     return material
 
 
@@ -1254,31 +1430,6 @@ def slot_for(obj, material):
             return index
     obj.data.materials.append(material)
     return len(obj.material_slots) - 1
-
-
-class COMBINEDASSAULT_OT_tag_material(Operator):
-    """Rename the active material to carry its armour or decor tag"""
-
-    bl_idname = "combinedassault.tag_material"
-    bl_label = "Apply tag to name"
-    bl_options = {"REGISTER", "UNDO"}
-
-    decor: BoolProperty(name="Decor", description="Drawn only: never hit, never collides", default=False)
-
-    @classmethod
-    def poll(cls, context):
-        return context.material is not None
-
-    def execute(self, context):
-        material = context.material
-        stem = strip_tags(material.name)
-        if self.decor:
-            material.name = stem + "_decor"
-        elif material.combinedassault.armor_mm > 0:
-            material.name = "%s_armor_%s" % (stem, "%g" % material.combinedassault.armor_mm)
-        else:
-            material.name = stem
-        return {"FINISHED"}
 
 
 class COMBINEDASSAULT_OT_check(Operator):
@@ -1480,6 +1631,189 @@ class COMBINEDASSAULT_OT_look_through(Operator):
         return {"FINISHED"}
 
 
+def drawn_points(obj):
+    """Vertices of obj and its untagged mesh descendants, in obj's local frame (gen_hulls.py `cylinder` input)."""
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    inverse = obj.matrix_world.inverted()
+    points, stack = [], [obj]
+    while stack:
+        node = stack.pop()
+        if node.type == "MESH":
+            points += [inverse @ p for p in faces_of(node, depsgraph)[0]]
+        stack += [c for c in node.children if role_of(c) == "NONE" and not c.combinedassault.reference]
+    return points
+
+
+def prism(points, sides):
+    """(vertices, faces): circumscribed prism round points, axis = thinnest extent (gen_hulls.py `cylinder`)."""
+    lo = [min(p[a] for p in points) for a in range(3)]
+    hi = [max(p[a] for p in points) for a in range(3)]
+    axis = min(range(3), key=lambda a: hi[a] - lo[a])
+    u, w = (axis + 1) % 3, (axis + 2) % 3
+    mid = [(lo[a] + hi[a]) / 2 for a in range(3)]
+    radius = max(math.hypot(p[u] - mid[u], p[w] - mid[w]) for p in points) / math.cos(math.pi / sides)
+    verts = []
+    for end in (lo[axis], hi[axis]):
+        for k in range(sides):
+            v = [0.0, 0.0, 0.0]
+            v[axis] = end
+            v[u] = mid[u] + radius * math.cos(2 * math.pi * k / sides)
+            v[w] = mid[w] + radius * math.sin(2 * math.pi * k / sides)
+            verts.append(tuple(v))
+    ring = list(range(sides))
+    faces = [ring[::-1], [sides + k for k in ring]] + [[k, (k + 1) % sides, sides + (k + 1) % sides, sides + k]
+                                                       for k in ring]
+    return verts, faces
+
+
+class COMBINEDASSAULT_OT_hit_cylinder(Operator):
+    """Hit surface prism round each selected node's drawn subtree (tyres: tread detail is noise), child of it;
+    regenerable by tools/gen_hulls.py --hit-cylinder"""
+
+    bl_idname = "combinedassault.hit_cylinder"
+    bl_label = "Make hit cylinder"
+    bl_options = {"REGISTER", "UNDO"}
+
+    sides: IntProperty(name="Sides", default=12, min=3, max=64)
+    surface: EnumProperty(name="Material", items=[("rubber", "rubber", ""), ("glass", "glass", ""),
+                                                  ("soft", "soft", ""), ("", "None (steel)", "")], default="rubber")
+
+    @classmethod
+    def poll(cls, context):
+        return any(role_of(obj) in ("NONE", "PART", "PITCH") for obj in context.selected_objects)
+
+    def execute(self, context):
+        made = []
+        for obj in [o for o in context.selected_objects if role_of(o) in ("NONE", "PART", "PITCH")]:
+            points = drawn_points(obj)
+            if len(points) < 3:
+                self.report({"WARNING"}, "%s: nothing drawn" % obj.name)
+                continue
+            data = bpy.data.meshes.new("hit_" + obj.name)
+            verts, faces = prism(points, self.sides)
+            data.from_pydata(verts, [], faces)
+            data.update()
+            if self.surface:
+                data.materials.append(bpy.data.materials.get(self.surface) or bpy.data.materials.new(self.surface))
+            hit = bpy.data.objects.new("hit_" + obj.name, data)
+            context.collection.objects.link(hit)
+            hit.parent = obj
+            hit.matrix_parent_inverse = Matrix.Identity(4)
+            hit.matrix_basis = Matrix.Identity(4)
+            hit.display_type = "WIRE"
+            hit.combinedassault.role = "HIT_SURFACE"
+            hit.combinedassault.raw_extras = json.dumps({"genHulls": {"node": obj.name, "hit": True}})
+            made.append(hit)
+        for obj in context.selected_objects:
+            obj.select_set(False)
+        for hit in made:
+            hit.select_set(True)
+        self.report({"INFO"}, "%d hit cylinder(s)" % len(made))
+        return {"FINISHED"} if made else {"CANCELLED"}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+
+class COMBINEDASSAULT_OT_add_screen(Operator):
+    """Screen quad at the 3D cursor facing the rider (+Y), UVs 0..1, material with texture slot screen_<id>; bind it
+    in the vehicle json `screens`"""
+
+    bl_idname = "combinedassault.add_screen"
+    bl_label = "Add screen"
+    bl_options = {"REGISTER", "UNDO"}
+
+    screen: StringProperty(name="Screen id", default="dash", description="`screens` key; slot = screen_<id>")
+    width: FloatProperty(name="Width", default=0.2, min=0.01)
+    height: FloatProperty(name="Height", default=0.15, min=0.01)
+
+    def execute(self, context):
+        slot = "screen_" + self.screen
+        w, h = self.width / 2, self.height / 2
+        data = bpy.data.meshes.new(slot)
+        # Seen from the rider (looking -Y): u 0 -> 1 left to right (+X -> -X), v 0 -> 1 bottom to top.
+        data.from_pydata([(w, 0, -h), (-w, 0, -h), (-w, 0, h), (w, 0, h)], [], [(0, 1, 2, 3)])
+        uv = data.uv_layers.new(name="UVMap")
+        for loop, coord in zip(data.loops, ((0, 0), (1, 0), (1, 1), (0, 1))):
+            uv.data[loop.index].uv = coord
+        data.update()
+        material = next((m for m in bpy.data.materials if m.combinedassault.texture_slot == slot), None)
+        if material is None:
+            material = bpy.data.materials.new(slot)
+            material.combinedassault.texture_slot = slot
+        data.materials.append(material)
+        obj = bpy.data.objects.new(slot, data)
+        context.collection.objects.link(obj)
+        if context.active_object is not None:
+            obj.parent = frame_of(context.active_object)
+        obj.matrix_world = context.scene.cursor.matrix
+        for other in context.selected_objects:
+            other.select_set(False)
+        obj.select_set(True)
+        context.view_layer.objects.active = obj
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+
+LIGHT_PREFIX = "lamp_"
+
+
+def preview_lights(scene):
+    """Rebuild one reference spot per light socket, parented to it: beam along the socket's -Y (glTF +Z), cone and
+    colour as the game resolves them; never exported or checked."""
+    for old in [o for o in scene.objects if o.type == "LIGHT" and o.name.startswith(LIGHT_PREFIX)
+                and o.combinedassault.reference]:
+        data = old.data
+        bpy.data.objects.remove(old)
+        if data.users == 0:
+            bpy.data.lights.remove(data)
+    collection = reference_collection(scene)
+    made = []
+    for socket in sorted(scene.objects, key=lambda o: o.name):
+        settings = socket.combinedassault
+        if role_of(socket) != "SOCKET" or settings.field != "light" or settings.reference:
+            continue
+        colour, reach, intensity, inner, outer = ca_validate.LIGHT_KINDS[settings.light_kind.lower()]
+        outer = settings.light_outer or outer
+        inner = settings.light_inner or min(inner, outer)
+        data = bpy.data.lights.new(LIGHT_PREFIX + socket.name, "SPOT")
+        data.color = settings.light_color if settings.light_use_color else \
+            tuple(((colour >> s) & 255) / 255 for s in (16, 8, 0))
+        data.energy = (settings.light_intensity or intensity) * 4 * math.pi
+        data.spot_size = math.radians(2 * min(outer, 88.9))
+        data.spot_blend = max(0.0, min(1.0, 1 - inner / outer))
+        data.use_shadow = settings.light_shadow
+        data.use_custom_distance = True
+        data.cutoff_distance = settings.light_range or reach
+        lamp = bpy.data.objects.new(LIGHT_PREFIX + socket.name, data)
+        lamp.combinedassault.reference = True
+        lamp.parent = socket
+        lamp.rotation_euler = (math.radians(90.0), 0.0, math.radians(180.0))
+        lamp.hide_select = True
+        collection.objects.link(lamp)
+        made.append(lamp)
+    return made
+
+
+class COMBINEDASSAULT_OT_preview_lights(Operator):
+    """A Blender spot at every light socket (beam, cone, colour, range as the game reads them); never exported.
+    Rebuilt per call"""
+
+    bl_idname = "combinedassault.preview_lights"
+    bl_label = "Preview lights"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+        made = preview_lights(context.scene)
+        if not made:
+            self.report({"WARNING"}, "no light sockets in the scene")
+            return {"CANCELLED"}
+        self.report({"INFO"}, "%d light(s)" % len(made))
+        return {"FINISHED"}
+
+
 def menu_import(self, context):
     self.layout.operator(COMBINEDASSAULT_OT_import.bl_idname, text="combinedassault pack model (.gltf)")
 
@@ -1530,6 +1864,7 @@ class COMBINEDASSAULT_PT_object(Panel):
                 if settings.limit_yaw:
                     row.prop(settings, "y_rot_min")
                     row.prop(settings, "y_rot_max")
+            layout.prop(settings, "follows_clips")
         elif role == "COLLIDER":
             layout.prop(settings, "label")
             row = layout.row()
@@ -1545,10 +1880,38 @@ class COMBINEDASSAULT_PT_object(Panel):
             layout.prop(settings, "field")
             layout.prop(settings, "target")
             layout.prop(settings, "index")
+            if settings.field in SCALE_FIELDS:
+                axis, meaning = SCALE_FIELDS[settings.field]
+                if axis == "Y":
+                    layout.prop(obj, "scale", index=1, text=meaning + " (Y scale)")
+                else:
+                    layout.prop(obj, "scale", text=meaning + (" (mean scale)" if axis == "mean" else ""))
+            if settings.field == "light":
+                box = layout.box()
+                box.label(text="Beam -Y (nose at yaw 0), cookie up +Z; 0 = kind default")
+                box.prop(settings, "light_kind")
+                row = box.row()
+                row.prop(settings, "light_use_color")
+                if settings.light_use_color:
+                    row.prop(settings, "light_color", text="")
+                row = box.row()
+                row.prop(settings, "light_range")
+                row.prop(settings, "light_intensity")
+                row = box.row()
+                row.prop(settings, "light_inner")
+                row.prop(settings, "light_outer")
+                box.prop(settings, "light_shadow")
+                box.prop(settings, "light_cookie")
         if role in ("NONE", "BODY", "PART", "PITCH"):
             layout.prop(settings, "hidden")
         if role == "NONE" and obj.type == "MESH":
             layout.prop(settings, "meta_road_wheel")
+        if role == "NONE":
+            for pattern, meaning in STATE_NODES:
+                match = pattern.match(obj.name)
+                if match:
+                    layout.label(text="mount state node: drawn while the weapon " + meaning.format(*match.groups()),
+                                 icon="HIDE_OFF")
         if role != "COLLIDER":
             layout.prop(settings, "posed")
         if role in ("NONE", "BODY", "PART", "PITCH", "HIT", "HIT_SURFACE"):
@@ -1561,6 +1924,9 @@ class COMBINEDASSAULT_PT_object(Panel):
             row.prop(settings, "meta_skip")
             row.prop(settings, "meta_swept")
             box.prop(settings, "meta_health")
+            row = box.row()
+            row.prop(settings, "meta_unit")
+            row.prop(settings, "meta_spin", text="")
         errors, warnings = check_object(obj, context.evaluated_depsgraph_get(),
                                         not any(role_of(o) == "BODY" for o in context.scene.objects))
         if errors or warnings:
@@ -1585,10 +1951,6 @@ class COMBINEDASSAULT_PT_material(Panel):
     def draw(self, context):
         layout = self.layout
         material = context.material
-        armor = ARMOR.search(material.name)
-        decor = DECOR.search(material.name)
-        layout.label(text="game reads: %s" % ("decor (drawn only)" if decor
-                                                 else "%s mm" % armor.group(1) if armor else "surface, no plate"))
         layout.operator("combinedassault.setup_texture", icon="TEXTURE")
         row = layout.row()
         row.prop(material.combinedassault, "alpha")
@@ -1605,10 +1967,18 @@ class COMBINEDASSAULT_PT_material(Panel):
             for message, icon in [(m, "ERROR") for m in errors] + [(m, "INFO") for m in warnings]:
                 for i, line in enumerate(wrap(message)):
                     box.label(text=line, icon=icon if i == 0 else "NONE")
-        layout.prop(material.combinedassault, "armor_mm")
-        row = layout.row()
-        row.operator("combinedassault.tag_material", text="Tag armour").decor = False
-        row.operator("combinedassault.tag_material", text="Tag decor").decor = True
+        if node is not None and node.image is not None and image_file(node.image):
+            stem = os.path.splitext(image_file(node.image))[0]
+            found = [v for v in ("_damaged", "_wrecked", "_paint", "_paint_solid") if os.path.isfile(stem + v + ".png")]
+            layout.label(text="variants: " + (", ".join(found) if found else "none (tools/damage_textures.py, "
+                                                                               "tools/paint_layers.py)"))
+        layout.prop(material.combinedassault, "texture_slot")
+        box = layout.box()
+        box.label(text="Read from the name; editing renames")
+        box.prop(material.combinedassault, "armor_mm")
+        row = box.row()
+        row.prop(material.combinedassault, "surface")
+        row.prop(material.combinedassault, "decor")
         layout.operator("combinedassault.assign_armor", icon="MOD_SOLIDIFY")
 
 
@@ -1637,10 +2007,14 @@ class COMBINEDASSAULT_PT_scene(Panel):
             layout.label(text=settings.note)
         layout.operator("combinedassault.make_hull", icon="MESH_ICOSPHERE")
         layout.operator("combinedassault.merge_coplanar", icon="MOD_DECIM")
+        layout.operator("combinedassault.hit_cylinder", icon="MESH_CYLINDER")
         row = layout.row()
         row.operator("combinedassault.add_socket", icon="EMPTY_ARROWS")
         row.operator("combinedassault.make_hinge", icon="CON_PIVOT")
         layout.operator("combinedassault.key_clip", icon="KEY_HLT")
+        row = layout.row()
+        row.operator("combinedassault.add_screen", icon="WINDOW")
+        row.operator("combinedassault.preview_lights", icon="LIGHT_SPOT")
         row = layout.row()
         row.operator("combinedassault.player_reference", text="Player standing", icon="ARMATURE_DATA").seated = False
         row.operator("combinedassault.player_reference", text="Player seated", icon="ARMATURE_DATA").seated = True
@@ -1669,7 +2043,6 @@ CLASSES = (
     COMBINEDASSAULT_OT_merge_coplanar,
     COMBINEDASSAULT_OT_key_clip,
     COMBINEDASSAULT_OT_assign_armor,
-    COMBINEDASSAULT_OT_tag_material,
     COMBINEDASSAULT_OT_check,
     COMBINEDASSAULT_OT_export,
     COMBINEDASSAULT_OT_import,
@@ -1677,6 +2050,9 @@ CLASSES = (
     COMBINEDASSAULT_OT_player_reference,
     COMBINEDASSAULT_OT_view_cameras,
     COMBINEDASSAULT_OT_look_through,
+    COMBINEDASSAULT_OT_hit_cylinder,
+    COMBINEDASSAULT_OT_add_screen,
+    COMBINEDASSAULT_OT_preview_lights,
     COMBINEDASSAULT_PT_object,
     COMBINEDASSAULT_PT_material,
     COMBINEDASSAULT_PT_scene,
