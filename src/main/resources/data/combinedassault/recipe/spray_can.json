@@ -1,0 +1,16 @@
+{
+  "neoforge:conditions": [
+    { "type": "wflib:system", "system": "combinedassault:camo" }
+  ],
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "minecraft:iron_ingot" },
+    { "item": "minecraft:bone_meal" },
+    { "tag": "c:dyes" },
+    { "item": "minecraft:flint" }
+  ],
+  "result": {
+    "id": "combinedassault:spray_can",
+    "count": 1
+  }
+}

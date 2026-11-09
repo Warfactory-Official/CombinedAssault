@@ -69,6 +69,10 @@ public class PartUnitPojo {
     @SerializedName("needs_on")
     public String needsOn = null;
 
+    /** Seat: switchable part that must be open (clip run out) to board, leave for another seat or switch into it. */
+    @SerializedName("hatch")
+    public String hatch = null;
+
     @SerializedName("display_id")
     public ResourceLocation displayId;
 

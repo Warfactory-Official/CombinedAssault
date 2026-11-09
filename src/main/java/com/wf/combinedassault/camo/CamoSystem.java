@@ -27,6 +27,8 @@ public final class CamoSystem implements CombinedAssaultSystem {
     public void register(IEventBus modBus, ModContainer container) {
         CamoContent.ITEMS.register(modBus);
         VehicleTabs.addMisc(CamoContent.CAMO_KIT);
+        VehicleTabs.addMisc(CamoContent.SPRAY_CAN);
+        SprayActions.register();
         container.registerConfig(ModConfig.Type.COMMON, CamoConfig.SPEC, "combinedassault-camo.toml");
         modBus.addListener(ModConfigEvent.Loading.class, CamoConfig::onLoad);
         modBus.addListener(ModConfigEvent.Reloading.class, CamoConfig::onLoad);

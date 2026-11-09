@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.RoundCount;
 import com.wf.combinedassault.weapon.WeaponContent;
@@ -133,6 +134,11 @@ public class MagazineFeedGameTest {
         WeaponUnit unit = roof(humvee);
         AbstractVehicle.Seat seat = humvee.seats.stream().filter(s -> s.partUnit == unit).findFirst().orElseThrow();
         ServerPlayer gunner = FakePlayerFactory.get(helper.getLevel(), new GameProfile(UUID.randomUUID(), "gunner"));
+        // Roof seat behind the top hatch: open, clip run out by hand.
+        ((SwitchableUnit<?>) humvee.getPartUnit("top_hatch").orElseThrow()).setOn(true);
+        for (int t = 0; t < 40; t++) {
+            humvee.clipTracks().tick();
+        }
         helper.assertTrue(humvee.changeSeat(gunner, seat.seatIndex), "roof seat taken");
         helper.startSequence()
                 .thenIdle(160)

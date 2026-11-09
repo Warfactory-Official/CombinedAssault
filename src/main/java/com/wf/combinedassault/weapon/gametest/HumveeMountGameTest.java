@@ -237,7 +237,8 @@ public class HumveeMountGameTest {
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
         player.setGameMode(GameType.SURVIVAL);
         Vec3 near = unit.worldPivotPosition();
-        player.moveTo(near.x + 1, near.y - player.getEyeHeight(), near.z);
+        // Eye 0.6 over the pivot: at pivot height it sits on the door_rl skin, which then hides the roof_mount centre.
+        player.moveTo(near.x + 1, near.y + 0.6 - player.getEyeHeight(), near.z);
         player.getInventory().clearContent();
         boolean refusedEmpty = Hardpoints.fitRefusal(player, unit, m2) != null;
         player.getInventory().add(HardwareItem.of(CombinedAssault.modLocation(M2_HUMVEE)));

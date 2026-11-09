@@ -31,6 +31,7 @@ public class PartUnitData {
     protected String sensor;
     protected List<CrewRole> crewRoles;
     protected String needsOn;
+    protected String hatch;
     protected Vec3 pivotOffset = Vec3.ZERO;
     protected ResourceLocation displayId;
     protected Vec3 displayOffset;
@@ -65,6 +66,7 @@ public class PartUnitData {
         this.ownerViewOffset = pojo.ownerViewOffset;
         this.crewRoles = pojo.crewRoles;
         this.needsOn = pojo.needsOn;
+        this.hatch = pojo.hatch;
         this.displayId = pojo.displayId;
         this.displayOffset = pojo.displayOffset;
         this.mounts = pojo.mounts;
@@ -177,6 +179,11 @@ public class PartUnitData {
     @Nullable
     public String getNeedsOn() {
         return needsOn;
+    }
+
+    @Nullable
+    public String getHatch() {
+        return hatch;
     }
 
     public List<CrewRole> getCrewRoles() {

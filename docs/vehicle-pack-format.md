@@ -398,6 +398,7 @@ that type adds — there is no nested `data` object.
 | `protect_passenger` | bool | vehicle `protect_passenger` | seat override; `false` on exposed stations (shipped `stand` seats) => AHF rig hits land |
 | `passenger_can_use_item` | bool | `false` | |
 | `sensor` | string | none | seat: weapon part id whose sight it looks through and slews (SCOPE; WSO); fires nothing; reticle = boresight. Spotter seated => owner's SCOPE view-only, other views stop aiming it. `crew.required` => only this seat aims the station (empty => holds); station seat fires (SPG-9: `sight` aims, `gun` fires + loads) |
+| `hatch` | string | none | seat: switchable part id; boarding refused (probe node unavailable) until on + its clip run out; seat switch into / out of it opens it, moves once open (closed again / jammed => dropped / refused). Unknown / non-switchable id => load error |
 | `crew_roles` | enum[] | derived | `driver`, `gunner`, `commander`, `loader`; gate stations under server config `crew.required`; driver seat always. Absent => seat 0 `driver` (+ `gunner` if a weapon station), other weapon seat `gunner`, else `commander`. Driver = first occupied `driver` seat (`crew.required` off: none occupied => seat 0 drives too); boarding takes an empty `driver` seat first; free seat probe node boards that seat |
 | `display_id` | id | — | |
 | `display_offset` | Vec3 | — | |
@@ -783,6 +784,7 @@ Damaged systems (every 3 ticks, 160 blocks), at a live hit node of that system (
 - Tool: any carried item in `#combinedassault:<code>_tool` (codes: `hull engine track wheel turret gun fuel ammo optics rotor tail_rotor wing`); costs durability per step. Every `_tool` tag includes `#combinedassault:all_tool` (= `repair_tool`).
 - Parts: a step from BROKEN also takes one `#combinedassault:<code>_parts`, **only if that tag has members**; shipped empty.
 - Damage tiles: `<image>_damaged.png` / `<image>_wrecked.png` beside a model image => its nodes wear them at DAMAGED / BROKEN, per system. `tools/damage_textures.py` derives both from the base colour.
+- AO: material `occlusionTexture` (first UV map, `<image>_ao.png`) multiplied into the base colour at load => under paint and damage tiles too. Texels shared by several faces carry one shade.
 - `/combinedassault ballistics components` lists colliders, hit nodes, pools and cells; `ballistics system <HUD label> <ratio>` sets one.
 
 ### 6.7 Sockets

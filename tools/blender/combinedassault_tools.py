@@ -18,6 +18,7 @@ import struct
 
 import bmesh
 import bpy
+import numpy as np
 from bpy.props import (BoolProperty, EnumProperty, FloatProperty, FloatVectorProperty, IntProperty, PointerProperty,
                        StringProperty)
 from bpy.types import Operator, Panel, PropertyGroup
@@ -834,7 +835,8 @@ def base_image_node(material):
     bsdf = principled(material)
     if bsdf is None:
         return None
-    return next((n for n in upstream(bsdf.inputs["Base Color"]) if n.type == "TEX_IMAGE"), None)
+    return next((n for n in upstream(bsdf.inputs["Base Color"])
+                 if n.type == "TEX_IMAGE" and not n.name.startswith(PAINT_PREFIX)), None)
 
 
 def material_problems(material):
@@ -854,7 +856,7 @@ def material_problems(material):
             errors.append("texture %s is not connected to Base Color: the game draws it untextured "
                           "(use Set up texture)" % (images[0].image.name if images[0].image else "(empty)"))
         return errors, warnings
-    chain = [n for n in upstream(bsdf.inputs["Base Color"]) if n != node]
+    chain = [n for n in upstream(bsdf.inputs["Base Color"]) if n != node and not n.name.startswith(PAINT_PREFIX)]
     between = [n for n in chain if n not in upstream(node.inputs["Vector"])]
     if between:
         warnings.append("Base Color goes through %s before the texture: the exporter keeps only the image"
@@ -900,6 +902,202 @@ def setup_texture(material, image, alpha):
     if alpha != "OPAQUE":
         tree.links.new(texture.outputs["Alpha"], bsdf.inputs["Alpha"])
     material.combinedassault.alpha = alpha
+
+
+# ---------------------------------------------------------------- paint preview
+
+PAINT_PREFIX = "ca_paint"
+GAMMA = 2.2
+paint_items = [("NONE", "Authored", "Base texture only")]
+_mtimes = {}
+
+
+def paint_specs(scene):
+    """{name: spec} from assets/<ns>/paints/*.json: {"texture": ns:path, "tile": n} or {"color": "#rrggbb"}."""
+    folder = os.path.join(pack_paths(scene)[3], "paints")
+    specs = {}
+    if os.path.isdir(folder):
+        for name in sorted(os.listdir(folder)):
+            if name.endswith(".json"):
+                with open(os.path.join(folder, name), encoding="utf-8") as source:
+                    specs[name[:-5]] = json.load(source)
+    return specs
+
+
+def paint_enum_items(self, context):
+    try:
+        names = list(paint_specs(bpy.context.scene))
+    except (OSError, ValueError):
+        names = []
+    paint_items[:] = [("NONE", "Authored", "Base texture only")] + [(n, n, "") for n in names]
+    return paint_items
+
+
+def hex_rgb(text):
+    text = text.lstrip("#")
+    return tuple(int(text[i:i + 2], 16) / 255.0 for i in (0, 2, 4))
+
+
+def raw_pixels(image):
+    """(h, w, 4) straight, undecoded values: what the game samples."""
+    image.alpha_mode = "CHANNEL_PACKED"
+    image.colorspace_settings.name = "Non-Color"
+    data = np.empty(image.size[0] * image.size[1] * 4, dtype=np.float32)
+    image.pixels.foreach_get(data)
+    return data.reshape(image.size[1], image.size[0], 4)
+
+
+def mask_mean(image):
+    """Coverage-weighted mean rgb of a _paint mask."""
+    px = raw_pixels(image)
+    weight = px[..., 3]
+    total = float(weight.sum())
+    if total <= 0.0:
+        return (1.0, 1.0, 1.0)
+    return tuple(float((px[..., c] * weight).sum() / total) for c in range(3))
+
+
+def texel_mean(image):
+    px = raw_pixels(image)
+    return tuple(float(px[..., c].mean()) for c in range(3))
+
+
+def clear_paint(material):
+    """Restore texture -> Base Color and drop the preview nodes."""
+    if not material.use_nodes:
+        return
+    tree = material.node_tree
+    nodes = [n for n in tree.nodes if n.name.startswith(PAINT_PREFIX)]
+    if not nodes:
+        return
+    bsdf = principled(material)
+    base = next((n for n in tree.nodes if n.type == "TEX_IMAGE" and not n.name.startswith(PAINT_PREFIX)), None)
+    for node in nodes:
+        tree.nodes.remove(node)
+    if bsdf is not None and base is not None:
+        tree.links.new(base.outputs["Color"], bsdf.inputs["Base Color"])
+
+
+def paint_node(tree, kind, name, x, y, **attrs):
+    node = tree.nodes.new(kind)
+    node.name = node.label = "%s_%s" % (PAINT_PREFIX, name)
+    node.location = (x, y)
+    for key, value in attrs.items():
+        setattr(node, key, value)
+    return node
+
+
+def apply_paint(material, spec, assets_dir):
+    """Insert out = mix(base, base * pattern / maskMean, mask.a) in the game's texel space (gamma) upstream of
+    Base Color. False: no `_paint` mask beside the base texture."""
+    clear_paint(material)
+    bsdf, base = principled(material), base_image_node(material)
+    if bsdf is None or base is None or base.image is None:
+        return False
+    source = image_file(base.image)
+    if source is None:
+        return False
+    stem = os.path.splitext(source)[0]
+    if not os.path.isfile(stem + "_paint.png"):
+        return False
+    tree = material.node_tree
+    mask = bpy.data.images.load(stem + "_paint.png", check_existing=True)
+    mean = mask_mean(mask)
+    x, y = base.location.x + 300, base.location.y
+
+    def image_node(name, image, dy, **attrs):
+        return paint_node(tree, "ShaderNodeTexImage", name, base.location.x, y + dy, image=image,
+                          interpolation="Closest", **attrs)
+
+    def to_gamma(socket, name, power, dx):
+        node = paint_node(tree, "ShaderNodeGamma", name, x + dx, y)
+        node.inputs["Gamma"].default_value = power
+        tree.links.new(socket, node.inputs["Color"])
+        return node.outputs["Color"]
+
+    def mix(name, blend, a, b, fac, dx, dy=0):
+        node = paint_node(tree, "ShaderNodeMixRGB", name, x + dx, y + dy, blend_type=blend, use_clamp=True)
+        if fac is None:
+            node.inputs["Fac"].default_value = 1.0
+        else:
+            tree.links.new(fac, node.inputs["Fac"])
+        for socket, value in ((node.inputs["Color1"], a), (node.inputs["Color2"], b)):
+            if isinstance(value, tuple):
+                socket.default_value = (*value, 1.0)
+            else:
+                tree.links.new(value, socket)
+        return node.outputs["Color"]
+
+    mask_node = image_node("mask", mask, -300)
+    base_g = to_gamma(base.outputs["Color"], "base_g", 1.0 / GAMMA, 0)
+    if "color" in spec:
+        pattern = pattern_mean = hex_rgb(spec["color"])
+    else:
+        ref_ns, _, ref_path = spec["texture"].partition(":")
+        pattern_path = os.path.join(os.path.dirname(assets_dir), ref_ns, *ref_path.split("/"))
+        if not os.path.isfile(pattern_path):
+            raise FileNotFoundError(pattern_path)
+        image = bpy.data.images.load(pattern_path, check_existing=True)
+        pattern_mean = texel_mean(image)
+        image.colorspace_settings.name = "sRGB"
+        coords = paint_node(tree, "ShaderNodeTexCoord", "coords", base.location.x - 450, y - 600)
+        mapping = paint_node(tree, "ShaderNodeMapping", "tile", base.location.x - 250, y - 600)
+        mapping.inputs["Scale"].default_value = (1.0 / float(spec.get("tile", 4)),) * 3
+        tree.links.new(coords.outputs["Object"], mapping.inputs["Vector"])
+        node = image_node("pattern", image, -600, projection="BOX", projection_blend=0.2, extension="REPEAT")
+        node.interpolation = "Linear"
+        tree.links.new(mapping.outputs["Vector"], node.inputs["Vector"])
+        pattern = to_gamma(node.outputs["Color"], "pattern_g", 1.0 / GAMMA, 0)
+    solid_path = stem + "_paint_solid.png"
+    if os.path.isfile(solid_path):
+        solid = bpy.data.images.load(solid_path, check_existing=True)
+        solid.colorspace_settings.name = "Non-Color"
+        solid_node = image_node("solid", solid, -900)
+        pattern = mix("solidmix", "MIX", pattern, pattern_mean, solid_node.outputs["Color"], 150, -250)
+    ratio = mix("ratio", "DIVIDE", pattern, mean, None, 300, -250)
+    painted = mix("painted", "MULTIPLY", base_g, ratio, None, 450)
+    blended = mix("coverage", "MIX", base_g, painted, mask_node.outputs["Alpha"], 600)
+    tree.links.new(to_gamma(blended, "out", GAMMA, 750), bsdf.inputs["Base Color"])
+    return True
+
+
+def set_paint(scene, name):
+    """Preview paint `name` ("NONE" = authored) on every material with a `_paint` mask; returns the count."""
+    assets = pack_paths(scene)[3]
+    spec = None if name == "NONE" else paint_specs(scene)[name]
+    painted = 0
+    for material in bpy.data.materials:
+        if spec is None:
+            clear_paint(material)
+        elif apply_paint(material, spec, assets):
+            painted += 1
+    return painted
+
+
+def paint_changed(self, context):
+    set_paint(context.scene, self.paint_preview)
+
+
+def watch_images():
+    """Timer: reload any file-backed image whose file changed on disk."""
+    changed = False
+    for image in bpy.data.images:
+        if image.source != "FILE" or not image.filepath:
+            continue
+        path = bpy.path.abspath(image.filepath, library=image.library)
+        try:
+            mtime = os.path.getmtime(path)
+        except OSError:
+            continue
+        if _mtimes.setdefault(path, mtime) != mtime:
+            _mtimes[path] = mtime
+            image.reload()
+            changed = True
+    if changed:
+        for window in bpy.context.window_manager.windows:
+            for area in window.screen.areas:
+                area.tag_redraw()
+    return 0.5
 
 
 # ---------------------------------------------------------------- player reference
@@ -1118,6 +1316,11 @@ class CombinedAssaultExportSettings(PropertyGroup):
     model_path: StringProperty(name="Model path", default="aircraft/untitled/untitled",
                                description="Under assets/<ns>/models/, without .glb")
     note: StringProperty(name="Last check", default="", options={"SKIP_SAVE"})
+    paint_preview: EnumProperty(name="Paint preview", items=paint_enum_items, update=paint_changed,
+                                description="Game paint layers (base * pattern / mask mean, by _paint coverage) on "
+                                            "materials with a _paint mask; removed while exporting")
+    live_reload: BoolProperty(name="Live reload", default=True, update=lambda s, c: toggle_watch(s.live_reload),
+                              description="Reload textures edited outside Blender (0.5 s poll)")
 
 
 # ---------------------------------------------------------------- operators
@@ -1480,7 +1683,13 @@ class COMBINEDASSAULT_OT_export(Operator):
             made.append(folder)
             folder = os.path.dirname(folder)
         staging = os.path.splitext(gltf_path)[0] + ".gltf"
-        written = export_gltf(context, staging, texture_dir)
+        preview = settings.paint_preview
+        set_paint(scene, "NONE")
+        try:
+            written = export_gltf(context, staging, texture_dir)
+        finally:
+            if preview != "NONE":
+                set_paint(scene, preview)
         relocate(staging, ns, assets, scene, written)
         pack_glb(staging, gltf_path)
         for folder in made:
@@ -2048,6 +2257,9 @@ class COMBINEDASSAULT_PT_scene(Panel):
                 button = column.operator("combinedassault.look_through", text=camera.parent.name if camera.parent else camera.name,
                                          icon="OUTLINER_OB_CAMERA" if camera == context.scene.camera else "CAMERA_DATA")
                 button.camera = camera.name
+        box = layout.box()
+        box.prop(settings, "paint_preview")
+        box.prop(settings, "live_reload")
         layout.operator("combinedassault.check", icon="CHECKMARK")
         layout.operator("combinedassault.export", icon="EXPORT")
 
@@ -2078,7 +2290,15 @@ CLASSES = (
 )
 
 
+def toggle_watch(on):
+    if bpy.app.timers.is_registered(watch_images):
+        bpy.app.timers.unregister(watch_images)
+    if on:
+        bpy.app.timers.register(watch_images, persistent=True)
+
+
 def register():
+    toggle_watch(True)
     for cls in CLASSES:
         bpy.utils.register_class(cls)
     bpy.types.Object.combinedassault = PointerProperty(type=CombinedAssaultObjectSettings)
@@ -2088,6 +2308,7 @@ def register():
 
 
 def unregister():
+    toggle_watch(False)
     bpy.types.TOPBAR_MT_file_import.remove(menu_import)
     del bpy.types.Scene.combinedassault_export
     del bpy.types.Material.combinedassault

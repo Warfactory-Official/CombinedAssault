@@ -18,6 +18,7 @@ import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 public final class VehicleEvents {
@@ -109,6 +110,19 @@ public final class VehicleEvents {
                     && !event.getSource().is(VehicleDamageTypes.BREECH_FIRE)
                     && !com.wf.combinedassault.ballistics.spall.Spall.delivering()) {
                 event.setNewDamage(0);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onSeatedBodyTick(EntityTickEvent.Post event) {
+        if (event.getEntity() instanceof LivingEntity rider && rider.getVehicle() instanceof AbstractVehicle vehicle
+                && vehicle.getDetachedBodyAnchor(rider) == null) {
+            PartUnit<?> seat = vehicle.getOwnOperatorUnit(rider);
+            if (seat != null) {
+                float rot = seat.getSeatRot();
+                rider.yBodyRot = rot;
+                rider.yBodyRotO = rot;
             }
         }
     }

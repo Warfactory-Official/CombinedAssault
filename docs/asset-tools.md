@@ -19,6 +19,7 @@ Install: `python3 tools/blender/build_addon.py` -> `build/combinedassault_tools.
 | tyre hit surface | Scene tab > Make hit cylinder: circumscribed prism `hit_surface` child per selected node (= `gen_hulls.py --hit-cylinder`, regenerable by it) |
 | screen | Scene tab > Add screen: `screen_<id>` quad (UV 0..1, faces the rider) + material `textureSlot`; bind in vehicle `screens` |
 | lights | Scene tab > Preview lights: Blender spot per `light` socket (kind defaults resolved). Rebuilt per call; never exported |
+| paint preview | Scene tab > Paint preview (dropdown = `assets/<ns>/paints/*.json`): `mix(base, base*pattern/maskMean, _paint.a)` in gamma space, `_paint_solid` swaps pattern for its mean; object-space box projection, scale `1/tile`. Nodes `ca_paint_*`; removed during Export, restored after. Live reload: 0.5 s mtime poll reloads every file-backed image |
 | player size | Scene tab > Player standing / Player seated (at the 3D cursor; seated: cursor on the seat socket). Never exported |
 | passenger views | Scene tab > Create passenger cameras: one camera per `seat` / `view` / `sight` / `camera` / `camera_zoomed` socket (eye = origin, -Y at yaw 0, 70 deg vertical); Previous / Next / per-socket buttons look through. Rebuilt per call; never exported |
 | check | Scene tab > Check vehicle; red lines in Object / Material tabs |

@@ -197,6 +197,122 @@ public class AccessGameTest {
         helper.succeed();
     }
 
+    /** Humvee top hatch: one clip keys both leaves; leaf b nests under leaf a's hinge, inside the roof_mount yaw frame. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    public static void aTopHatchFoldsBothLeaves(GameTestHelper helper) {
+        AbstractVehicle humvee = spawn(helper, "humvee");
+        if (humvee == null) {
+            return;
+        }
+        PartClipTracks tracks = humvee.clipTracks();
+        int a = humvee.hits().model().indexOf("top_hatch_leaf_a");
+        int b = humvee.hits().model().indexOf("top_hatch_leaf_b");
+        tracks.tick();
+        humvee.hits().refreshClips();
+        Vec3 closedA = humvee.hits().centre(a).subtract(humvee.position());
+        Vec3 closedB = humvee.hits().centre(b).subtract(humvee.position());
+        SwitchableUnit<?> hatch = (SwitchableUnit<?>) humvee.getPartUnit("top_hatch").orElseThrow();
+        boolean toggled = AccessActions.toggle(player(helper), humvee, hatch.getIndex());
+        for (int t = 0; t < 40; t++) {
+            tracks.tick();
+            humvee.hits().refreshClips();
+        }
+        Vec3 openA = humvee.hits().centre(a).subtract(humvee.position());
+        Vec3 openB = humvee.hits().centre(b).subtract(humvee.position());
+        float progress = tracks.track("top_hatch").progress(1);
+        humvee.discard();
+        // Closed: both leaves level over the ring; open: stacked outboard, leaf b on top.
+        if (!toggled || progress != 1 || openA.distanceTo(closedA) < 0.3 || openB.distanceTo(closedB) < 0.7
+                || openB.y <= openA.y || Math.abs(closedA.y - closedB.y) > 0.01) {
+            helper.fail("toggled " + toggled + ", progress " + progress + ", leaf a " + closedA + " -> " + openA
+                    + ", leaf b " + closedB + " -> " + openB);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** Roof seat ({@code hatch: top_hatch}): boarding refused while closed; open + clip run out => boards. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    public static void aClosedHatchRefusesBoarding(GameTestHelper helper) {
+        AbstractVehicle humvee = spawn(helper, "humvee");
+        if (humvee == null) {
+            return;
+        }
+        int roof = roofSeat(humvee);
+        // Unticked track reads its target: settle it closed first.
+        humvee.clipTracks().tick();
+        SwitchableUnit<?> hatch = (SwitchableUnit<?>) humvee.getPartUnit("top_hatch").orElseThrow();
+        Vec3 at = humvee.position();
+        ArmorStand rider = new ArmorStand(helper.getLevel(), at.x, at.y, at.z);
+        helper.getLevel().addFreshEntity(rider);
+        boolean closedBoarded = humvee.board(rider, roof);
+        hatch.setOn(true);
+        boolean openingBoarded = humvee.board(rider, roof);
+        for (int t = 0; t < 40; t++) {
+            humvee.clipTracks().tick();
+        }
+        boolean openBoarded = humvee.board(rider, roof);
+        PartUnit<?> seat = humvee.getOwnOperatorUnit(rider);
+        humvee.discard();
+        rider.discard();
+        if (closedBoarded || openingBoarded || !openBoarded || seat == null || !seat.getId().equals("roof_mount")) {
+            helper.fail("boarded closed " + closedBoarded + ", opening " + openingBoarded + ", open " + openBoarded
+                    + " into " + (seat == null ? null : seat.getId()));
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** Rear seat -> roof seat: the switch opens the hatch, the rider moves only once its clip has run out. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
+    public static void aSeatSwitchOpensTheHatchFirst(GameTestHelper helper) {
+        AbstractVehicle humvee = spawn(helper, "humvee");
+        if (humvee == null) {
+            return;
+        }
+        int roof = roofSeat(humvee);
+        int rear = humvee.seats.stream().filter(seat -> seat.partUnit.getId().equals("rear_left"))
+                .findFirst().orElseThrow().seatIndex;
+        SwitchableUnit<?> hatch = (SwitchableUnit<?>) humvee.getPartUnit("top_hatch").orElseThrow();
+        Vec3 at = humvee.position();
+        ArmorStand rider = new ArmorStand(helper.getLevel(), at.x, at.y, at.z);
+        rider.setInvulnerable(true);
+        helper.getLevel().addFreshEntity(rider);
+        String[] state = new String[1];
+        // Boarded after the hull's first tick: that tick ejects riders attached before it.
+        helper.startSequence()
+                .thenIdle(3)
+                .thenExecute(() -> {
+                    boolean boarded = humvee.board(rider, rear);
+                    boolean movedAtOnce = humvee.changeSeat(rider, roof);
+                    state[0] = "boarded " + boarded + ", moved at once " + movedAtOnce + ", hatch on " + hatch.isOn()
+                            + ", seat " + seatOf(humvee, rider);
+                    helper.assertTrue(boarded && !movedAtOnce && hatch.isOn() && "rear_left".equals(seatOf(humvee, rider)),
+                            state[0]);
+                })
+                .thenIdle(10)
+                .thenExecute(() -> helper.assertTrue("rear_left".equals(seatOf(humvee, rider)),
+                        state[0] + "; after 10 ticks " + seatOf(humvee, rider) + ", riding " + rider.getVehicle()))
+                .thenWaitUntil(() -> helper.assertTrue("roof_mount".equals(seatOf(humvee, rider)),
+                        "still in " + seatOf(humvee, rider)))
+                .thenExecute(() -> {
+                    humvee.discard();
+                    rider.discard();
+                })
+                .thenSucceed();
+    }
+
+    private static int roofSeat(AbstractVehicle vehicle) {
+        return vehicle.seats.stream().filter(seat -> seat.partUnit.getId().equals("roof_mount"))
+                .findFirst().orElseThrow().seatIndex;
+    }
+
+    @Nullable
+    private static String seatOf(AbstractVehicle vehicle, ArmorStand rider) {
+        PartUnit<?> seat = vehicle.getOwnOperatorUnit(rider);
+        return seat == null ? null : seat.getId();
+    }
+
     /** Seat node: rear_right boarded though driver free; taken seat refused. Armour stands: FakePlayer fails the mount gate. */
     @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void aSeatNodeBoardsThatSeat(GameTestHelper helper) {

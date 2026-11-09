@@ -12,6 +12,8 @@ public final class CamoContent {
 
     public static final DeferredHolder<Item, CamoKitItem> CAMO_KIT = ITEMS.register("camo_kit", CamoKitItem::new);
 
+    public static final DeferredHolder<Item, SprayCanItem> SPRAY_CAN = ITEMS.register("spray_can", SprayCanItem::new);
+
     private CamoContent() {
     }
 }

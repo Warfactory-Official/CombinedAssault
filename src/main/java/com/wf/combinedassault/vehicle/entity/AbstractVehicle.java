@@ -72,6 +72,7 @@ import com.wf.combinedassault.vehicle.message.ServerVehicleSeatsChange;
 import com.wf.combinedassault.vehicle.part.DoorUnit;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.RotatableUnit;
+import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import com.wf.combinedassault.vehicle.part.data.PartUnitData;
 import com.wf.combinedassault.vehicle.part.data.PartUnitPojo;
 import com.wf.combinedassault.vehicle.pojo.MountableInfo;
@@ -439,6 +440,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     private CompoundTag droneTag;
     /** {@link #board} -> {@link #onEnterVehicle}; -1 = default pick. */
     private int requestedSeat = -1;
+    /** Server: passenger id -> seat index, moved once every seat {@code hatch} involved is open. */
+    private final Map<Integer, Integer> pendingSeats = new HashMap<>();
     /** Last player to fly this UAV: its datalink keeps reporting to them while it flies itself. */
     @Nullable
     private UUID uavOperator;
@@ -1185,6 +1188,9 @@ public abstract class AbstractVehicle extends ContainerCraft
             if (hits != null) {
                 hits.refreshClips();
             }
+        }
+        if (!pendingSeats.isEmpty()) {
+            tickPendingSeats();
         }
         tickDecorations();
         TrialProfile.stop(TrialProfile.Stage.PARTS, rightAt);
@@ -2114,9 +2120,23 @@ public abstract class AbstractVehicle extends ContainerCraft
         }
     }
 
-    /** Boards {@code seatIndex} (free) instead of the default pick. */
+    /** Seat's {@code hatch} on and its clip run out; no hatch / no clip => on suffices. */
+    public boolean hatchOpen(Seat seat) {
+        SwitchableUnit<?> hatch = seat.partUnit.hatch();
+        if (hatch == null) {
+            return true;
+        }
+        if (!hatch.isOn()) {
+            return false;
+        }
+        PartClipTracks.Track track = clipTracks == null ? null : clipTracks.track(hatch.getId());
+        return track == null || track.progress(1) >= 1;
+    }
+
+    /** Boards {@code seatIndex} (free, hatch open) instead of the default pick. */
     public boolean board(LivingEntity rider, int seatIndex) {
-        if (seatIndex < 0 || seatIndex >= seats.size() || seats.get(seatIndex).passengerId != -1) {
+        if (seatIndex < 0 || seatIndex >= seats.size() || seats.get(seatIndex).passengerId != -1
+                || !hatchOpen(seats.get(seatIndex))) {
             return false;
         }
         requestedSeat = seatIndex;
@@ -2140,11 +2160,11 @@ public abstract class AbstractVehicle extends ContainerCraft
             if (targetSeat == null && drivingSeat() == null) {
                 // First aboard takes the wheel, not the gun that happens to be seat 0 (Centauro: turret).
                 targetSeat = seats.stream()
-                        .filter(seat -> seat.passengerId == -1 && CrewRules.roles(seat).contains(CrewRole.DRIVER))
+                        .filter(seat -> seat.passengerId == -1 && hatchOpen(seat) && CrewRules.roles(seat).contains(CrewRole.DRIVER))
                         .findFirst().orElse(null);
             }
             if (targetSeat == null) {
-                Optional<Seat> emptySeatOptional = seats.stream().filter(seat -> seat.passengerId == -1).findFirst();
+                Optional<Seat> emptySeatOptional = seats.stream().filter(seat -> seat.passengerId == -1 && hatchOpen(seat)).findFirst();
                 if (emptySeatOptional.isEmpty()) {
                     return;
                 }
@@ -2194,23 +2214,71 @@ public abstract class AbstractVehicle extends ContainerCraft
         }
     }
 
+    /**
+     * Seat {@code hatch} of the seat left or taken closed => opened (jammed => refused) and the move queued until its
+     * clip has run out; false until then.
+     */
     public boolean changeSeat(LivingEntity pPassenger, int toSeatIndex) {
-        if (toSeatIndex >= 0 && toSeatIndex < seats.size() && seats.get(toSeatIndex).passengerId == -1) {
-            Optional<Seat> ownSeat = seats.stream().filter(seat -> seat.passengerId == pPassenger.getId()).findFirst();
-            if (ownSeat.isPresent()) {
-                Seat seat = ownSeat.get();
-                seat.partUnit.setOwner(null);
-                seat.passengerId = -1;
-            }
-            Seat toSeat = seats.get(toSeatIndex);
-            toSeat.partUnit.setOwner(pPassenger);
-            toSeat.passengerId = pPassenger.getId();
-            refreshDriver();
-            toSeat.partUnit.applySeatRot(pPassenger);
-            PacketDistributor.sendToPlayersTrackingEntity(this, new ServerVehicleSeatsChange(this));
-            return true;
+        if (toSeatIndex < 0 || toSeatIndex >= seats.size() || seats.get(toSeatIndex).passengerId != -1) {
+            return false;
         }
+        Seat to = seats.get(toSeatIndex);
+        Seat from = seats.stream().filter(seat -> seat.passengerId == pPassenger.getId()).findFirst().orElse(null);
+        if (hatchOpen(to) && (from == null || hatchOpen(from))) {
+            pendingSeats.remove(pPassenger.getId());
+            return moveSeat(pPassenger, toSeatIndex);
+        }
+        for (Seat seat : from == null ? List.of(to) : List.of(from, to)) {
+            SwitchableUnit<?> hatch = seat.partUnit.hatch();
+            if (hatch != null && hatch.isDestroyed()) {
+                if (pPassenger instanceof Player player) {
+                    player.displayClientMessage(Component.translatable("door.combinedassault.jammed"), true);
+                }
+                return false;
+            }
+        }
+        for (Seat seat : from == null ? List.of(to) : List.of(from, to)) {
+            if (seat.partUnit.hatch() != null) {
+                seat.partUnit.hatch().setOn(true);
+            }
+        }
+        pendingSeats.put(pPassenger.getId(), toSeatIndex);
         return false;
+    }
+
+    /** Queued moves: passenger gone / target taken / hatch closed again => dropped; all hatches open => moved. */
+    private void tickPendingSeats() {
+        Iterator<Map.Entry<Integer, Integer>> it = pendingSeats.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<Integer, Integer> entry = it.next();
+            Seat to = seats.get(entry.getValue());
+            Entity passenger = level().getEntity(entry.getKey());
+            Seat from = seats.stream().filter(seat -> seat.passengerId == entry.getKey()).findFirst().orElse(null);
+            if (!(passenger instanceof LivingEntity living) || living.getVehicle() != this || to.passengerId != -1
+                    || to.partUnit.hatch() != null && !to.partUnit.hatch().isOn()
+                    || from != null && from.partUnit.hatch() != null && !from.partUnit.hatch().isOn()) {
+                it.remove();
+            } else if (hatchOpen(to) && (from == null || hatchOpen(from))) {
+                it.remove();
+                moveSeat(living, entry.getValue());
+            }
+        }
+    }
+
+    private boolean moveSeat(LivingEntity pPassenger, int toSeatIndex) {
+        Optional<Seat> ownSeat = seats.stream().filter(seat -> seat.passengerId == pPassenger.getId()).findFirst();
+        if (ownSeat.isPresent()) {
+            Seat seat = ownSeat.get();
+            seat.partUnit.setOwner(null);
+            seat.passengerId = -1;
+        }
+        Seat toSeat = seats.get(toSeatIndex);
+        toSeat.partUnit.setOwner(pPassenger);
+        toSeat.passengerId = pPassenger.getId();
+        refreshDriver();
+        toSeat.partUnit.applySeatRot(pPassenger);
+        PacketDistributor.sendToPlayersTrackingEntity(this, new ServerVehicleSeatsChange(this));
+        return true;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -2302,7 +2370,7 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     @Override
     protected boolean canAddPassenger(@NotNull Entity pPassenger) {
-        return seats.stream().anyMatch(seat -> seat.passengerId == -1);
+        return seats.stream().anyMatch(seat -> seat.passengerId == -1 && hatchOpen(seat));
     }
 
     @Override

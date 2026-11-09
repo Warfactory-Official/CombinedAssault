@@ -1,6 +1,9 @@
 package com.wf.combinedassault.vehicle.part.client;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.camo.CamoContent;
+import com.wf.combinedassault.camo.Finishes;
+import com.wf.combinedassault.camo.SprayActions;
 import com.wf.combinedassault.airdefense.client.AirDefenseProbe;
 import com.wf.combinedassault.ballistics.addon.AddonActions;
 import com.wf.combinedassault.ballistics.addon.AddonArmorLayer;
@@ -34,6 +37,7 @@ import com.wf.wflib.armor.api.hull.HullWear;
 import com.wf.wflib.geom.api.OBB;
 import com.wf.wflib.probe.api.*;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -124,7 +128,9 @@ public final class VehicleNodes {
                         seat.partUnit.getSeatOffset().subtract(0, SEAT_DROP, 0), partialTick);
                 out.add(new ProbeNode("seat:" + seat.seatIndex, at, info -> {
                     info.title(PartNames.name(seat.partUnit));
-                    info.action(ProbeAction.of(AccessActions.BOARD, seat.seatIndex, Component.translatable(KEY + "enter")));
+                    ProbeAction board = ProbeAction.of(AccessActions.BOARD, seat.seatIndex, Component.translatable(KEY + "enter"));
+                    info.action(vehicle.hatchOpen(seat) ? board
+                            : board.unavailable(Component.translatable("seat.combinedassault.hatch_closed")));
                 }).colour(SEAT));
             }
         }
@@ -267,6 +273,25 @@ public final class VehicleNodes {
         return vehicle.position(partialTick).add(c).add(arm.x, arm.y, arm.z);
     }
 
+    private static void spray(ProbeInfo info, ProbeContext ctx, AbstractVehicle vehicle) {
+        if (!ctx.carrying(CamoContent.SPRAY_CAN.get())) {
+            return;
+        }
+        List<ResourceLocation> finishes = Finishes.of(vehicle.getDisplayId());
+        if (finishes.size() < 2) {
+            return;
+        }
+        ProbeElement icon = new ProbeElement.Icon(new ItemStack(CamoContent.SPRAY_CAN.get()), 10, false);
+        for (int i = 0; i < finishes.size(); i++) {
+            Component name = Finishes.name(finishes.get(i));
+            if (finishes.get(i).equals(vehicle.getDisplayId())) {
+                info.entry(Component.translatable(PROBE + "finish"), name);
+            } else {
+                info.action(ProbeAction.of(SprayActions.SPRAY, i, Component.translatable(PROBE + "spray", name)).withIcon(icon));
+            }
+        }
+    }
+
     /** Hull node: grid + rows of damaged systems without geometry; each placed damaged system its own node. */
     private static void systems(List<ProbeNode> out, ProbeContext ctx, AbstractVehicle vehicle, Vec3 drift) {
         List<VehicleSystems.Cell> cells = VehicleSystems.cells(vehicle);
@@ -304,6 +329,7 @@ public final class VehicleNodes {
             if (vehicle.hasBatterySlot()) {
                 battery(info, ctx.player(), vehicle);
             }
+            spray(info, ctx, vehicle);
             SystemsProbe.grid(info, cells);
             AirDefenseProbe.append(info, ctx, vehicle);
             for (VehicleSystems.Cell cell : unplaced) {

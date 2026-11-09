@@ -121,6 +121,7 @@
                 }
             ],
             "pose": "stand",
+            "hatch": "top_hatch",
             "protect_passenger": false
         },
         {
@@ -210,6 +211,12 @@
             "rest_length": 0.25,
             "max_compression": 0.25,
             "max_extension": 0.2
+        },
+        {
+            "id": "top_hatch",
+            "name": "top_hatch",
+            "type": "combinedassault:switchable",
+            "is_seat": false
         }
     ],
     "model": "combinedassault:models/ground/humvee/humvee.glb",

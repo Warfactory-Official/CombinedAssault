@@ -19,7 +19,7 @@ from PIL import Image
 
 PACK = "src/main/resources/combinedassault_packs/combinedassault/assets/combinedassault/textures"
 DIRS = ("aircraft", "ground", "emplacement")
-SKIP = ("_orm", "_normal", "_damaged", "_wrecked", "_paint", "_solid")
+SKIP = ("_orm", "_normal", "_ao", "_damaged", "_wrecked", "_paint", "_solid")
 WRECK_PAINT = 0.1
 
 

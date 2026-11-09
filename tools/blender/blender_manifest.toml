@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "combinedassault_tools"
-version = "4.1.0"
+version = "4.2.0"
 name = "combinedassault tools"
 tagline = "Frames, colliders, hit modules, sockets, armour and pack export"
 maintainer = "combinedassault"

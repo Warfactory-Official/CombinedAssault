@@ -467,6 +467,35 @@ def texture_setup(work):
           == "combinedassault:textures/test/skin/skin.png", str(gltf["images"]))
     errors, _, _ = T.ca_validate.validate(gltf_path)
     check("validator passes the textured export", not errors, str(errors))
+
+    mask = bpy.data.images.new("skin_paint", 4, 4, alpha=True)
+    mask.pixels = [0.5, 0.25, 0.0, 1.0] * 8 + [0.0, 0.0, 0.0, 0.0] * 8
+    mask.filepath_raw = os.path.join(work, "skin_paint.png")
+    mask.file_format = "PNG"
+    mask.save()
+    mean = T.mask_mean(bpy.data.images.load(mask.filepath_raw, check_existing=False))
+    check("mask mean is coverage weighted", all(abs(a - b) < 0.01 for a, b in zip(mean, (0.5, 0.25, 0.0))), str(mean))
+    paints = os.path.join(pack, "assets/combinedassault/paints")
+    os.makedirs(paints)
+    with open(os.path.join(paints, "red.json"), "w", encoding="utf-8") as out:
+        json.dump({"color": "#804000"}, out)
+    check("paint specs listed", list(T.paint_specs(scene)) == ["red"], str(T.paint_specs(scene)))
+    before = [n.name for n in material.node_tree.nodes]
+    check("paint preview applied", T.set_paint(scene, "red") == 1)
+    check("Base Color fed by the preview", T.principled(material).inputs["Base Color"].links[0].from_node.name
+          .startswith(T.PAINT_PREFIX))
+    check("base image still found through the preview", T.base_image_node(material).image.name == "skin")
+    errors, warnings = T.material_problems(material)
+    check("preview adds no material problem", not errors and not warnings, str(errors + warnings))
+    settings.paint_preview = "NONE"
+    check("preview removed", [n.name for n in material.node_tree.nodes] == before
+          and T.base_image_node(material).outputs["Color"].links[0].to_node.type == "BSDF_PRINCIPLED")
+    settings.paint_preview = "red"
+    result = bpy.ops.combinedassault.export()
+    check("export with preview on finishes, preview restored", result == {"FINISHED"} and any(
+        n.name.startswith(T.PAINT_PREFIX) for n in material.node_tree.nodes))
+    errors, _, _ = T.ca_validate.validate(gltf_path)
+    check("validator passes export made with preview", not errors, str(errors))
     shutil.rmtree(pack)
 
 

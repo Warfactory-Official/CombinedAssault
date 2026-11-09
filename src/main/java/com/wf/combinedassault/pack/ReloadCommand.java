@@ -6,6 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.pack.client.ClientAssetsManager;
 import com.wf.combinedassault.radar.RadarConfig;
+import com.wf.combinedassault.render.gem.GemRenderSetup;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.core.api.WFSystems;
 import net.minecraft.client.Minecraft;
@@ -18,6 +19,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -42,8 +44,11 @@ public class ReloadCommand {
         StopWatch watch = StopWatch.createStarted();
         {
             if (FMLLoader.getDist().isClient()) {
-                LocalPlayer player = Minecraft.getInstance().player;
-                ClientAssetsManager.INSTANCE.reload(Minecraft.getInstance().getResourceManager());
+                Minecraft minecraft = Minecraft.getInstance();
+                LocalPlayer player = minecraft.player;
+                ResourceManager resources = minecraft.getResourceManager();
+                ClientAssetsManager.INSTANCE.reload(resources);
+                minecraft.execute(() -> GemRenderSetup.reloadTextures(resources));
                 CreativeModeTabs.tryRebuildTabContents(player.connection.enabledFeatures(), true, player.level().registryAccess());
             }
             CommonAssetsManager.reload();

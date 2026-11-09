@@ -80,6 +80,14 @@ public enum ClientAssetsManager {
     }
 
     @NotNull
+    public List<BaseDisplay> getWeaponDisplays() {
+        if (weaponDisplayManager == null) {
+            return List.of();
+        }
+        return new ArrayList<>(weaponDisplayManager.getDisplayMap().values());
+    }
+
+    @NotNull
     public Optional<BaseDisplay> getDecorationDisplay(ResourceLocation id) {
         if (decorationDisplayManager == null) {
             return Optional.empty();

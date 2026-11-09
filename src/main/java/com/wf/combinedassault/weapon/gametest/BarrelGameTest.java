@@ -5,6 +5,7 @@ import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.pack.sync.SyncDataSerializers;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.barrel.BarrelActions;
 import com.wf.combinedassault.weapon.barrel.BarrelPacket;
@@ -340,6 +341,11 @@ public class BarrelGameTest {
     private static void seat(AbstractVehicle vehicle, ServerPlayer player) {
         WeaponUnit unit = (WeaponUnit) vehicle.getPartUnit("roof_mount").orElseThrow();
         AbstractVehicle.Seat seat = vehicle.seats.stream().filter(s -> s.partUnit == unit).findFirst().orElseThrow();
+        // Roof seat behind the top hatch: open, clip run out by hand.
+        ((SwitchableUnit<?>) vehicle.getPartUnit("top_hatch").orElseThrow()).setOn(true);
+        for (int t = 0; t < 40; t++) {
+            vehicle.clipTracks().tick();
+        }
         if (!vehicle.changeSeat(player, seat.seatIndex)) {
             throw new IllegalStateException("roof seat taken");
         }
