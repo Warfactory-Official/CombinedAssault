@@ -80,6 +80,7 @@ public class LandingGearUnit extends SwitchableUnit<LandingGearUnitData> {
         if (!changing) {
             return;
         }
+        vehicle.holdAwake();
         boolean reached = true;
         for (GearCube gearCube : gearCubes) {
             float targetY = gearPointY(gearCube.gearCubeOBB);

@@ -185,6 +185,7 @@ public final class VehicleRighting {
         vehicle.setXRot(0);
         vehicle.setZRot(0);
         vehicle.physicsEngine.angularVelocity.zero();
+        vehicle.holdAwake();
         vehicle.triggerPosRotUpdate();
         // deckSoundType: landing sound matches the hull's declared material.
         vehicle.level().playSound(null, vehicle.getX(), vehicle.getY(), vehicle.getZ(),

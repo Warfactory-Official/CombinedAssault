@@ -10,6 +10,9 @@ import com.wf.combinedassault.radar.RadarUnit;
 import com.wf.combinedassault.uav.fpv.FpvFlight;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.crew.CrewRules;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.part.SwitchableUnit;
+import com.wf.combinedassault.weapon.part.WeaponBayUnit;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.entity.GroundVehicle;
 import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
@@ -122,6 +125,8 @@ public class InputHandler {
                     sendToggleLandingGear(vehicle);
                 } else if (matchesKey(TOGGLE_AIRBRAKE, key, scanCode)) {
                     sendToggleAirbrake(vehicle);
+                } else if (matchesKey(TOGGLE_CARGO_DOOR, key, scanCode)) {
+                    sendToggleCargoDoor(vehicle);
                 } else if (vehicle instanceof GroundVehicle ground && ground.transmission != null
                         && (matchesKey(SHIFT_UP, key, scanCode) || matchesKey(SHIFT_DOWN, key, scanCode))) {
                     if (!ground.automatic() && player.equals(vehicle.controlUnit.getOperator())) {
@@ -177,6 +182,8 @@ public class InputHandler {
                 } else if (matchesKey(TOGGLE_WEAPON_BAY, key, scanCode)) {
                     if (weaponUnit != null) {
                         weaponUnit.toggleCurrentWeaponBay();
+                    } else {
+                        sendToggleHandBays(vehicle);
                     }
                 } else if (matchesKey(TOGGLE_AEROBATIC_SMOKE, key, scanCode)) {
                     if (vehicle instanceof FixedWingVehicle) {
@@ -504,6 +511,29 @@ public class InputHandler {
         ClientVehicleAction action = new ClientVehicleAction();
         action.vehicleEntityId = vehicle.getId();
         action.toggleLandingGear = true;
+        PacketDistributor.sendToServer(action);
+    }
+
+    private static void sendToggleCargoDoor(AbstractVehicle vehicle) {
+        SwitchableUnit<?> door = vehicle.cargoDoor();
+        if (door != null) {
+            sendTogglePart(vehicle, door.getIndex());
+        }
+    }
+
+    private static void sendToggleHandBays(AbstractVehicle vehicle) {
+        for (PartUnit<?> part : vehicle.getPartUnits()) {
+            if (part instanceof WeaponBayUnit bay && bay.handWorked()) {
+                sendTogglePart(vehicle, bay.getIndex());
+            }
+        }
+    }
+
+    private static void sendTogglePart(AbstractVehicle vehicle, int index) {
+        ClientVehicleAction action = new ClientVehicleAction();
+        action.vehicleEntityId = vehicle.getId();
+        action.partUnitIndex = index;
+        action.togglePartUnitState = true;
         PacketDistributor.sendToServer(action);
     }
 

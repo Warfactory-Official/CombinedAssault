@@ -99,6 +99,45 @@
             "id": "cargo_doors",
             "name": "cargo_doors",
             "type": "combinedassault:door",
+            "is_seat": false,
+            "opens_on_dismount": false
+        },
+        {
+            "id": "nose_doors",
+            "name": "nose_doors",
+            "type": "combinedassault:door",
+            "is_seat": false,
+            "opens_on_dismount": false,
+            "closed_with": ["pilot", "copilot"]
+        },
+        {
+            "id": "visor",
+            "name": "visor",
+            "type": "combinedassault:generic",
+            "is_seat": false
+        },
+        {
+            "id": "nose_ramp",
+            "name": "nose_ramp",
+            "type": "combinedassault:generic",
+            "is_seat": false
+        },
+        {
+            "id": "nose_ramp_ext",
+            "name": "nose_ramp_ext",
+            "type": "combinedassault:generic",
+            "is_seat": false
+        },
+        {
+            "id": "clamshell_l",
+            "name": "clamshell_l",
+            "type": "combinedassault:generic",
+            "is_seat": false
+        },
+        {
+            "id": "clamshell_r",
+            "name": "clamshell_r",
+            "type": "combinedassault:generic",
             "is_seat": false
         },
         {

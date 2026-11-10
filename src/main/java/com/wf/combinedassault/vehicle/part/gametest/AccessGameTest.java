@@ -170,7 +170,7 @@ public class AccessGameTest {
         });
     }
 
-    /** Clip-driven hit node follows its part: C5 visor (clip cargo_doors) swings up with the doors. */
+    /** Clip-driven hit node follows its part: C5 visor (clip nose_doors) swings up with the doors. */
     @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
     public static void aClipMovesItsHitGeometry(GameTestHelper helper) {
         AbstractVehicle c5 = spawn(helper, "c5");
@@ -183,17 +183,54 @@ public class AccessGameTest {
         tracks.tick();
         c5.hits().refreshClips();
         Vec3 closed = c5.hits().centre(visor).subtract(c5.position());
-        SwitchableUnit<?> doors = (SwitchableUnit<?>) c5.getPartUnit("cargo_doors").orElseThrow();
+        SwitchableUnit<?> doors = (SwitchableUnit<?>) c5.getPartUnit("nose_doors").orElseThrow();
         boolean toggled = AccessActions.toggle(player(helper), c5, doors.getIndex());
         for (int t = 0; t < 60; t++) {
             tracks.tick();
             c5.hits().refreshClips();
         }
         Vec3 open = c5.hits().centre(visor).subtract(c5.position());
-        float progress = tracks.track("cargo_doors").progress(1);
+        float progress = tracks.track("nose_doors").progress(1);
         c5.discard();
         if (!toggled || progress != 1 || open.distanceTo(closed) < 1) {
             helper.fail("toggled " + toggled + ", progress " + progress + ", visor hit centre " + closed + " -> " + open);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * C-5 nose + rear doors toggle apart; nose refused while the pilot sits, boarding the pilot seat shuts it;
+     * leaving opens neither.
+     */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    public static void aGalaxyNoseOpensOnlyWithTheCockpitEmpty(GameTestHelper helper) {
+        AbstractVehicle c5 = spawn(helper, "c5");
+        if (c5 == null) {
+            return;
+        }
+        SwitchableUnit<?> nose = (SwitchableUnit<?>) c5.getPartUnit("nose_doors").orElseThrow();
+        SwitchableUnit<?> rear = (SwitchableUnit<?>) c5.getPartUnit("cargo_doors").orElseThrow();
+        int pilot = c5.seats.stream().filter(seat -> seat.partUnit.getId().equals("pilot")).findFirst().orElseThrow().seatIndex;
+        FakePlayer player = player(helper);
+        boolean rearOpened = AccessActions.toggle(player, c5, rear.getIndex()) && rear.isOn() && !nose.isOn();
+        boolean noseOpened = AccessActions.toggle(player, c5, nose.getIndex()) && nose.isOn();
+        Vec3 at = c5.position();
+        ArmorStand rider = new ArmorStand(helper.getLevel(), at.x, at.y, at.z);
+        helper.getLevel().addFreshEntity(rider);
+        boolean boarded = c5.board(rider, pilot);
+        boolean shutByPilot = !nose.isOn();
+        boolean refused = !AccessActions.toggle(player, c5, nose.getIndex()) && !nose.isOn();
+        boolean rearWithPilot = AccessActions.toggle(player, c5, rear.getIndex()) && rear.isOn();
+        rider.stopRiding();
+        boolean leftShut = !nose.isOn() && rear.isOn();
+        boolean noseAfter = AccessActions.toggle(player, c5, nose.getIndex()) && nose.isOn();
+        c5.discard();
+        rider.discard();
+        if (!rearOpened || !noseOpened || !boarded || !shutByPilot || !refused || !rearWithPilot || !leftShut || !noseAfter) {
+            helper.fail("rear alone " + rearOpened + ", nose " + noseOpened + ", boarded " + boarded + ", shut by pilot "
+                    + shutByPilot + ", refused " + refused + ", rear toggles with pilot " + rearWithPilot
+                    + ", leaving changed none " + leftShut + ", nose after " + noseAfter);
             return;
         }
         helper.succeed();

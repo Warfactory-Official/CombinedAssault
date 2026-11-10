@@ -4,6 +4,10 @@ import com.maydaymemory.mae.basic.Pose;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.wf.combinedassault.aircraft.FixedWingVehicle;
+import com.wf.combinedassault.aircraft.RotorStrike;
+import com.wf.combinedassault.ballistics.component.HullComponents;
+import com.wf.combinedassault.ballistics.hit.HitModel;
+import com.wf.combinedassault.ballistics.hit.VehicleHits;
 import com.wf.combinedassault.ballistics.addon.client.AddonArmorRenderer;
 import com.wf.combinedassault.camo.client.VehicleCamoRenderer;
 import com.wf.combinedassault.cargo.client.CargoRenderer;
@@ -18,6 +22,7 @@ import com.wf.combinedassault.render.gem.GemScreens;
 import com.wf.combinedassault.render.model.VehicleModelInstance;
 import com.wf.combinedassault.render.part.RoundStations;
 import com.wf.combinedassault.render.particle.BulletHoleParticle;
+import com.wf.combinedassault.render.util.DebugRenderTypes;
 import com.wf.combinedassault.render.util.HullRenderer;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.client.VehicleKeys;
@@ -39,12 +44,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.List;
 
 import static com.wf.combinedassault.render.animation.util.PoseBlenders.BLENDER;
@@ -157,41 +165,26 @@ public class VehicleRender<T extends AbstractVehicle> extends EntityRenderer<T> 
         return isCabinView(vehicle, display) ? vehicle.getCabinModelInstance() : vehicle.getVehicleModelInstance();
     }
 
+    /**
+     * Collision pieces queued this frame, drawn at {@link #onRenderLevel}. Keyed by vehicle: shadow / scope passes
+     * render entities again from other cameras => origin from the main camera at draw time, never the queuing stack.
+     */
+    private static final Map<AbstractVehicle, List<VehicleCubeOBB>> PENDING = new LinkedHashMap<>();
+
+    /**
+     * Collision pieces: queued to {@link #onRenderLevel}, no depth test. GemRender draws the model after the entity
+     * batch => an entity-pass line, depth test or not, is painted over (hold floor / walls inside the skin).
+     */
     public static void renderHitbox(AbstractVehicle vehicle, PoseStack poseStack, MultiBufferSource bufferSource) {
-        VertexConsumer buffer = bufferSource.getBuffer(RenderType.lines());
         EntityRenderDispatcher dispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
-        boolean debugHitboxes = dispatcher.shouldRenderHitBoxes() && com.wf.wflib.core.api.client.DebugGate.allowed();
-        boolean renderSelfVehicleHitbox = vehicle == LocalVehiclePlayer.instance().vehicle && VehicleKeys.INSPECT_VEHICLE.isDown();
+        boolean all = dispatcher.shouldRenderHitBoxes() && com.wf.wflib.core.api.client.DebugGate.allowed()
+                || vehicle == LocalVehiclePlayer.instance().vehicle && VehicleKeys.INSPECT_VEHICLE.isDown();
+        boolean meshed = vehicle.hits() != null;
         List<PartUnit<?>> partUnits = new ArrayList<>();
-        if ((debugHitboxes || renderSelfVehicleHitbox) && vehicle.hits() != null) {
-            renderMeshVehicleHitbox(vehicle, poseStack, buffer);
-            partUnits.addAll(vehicle.getDecorationUnits().values());
-        } else if (debugHitboxes || renderSelfVehicleHitbox) {
-            if (vehicle.getMainCubeOBB() != null) {
-                OBBRenderer.render(vehicle.position(),
-                        List.of(vehicle.getMainCubeOBB().obb()),
-                        poseStack, buffer, 0, 0, 1, 1);
+        if (all) {
+            if (!meshed) {
+                partUnits.addAll(vehicle.getPartUnits());
             }
-            for (VehicleCubeOBB vehicleCubeOBB : vehicle.getVehicleCubeOBBs()) {
-                // Solid: real hull shape. Faint: broad-phase bound box, can be looser than the hull.
-                boolean hulled = vehicleCubeOBB.hasHull();
-                OBBRenderer.render(vehicle.position(),
-                        List.of(vehicleCubeOBB.obb()),
-                        poseStack, buffer, 0, 1, 0, hulled ? 0.25F : 1);
-                if (hulled) {
-                    HullRenderer.render(vehicle.position(), vehicleCubeOBB,
-                            vehicle.collisionBody().solvesAgainst(vehicleCubeOBB),
-                            poseStack, buffer);
-                }
-            }
-            HullRenderer.renderHits(vehicle, poseStack, buffer);
-            if (vehicle instanceof FixedWingVehicle fixedWingVehicle
-                    && fixedWingVehicle.aerodynamicCubeOBB != null) {
-                OBBRenderer.render(vehicle.position(),
-                        List.of(fixedWingVehicle.aerodynamicCubeOBB.obb()),
-                        poseStack, buffer, 0, 1, 1, 1);
-            }
-            partUnits.addAll(vehicle.getPartUnits());
             partUnits.addAll(vehicle.getDecorationUnits().values());
         } else {
             PartUnit<?> partUnit = LocalVehiclePlayer.instance().lookAtPartUnit;
@@ -199,57 +192,115 @@ public class VehicleRender<T extends AbstractVehicle> extends EntityRenderer<T> 
                 partUnits.add(partUnit);
             }
         }
+        partUnits.removeIf(p -> p.isDetached() || meshed && !(p instanceof DecorationUnit));
+        if (!all && partUnits.isEmpty()) {
+            return;
+        }
+
+        List<VehicleCubeOBB> cubes = new ArrayList<>();
+        if (all) {
+            cubes.addAll(vehicle.getVehicleCubeOBBs());
+        }
+        if (all && meshed) {
+            for (PartUnit<?> partUnit : vehicle.getPartUnits()) {
+                if (!partUnit.isDetached()) {
+                    cubes.addAll(partUnit.getPartCubeOBBs());
+                }
+            }
+            if (!cubes.contains(vehicle.getMainCubeOBB())) {
+                cubes.add(vehicle.getMainCubeOBB());
+            }
+        }
         for (PartUnit<?> partUnit : partUnits) {
-            if (partUnit.isDetached()) {
-                continue;
+            cubes.addAll(partUnit.getPartCubeOBBs());
+        }
+        if (!(all && meshed)) {
+            cubes.removeIf(cube -> !cube.hasHull()); // box drawn green / yellow below
+        }
+        if (!cubes.isEmpty()) {
+            PENDING.put(vehicle, cubes);
+        }
+
+        VertexConsumer buffer = bufferSource.getBuffer(RenderType.lines());
+        if (all) {
+            if (!meshed) {
+                if (vehicle.getMainCubeOBB() != null) {
+                    OBBRenderer.render(vehicle.position(), List.of(vehicle.getMainCubeOBB().obb()),
+                            poseStack, buffer, 0, 0, 1, 1);
+                }
+                for (VehicleCubeOBB cube : vehicle.getVehicleCubeOBBs()) {
+                    // Solid: real hull shape. Faint: broad-phase bound box, can be looser than the hull.
+                    OBBRenderer.render(vehicle.position(), List.of(cube.obb()),
+                            poseStack, buffer, 0, 1, 0, cube.hasHull() ? 0.25F : 1);
+                }
+                if (vehicle instanceof FixedWingVehicle fixedWingVehicle && fixedWingVehicle.aerodynamicCubeOBB != null) {
+                    OBBRenderer.render(vehicle.position(), List.of(fixedWingVehicle.aerodynamicCubeOBB.obb()),
+                            poseStack, buffer, 0, 1, 1, 1);
+                }
             }
-            if (vehicle.hits() != null && !(partUnit instanceof DecorationUnit)) {
-                continue;
-            }
-            for (VehicleCubeOBB partCube : partUnit.getPartCubeOBBs()) {
-                HullRenderer.render(vehicle.position(), partCube,
-                        vehicle.collisionBody().solvesAgainst(partCube), poseStack, buffer);
-            }
+            HullRenderer.renderHits(vehicle, poseStack, buffer);
+        }
+        for (PartUnit<?> partUnit : partUnits) {
             if (partUnit instanceof WeaponUnit weaponUnit) {
-                OBBRenderer.render(vehicle.position(), weaponUnit.getOBBs(),
-                        poseStack, buffer, 1, 0, 0, 1);
+                OBBRenderer.render(vehicle.position(), weaponUnit.getOBBs(), poseStack, buffer, 1, 0, 0, 1);
             } else if (partUnit instanceof DecorationUnit decorationUnit) {
-                OBBRenderer.render(vehicle.position(), decorationUnit.getOBBs(),
-                        poseStack, buffer, 1, 0, 1, 1);
+                OBBRenderer.render(vehicle.position(), decorationUnit.getOBBs(), poseStack, buffer, 1, 0, 1, 1);
             } else {
-                OBBRenderer.render(vehicle.position(), partUnit.getOBBs(),
-                        poseStack, buffer, 1, 1, 0, 1);
+                OBBRenderer.render(vehicle.position(), partUnit.getOBBs(), poseStack, buffer, 1, 1, 0, 1);
             }
         }
     }
 
-    /** Collision hull pieces, main cube deduped in, + hit geometry. */
-    private static void renderMeshVehicleHitbox(AbstractVehicle vehicle, PoseStack poseStack, VertexConsumer buffer) {
-        List<VehicleCubeOBB> cubes = new ArrayList<>(vehicle.getVehicleCubeOBBs());
-        for (PartUnit<?> partUnit : vehicle.getPartUnits()) {
-            if (!partUnit.isDetached()) {
-                cubes.addAll(partUnit.getPartCubeOBBs());
+    /** Hull pieces white (see-through when not colliding); hull-less pieces of a meshed vehicle yellow boxes. */
+    @SubscribeEvent
+    public static void onRenderLevel(RenderLevelStageEvent event) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL || PENDING.isEmpty()) {
+            return;
+        }
+        MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
+        VertexConsumer buffer = bufferSource.getBuffer(DebugRenderTypes.LINES_NO_DEPTH);
+        // AFTER_LEVEL: NeoForge passes no stack and the view rotation is already popped => apply it here.
+        PoseStack poseStack = new PoseStack();
+        poseStack.mulPose(event.getModelViewMatrix());
+        Vec3 camera = event.getCamera().getPosition();
+        float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(true);
+        for (Map.Entry<AbstractVehicle, List<VehicleCubeOBB>> pending : PENDING.entrySet()) {
+            AbstractVehicle vehicle = pending.getKey();
+            Vec3 at = vehicle.getPosition(partialTick).subtract(camera);
+            poseStack.pushPose();
+            poseStack.translate(at.x, at.y, at.z);
+            for (VehicleCubeOBB cube : pending.getValue()) {
+                if (cube.hasHull()) {
+                    HullRenderer.render(vehicle.position(), cube, vehicle.collisionBody().solvesAgainst(cube), poseStack, buffer);
+                } else {
+                    OBBRenderer.render(vehicle.position(), List.of(cube.obb()), poseStack, buffer, 1, 1, 0, 1);
+                }
             }
+            poseStack.popPose();
         }
-        if (!cubes.contains(vehicle.getMainCubeOBB())) {
-            cubes.add(vehicle.getMainCubeOBB());
-        }
-        for (VehicleCubeOBB cube : cubes) {
-            if (cube.hasHull()) {
-                HullRenderer.render(vehicle.position(), cube, vehicle.collisionBody().solvesAgainst(cube), poseStack, buffer);
-            } else {
-                OBBRenderer.render(vehicle.position(), List.of(cube.obb()), poseStack, buffer, 1, 1, 0, 1);
-            }
-        }
-        HullRenderer.renderHits(vehicle, poseStack, buffer);
+        PENDING.clear();
+        bufferSource.endBatch(DebugRenderTypes.LINES_NO_DEPTH);
     }
 
-    /** Hides the bones of parts that have fallen off. */
+    /** Hides the bones of parts that have fallen off, and of rotors whose pool is spent ({@link RotorStrike}). */
     public static void applyDetachedPart(AbstractVehicle vehicle, VehicleModelInstance modelInstance) {
         for (PartUnit<?> partUnit : vehicle.getPartUnits()) {
             String renderBoneName = partUnit.getRenderBoneName();
             if (renderBoneName != null && modelInstance.boneIndex(renderBoneName) >= 0) {
                 modelInstance.setBoneVisible(renderBoneName, !partUnit.isDetached());
+            }
+        }
+        VehicleHits hits = vehicle.hits();
+        if (hits == null) {
+            return;
+        }
+        HullComponents pools = vehicle.hullComponents();
+        List<HitModel.Node> nodes = hits.model().nodes();
+        for (int i = 0; i < nodes.size(); i++) {
+            HitModel.Node node = nodes.get(i);
+            if (node.mesh().disc() != null && RotorStrike.rotor(node.kind())) {
+                int pool = pools.indexOf(node.systemId());
+                modelInstance.setBoneVisible(node.mesh().name(), pool < 0 || pools.health(pool) > 0);
             }
         }
     }

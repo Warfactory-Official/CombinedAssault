@@ -566,6 +566,12 @@ public class FixedWingVehicle extends AbstractVehicle
         }
     }
 
+    /** Engine on => rotor/prop thrust and attitude control are live input. */
+    @Override
+    protected boolean controlsNeutral() {
+        return super.controlsNeutral() && !isEngineOn();
+    }
+
     /** Thrust vectoring: nozzle aim is part state turning over ticks, not in the snapshot. */
     @Override
     protected boolean predictable() {
@@ -638,6 +644,22 @@ public class FixedWingVehicle extends AbstractVehicle
     public boolean rollsOnGear() {
         return !isLandingGearUp();
     }
+
+    /** Consecutive solved steps on the ground. */
+    private int groundRun;
+
+    /**
+     * Rolling on gear for {@code GROUND_RUN_SETTLED}+ steps => contacts are pitch/rotation scrape, not a crash:
+     * 0.5*mass*dv^2*impact_multiplier one-shots a laden hull at dv > 5 m/s. Landing (airborne => grounded) still hurts.
+     * TODO: ground wall hits are also exempt; needs contact normal.
+     */
+    @Override
+    protected boolean impactsHurt() {
+        groundRun = onGround() ? groundRun + 1 : 0;
+        return !(rollsOnGear() && groundRun > GROUND_RUN_SETTLED);
+    }
+
+    private static final int GROUND_RUN_SETTLED = 10;
 
     public boolean isAirbrakeOn() {
         return airbrakeUnit != null && airbrakeUnit.isOn();

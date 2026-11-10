@@ -91,8 +91,11 @@ public final class HudSignals {
                 .getString().toUpperCase(java.util.Locale.ROOT));
         Signals.text(VEHICLE, "radio_key", 16, v -> HudCache.keyName(com.wf.combinedassault.uav.fpv.client.FpvKeys.RADIO_STATION));
         Signals.text(VEHICLE, "fuel_label", 24, HudCache::fuelLabel);
-        Signals.bool(VEHICLE, "overloaded", v -> v.overload() > 1);
+        Signals.bool(VEHICLE, "cargo_door", v -> v.cargoDoor() != null);
         Signals.num(VEHICLE, "payload_pct", v -> v.overload() * 100);
+        Signals.bool(VEHICLE, "payload_shown", v -> v.maxPayload > 0 && v.cargoMass() > 0);
+        Signals.num(VEHICLE, "payload_t", v -> v.cargoMass() / 1000.0);
+        Signals.num(VEHICLE, "payload_max_t", v -> v.maxPayload / 1000.0);
         Signals.num(VEHICLE, "fuel_seconds", v -> v.burnPerTick() <= 0 ? Double.NaN : v.getEnergy() / v.burnPerTick() / 20);
         Signals.num(VEHICLE, "pitch", v -> v.getViewXRot(partialTick()));
         Signals.num(VEHICLE, "roll", v -> v.getViewZRot(partialTick()));

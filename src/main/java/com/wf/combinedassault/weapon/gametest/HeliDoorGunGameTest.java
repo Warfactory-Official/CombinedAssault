@@ -155,6 +155,51 @@ public class HeliDoorGunGameTest {
         return c == null ? "none" : c.getContents() instanceof TranslatableContents t ? t.getKey() : c.getString();
     }
 
+    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    public static void aChinookRampColliderSwingsWithTheDoors(GameTestHelper helper) {
+        AbstractVehicle heli = spawn(helper, "ch47");
+        if (heli == null) {
+            return;
+        }
+        SwitchableUnit<?> doors = (SwitchableUnit<?>) heli.getPartUnit("cargo_doors").orElseThrow();
+        var ramp = heli.getPartUnit("ramp").orElseThrow();
+        doors.setOn(false);
+        for (int i = 0; i < 80; i++) {
+            ramp.tick();
+            ((com.wf.combinedassault.vehicle.part.LinkedHingeUnit) ramp).updateRot();
+            heli.updateOBBs();
+        }
+        Vec3 closed = rampCollider(heli, ramp);
+        doors.setOn(true);
+        for (int i = 0; i < 80; i++) {
+            ramp.tick();
+            ((com.wf.combinedassault.vehicle.part.LinkedHingeUnit) ramp).updateRot();
+            heli.updateOBBs();
+        }
+        Vec3 open = rampCollider(heli, ramp);
+        String report = "[ramp collider] closed " + closed + " open " + open + " xRot "
+                + ((com.wf.combinedassault.vehicle.part.LinkedHingeUnit) ramp).getXRot() + " tick " + heli.tickCount;
+        CombinedAssault.LOGGER.info(report);
+        heli.discard();
+        if (closed == null || open == null || closed.distanceTo(open) < 0.3) {
+            helper.fail(report);
+        }
+        helper.succeed();
+    }
+
+    @Nullable
+    private static Vec3 rampCollider(AbstractVehicle heli, com.wf.combinedassault.vehicle.part.PartUnit<?> ramp) {
+        Vec3 sum = Vec3.ZERO;
+        int n = 0;
+        for (var obb : ramp.getPartCubeOBBs()) {
+            if (obb.position != null) {
+                sum = sum.add(obb.position.subtract(heli.position()));
+                n++;
+            }
+        }
+        return n == 0 ? null : sum.scale(1.0 / n);
+    }
+
     @Nullable
     private static AbstractVehicle spawn(GameTestHelper helper, String id) {
         ResourceLocation rl = CombinedAssault.modLocation(id);

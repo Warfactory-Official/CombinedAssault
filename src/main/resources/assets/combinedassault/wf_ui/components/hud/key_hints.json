@@ -133,6 +133,12 @@
           },
           {
             "type": "key_hint",
+            "if": "!local.scope && vehicle.cargo_door",
+            "label": "{tr:hud.combinedassault.hint.cargo_door}",
+            "key": "key.combinedassault.toggle_cargo_door.desc"
+          },
+          {
+            "type": "key_hint",
             "if": "local.driver && fixed_wing.present",
             "label": "{tr:hud.combinedassault.hint.airbrake}",
             "key": "key.combinedassault.toggle_airbrake.desc"

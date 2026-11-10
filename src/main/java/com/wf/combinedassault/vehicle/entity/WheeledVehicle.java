@@ -98,6 +98,11 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
         }
     }
 
+    @Override
+    protected boolean controlsNeutral() {
+        return super.controlsNeutral() && getTurnAngle() == 0;
+    }
+
     private void tickInput() {
         turnAngleO = turnAngle;
         if (level().isClientSide()) {

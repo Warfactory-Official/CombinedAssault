@@ -40,12 +40,16 @@ final class VehiclePaints extends JsonDataManager<VehiclePaints.Pojo> {
         return id == null ? Paint.NONE : INSTANCE.paints.getOrDefault(id, Paint.NONE);
     }
 
-    /** The vehicle's display paint; NONE when the model has no mask. */
     static Paint forVehicle(AbstractVehicle vehicle, GemRenderGltfModel gltf) {
+        return forDisplay(vehicle.getDisplayId(), gltf);
+    }
+
+    /** The display's paint; NONE when the model has no mask. */
+    static Paint forDisplay(ResourceLocation displayId, GemRenderGltfModel gltf) {
         if (!gltf.paintable()) {
             return Paint.NONE;
         }
-        return ClientAssetsManager.INSTANCE.getVehicleDisplay(vehicle.getDisplayId())
+        return ClientAssetsManager.INSTANCE.getVehicleDisplay(displayId)
                 .map(display -> get(display.getPaint()))
                 .orElse(Paint.NONE);
     }

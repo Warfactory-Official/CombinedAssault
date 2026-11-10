@@ -188,7 +188,7 @@ public class ClientVehicleAction implements CustomPacketPayload {
         if (message.togglePartUnitState) {
             if (message.partUnitIndex < vehicle.getPartUnits().size()
                     && vehicle.getPartUnits().get(message.partUnitIndex) instanceof SwitchableUnit<?> switchableUnit
-                    && vehicle.mayClose(switchableUnit, player)) {
+                    && vehicle.mayClose(switchableUnit, player) && vehicle.mayOpen(switchableUnit, player)) {
                 switchableUnit.setOn(!switchableUnit.isOn());
             }
         } else if ((message.toggleEngine || message.toggleLandingGear || message.toggleAirbrake || message.flapStep != 0 || message.toggleHoverMode

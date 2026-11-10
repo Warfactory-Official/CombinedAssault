@@ -420,24 +420,41 @@ public class SuspensionUnit<T extends SuspensionUnitData> extends PartUnit<T> {
 
     @Override
     public void tick() {
-        if (!vehicle.level().isClientSide()) {
+        boolean server = !vehicle.level().isClientSide();
+        if (server) {
             if (data.stowWhenTowed()) {
-                deploy = Mth.approach(deploy, vehicle.towLink() == null ? 1 : 0, DEPLOY_RATE);
+                float target = vehicle.towLink() == null ? 1 : 0;
+                deploy = Mth.approach(deploy, target, DEPLOY_RATE);
+                if (deploy != target) {
+                    vehicle.holdAwake();
+                }
             }
             if (isDestroyed() && !isDetached() && !vehicle.isDestroyed() && isDetachable()) {
                 VehiclePartSpawner.popOff(this);
             }
         }
-        if (vehicle.level().isClientSide() && !vehicle.predicted()) {
+        if (!server && !vehicle.predicted()) {
             // Client: rebuild wheel geometry off interpolated hull; grounded flag stays server-synced.
             compression = getVisualCompression(1, Mth.lerp(0.5f, compression, remoteCompression));
-        } else {
+            updateTransform();
+        } else if (!(server && sampleCurrent())) {
             // Server: resample mount axis after this tick's angular integration.
             captureFrame();
             simulate(vehicle.position(), vehicle.rotYXZ(), CellTops.live(vehicle.level()));
+            sampledDeploy = deploy;
+            sampledActive = frameActive;
+            updateTransform();
         }
-        updateTransform();
         super.tick();
+    }
+
+    private float sampledDeploy = Float.NaN;
+    private boolean sampledActive;
+
+    /** Output is a function of the vehicle pose, {@code deploy} and activity alone; a parent group moves the mount. */
+    private boolean sampleCurrent() {
+        return vehicle.poseSettled() && deploy == sampledDeploy && isActive() == sampledActive
+                && (structureGroup == null || structureGroup.parent == null);
     }
 
     private float clampCompression(float value) {

@@ -2,6 +2,11 @@
   "use": ["combinedassault:hud"],
   "root": {"type": "anchor", "at": "bottom", "margin": 6, "dx": "-(ui.width % 2) / 2",
     "child": {"type": "column", "children": [
+      {"type": "when", "if": "vehicle.payload_shown",
+        "then": {"type": "text",
+          "text": "{tr:ui.vehicle_load(vehicle.payload_t|.1, vehicle.payload_max_t|.1, vehicle.payload_pct|.0)}",
+          "color": "vehicle.payload_pct > 100 ? $red : vehicle.payload_pct >= 70 ? $amber : $green",
+          "shadow": true, "scale": 0.75}},
       {"type": "text", "text": "{vehicle.name}", "color": "vehicle.name_color", "shadow": true},
       {"type": "sized", "w": 150, "h": 2},
       {"type": "bar", "w": 150, "h": 3, "value": "vehicle.hull", "back": "#a0101014",

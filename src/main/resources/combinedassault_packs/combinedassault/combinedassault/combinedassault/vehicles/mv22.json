@@ -122,6 +122,24 @@
             "type": "combinedassault:door",
             "is_seat": false
         },
+        {
+            "id": "ramp",
+            "name": "ramp",
+            "type": "combinedassault:linked_hinge",
+            "is_seat": false,
+            "link": "cargo_doors",
+            "open_x_rot": -45,
+            "rot_info": {"x_rot_speed": 1, "y_rot_speed": 0, "need_power": false}
+        },
+        {
+            "id": "ramp_door",
+            "name": "ramp_door",
+            "type": "combinedassault:linked_hinge",
+            "is_seat": false,
+            "link": "cargo_doors",
+            "open_x_rot": -45,
+            "rot_info": {"x_rot_speed": 1, "y_rot_speed": 0, "need_power": false}
+        },
         {"id": "troop_0", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true},
         {"id": "troop_1", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true},
         {"id": "troop_2", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true},

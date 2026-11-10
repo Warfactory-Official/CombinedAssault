@@ -109,7 +109,7 @@ public final class CargoHold {
 
     /** Cached: parts rebuild only with a new hold (same data apply). */
     @Nullable
-    private SwitchableUnit<?> door() {
+    public SwitchableUnit<?> door() {
         if (!doorResolved) {
             doorResolved = true;
             for (PartUnit<?> part : carrier.getPartUnits()) {

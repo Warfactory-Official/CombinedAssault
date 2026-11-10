@@ -13,6 +13,7 @@ import com.wf.gemrender.gltf.GemRenderGltfModel;
 import com.wf.gemrender.texture.Paint;
 import com.wf.gemrender.texture.VariantUv;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -43,6 +44,22 @@ public final class GemRenderPreview {
                 OverlayTexture.NO_OVERLAY, 0xFFFFFFFF, DirectPass.LEVEL, VariantUv.NONE,
                 paint, gltf.paintReference(), RestPalettes.of(gltf));
         drawMounts(vehicle, gltf, snapshot, pose, light, DirectPass.LEVEL, paint);
+        return true;
+    }
+
+    /** Mount-less piece of a {@code display} model (shed rotor): palette at {@code pose}; level pass. */
+    public static boolean drawPiece(ResourceLocation display, VehicleModelInstance instance, Matrix4f pose, int light) {
+        if (!(instance instanceof GemRenderModelInstance gem)) {
+            return false;
+        }
+        GemRenderGltfModel gltf = ((GemRenderVehicleModel) gem.model()).gltf();
+        GemRenderModelInstance.Snapshot snapshot = gem.snapshot();
+        if (gltf == null || snapshot == null) {
+            return false;
+        }
+        DirectRenderer.submit(gltf, snapshot.palette(), snapshot.morphBlock(), new Matrix4f(pose), light,
+                OverlayTexture.NO_OVERLAY, 0xFFFFFFFF, DirectPass.LEVEL, VariantUv.NONE,
+                VehiclePaints.forDisplay(display, gltf), gltf.paintReference(), RestPalettes.of(gltf));
         return true;
     }
 

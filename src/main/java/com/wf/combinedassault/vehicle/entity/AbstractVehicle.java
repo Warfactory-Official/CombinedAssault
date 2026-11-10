@@ -1005,6 +1005,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         SuspensionUnit.calibrateRestLengths(this);
         updateOBBs();
         this.dataInitialized = true;
+        poseStill = 0;
     }
 
     @NotNull
@@ -1171,11 +1172,44 @@ public abstract class AbstractVehicle extends ContainerCraft
             }
         }
         if (!stepped) {
-            finishTick(trace);
+            finishTick(trace, false);
         }
     }
 
-    private void finishTick(@Nullable PhysicsTrace trace) {
+    private double stillX, stillY, stillZ;
+    private float stillXRot, stillYRot, stillZRot;
+    private int poseStill;
+
+    /**
+     * Consecutive unsolved server ticks at an identical pose, capped at 2. A solved tick resets it:
+     * the heartbeat re-samples terrain under a parked hull.
+     */
+    private void trackPose(boolean solved) {
+        if (level().isClientSide()) {
+            return;
+        }
+        if (!solved && getX() == stillX && getY() == stillY && getZ() == stillZ
+                && xRot == stillXRot && yRot == stillYRot && zRot == stillZRot) {
+            if (poseStill < 2) {
+                poseStill++;
+            }
+            return;
+        }
+        poseStill = 0;
+        stillX = getX();
+        stillY = getY();
+        stillZ = getZ();
+        stillXRot = xRot;
+        stillYRot = yRot;
+        stillZRot = zRot;
+    }
+
+    /** Server: pose unchanged for two unsolved ticks; a suspension sample of it is current. */
+    public boolean poseSettled() {
+        return poseStill >= 2;
+    }
+
+    private void finishTick(@Nullable PhysicsTrace trace, boolean solved) {
         long rightAt = TrialProfile.start();
         if (!level().isClientSide() && DroneNetBlock.catchable(this) && DroneNetBlock.caught(level(), this)) {
             if (DroneNetBlock.caught(level(), getBoundingBox().move(xo - getX(), yo - getY(), zo - getZ()))) {
@@ -1193,6 +1227,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             TrialProfile.stop(TrialProfile.Stage.HARNESS, carryAt);
             rightAt = TrialProfile.start();
         }
+        trackPose(solved);
         afterVehicleRot();
         tickParts();
         if (clipTracks != null) {
@@ -1280,7 +1315,7 @@ public abstract class AbstractVehicle extends ContainerCraft
 
 
 
-    /** Ticks of stillness before a grounded or floating, empty vehicle drops to the reduced solve rate. */
+    /** Ticks of stillness before a grounded or floating vehicle drops to the reduced solve rate. */
     private static final int REST_TICKS_TO_SLEEP = 20;
 
     /**
@@ -1304,7 +1339,19 @@ public abstract class AbstractVehicle extends ContainerCraft
             physicsRestTicks++;
             return false;
         }
-        return tickCount % REST_SOLVE_INTERVAL != 0;
+        return level().isClientSide() || tickCount % REST_SOLVE_INTERVAL != 0;
+    }
+
+    /** Restarts the stillness count: a state change the velocity thresholds do not see. */
+    public void holdAwake() {
+        physicsRestTicks = 0;
+    }
+
+    /** Keys and sticks the drive code reads; subclasses add persistent command state. */
+    protected boolean controlsNeutral() {
+        ControlUnit input = controlUnit;
+        return !(input.forward || input.backward || input.left || input.right || input.up || input.down
+                || input.leftYaw || input.rightYaw);
     }
 
     /** Afloat counts: no waves => damped heave settles under REST_LINEAR. */
@@ -1316,9 +1363,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         if (mainCubeOBB == null || !restSupported() || isDestroyed() || this.isRemoved()) {
             return false;
         }
-        // Anything aboard can steer, and anything unsupported is still falling.
-        if (!getPassengers().isEmpty() || isEngineOn() || carrierLink.active()
-                || TowLinks.awake(this)) {
+        if (carrierLink.active() || TowLinks.awake(this) || !controlsNeutral()) {
             return false;
         }
         Vec3 movement = getDeltaMovement();
@@ -1695,8 +1740,9 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     @Override
     @Nullable
-    public HarnessCarrier mountedOn() {
-        return VehicleHarness.carrierOf(this);
+    public DeckCarrier carriedBy() {
+        HarnessCarrier harness = VehicleHarness.carrierOf(this);
+        return harness != null ? harness : carrierLink.carrier();
     }
 
     @Override
@@ -1713,6 +1759,12 @@ public abstract class AbstractVehicle extends ContainerCraft
         if (rebuilt || detachChanged || groupsChanged || hits != null && !hits.boundsCurrent()) {
             localVersion++;
         }
+        if (detachChanged) {
+            physicsRestTicks = 0;
+        }
+        if (posedSettled && posedAt()) {
+            return;
+        }
 
         Quaternionf vehicleRotation = rotYXZShared();
         int structureCubes = allCubeOBBs.size();
@@ -1724,6 +1776,7 @@ public abstract class AbstractVehicle extends ContainerCraft
                 cubeOBB.update(this, vehicleRotation, groupOffset[group], groupRotation[group]);
             }
             publishOBBs(deck, vehicleRotation, deckBoxCount, deckLandingCount);
+            notePosed();
             return;
         }
         deckSlotVersion[deckSnapshotSlot] = localVersion;
@@ -1806,6 +1859,32 @@ public abstract class AbstractVehicle extends ContainerCraft
         deckBoxCount = boxCount;
         deckLandingCount = landingCount;
         publishOBBs(deck, vehicleRotation, boxCount, landingCount);
+        notePosed();
+    }
+
+    /**
+     * Pose + {@link #localVersion} the cubes and deck were last posed at. Skip needs two consecutive
+     * reposes at it: {@code positionO} must have caught up with {@code position}.
+     */
+    private double posedX, posedY, posedZ;
+    private float posedXRot, posedYRot, posedZRot;
+    private int posedVersion = -1;
+    private boolean posedSettled;
+
+    private boolean posedAt() {
+        return localVersion == posedVersion && getX() == posedX && getY() == posedY && getZ() == posedZ
+                && xRot == posedXRot && yRot == posedYRot && zRot == posedZRot;
+    }
+
+    private void notePosed() {
+        posedSettled = posedAt();
+        posedX = getX();
+        posedY = getY();
+        posedZ = getZ();
+        posedXRot = xRot;
+        posedYRot = yRot;
+        posedZRot = zRot;
+        posedVersion = localVersion;
     }
 
     private void publishOBBs(DeckSnapshot deck, Quaternionf vehicleRotation, int boxCount, int landingCount) {
@@ -1845,6 +1924,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             updateOBBs();
             return;
         }
+        posedSettled = false;
         float fx = (float) dx;
         float fy = (float) dy;
         float fz = (float) dz;
@@ -1939,7 +2019,8 @@ public abstract class AbstractVehicle extends ContainerCraft
             Vector3f offset = groupOffset[i];
             Quaternionf rotation = groupRotation[i];
             float ox = offset.x, oy = offset.y, oz = offset.z, rx = rotation.x, ry = rotation.y, rz = rotation.z, rw = rotation.w;
-            offset.set((float) group.pivot.x, (float) group.pivot.y, (float) group.pivot.z);
+            offset.set((float) (group.pivot.x + group.offset.x), (float) (group.pivot.y + group.offset.y),
+                    (float) (group.pivot.z + group.offset.z));
             int parent = groupParent[i];
             if (parent < 0) {
                 rotation.set(group.rotation);
@@ -2252,6 +2333,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             }
             targetSeat.partUnit.setOwner(livingEntity);
             targetSeat.passengerId = livingEntity.getId();
+            closeFor(targetSeat);
             if (CrewRules.drives(this, targetSeat)) {
                 partUnits.forEach(partUnit -> {
                     // Entries stay as left: the rest of the crew boards through them.
@@ -2357,6 +2439,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         Seat toSeat = seats.get(toSeatIndex);
         toSeat.partUnit.setOwner(pPassenger);
         toSeat.passengerId = pPassenger.getId();
+        closeFor(toSeat);
         if (ownSeat.isPresent() && toSeat.partUnit.turnOut() == ownSeat.get().partUnit) {
             SwitchableUnit<?> hatch = ownSeat.get().partUnit.hatch();
             if (seats.stream().noneMatch(seat -> seat.passengerId != -1 && seat.partUnit.hatch() == hatch)) {
@@ -2739,6 +2822,11 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     public List<VehicleCubeOBB> getVehicleCubeOBBs() {
         return vehicleCubeOBBs;
+    }
+
+    /** Called once per solved step; false => this step's contact impact does no damage. */
+    protected boolean impactsHurt() {
+        return true;
     }
 
     /** m/s of contact velocity change below which an impact does no damage. */
@@ -3880,6 +3968,54 @@ public abstract class AbstractVehicle extends ContainerCraft
         return refusal == null;
     }
 
+    /** Off door with a {@code closed_with} seat taken => reason; else null. */
+    @Nullable
+    public Component openRefusal(SwitchableUnit<?> part) {
+        if (part.isOn() || !(part instanceof DoorUnit door) || door.closedWith().isEmpty()) {
+            return null;
+        }
+        for (Seat seat : seats) {
+            if (seat.passengerId != -1 && door.closedWith().contains(seat.partUnit)) {
+                String id = seat.partUnit.getId();
+                return Component.translatable("door.combinedassault.seat_taken",
+                        Component.translatableWithFallback("part.combinedassault." + id, id));
+            }
+        }
+        return null;
+    }
+
+    /** {@link #openRefusal} null; else reason shown to {@code player}. */
+    public boolean mayOpen(SwitchableUnit<?> part, @Nullable Player player) {
+        Component refusal = openRefusal(part);
+        if (refusal != null && player != null) {
+            player.displayClientMessage(refusal.copy().withStyle(ChatFormatting.RED), true);
+        }
+        return refusal == null;
+    }
+
+    private void closeFor(Seat seat) {
+        for (PartUnit<?> part : partUnits) {
+            if (part instanceof DoorUnit door && door.isOn() && door.closedWith().contains(seat.partUnit) && mayClose(door, null)) {
+                door.setOn(false);
+            }
+        }
+    }
+
+    /** Hold door, else part {@code cargo_doors} / {@code ramp}; null => none. */
+    @Nullable
+    public SwitchableUnit<?> cargoDoor() {
+        if (cargoHold != null && cargoHold.door() != null) {
+            return cargoHold.door();
+        }
+        for (PartUnit<?> part : getPartUnits()) {
+            if (part instanceof SwitchableUnit<?> door
+                    && ("cargo_doors".equals(part.getData().getId()) || "ramp".equals(part.getData().getId()))) {
+                return door;
+            }
+        }
+        return null;
+    }
+
     public CompoundTag cargoView() {
         return entityData.get(CARGO_VIEW);
     }
@@ -4559,6 +4695,9 @@ public abstract class AbstractVehicle extends ContainerCraft
     @Override
     public void predictStep() {
         tickPower();
+        if (skipRestingSolve()) {
+            return;
+        }
         prepareStep();
         StepResult step = PhysicsStep.predict(this);
         PhysicsRig rig = physicsRig;
@@ -4587,7 +4726,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             this.setDeltaMovement(rig.getDeltaMovement());
             this.setOnGround(rig.onGround());
             // Wreck pool = weapons only: its own crash would discard it on touchdown.
-            if (rig.impactVelocityDiff > 0 && !isDestroyed()) {
+            if (impactsHurt() && rig.impactVelocityDiff > 0 && !isDestroyed()) {
                 DamageSystem.impactHurt(rig.impactVelocityDiff, rig.impactPos, this);
             }
             for (int i = 0, size = step.touched.size(); i < size; i++) {
@@ -4603,7 +4742,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         }
         this.pushEntities();
         postMoveEvent();
-        finishTick(physicsTrace);
+        finishTick(physicsTrace, true);
     }
 
     /** The substep sweep. Worker-safe; reads prepared snapshots and records each slice. */

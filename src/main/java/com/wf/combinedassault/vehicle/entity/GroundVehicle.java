@@ -116,6 +116,12 @@ public abstract class GroundVehicle extends AbstractVehicle {
         setPedals((throttle ? THROTTLE : 0) | (brake ? BRAKE : 0) | (handbrake ? HANDBRAKE : 0));
     }
 
+    @Override
+    protected boolean controlsNeutral() {
+        return super.controlsNeutral() && (transmission == null || controlUnit.gearRequest == ControlUnit.NO_GEAR
+                || controlUnit.gearRequest == getGear());
+    }
+
     protected void setPedals(int pedals) {
         entityData.set(PEDALS, (byte) pedals);
     }

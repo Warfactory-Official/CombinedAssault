@@ -5,7 +5,9 @@ import com.wf.combinedassault.cargo.CargoContent;
 import com.wf.combinedassault.pack.client.ClientAssetsManager;
 import com.wf.combinedassault.radar.RadarContent;
 import com.wf.combinedassault.radar.client.RadarMarkerRenderer;
+import com.wf.combinedassault.render.entity.vehicle.RotorDebrisRender;
 import com.wf.combinedassault.render.entity.vehicle.VehiclePartRender;
+import com.wf.combinedassault.aircraft.AircraftContent;
 import com.wf.combinedassault.render.entity.vehicle.VehicleRender;
 import com.wf.combinedassault.render.fx.HitFx;
 import com.wf.combinedassault.render.fx.JetExhaustFx;
@@ -59,6 +61,9 @@ final class RenderClient {
         event.enqueueWork(GemRenderSetup::init);
         event.enqueueWork(() -> VehicleContent.vehicleTypes().forEach(type -> EntityRenderers.register(type, VehicleRender::new)));
         event.enqueueWork(() -> EntityRenderers.register(VehicleContent.VEHICLE_PART.get(), VehiclePartRender::new));
+        if (WFSystems.enabled(CombinedAssault.MOD_ID + ":aircraft")) {
+            event.enqueueWork(() -> EntityRenderers.register(AircraftContent.ROTOR_DEBRIS.get(), RotorDebrisRender::new));
+        }
         if (WFSystems.enabled(CombinedAssault.MOD_ID + ":radar")) {
             event.enqueueWork(() -> EntityRenderers.register(RadarContent.RADAR_MARKER.get(), RadarMarkerRenderer::new));
         }

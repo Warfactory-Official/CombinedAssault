@@ -289,6 +289,17 @@ public class ShipVehicle extends AbstractVehicle
         return Vec3.ZERO;
     }
 
+    /** Throttle and rudder persist after the keys lift; a held order is live input. */
+    @Override
+    protected boolean controlsNeutral() {
+        return super.controlsNeutral() && model.throttle == 0 && model.rudder == 0
+                && Math.abs(model.yawRate) < YAW_REST
+                && (!params.submarine || Math.abs(model.depth - model.depthSetting) < DEPTH_REST);
+    }
+
+    private static final double YAW_REST = 1.0e-5;
+    private static final double DEPTH_REST = 0.05;
+
     @Override
     protected boolean restSupported() {
         return super.restSupported() || environment.afloat;

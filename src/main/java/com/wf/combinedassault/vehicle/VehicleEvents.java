@@ -89,7 +89,8 @@ public final class VehicleEvents {
             } else {
                 if (!event.getLevel().isClientSide()) {
                     DoorUnit doorUnit = vehicle.getNearestDoorUnit(livingEntity);
-                    if (doorUnit != null && !doorUnit.isOn()) {
+                    if (doorUnit != null && !doorUnit.isOn() && doorUnit.getData().opensOnDismount()
+                            && vehicle.openRefusal(doorUnit) == null) {
                         doorUnit.setOn(true);
                     }
                 }

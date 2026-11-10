@@ -90,6 +90,11 @@ public class TrackedVehicle extends GroundVehicle
     }
 
     @Override
+    protected boolean controlsNeutral() {
+        return super.controlsNeutral() && getTurnSpeed() == 0;
+    }
+
+    @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(FORWARD_SPEED, 0f);

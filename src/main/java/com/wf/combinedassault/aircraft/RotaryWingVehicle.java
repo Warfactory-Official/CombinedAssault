@@ -96,6 +96,7 @@ public class RotaryWingVehicle extends AbstractVehicle
     @Nullable
     private RotorLayout rotorLayout;
     private boolean rotorLayoutBound;
+    private final RotorStrike rotorStrike = new RotorStrike();
     public boolean fastRoping;
     public String fastRopingDoorId;
     public HashMap<UUID, FastRopingContext> fastRopingContexts = new HashMap<>();
@@ -187,6 +188,7 @@ public class RotaryWingVehicle extends AbstractVehicle
                 tickFastRoping();
             }
             tickCargo();
+            rotorStrike.tick(this);
             if (multirotor != null) {
                 entityData.set(MULTIROTOR_FPV, multirotor.fpv());
             }
@@ -810,6 +812,12 @@ public class RotaryWingVehicle extends AbstractVehicle
             return speed >= fullSpeed ? 1 : 0;
         }
         return Mth.clamp((speed - startSpeed) / (fullSpeed - startSpeed), 0, 1);
+    }
+
+    /** Engine on => rotor/prop thrust and attitude control are live input. */
+    @Override
+    protected boolean controlsNeutral() {
+        return super.controlsNeutral() && !isEngineOn();
     }
 
     /** FPV/multirotor: attitude owned outside the snapshot. */

@@ -150,6 +150,11 @@ public class VesselVehicle extends AbstractVehicle implements IAnimationEntity<V
     }
 
     @Override
+    protected boolean controlsNeutral() {
+        return super.controlsNeutral() && getTurnAngle() == 0;
+    }
+
+    @Override
     protected boolean predictable() {
         return true;
     }
