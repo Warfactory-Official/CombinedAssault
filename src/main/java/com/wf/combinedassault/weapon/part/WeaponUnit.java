@@ -22,6 +22,7 @@ import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.event.VehicleFireEvent;
 import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
 import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import com.wf.combinedassault.vehicle.part.RotatableUnit;
 import com.wf.combinedassault.vehicle.pojo.WarnType;
 import com.wf.combinedassault.vehicle.util.VectorUtil;
@@ -30,6 +31,7 @@ import com.wf.combinedassault.weapon.CcipUtil;
 import com.wf.combinedassault.weapon.VehicleMissile;
 import com.wf.combinedassault.weapon.VehicleWeaponAgent;
 import com.wf.combinedassault.weapon.barrel.GunBarrel;
+import com.wf.combinedassault.weapon.kit.HardwareKit;
 import com.wf.combinedassault.weapon.kit.HardwareKits;
 import com.wf.combinedassault.weapon.message.ServerVehicleFire;
 import com.wf.combinedassault.weapon.ordnance.Munitions;
@@ -58,6 +60,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
@@ -138,6 +141,11 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     /** Index into the hardpoint's kits; -1 = none fitted. */
     private int kit = -1;
     private final Map<AbstractVehicleWeapon<?>, ResourceLocation> weaponKits = new HashMap<>();
+    /** Server: the carried stack the fitted kit came from; empty = a fresh one ({@code fitted} at spawn, creative). */
+    private ItemStack kitStack = ItemStack.EMPTY;
+    /** Hardpoint {@code door}; null = none. */
+    @Nullable
+    private SwitchableUnit<?> hardpointDoor;
     /** Client: operator's standing fire mission. */
     @Nullable
     private com.wf.combinedassault.indirect.FireMission fireMission;
@@ -238,6 +246,21 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         return kit;
     }
 
+    /** Fitted kit as carried: the stack it was fitted from, else a fresh one; empty without a kit. */
+    public ItemStack kitStack() {
+        HardwareKit fitted = HardwareKits.get(kit());
+        return fitted == null ? ItemStack.EMPTY : kitStack.isEmpty() ? fitted.stack() : kitStack.copy();
+    }
+
+    public void setKitStack(ItemStack stack) {
+        this.kitStack = stack;
+    }
+
+    @Nullable
+    public SwitchableUnit<?> hardpointDoor() {
+        return hardpointDoor;
+    }
+
     /** {@code weapon} is the part's own or the fitted kit's. */
     public boolean carries(AbstractVehicleWeapon<?> weapon) {
         ResourceLocation from = weaponKits.get(weapon);
@@ -257,6 +280,7 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     /** Server: {@code index} fitted (-1 = taken off); its first weapon selected. */
     public void fitKit(int index) {
         applyKit(index);
+        kitStack = ItemStack.EMPTY;
         ResourceLocation fitted = kit();
         for (int i = 0; fitted != null && i < weapons.size(); i++) {
             if (fitted.equals(weaponKits.get(weapons.get(i)))) {
@@ -310,6 +334,16 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     @Override
     public void combineAndInit(Map<String, PartUnit<?>> partUnitsView, AbstractVehicle vehicle) {
         super.combineAndInit(partUnitsView, vehicle);
+        String door = isHardpoint() ? hardpoint().door() : null;
+        if (door != null) {
+            if (!(partUnitsView.get(door) instanceof SwitchableUnit<?> switchable)) {
+                throw new IllegalArgumentException("part " + getId() + ": hardpoint door " + door + " is not a switchable part");
+            }
+            this.hardpointDoor = switchable;
+            if (kit >= 0) {
+                switchable.setOn(true);
+            }
+        }
         int index = 0;
         WeaponUnit parentWeaponUnit = this;
         for (var weaponInfo : data.getWeapons()) {
@@ -394,6 +428,13 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
                         weaponUnit.basePartUnit = this;
                     }
                 }
+            }
+        }
+        // Spawn-fitted kit: its first weapon, not index 0 (another kit's => nothing fires).
+        for (int i = 0; kit() != null && i < weapons.size(); i++) {
+            if (kit().equals(weaponKits.get(weapons.get(i)))) {
+                currentWeaponIndex = i;
+                break;
             }
         }
     }
@@ -1450,6 +1491,9 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         tag.putInt("CurrentWeaponIndex", currentWeaponIndex);
         if (isHardpoint()) {
             tag.putString("Kit", kit() == null ? "" : kit().toString());
+            if (!kitStack.isEmpty()) {
+                tag.put("KitItem", kitStack.save(provider));
+            }
         }
         CompoundTag weaponTag = new CompoundTag();
         this.indexedWeapons.forEach(weapon -> {
@@ -1477,6 +1521,8 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
           if (isHardpoint() && nbt.contains("Kit", Tag.TAG_STRING)) {
               String saved = nbt.getString("Kit");
               applyKit(saved.isEmpty() ? -1 : hardpoint().indexOf(ResourceLocation.tryParse(saved)));
+              kitStack = kit >= 0 && nbt.contains("KitItem") ? ItemStack.parseOptional(provider, nbt.getCompound("KitItem"))
+                      : ItemStack.EMPTY;
           }
           this.initWeapon(nbt.getInt("CurrentWeaponIndex"));
         CompoundTag weaponTag = nbt.getCompound("WeaponTag");

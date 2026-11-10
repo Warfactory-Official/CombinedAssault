@@ -3,7 +3,35 @@
     "script": "combinedassault:ah_6",
     "parameters": {},
     "graph": {
-        "type": "script",
-        "function": "updateBones"
+        "type": "merge",
+        "inputs": [
+            {
+                "type": "script",
+                "function": "updateBones"
+            },
+            {
+                "type": "bone_binding",
+                "special_bindings": [
+                    {
+                        "bones": [
+                            "stick",
+                            "stick_2"
+                        ],
+                        "source": "stick_pitch",
+                        "axis": "x",
+                        "multiplier": 9.0
+                    },
+                    {
+                        "bones": [
+                            "stick",
+                            "stick_2"
+                        ],
+                        "source": "stick_roll",
+                        "axis": "z",
+                        "multiplier": 8.0
+                    }
+                ]
+            }
+        ]
     }
 }

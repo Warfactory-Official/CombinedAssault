@@ -17,6 +17,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -32,6 +35,8 @@ public final class MfdView implements ScreenView {
     private static final long REFRESH_NANOS = 100_000_000L;
     /** Allied vehicles within this many blocks join the picture (data link). */
     private static final double LINK_RANGE = 8000;
+    private static final double SEA_LEVEL = 63;
+    private static final double KMH_PER_BLOCK_PER_TICK = 72.0;
 
     public enum Kind { HOSTILE, FRIEND, UNKNOWN, MISSILE }
 
@@ -70,6 +75,8 @@ public final class MfdView implements ScreenView {
     double farthest;
     /** Level clock {@code HH:MM}. */
     final StringBuilder time = new StringBuilder(5);
+    private final Vector3f forward = new Vector3f();
+    private final Vector3f up = new Vector3f();
 
     public MfdView(AbstractVehicle vehicle) {
         this.vehicle = vehicle;
@@ -100,6 +107,33 @@ public final class MfdView implements ScreenView {
     /** Height above the surface below (radar altimeter), blocks. */
     public double agl() {
         return vehicle.getY() - vehicle.level().getHeight(Heightmap.Types.MOTION_BLOCKING, Mth.floor(vehicle.getX()), Mth.floor(vehicle.getZ()));
+    }
+
+    /** ISA troposphere: 1 - h / 44330.8 m, h above sea level (y 63), clamped to [0, 11 km]. */
+    private double isaTheta() {
+        return 1 - Mth.clamp(vehicle.getY() - SEA_LEVEL, 0, 11000) * 2.25577e-5;
+    }
+
+    /** Indicated airspeed, km/h: true speed * sqrt(density ratio). */
+    public double ias() {
+        return vehicle.getDeltaMovement().length() * KMH_PER_BLOCK_PER_TICK * Math.sqrt(Math.pow(isaTheta(), 4.2559));
+    }
+
+    /** True speed / local speed of sound. */
+    public double mach() {
+        return vehicle.getDeltaMovement().length() * KMH_PER_BLOCK_PER_TICK / (1225.06 * Math.sqrt(isaTheta()));
+    }
+
+    /** Angle of attack, degrees: velocity below the nose in the body frame, 0 below 1 block/s. */
+    public double aoa() {
+        Vec3 v = vehicle.getDeltaMovement();
+        if (v.lengthSqr() < 0.0025) {
+            return 0;
+        }
+        Quaternionf q = vehicle.rotYXZShared();
+        q.transform(0, 0, 1, forward);
+        q.transform(0, 1, 0, up);
+        return Math.toDegrees(Math.atan2(-(v.x * up.x + v.y * up.y + v.z * up.z), v.x * forward.x + v.y * forward.y + v.z * forward.z));
     }
 
     @Override
@@ -253,5 +287,8 @@ public final class MfdView implements ScreenView {
         Signals.text(s, "time", 5, m -> m.time);
         Signals.num(s, "clock", MfdView::clock);
         Signals.num(s, "agl", MfdView::agl);
+        Signals.num(s, "ias", MfdView::ias);
+        Signals.num(s, "mach", MfdView::mach);
+        Signals.num(s, "aoa", MfdView::aoa);
     }
 }

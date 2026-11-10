@@ -8,6 +8,7 @@ import com.wf.combinedassault.radar.client.RadarMarkerRenderer;
 import com.wf.combinedassault.render.entity.vehicle.VehiclePartRender;
 import com.wf.combinedassault.render.entity.vehicle.VehicleRender;
 import com.wf.combinedassault.render.fx.HitFx;
+import com.wf.combinedassault.render.fx.JetExhaustFx;
 import com.wf.combinedassault.render.fx.WakeFx;
 import com.wf.combinedassault.render.gem.GemRenderSetup;
 import com.wf.combinedassault.render.handler.RenderLivingHandler;
@@ -53,6 +54,7 @@ final class RenderClient {
     private static void onClientSetup(FMLClientSetupEvent event) {
         HitFx.register();
         WakeFx.register();
+        JetExhaustFx.register();
         // Must precede renderer registration: reload racing ahead of this => built-in loader for the session.
         event.enqueueWork(GemRenderSetup::init);
         event.enqueueWork(() -> VehicleContent.vehicleTypes().forEach(type -> EntityRenderers.register(type, VehicleRender::new)));

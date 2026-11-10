@@ -3,6 +3,10 @@
     "attributes": {
         "thrust": 80000,
         "thrust_k": 1.0,
+        "exhausts": [
+            {"offset": [1.82, 2.94, -10.3], "radius": 0.45, "smoke": 0.3},
+            {"offset": [-1.82, 2.94, -10.3], "radius": 0.45, "smoke": 0.3}
+        ],
         "ceiling": 512,
         "x_rot_input_step": 0.2,
         "y_rot_input_step": 0.5,
@@ -187,7 +191,9 @@
     ],
     "screens": {
         "tv": {"layout": "combinedassault:mfd_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 4.0},
-        "rwr": {"pages": [{"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_flight", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_caution", "kind": "mfd", "max_fps": 30}]}
+        "rwr": {"pages": [{"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_flight", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_caution", "kind": "mfd", "max_fps": 30}]},
+        "flight": {"layout": "combinedassault:a10_flight", "kind": "mfd", "max_fps": 30},
+        "engine": {"layout": "combinedassault:a10_engine", "kind": "mfd", "max_fps": 30}
     },
     "model": "combinedassault:models/aircraft/a10/a10.glb",
     "display": {

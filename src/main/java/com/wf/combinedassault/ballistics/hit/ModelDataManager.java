@@ -1,5 +1,8 @@
 package com.wf.combinedassault.ballistics.hit;
 
+import com.wf.wflib.packs.api.PackHost;
+import com.wf.wflib.packs.api.PackHosts;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -264,16 +267,32 @@ public final class ModelDataManager {
     }
 
     static GltfReader.Model gltf(ResourceLocation modelId) throws IOException {
-        byte[] file = CombinedAssault.packs().asset(modelId).orElseThrow(() -> new IOException("model " + modelId + " in no pack"));
+        byte[] file = asset(modelId).orElseThrow(() -> new IOException("model " + modelId + " in no pack"));
         String dir = modelId.getPath().contains("/")
                 ? modelId.getPath().substring(0, modelId.getPath().lastIndexOf('/') + 1) : "";
         return GltfReader.read(file, (uri, location) -> {
             ResourceLocation buffer = uri != null
                     ? ResourceLocation.fromNamespaceAndPath(modelId.getNamespace(), dir + uri)
                     : ResourceLocation.parse(location);
-            return CombinedAssault.packs().asset(buffer).orElseThrow(() -> new IOException("buffer " + buffer + " of " + modelId
-                    + " missing"));
+            return asset(buffer).orElseThrow(() -> new IOException("buffer " + buffer + " of " + modelId + " missing"));
         });
+    }
+
+    /** Ours first, then any other mod's wflib packs (a kit model from MineAssault's). */
+    private static Optional<byte[]> asset(ResourceLocation id) throws IOException {
+        Optional<byte[]> own = CombinedAssault.packs().asset(id);
+        if (own.isPresent()) {
+            return own;
+        }
+        for (PackHost host : PackHosts.all()) {
+            if (host != CombinedAssault.packs()) {
+                Optional<byte[]> other = host.asset(id);
+                if (other.isPresent()) {
+                    return other;
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     /** {@code mount}'s roots re-parented under node {@code at}; its part-target sockets without an interface => {@code part}; its clips appended. */

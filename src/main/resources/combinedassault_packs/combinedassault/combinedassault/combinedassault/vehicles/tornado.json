@@ -3,6 +3,10 @@
     "attributes": {
         "thrust": 130000,
         "thrust_k": 1.5,
+        "exhausts": [
+            {"offset": [0.515, 1.98, -10.3], "radius": 0.37, "smoke": 0.4},
+            {"offset": [-0.515, 1.98, -10.3], "radius": 0.37, "smoke": 0.4}
+        ],
         "ceiling": 512,
         "x_rot_input_step": 0.2,
         "y_rot_input_step": 0.5,
@@ -204,6 +208,12 @@
             "sweep_end": 2.6
         }
     ],
+    "screens": {
+        "crpmd": {"pages": [{"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 4.4}]},
+        "rhwr": {"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30},
+        "gauges": {"layout": "combinedassault:tornado_gauges", "kind": "mfd", "max_fps": 30},
+        "engine": {"layout": "combinedassault:tornado_engine", "kind": "mfd", "max_fps": 30}
+    },
     "model": "combinedassault:models/aircraft/tornado/tornado.glb",
     "display": {
         "icon": "combinedassault:textures/slot/tornado.png",

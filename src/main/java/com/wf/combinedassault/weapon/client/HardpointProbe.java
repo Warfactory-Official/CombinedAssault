@@ -2,7 +2,6 @@ package com.wf.combinedassault.weapon.client;
 
 import com.wf.combinedassault.vehicle.part.client.PartNames;
 import com.wf.combinedassault.weapon.kit.Hardpoints;
-import com.wf.combinedassault.weapon.kit.HardwareItem;
 import com.wf.combinedassault.weapon.kit.HardwareKit;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.wflib.probe.api.ProbeAction;
@@ -30,7 +29,7 @@ public final class HardpointProbe {
         List<HardwareKit> kits = unit.hardpoint().kits();
         if (unit.kit() != null) {
             HardwareKit kit = kits.get(unit.kitIndex());
-            ItemStack item = HardwareItem.of(kit.id());
+            ItemStack item = kit.stack();
             info.entry(Component.translatable(KEY + "hardware"), item.getHoverName().copy().withStyle(ChatFormatting.GREEN));
             ProbeAction off = ProbeAction.of(Hardpoints.TAKE_OFF, Hardpoints.arg(unit, unit.kitIndex()),
                     Component.translatable(KEY + "action.take_off")).timed(kit.installTicks())
@@ -42,9 +41,9 @@ public final class HardpointProbe {
         info.entry(Component.translatable(KEY + "hardware"), Component.translatable(KEY + "unfitted")
                 .withStyle(ChatFormatting.YELLOW));
         for (int i = 0; i < kits.size(); i++) {
-            ItemStack item = HardwareItem.of(kits.get(i).id());
+            ItemStack item = kits.get(i).stack();
             ProbeAction mount = ProbeAction.of(Hardpoints.FIT, Hardpoints.arg(unit, i),
-                    Component.translatable(KEY + "action.mount", item.getHoverName())).timed(kits.get(i).installTicks())
+                    Component.translatable(KEY + "action.mount", kits.get(i).name())).timed(kits.get(i).installTicks())
                     .withIcon(new ProbeElement.Icon(item, 10, false));
             Component refusal = Hardpoints.fitRefusal(player, unit, i);
             info.action(refusal == null ? mount : mount.unavailable(refusal));

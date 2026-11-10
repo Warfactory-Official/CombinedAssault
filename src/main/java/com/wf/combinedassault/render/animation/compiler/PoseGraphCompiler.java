@@ -150,6 +150,7 @@ public class PoseGraphCompiler {
                     def.getSource(),
                     parseAxis(def.getAxis()),
                     def.getMultiplier(),
+                    def.getOffset(),
                     def.getMin(),
                     def.getMax(),
                     def.getParam()

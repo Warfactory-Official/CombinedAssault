@@ -3,6 +3,12 @@
     "attributes": {
         "thrust": 308000,
         "thrust_k": 1,
+        "exhausts": [
+            {"offset": [3.5, 3.05, -11.4], "radius": 0.35, "smoke": 0.15},
+            {"offset": [4.5, 3.05, -11.4], "radius": 0.35, "smoke": 0.15},
+            {"offset": [-3.5, 3.05, -11.4], "radius": 0.35, "smoke": 0.15},
+            {"offset": [-4.5, 3.05, -11.4], "radius": 0.35, "smoke": 0.15}
+        ],
         "ceiling": 512,
         "x_rot_input_step": 0.15,
         "y_rot_input_step": 0.2,
@@ -136,7 +142,9 @@
         "c_right": {"pages": [{"layout": "combinedassault:mfd_flight", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_caution", "kind": "mfd", "max_fps": 30}]},
         "c_lower": {"pages": [{"layout": "combinedassault:mfd_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30}]},
         "upper": {"layout": "combinedassault:ufd_caution", "kind": "mfd", "max_fps": 30},
-        "cdu": {"layout": "combinedassault:ufd_fuel", "kind": "mfd", "max_fps": 30}
+        "cdu": {"layout": "combinedassault:ufd_fuel", "kind": "mfd", "max_fps": 30},
+        "standby_p": {"layout": "combinedassault:b2a_standby_p", "kind": "mfd", "max_fps": 30},
+        "standby_c": {"layout": "combinedassault:b2a_standby_c", "kind": "mfd", "max_fps": 30}
     },
     "model": "combinedassault:models/aircraft/b2a/b2a.glb",
     "display": {

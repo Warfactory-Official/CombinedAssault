@@ -69,7 +69,7 @@ public final class VehicleTooltips {
                 out.add(line(Component.translatable(KEY + "hardpoint", String.join(", ", hardpoint.accepts().stream()
                         .sorted().toList()))));
                 for (HardwareKit kit : hardpoint.kits()) {
-                    MutableComponent name = Component.translatable(kit.nameKey());
+                    MutableComponent name = kit.name().copy();
                     out.add(line(kit.id().equals(hardpoint.fitted())
                             ? Component.translatable(KEY + "fitted", name).withStyle(ChatFormatting.GREEN) : name));
                 }

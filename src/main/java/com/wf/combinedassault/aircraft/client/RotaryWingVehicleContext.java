@@ -7,8 +7,24 @@ import net.minecraft.util.Mth;
 
 public class RotaryWingVehicleContext extends VehicleContext<RotaryWingVehicle> {
 
+    private final AircraftControls controls = new AircraftControls();
+
     public RotaryWingVehicleContext(RotaryWingVehicle vehicle) {
         super(vehicle);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        float yawRate = Mth.wrapDegrees(entity.getYRot() - entity.yRotO) / entity.yRotSpeedMax;
+        controls.update(-getPitchInput(), getRollInput(), yawRate, 0f, getCollectivePitch() / 100f,
+                (currentTimeMillis() - lastRenderTime()) / 1000f);
+    }
+
+    @Override
+    public float getBindingValue(String source, Float param) {
+        float control = controls.value(source);
+        return Float.isNaN(control) ? super.getBindingValue(source, param) : control;
     }
 
     public float getCollectivePitch() {

@@ -170,7 +170,9 @@ public final class VehicleNodes {
             ProbeAction toggle = ProbeAction.of(AccessActions.TOGGLE, door.getIndex(),
                     Component.translatable(KEY + (door.getId().equals(stowedBy) ? (door.isOn() ? "stow" : "deploy")
                             : door.isOn() ? "close" : "open")));
-            info.action(jammed ? toggle.unavailable(Component.translatable("door.combinedassault.jammed")) : toggle);
+            Component gun = Hardpoints.doorRefusal(vehicle, door);
+            info.action(jammed ? toggle.unavailable(Component.translatable("door.combinedassault.jammed"))
+                    : gun != null ? toggle.unavailable(gun) : toggle);
             if (vehicle.entries().contains(door) && vehicle.reaches(door, player)) {
                 for (AbstractVehicle.Seat seat : vehicle.seats) {
                     if (seat.passengerId == -1 && !seat.partUnit.isDetached() && vehicle.hatchOpen(seat) && vehicle.serves(door, seat)) {

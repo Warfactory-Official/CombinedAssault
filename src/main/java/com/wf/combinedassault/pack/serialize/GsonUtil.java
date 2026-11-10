@@ -3,8 +3,6 @@ package com.wf.combinedassault.pack.serialize;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
-import com.wf.combinedassault.aircraft.pojo.AfterburnerOffset;
-import com.wf.combinedassault.aircraft.pojo.AfterburnerOffsetSerializer;
 import com.wf.combinedassault.pack.part.PartUnitEntry;
 import com.wf.combinedassault.vehicle.recipe.VehiclePrintingIngredient;
 import com.wf.combinedassault.weapon.pojo.WeaponInfo;
@@ -20,7 +18,6 @@ public class GsonUtil {
     public static final Gson GSON = new GsonBuilder()
             .registerTypeAdapter(ResourceLocation.class, new ResourceLocation.Serializer())
             .registerTypeAdapter(Vec3.class, new Vec3Serializer())
-            .registerTypeAdapter(AfterburnerOffset.class, new AfterburnerOffsetSerializer())
             .registerTypeAdapter(Ingredient.class, new IngredientSerializer())
             .registerTypeAdapter(WeaponInfo.class, new WeaponInfoSerializer())
             .registerTypeAdapter(PartUnitEntry.class, new PartUnitEntrySerializer())

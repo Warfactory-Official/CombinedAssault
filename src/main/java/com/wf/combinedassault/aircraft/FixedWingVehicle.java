@@ -2,11 +2,11 @@ package com.wf.combinedassault.aircraft;
 
 import com.wf.combinedassault.aircraft.client.FixedWingVehicleContext;
 import com.wf.combinedassault.aircraft.client.FixedWingVehicleDisplay;
-import com.wf.combinedassault.aircraft.part.AfterburnerUnit;
 import com.wf.combinedassault.aircraft.part.AirbrakeUnit;
 import com.wf.combinedassault.aircraft.part.FlapUnit;
 import com.wf.combinedassault.aircraft.part.ThrustUnit;
 import com.wf.combinedassault.aircraft.part.data.FlapUnitData;
+import com.wf.combinedassault.aircraft.pojo.Exhaust;
 import com.wf.combinedassault.ballistics.component.VehicleRotors;
 import com.wf.combinedassault.dynamics.PhysicsHelper;
 import com.wf.combinedassault.dynamics.part.LandingGearUnit;
@@ -19,7 +19,6 @@ import com.wf.combinedassault.vehicle.audio.HullLoop;
 import com.wf.combinedassault.vehicle.audio.VehicleSounds;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
-import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.util.ParticleUtil;
 import com.wf.combinedassault.vehicle.util.VectorUtil;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
@@ -85,7 +84,7 @@ public class FixedWingVehicle extends AbstractVehicle
     public float vtolTurnRate = 0;
     public List<Vec3> vortexOffsets;
     public List<Vec3> aerobaticSmokeOffsets;
-    public List<AfterburnerUnit> afterburnerUnits;
+    public List<Exhaust> exhausts = List.of();
     public float throttleLevelO;
     public float throttleLevel;
     public float pitchInput;
@@ -222,8 +221,6 @@ public class FixedWingVehicle extends AbstractVehicle
         super.tick();
         if (level().isClientSide()) {
             tickInput();
-        } else {
-            tickAfterburner();
         }
     }
 
@@ -250,14 +247,6 @@ public class FixedWingVehicle extends AbstractVehicle
             pitchInput = getPitchInput();
             yawInput = getYawInput();
             rollInput = getRollInput();
-        }
-    }
-
-    private void tickAfterburner() {
-        for (PartUnit<?> partUnit : partUnits) {
-            if (partUnit instanceof AfterburnerUnit afterburner) {
-                afterburner.setOn(hasPower() && getThrottleLevel() > 100);
-            }
         }
     }
 

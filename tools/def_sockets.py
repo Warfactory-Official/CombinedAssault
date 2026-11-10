@@ -153,7 +153,8 @@ def move(model, jsons, log):
             ("attributes.vortex_offsets", lambda d: d.get("attributes", {}).get("vortex_offsets"), "vortex"),
             ("attributes.aerobatic_smoke_offsets", lambda d: d.get("attributes", {}).get("aerobatic_smoke_offsets"),
              "smoke"),
-            ("attributes.afterburner_offsets", lambda d: d.get("attributes", {}).get("afterburner_offsets"),
+            ("attributes.exhausts", lambda d: [e["offset"] + [e.get("radius", 0.5)]
+                                               for e in d.get("attributes", {}).get("exhausts", [])] or None,
              "afterburner")):
         values = agreed(jsons, getter)
         if values and not any(model.has(role, "", k) for k in range(len(values))):

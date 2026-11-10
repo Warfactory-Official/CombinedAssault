@@ -3,6 +3,8 @@ package com.wf.combinedassault.weapon.kit;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.ballistics.hit.VehicleHits;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.wflib.probe.api.ProbeActions;
 import com.wf.wflib.probe.api.ProbeInventory;
@@ -17,6 +19,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
 import java.util.function.Predicate;
 
 /** Kit fitted / taken off at a hardpoint probe node, timed {@code install_ticks}; arg = part index << 8 | kit index. */
@@ -97,13 +100,17 @@ public final class Hardpoints {
         if (unit.kit() != null) {
             return Component.translatable(KEY + "occupied");
         }
+        SwitchableUnit<?> door = unit.hardpointDoor();
+        if (door != null && !unit.getVehicle().opened(door)) {
+            return Component.translatable(KEY + "door_shut", partName(door));
+        }
         Component busy = handsOff(player, unit);
         if (busy != null) {
             return busy;
         }
-        ResourceLocation id = unit.hardpoint().kits().get(kit).id();
-        if (!player.getAbilities().instabuild && ProbeInventory.count(player, matcher(id)) < 1) {
-            return Component.translatable(KEY + "need", Component.translatable(unit.hardpoint().kits().get(kit).nameKey()));
+        HardwareKit wanted = unit.hardpoint().kits().get(kit);
+        if (!player.getAbilities().instabuild && ProbeInventory.count(player, wanted::matches) < 1) {
+            return Component.translatable(KEY + "need", wanted.name());
         }
         return null;
     }
@@ -134,22 +141,49 @@ public final class Hardpoints {
         return null;
     }
 
-    public static Predicate<ItemStack> matcher(ResourceLocation kit) {
-        return stack -> HardwareItem.kit(stack) != null && kit.equals(HardwareItem.kit(stack).id());
+    /** Both sides: lang key as {@code PartNames} resolves it, without the client-only I18n check. */
+    public static Component partName(PartUnit<?> part) {
+        String id = part.getId();
+        String spelled = id.replace('_', ' ');
+        return Component.translatableWithFallback("part.combinedassault." + id,
+                spelled.substring(0, 1).toUpperCase(Locale.ROOT) + spelled.substring(1));
     }
 
-    /** Server, refusal checked: item taken (survival), kit fitted, its first weapon selected. */
+    /** Null = {@code door} may close: no fitted hardpoint names it. */
+    @Nullable
+    public static Component doorRefusal(AbstractVehicle vehicle, SwitchableUnit<?> door) {
+        if (!door.isOn()) {
+            return null;
+        }
+        for (PartUnit<?> part : vehicle.getPartUnits()) {
+            if (part instanceof WeaponUnit unit && unit.hardpointDoor() == door && unit.kit() != null) {
+                return Component.translatable("door.combinedassault.gun_fitted", HardwareKits.get(unit.kit()).name());
+            }
+        }
+        return null;
+    }
+
+    public static Predicate<ItemStack> matcher(ResourceLocation kit) {
+        HardwareKit found = HardwareKits.get(kit);
+        return stack -> found != null && found.matches(stack);
+    }
+
+    /** Server, refusal checked: item taken (survival; kept on the part), kit fitted, its first weapon selected. */
     public static void fit(ServerPlayer player, WeaponUnit unit, int kit) {
+        HardwareKit fitted = unit.hardpoint().kits().get(kit);
+        ItemStack carried = fitted.stack();
         if (!player.getAbilities().instabuild) {
-            ProbeInventory.take(player, matcher(unit.hardpoint().kits().get(kit).id()), 1);
+            carried = ProbeInventory.find(player, fitted::matches).split(1);
+            player.getInventory().setChanged();
         }
         unit.fitKit(kit);
+        unit.setKitStack(carried);
         sound(player, unit);
     }
 
-    /** Server, refusal checked: kit item back to {@code player} (survival). */
+    /** Server, refusal checked: kit item (the stack fitted, else a fresh one) back to {@code player} (survival). */
     public static void takeOff(ServerPlayer player, WeaponUnit unit) {
-        ItemStack item = HardwareItem.of(unit.kit());
+        ItemStack item = unit.kitStack();
         unit.fitKit(-1);
         if (!player.getAbilities().instabuild && !player.getInventory().add(item)) {
             player.drop(item, false);

@@ -153,9 +153,13 @@
             "optical_sight_type": "operator",
             "zoom_max": 2,
             "crosshair_style": "cross",
-            "weapons": [
-                "combinedassault:gun_7.62mm"
-            ]
+            "hardpoint": {
+                "node": "door_gun_up",
+                "accepts": ["door"],
+                "fitted": "combinedassault:pkm",
+                "door": "cabin_door_r",
+                "overrides": {"combinedassault:ma_pkm": {"node": "door_gun_ma"}}
+            }
         },
         {
             "id": "seat3",
@@ -192,6 +196,18 @@
             "name": "passenger_seat",
             "type": "combinedassault:generic",
             "is_seat": true
+        },
+        {
+            "id": "cabin_door_r",
+            "name": "part.combinedassault.cabin_door_r",
+            "type": "combinedassault:door",
+            "is_seat": false
+        },
+        {
+            "id": "cabin_door_l",
+            "name": "part.combinedassault.cabin_door_l",
+            "type": "combinedassault:door",
+            "is_seat": false
         }
     ],
     "screens": {

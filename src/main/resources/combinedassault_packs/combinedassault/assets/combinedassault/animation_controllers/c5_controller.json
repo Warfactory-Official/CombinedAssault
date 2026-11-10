@@ -91,6 +91,24 @@
                         "source": "wheel_rotation",
                         "axis": "x",
                         "param": 0.508
+                    },
+                    {
+                        "bones": [
+                            "yoke",
+                            "yoke_2"
+                        ],
+                        "source": "stick_pitch",
+                        "axis": "x",
+                        "multiplier": 10.0
+                    },
+                    {
+                        "bones": [
+                            "yoke_wheel",
+                            "yoke_wheel_2"
+                        ],
+                        "source": "stick_roll",
+                        "axis": "z",
+                        "multiplier": 60.0
                     }
                 ]
             }

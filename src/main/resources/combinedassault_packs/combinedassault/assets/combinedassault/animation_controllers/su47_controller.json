@@ -43,6 +43,38 @@
                         "source": "wheel_rotation",
                         "axis": "x",
                         "param": 0.517
+                    },
+                    {
+                        "bones": [
+                            "stick"
+                        ],
+                        "source": "stick_pitch",
+                        "axis": "x",
+                        "multiplier": 15.0
+                    },
+                    {
+                        "bones": [
+                            "stick"
+                        ],
+                        "source": "stick_roll",
+                        "axis": "z",
+                        "multiplier": 12.0
+                    },
+                    {
+                        "bones": [
+                            "pedal_l"
+                        ],
+                        "source": "pedals",
+                        "axis": "x",
+                        "multiplier": 12.0
+                    },
+                    {
+                        "bones": [
+                            "pedal_r"
+                        ],
+                        "source": "pedals",
+                        "axis": "x",
+                        "multiplier": -12.0
                     }
                 ]
             }

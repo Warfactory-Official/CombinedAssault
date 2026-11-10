@@ -2,11 +2,10 @@ package com.wf.combinedassault.aircraft.data;
 
 import com.wf.combinedassault.aircraft.AircraftContent;
 import com.wf.combinedassault.aircraft.FixedWingVehicle;
-import com.wf.combinedassault.aircraft.part.AfterburnerUnit;
 import com.wf.combinedassault.aircraft.part.AirbrakeUnit;
 import com.wf.combinedassault.aircraft.part.FlapUnit;
 import com.wf.combinedassault.aircraft.part.ThrustUnit;
-import com.wf.combinedassault.aircraft.pojo.AfterburnerOffset;
+import com.wf.combinedassault.aircraft.pojo.Exhaust;
 import com.wf.combinedassault.dynamics.part.LandingGearUnit;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
@@ -15,10 +14,7 @@ import com.wf.combinedassault.vehicle.part.PartUnit;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 public class FixedWingVehicleData extends BaseVehicleData<FixedWingVehicle> {
 
@@ -44,7 +40,7 @@ public class FixedWingVehicleData extends BaseVehicleData<FixedWingVehicle> {
     public float vtolTurnRate = 0;
     public List<Vec3> vortexOffsets;
     public List<Vec3> aerobaticSmokeOffsets;
-    public List<AfterburnerOffset> afterburnerOffsets;
+    public List<Exhaust> exhausts;
     public String landingGearPartId;
     public String airbrakePartId;
     public String thrustPartId;
@@ -72,19 +68,7 @@ public class FixedWingVehicleData extends BaseVehicleData<FixedWingVehicle> {
             if (thrustPartUnit instanceof ThrustUnit thrustUnit) {
                 fixedWingVehicle.thrustUnit = thrustUnit;
             }
-            if (afterburnerOffsets == null || afterburnerOffsets.isEmpty()) {
-                return result;
-            }
-            fixedWingVehicle.afterburnerUnits = new ArrayList<>();
-            Map<String, PartUnit<?>> partUnitMap = new LinkedHashMap<>(result.partUnitMap());
-            int index = partUnitMap.size();
-            for (AfterburnerOffset offset : afterburnerOffsets) {
-                AfterburnerUnit afterburnerUnit = new AfterburnerUnit(index, vehicle, offset.offset());
-                partUnitMap.put(afterburnerUnit.getId(), afterburnerUnit);
-                fixedWingVehicle.afterburnerUnits.add(afterburnerUnit);
-                index++;
-            }
-            return new PartUnitsAndSeats(partUnitMap, result.seats(), result.groups());
+            return result;
         }
         return null;
     }
@@ -112,7 +96,17 @@ public class FixedWingVehicleData extends BaseVehicleData<FixedWingVehicle> {
         this.zTurnRate = pojo.attributes.zTurnRate;
         this.vtolTurnRate = pojo.attributes.vtolTurnRate;
         this.vortexOffsets = pojo.attributes.vortexOffsets;
-        this.afterburnerOffsets = pojo.attributes.afterburnerOffsets;
+        this.exhausts = List.copyOf(pojo.attributes.exhausts);
+        for (int i = 0; i < exhausts.size(); i++) {
+            Exhaust e = exhausts.get(i);
+            if (e.offset == null || !(e.radius > 0) || e.direction.lengthSqr() < 1e-6) {
+                throw new IllegalArgumentException("exhausts[" + i + "] needs offset, radius > 0, direction");
+            }
+            if (e.pivot != null && pojo.thrustPartId == null) {
+                throw new IllegalArgumentException("exhausts[" + i + "] pivot needs thrust_part_id");
+            }
+            e.direction = e.direction.normalize();
+        }
         this.aerobaticSmokeOffsets = pojo.attributes.aerobaticSmokeOffsets.isEmpty() ? pojo.attributes.vortexOffsets : pojo.attributes.aerobaticSmokeOffsets;
         this.landingGearPartId = pojo.landingGearPartId;
         this.airbrakePartId = pojo.airbrakePartId;
@@ -142,6 +136,7 @@ public class FixedWingVehicleData extends BaseVehicleData<FixedWingVehicle> {
         vehicle.vtolTurnRate = this.vtolTurnRate;
         vehicle.vortexOffsets = this.vortexOffsets;
         vehicle.aerobaticSmokeOffsets = this.aerobaticSmokeOffsets;
+        vehicle.exhausts = this.exhausts;
     }
 
 }

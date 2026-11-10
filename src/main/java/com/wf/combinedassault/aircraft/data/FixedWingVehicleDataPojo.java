@@ -1,7 +1,7 @@
 package com.wf.combinedassault.aircraft.data;
 
 import com.google.gson.annotations.SerializedName;
-import com.wf.combinedassault.aircraft.pojo.AfterburnerOffset;
+import com.wf.combinedassault.aircraft.pojo.Exhaust;
 import com.wf.combinedassault.vehicle.data.BaseVehicleDataPojo;
 import net.minecraft.world.phys.Vec3;
 
@@ -85,8 +85,8 @@ public class FixedWingVehicleDataPojo extends BaseVehicleDataPojo {
         @SerializedName("vortex_offsets")
         public List<Vec3> vortexOffsets = new ArrayList<>();
 
-        @SerializedName("afterburner_offsets")
-        public List<AfterburnerOffset> afterburnerOffsets = new ArrayList<>();
+        @SerializedName("exhausts")
+        public List<Exhaust> exhausts = new ArrayList<>();
 
         @SerializedName("aerobatic_smoke_offsets")
         public List<Vec3> aerobaticSmokeOffsets = new ArrayList<>();

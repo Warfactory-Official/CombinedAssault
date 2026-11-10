@@ -97,6 +97,24 @@ enum HitFxKind {
             .gravity(-WakeFx.BUBBLE_LIFT)
             .size(0.1F, 0.05F)
             .build(), "minecraft:textures/particle/bubble.png", false),
+    /**
+     * Jet nozzle glow, afterburner plume: carried at the airframe's velocity, life ~2 ticks. Colour by look. Glow < 1:
+     * the absorbing share keeps the hue over a bright sky (all-emission => white).
+     */
+    JET_FLAME(1024, GemRenderParticleTypes.BILLBOARD, () -> ParticleStyle.builder()
+            .size(1, 0.35F)
+            .alpha(1, 1.2F)
+            .fadeOut(0.4F)
+            .glow(0.65F)
+            .build(), "jet", true),
+    JET_SMOKE(2048, GemRenderParticleTypes.BILLBOARD, () -> ParticleStyle.builder()
+            .drag(2.5F)
+            .gravity(-0.4F)
+            .size(1, 2.5F)
+            .alpha(0.22F, 1.3F)
+            .fadeIn(0.08F)
+            .spin(0.4F)
+            .build(), "smoke", false),
     CASING_PISTOL(64, Casing.PISTOL, 0.00495F),
     CASING_RIFLE(256, Casing.RIFLE, 0.00478F),
     CASING_LARGE(256, Casing.LARGE, 0.0102F),

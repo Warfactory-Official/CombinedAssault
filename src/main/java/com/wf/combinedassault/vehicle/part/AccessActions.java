@@ -82,7 +82,7 @@ public final class AccessActions {
             player.displayClientMessage(Component.translatable("door.combinedassault.jammed"), true);
             return false;
         }
-        if (vehicle.cargoHold() != null && !vehicle.cargoHold().mayClose(door, player)) {
+        if (!vehicle.mayClose(door, player)) {
             return false;
         }
         if (!door.isOn() && door.getId().equals(vehicle.towing.towable.stowedBy) && TowLinks.isTowed(vehicle)) {

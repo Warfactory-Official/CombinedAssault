@@ -132,7 +132,11 @@
         "pilot_inner": {"pages": [{"layout": "combinedassault:hwide_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hwide_stores", "kind": "mfd", "max_fps": 30}]},
         "cpg_inner": {"pages": [{"layout": "combinedassault:hwide_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 3.1}, {"layout": "combinedassault:hwide_sa", "kind": "mfd", "max_fps": 30}]},
         "cpg_outer": {"pages": [{"layout": "combinedassault:hwide_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hwide_flight", "kind": "mfd", "max_fps": 30}]},
-        "cpg_strip": {"layout": "combinedassault:hstrip", "kind": "mfd", "max_fps": 30}
+        "cpg_strip": {"layout": "combinedassault:hstrip", "kind": "mfd", "max_fps": 30},
+        "standby_pilot": {"layout": "combinedassault:ka52_standby_pilot", "kind": "mfd", "max_fps": 30},
+        "standby_outer": {"layout": "combinedassault:ka52_standby_outer", "kind": "mfd", "max_fps": 30},
+        "rotor": {"layout": "combinedassault:ka52_rotor", "kind": "mfd", "max_fps": 30},
+        "standby_cpg": {"layout": "combinedassault:ka52_standby_cpg", "kind": "mfd", "max_fps": 30}
     },
     "model": "combinedassault:models/aircraft/ka52/ka52.glb",
     "display": {

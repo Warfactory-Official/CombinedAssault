@@ -6,8 +6,24 @@ import net.minecraft.util.Mth;
 
 public class FixedWingVehicleContext extends VehicleContext<FixedWingVehicle> {
 
+    private final AircraftControls controls = new AircraftControls();
+
     public FixedWingVehicleContext(FixedWingVehicle vehicle) {
         super(vehicle);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        float full = 100f * Math.max(1f, entity.thrustK);
+        controls.update(getPitchInput(), getRollInput(), -getYawInput(), Math.min(getThrottleLevel(), full) / full, 0f,
+                (currentTimeMillis() - lastRenderTime()) / 1000f);
+    }
+
+    @Override
+    public float getBindingValue(String source, Float param) {
+        float control = controls.value(source);
+        return Float.isNaN(control) ? super.getBindingValue(source, param) : control;
     }
 
     public float getThrottleLevel() {

@@ -80,6 +80,7 @@ import com.wf.combinedassault.vehicle.pojo.ViewInfo;
 import com.wf.combinedassault.vehicle.screen.ScreenInfo;
 import com.wf.combinedassault.vehicle.util.ParticleUtil;
 import com.wf.combinedassault.vehicle.util.VectorUtil;
+import com.wf.combinedassault.weapon.kit.Hardpoints;
 import com.wf.combinedassault.weapon.kit.Loadouts;
 import com.wf.combinedassault.weapon.ordnance.GuidedRounds;
 import com.wf.combinedassault.weapon.part.MissileHolderUnit;
@@ -108,6 +109,7 @@ import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -2253,8 +2255,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             if (CrewRules.drives(this, targetSeat)) {
                 partUnits.forEach(partUnit -> {
                     // Entries stay as left: the rest of the crew boards through them.
-                    if (partUnit instanceof DoorUnit doorUnit && !entries.contains(doorUnit)
-                            && (cargoHold == null || cargoHold.mayClose(doorUnit, null))) {
+                    if (partUnit instanceof DoorUnit doorUnit && !entries.contains(doorUnit) && mayClose(doorUnit, null)) {
                         doorUnit.setOn(false);
                     }
                 });
@@ -3865,6 +3866,18 @@ public abstract class AbstractVehicle extends ContainerCraft
     @Nullable
     public CargoHold cargoHold() {
         return cargoHold;
+    }
+
+    /** {@code part} may close now (cargo hold, hardpoint door); false => reason shown to {@code player}. Open/off parts: true. */
+    public boolean mayClose(SwitchableUnit<?> part, @Nullable Player player) {
+        if (cargoHold != null && !cargoHold.mayClose(part, player)) {
+            return false;
+        }
+        Component refusal = Hardpoints.doorRefusal(this, part);
+        if (refusal != null && player != null) {
+            player.displayClientMessage(refusal.copy().withStyle(ChatFormatting.RED), true);
+        }
+        return refusal == null;
     }
 
     public CompoundTag cargoView() {

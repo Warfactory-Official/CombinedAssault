@@ -3,6 +3,10 @@
     "attributes": {
         "thrust": 170000,
         "thrust_k": 1.5,
+        "exhausts": [
+            {"offset": [0.49, 2.34, -14.05], "radius": 0.35, "smoke": 0.3},
+            {"offset": [-0.49, 2.34, -14.05], "radius": 0.35, "smoke": 0.3}
+        ],
         "ceiling": 512,
         "x_rot_input_step": 0.2,
         "y_rot_input_step": 0.5,
@@ -159,6 +163,14 @@
             "drag_k": 2
         }
     ],
+    "screens": {
+        "left": {"pages": [{"layout": "combinedassault:hmfd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hmfd_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 7.8}]},
+        "centre": {"pages": [{"layout": "combinedassault:mfd_flight", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_caution", "kind": "mfd", "max_fps": 30}]},
+        "right": {"pages": [{"layout": "combinedassault:hmfd_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hmfd_sa", "kind": "mfd", "max_fps": 30}]},
+        "gauges_upper": {"layout": "combinedassault:su47_gauges_upper", "kind": "mfd", "max_fps": 30},
+        "gauges_lower": {"layout": "combinedassault:su47_gauges_lower", "kind": "mfd", "max_fps": 30},
+        "engine": {"layout": "combinedassault:su47_engine", "kind": "mfd", "max_fps": 30}
+    },
     "model": "combinedassault:models/aircraft/su47/su47.glb",
     "display": {
         "icon": "combinedassault:textures/slot/su47.png",

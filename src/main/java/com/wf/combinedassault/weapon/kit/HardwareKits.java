@@ -25,27 +25,55 @@ public final class HardwareKits {
             "handling", "optic");
     /** Hardpoint override key outside the station: vehicle display name (lang key) while the kit is fitted. */
     public static final String VEHICLE_NAME = "vehicle_name";
+    /** Hardpoint override key outside the station: node the kit model grafts under instead of the hardpoint's. */
+    public static final String NODE = "node";
 
     private static volatile Map<ResourceLocation, HardwareKit> kits = Map.of();
+    /** Replaced kit id -> its replacement. */
+    private static volatile Map<ResourceLocation, ResourceLocation> aliases = Map.of();
+    /** Kits whose {@code item} no loaded mod registers. */
+    private static volatile Set<ResourceLocation> absent = Set.of();
 
     private HardwareKits() {
     }
 
     public static void load(Map<ResourceLocation, JsonObject> defs, List<String> problems) {
         Map<ResourceLocation, HardwareKit> out = new LinkedHashMap<>();
+        Set<ResourceLocation> missing = new HashSet<>();
         defs.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> {
             try {
-                out.put(e.getKey(), HardwareKit.parse(e.getKey(), e.getValue()));
+                HardwareKit kit = HardwareKit.parse(e.getKey(), e.getValue());
+                if (kit == null) {
+                    missing.add(e.getKey());
+                } else {
+                    out.put(e.getKey(), kit);
+                }
             } catch (RuntimeException ex) {
                 problems.add("hardware " + e.getKey() + ": " + ex.getMessage());
             }
         });
+        Map<ResourceLocation, ResourceLocation> alias = new HashMap<>();
+        for (HardwareKit kit : List.copyOf(out.values())) {
+            if (kit.replaces() != null) {
+                if (out.remove(kit.replaces()) == null) {
+                    problems.add("hardware " + kit.id() + ": replaces " + kit.replaces() + ", no loaded kit");
+                }
+                alias.put(kit.replaces(), kit.id());
+            }
+        }
         kits = Map.copyOf(out);
+        aliases = Map.copyOf(alias);
+        absent = Set.copyOf(missing);
+    }
+
+    /** {@code id}, or the kit replacing it. */
+    public static ResourceLocation resolve(ResourceLocation id) {
+        return aliases.getOrDefault(id, id);
     }
 
     @Nullable
     public static HardwareKit get(@Nullable ResourceLocation id) {
-        return id == null ? null : kits.get(id);
+        return id == null ? null : kits.get(resolve(id));
     }
 
     /** Sorted by id. */
@@ -112,8 +140,9 @@ public final class HardwareKits {
                 weapons.add(weapon);
             }
             JsonObject mount = new JsonObject();
+            JsonObject override = hardpoint.overrides().get(kit.id());
             mount.addProperty("model", kit.model().toString());
-            mount.addProperty("node", hardpoint.node());
+            mount.addProperty("node", override != null && override.has(NODE) ? override.get(NODE).getAsString() : hardpoint.node());
             mount.addProperty("kit", kit.id().toString());
             mounts.add(mount);
         }
@@ -128,6 +157,7 @@ public final class HardwareKits {
         if (override != null) {
             JsonObject station = override.deepCopy();
             station.remove(VEHICLE_NAME);
+            station.remove(NODE);
             merge(out, station);
         }
         return out;
@@ -144,9 +174,13 @@ public final class HardwareKits {
         }
     }
 
-    /** Hardpoint keys as authored; kits resolved against the loaded set. */
+    /**
+     * Hardpoint keys as authored; kits resolved against the loaded set.
+     *
+     * @param door switchable part id: fitting needs it opened, closing it is refused while a kit is on; null = none
+     */
     public record Hardpoint(String node, Set<String> accepts, List<HardwareKit> kits, @Nullable ResourceLocation fitted,
-                            Map<ResourceLocation, JsonObject> overrides) {
+                            Map<ResourceLocation, JsonObject> overrides, @Nullable String door) {
 
         public static Hardpoint parse(JsonObject json) {
             String node = GsonHelper.getAsString(json, "node");
@@ -160,14 +194,18 @@ public final class HardwareKits {
             }
             List<ResourceLocation> ids = new ArrayList<>(kits.stream().map(HardwareKit::id).toList());
             ResourceLocation fitted = json.has("fitted") && !json.get("fitted").isJsonNull()
-                    ? ResourceLocation.parse(json.get("fitted").getAsString()) : null;
+                    ? resolve(ResourceLocation.parse(json.get("fitted").getAsString())) : null;
             if (fitted != null && !ids.contains(fitted)) {
                 throw new IllegalArgumentException("fitted " + fitted + " is no accepted kit " + ids);
             }
             Map<ResourceLocation, JsonObject> overrides = new LinkedHashMap<>();
             for (Map.Entry<String, JsonElement> e : GsonHelper.getAsJsonObject(json, "overrides", new JsonObject())
                     .entrySet()) {
-                ResourceLocation kit = ResourceLocation.parse(e.getKey());
+                ResourceLocation named = ResourceLocation.parse(e.getKey());
+                if (absent.contains(named)) {
+                    continue;
+                }
+                ResourceLocation kit = resolve(named);
                 if (!ids.contains(kit)) {
                     throw new IllegalArgumentException("override " + kit + " is no accepted kit " + ids);
                 }
@@ -176,15 +214,20 @@ public final class HardwareKits {
                 if (station.has(VEHICLE_NAME) && !(station.remove(VEHICLE_NAME) instanceof JsonPrimitive)) {
                     throw new IllegalArgumentException("override " + kit + ": " + VEHICLE_NAME + " is a lang key");
                 }
+                if (station.has(NODE) && !(station.remove(NODE) instanceof JsonPrimitive)) {
+                    throw new IllegalArgumentException("override " + kit + ": " + NODE + " is a node name");
+                }
                 checkStation(station, "override " + kit);
                 overrides.put(kit, override);
             }
-            return new Hardpoint(node, Set.copyOf(accepts), List.copyOf(kits), fitted, Map.copyOf(overrides));
+            return new Hardpoint(node, Set.copyOf(accepts), List.copyOf(kits), fitted, Map.copyOf(overrides),
+                    json.has("door") ? GsonHelper.getAsString(json, "door") : null);
         }
 
         public int indexOf(@Nullable ResourceLocation kit) {
+            ResourceLocation id = kit == null ? null : resolve(kit);
             for (int i = 0; i < kits.size(); i++) {
-                if (kits.get(i).id().equals(kit)) {
+                if (kits.get(i).id().equals(id)) {
                     return i;
                 }
             }

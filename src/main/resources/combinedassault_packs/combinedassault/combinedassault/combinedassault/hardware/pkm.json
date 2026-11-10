@@ -1,0 +1,7 @@
+{
+  "model": "combinedassault:models/weapon/pkm/pkm.glb",
+  "weapons": ["combinedassault:gun_7.62mm"],
+  "fits": ["door"],
+  "install_ticks": 80,
+  "station": {"optical_sight_type": "operator", "zoom_max": 2}
+}

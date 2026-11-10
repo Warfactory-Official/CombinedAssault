@@ -146,7 +146,8 @@
         "pilot_ufd": {"layout": "combinedassault:hufd", "kind": "mfd", "max_fps": 30},
         "cpg_left": {"pages": [{"layout": "combinedassault:hmfd_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hmfd_flight", "kind": "mfd", "max_fps": 30}]},
         "cpg_tads": {"layout": "combinedassault:hmfd_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 3.8},
-        "cpg_right": {"pages": [{"layout": "combinedassault:hmfd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hmfd_caution", "kind": "mfd", "max_fps": 30}]}
+        "cpg_right": {"pages": [{"layout": "combinedassault:hmfd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hmfd_caution", "kind": "mfd", "max_fps": 30}]},
+        "standby": {"layout": "combinedassault:ah64d_standby", "kind": "mfd", "max_fps": 30}
     },
     "model": "combinedassault:models/aircraft/ah64d/ah64d.glb",
     "display": {

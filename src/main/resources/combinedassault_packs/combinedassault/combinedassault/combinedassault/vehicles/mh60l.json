@@ -142,9 +142,12 @@
             "optical_sight_type": "operator",
             "zoom_max": 2,
             "crosshair_style": "cross",
-            "weapons": [
-                "combinedassault:gun_7.62mm"
-            ]
+            "hardpoint": {
+                "node": "door_gun_r_barrel",
+                "accepts": ["door"],
+                "fitted": "combinedassault:m134",
+                "door": "gun_window_r"
+            }
         },
         {
             "id": "door_gun_l",
@@ -165,9 +168,12 @@
             "optical_sight_type": "operator",
             "zoom_max": 2,
             "crosshair_style": "cross",
-            "weapons": [
-                "combinedassault:gun_7.62mm"
-            ]
+            "hardpoint": {
+                "node": "door_gun_l_barrel",
+                "accepts": ["door"],
+                "fitted": "combinedassault:m134",
+                "door": "gun_window_l"
+            }
         },
         {
             "id": "seat5",
@@ -192,13 +198,37 @@
             "name": "passenger_seat",
             "type": "combinedassault:generic",
             "is_seat": true
+        },
+        {
+            "id": "cabin_door_r",
+            "name": "part.combinedassault.cabin_door_r",
+            "type": "combinedassault:door",
+            "is_seat": false
+        },
+        {
+            "id": "cabin_door_l",
+            "name": "part.combinedassault.cabin_door_l",
+            "type": "combinedassault:door",
+            "is_seat": false
+        },
+        {
+            "id": "gun_window_r",
+            "name": "part.combinedassault.gun_window_r",
+            "type": "combinedassault:switchable",
+            "is_seat": false
+        },
+        {
+            "id": "gun_window_l",
+            "name": "part.combinedassault.gun_window_l",
+            "type": "combinedassault:switchable",
+            "is_seat": false
         }
     ],
     "screens": {
-        "pilot_outer": {"pages": [{"layout": "combinedassault:hwide_flight", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hwide_caution", "kind": "mfd", "max_fps": 30}]},
-        "pilot_inner": {"pages": [{"layout": "combinedassault:hwide_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hwide_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 4.8}]},
-        "copilot_inner": {"pages": [{"layout": "combinedassault:hwide_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hwide_sa", "kind": "mfd", "max_fps": 30}]},
-        "copilot_outer": {"pages": [{"layout": "combinedassault:hwide_flight", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hwide_caution", "kind": "mfd", "max_fps": 30}]}
+        "pilot_outer": {"layout": "combinedassault:mh60l_flight", "kind": "mfd", "max_fps": 30},
+        "pilot_inner": {"layout": "combinedassault:mh60l_pdu", "kind": "mfd", "max_fps": 30},
+        "copilot_inner": {"layout": "combinedassault:mh60l_cdu", "kind": "mfd", "max_fps": 30},
+        "copilot_outer": {"layout": "combinedassault:mh60l_flight", "kind": "mfd", "max_fps": 30}
     },
     "model": "combinedassault:models/aircraft/mh60l/mh60l.glb",
     "display": {

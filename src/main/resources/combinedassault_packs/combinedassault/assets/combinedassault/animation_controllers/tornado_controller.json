@@ -43,6 +43,31 @@
                         "source": "wheel_rotation",
                         "axis": "x",
                         "param": 0.37
+                    },
+                    {
+                        "bones": [
+                            "stick"
+                        ],
+                        "source": "stick_pitch",
+                        "axis": "x",
+                        "multiplier": 15.0
+                    },
+                    {
+                        "bones": [
+                            "stick"
+                        ],
+                        "source": "stick_roll",
+                        "axis": "z",
+                        "multiplier": 12.0
+                    },
+                    {
+                        "bones": [
+                            "throttle"
+                        ],
+                        "source": "throttle_lever",
+                        "axis": "x",
+                        "multiplier": 32.0,
+                        "offset": -12.0
                     }
                 ]
             }

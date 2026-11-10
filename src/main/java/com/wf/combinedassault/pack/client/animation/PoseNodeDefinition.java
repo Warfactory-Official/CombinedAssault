@@ -120,6 +120,10 @@ public class PoseNodeDefinition {
         @SerializedName("multiplier")
         private float multiplier = 1.0f;
 
+        /** Degrees added after {@code multiplier}, before {@code min}/{@code max}. */
+        @SerializedName("offset")
+        private float offset;
+
         @SerializedName("min")
         private Float min;
 
@@ -143,6 +147,10 @@ public class PoseNodeDefinition {
 
         public float getMultiplier() {
             return multiplier;
+        }
+
+        public float getOffset() {
+            return offset;
         }
 
         public Float getMin() {

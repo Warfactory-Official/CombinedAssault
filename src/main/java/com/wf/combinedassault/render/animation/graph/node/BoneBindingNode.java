@@ -75,7 +75,7 @@ public class BoneBindingNode implements PoseNode {
 
         float value = context.getContext().getBindingValue(binding.source, binding.param);
 
-        value *= binding.multiplier;
+        value = value * binding.multiplier + binding.offset;
 
         if (binding.min != null) {
             value = Math.max(binding.min, value);
@@ -110,6 +110,7 @@ public class BoneBindingNode implements PoseNode {
         String source,
         int axis, // 0=x, 1=y, 2=z, -1=none
         float multiplier,
+        float offset,
         Float min,
         Float max,
         Float param

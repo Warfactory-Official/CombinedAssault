@@ -342,8 +342,21 @@ Both ground types also take a top-level `landing_gear_part_id` where applicable.
 | `z_turn_rate` | float | `8` |
 | `vtol_turn_rate` | float | `0` | hover pitch/roll floor: share of `x/z_turn_rate` × power × \|sin(thrust part pitch)\| (reaction controls); needs `thrust_part_id`. Hover: `thrust` > 9.8 × mass |
 | `vortex_offsets` | Vec3[] | `[]` |
-| `afterburner_offsets` | array | `[]` | each `{"offset": Vec3, "scale": float}` |
+| `exhausts` | array | `[]` | jet nozzles, client effect only; entry keys below |
 | `aerobatic_smoke_offsets` | Vec3[] | `[]` |
+
+`exhausts` entry (vehicle frame):
+
+| key | type | default | |
+| --- | --- | --- | --- |
+| `offset` | Vec3 | required | exit centre |
+| `radius` | float | `0.5` | exit radius; scales glow, plume, smoke |
+| `direction` | Vec3 | `[0,0,-1]` | flow |
+| `pivot` | Vec3 | none | present => `offset`, `direction` turn with the `thrust_part_id` part's pitch about local X through this point |
+| `heat` | float | `1` | nozzle glow share; `0` = cold fan air |
+| `smoke` | float | `0.2` | smoke / haze density; `0` = none |
+
+- Afterburner flame + light: throttle > 100, reachable only with `thrust_k > 1`.
 
 - `rotor` systems (props, proprotors): `thrust` × Π effectiveness. Drawn under a part frame => part hit, no pool: tilting rotors = body nodes posed by script (`mv22`).
 
@@ -620,7 +633,7 @@ Vehicle def `display` block; client only.
 | field | notes |
 | --- | --- |
 | `icon` | slot texture; `tools/model_icon.py <rig>` renders it from the model |
-| `controller` | `assets/<ns>/animation_controllers/<id>.json`; graph nodes `merge`, `blend`, `layered_blend`, `additive`, `script`, `bone_binding`. Ground `special_bindings` sources: `throttle_pedal`, `brake_pedal`, `handbrake` (0..1, eased 0.12 s), `gear_lever_x` / `gear_lever_z` (degrees, transmission `lever`; H gate: crosses at N's x); multiplier = degrees at 1. Missing bones skipped |
+| `controller` | `assets/<ns>/animation_controllers/<id>.json`; graph nodes `merge`, `blend`, `layered_blend`, `additive`, `script`, `bone_binding`. Ground `special_bindings` sources: `throttle_pedal`, `brake_pedal`, `handbrake` (0..1, eased 0.12 s), `gear_lever_x` / `gear_lever_z` (degrees, transmission `lever`; H gate: crosses at N's x). Aircraft sources (eased 0.15 s): `stick_pitch` (+ fwd), `stick_roll` (+ right), `pedals` (+ right pedal fwd; rotary: yaw rate / `yRotSpeedMax`), -1..1; `throttle_lever` (fixed wing, 0..1 over 0..100·thrustK), `collective` (rotary, 0..1). Angle = source·multiplier + `offset`, then `min`/`max`. Missing bones skipped |
 | `engine` | engine audio ([§6.10](#610-audio)) |
 | `cabin_muffle` | 0..1, default `0`: outside sound low-passed for a first-person rider of a protected seat; own door open x0.25, others x(1 - 0.5 open fraction) |
 | `tab_index` | creative tab order |
@@ -810,7 +823,7 @@ Role nodes read at load (rest pose, vehicle frame). Each fills a vehicle def key
 | `towable`, `axle` | — | `towing.towable.offset` / `.axle` | origin |
 | `exhaust` | — | `energy_info.engine_particle_offsets` (by `index`) | origin |
 | `vortex`, `smoke` | — | `attributes.vortex_offsets` / `aerobatic_smoke_offsets` (by `index`) | origin |
-| `afterburner` | — | `attributes.afterburner_offsets` (by `index`) | origin |
+| `afterburner` | — | `attributes.exhausts` (by `index`) `offset`, `radius` | origin; mean scale = radius |
 | `camera`, `camera_zoomed` | — | node-only | origin = third-person orbit centre. None: `[0,3,0]` / `[0,5,0]` |
 | `light` | — | none: GemRender spot | posed frame; beam +Z, cookie up +Y |
 | `propeller` | — | `attributes.propellers` (ship) | origin = hub; mean scale = radius |
@@ -1511,18 +1524,22 @@ Gun = kit def; vehicle part = typed `hardpoint`. Fitted / taken off in the field
 | `fits` | hardpoint classes (free strings) |
 | `install_ticks` | fit / take off duration, default 100 |
 | `station` | weapon part keys over the hardpoint part's own |
+| `item` | another mod's item id the kit is carried as, instead of `hardware`: fit takes that stack (data kept on the part, NBT `KitItem`), take off gives it back; unregistered => kit absent (no error; overrides naming it skipped) |
+| `replaces` | kit id hidden while this kit loads; that id resolves here (`fitted`, overrides, saved `Kit`) |
 
 | hardpoint field | notes |
 | --- | --- |
 | `node` | vehicle glTF node the kit model grafts under |
 | `accepts` | classes; kits = every loaded kit with a `fits` class here, by id; none => load error |
 | `fitted` | kit at first spawn; absent / null = empty |
-| `overrides` | kit id -> station keys for this vehicle only, + `vehicle_name` (lang key: vehicle display name while fitted) |
+| `overrides` | kit id -> station keys for this vehicle only, + `vehicle_name` (lang key: vehicle display name while fitted), + `node` (graft node for that kit: a model in another frame) |
+| `door` | switchable part id: fit refused until on + clip run out; closing it refused while a kit is on (probe, key, pilot-boarding auto-close skips it); kit `fitted` at spawn => on. Unknown / non-switchable => load error |
 
+- Kit `model` not in a CA pack => read from any other wflib pack host (MineAssault's).
 - Station keys: `pose`, `dismount_offset`, `protect_passenger`, `passenger_can_use_item`, `crew_roles`, `rot_info`, `bolts`, `ejects`, `ammo_capacity`, `firing_mode`, `operator_on_weapon_unit`, `fire_control_sensor_type`, `optical_sight_type`, `with_*`, `loading`, `zoom_min`, `zoom_max`, `crosshair_style`, `handling`, `optic`. Other key => load error.
 - Merge: part (glTF sockets applied) < kit `station` < hardpoint override; objects (`rot_info`) merge by key, else replace.
 - No kit => no gun: `currentWeaponId` null, kit mounts hidden and unhit, never fires. Seat switch cycles within the fitted kit; modding tool swaps refused.
 - Item `combinedassault:hardware`, component `combinedassault:hardware_kit` = kit id; name lang `hardware.<ns>.<path>`; drawn from the kit model. Recipes: result `{"id": "combinedassault:hardware", "components": {"combinedassault:hardware_kit": "<kit>"}}`.
 - Probe node `hardpoint:<part index>`: empty => one timed `hardpoint_fit` row per kit (arg = part << 8 | kit index), item consumed; fitted => timed `hardpoint_take_off`, item back. Refused: wreck, part detached, kit already on, eye > 4 blocks from pivot, pivot > 1.5 m behind hull surface from the eye, a seat of the part occupied, item missing (creative exempt).
 - NBT `Kit` (id, "" = empty) per hardpoint part.
-- Shipped kits: `m2`, `kord`, `mk19` (`pintle`, `tripod`), `spg9` (`tripod`). Hardpoints: `humvee` roof (`pintle`, empty), `riverine` bows / stern (`pintle`, M2 / M2 / Mk 19), `spg9` weapon tripod (`tripod`, empty, `kneel`).
+- Shipped kits: `m2`, `kord` (`pintle`, `tripod`, `door`), `mk19` (`pintle`, `tripod`), `spg9` (`tripod`), `m134`, `pkm` (`door`), `ma_pkm` (`door`; MineAssault `ma_lmgs:pkm` item + model, replaces `pkm`). Hardpoints: `humvee` roof (`pintle`, empty), `riverine` bows / stern (`pintle`, M2 / M2 / Mk 19), `spg9` weapon tripod (`tripod`, empty, `kneel`); `door`, `door` key: `mh60l` door guns (M134, `gun_window_*`), `w3` door gun (PKM, `cabin_door_r`), `ch47` door guns (M134, `gun_window_*`) + ramp gun (M2, `cargo_doors`).

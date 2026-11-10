@@ -51,6 +51,22 @@
                         "source": "wheel_rotation",
                         "axis": "x",
                         "param": 0.224
+                    },
+                    {
+                        "bones": [
+                            "stick"
+                        ],
+                        "source": "stick_pitch",
+                        "axis": "x",
+                        "multiplier": 15.0
+                    },
+                    {
+                        "bones": [
+                            "stick"
+                        ],
+                        "source": "stick_roll",
+                        "axis": "z",
+                        "multiplier": 12.0
                     }
                 ]
             }

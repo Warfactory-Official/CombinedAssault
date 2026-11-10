@@ -112,9 +112,12 @@
             "optical_sight_type": "operator",
             "zoom_max": 2,
             "crosshair_style": "cross",
-            "weapons": [
-                "combinedassault:gun_7.62mm"
-            ]
+            "hardpoint": {
+                "node": "door_gun_r_up",
+                "accepts": ["door"],
+                "fitted": "combinedassault:m134",
+                "door": "gun_window_r"
+            }
         },
         {
             "id": "door_gun_l",
@@ -135,9 +138,12 @@
             "optical_sight_type": "operator",
             "zoom_max": 2,
             "crosshair_style": "cross",
-            "weapons": [
-                "combinedassault:gun_7.62mm"
-            ]
+            "hardpoint": {
+                "node": "door_gun_l_up",
+                "accepts": ["door"],
+                "fitted": "combinedassault:m134",
+                "door": "gun_window_l"
+            }
         },
         {
             "id": "ramp_gun",
@@ -158,13 +164,16 @@
             "optical_sight_type": "operator",
             "zoom_max": 2,
             "crosshair_style": "cross",
-            "weapons": [
-                "combinedassault:gun_12.7mm"
-            ]
+            "hardpoint": {
+                "node": "ramp_gun_up",
+                "accepts": ["door"],
+                "fitted": "combinedassault:m2",
+                "door": "cargo_doors"
+            }
         },
         {
             "id": "cargo_doors",
-            "name": "cargo_doors",
+            "name": "part.combinedassault.cargo_doors",
             "type": "combinedassault:door",
             "is_seat": false
         },
@@ -228,6 +237,18 @@
             "name": "passenger_seat",
             "type": "combinedassault:generic",
             "is_seat": true
+        },
+        {
+            "id": "gun_window_r",
+            "name": "part.combinedassault.gun_window_r",
+            "type": "combinedassault:switchable",
+            "is_seat": false
+        },
+        {
+            "id": "gun_window_l",
+            "name": "part.combinedassault.gun_window_l",
+            "type": "combinedassault:switchable",
+            "is_seat": false
         }
     ],
     "screens": {

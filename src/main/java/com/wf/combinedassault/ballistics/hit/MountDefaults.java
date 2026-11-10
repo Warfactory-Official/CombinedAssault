@@ -197,12 +197,10 @@ public final class MountDefaults {
             case "vortex" -> list(mount, "attributes/vortex_offsets", target, vec(origin));
             case "smoke" -> list(mount, "attributes/aerobatic_smoke_offsets", target, vec(origin));
             case "afterburner" -> {
-                JsonArray at = vec(origin);
-                float scale = (mount.scale().x + mount.scale().y + mount.scale().z) / 3;
-                if (Math.abs(scale - 1) > SAME) {
-                    at.add(round(scale));
-                }
-                list(mount, "attributes/afterburner_offsets", target, at);
+                JsonObject nozzle = new JsonObject();
+                nozzle.add("offset", vec(origin));
+                nozzle.add("radius", number((mount.scale().x + mount.scale().y + mount.scale().z) / 3));
+                list(mount, "attributes/exhausts", target, nozzle);
             }
             default -> throw new IllegalStateException(field);
         }
