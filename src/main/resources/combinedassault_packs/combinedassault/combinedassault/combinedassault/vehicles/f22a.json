@@ -178,6 +178,14 @@
             "drag_k": 2
         }
     ],
+    "screens": {
+        "centre": {"pages": [{"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_stores", "kind": "mfd", "max_fps": 30}]},
+        "left": {"pages": [{"layout": "combinedassault:mfd_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 4.6}, {"layout": "combinedassault:mfd_flight", "kind": "mfd", "max_fps": 30}]},
+        "upper": {"pages": [{"layout": "combinedassault:mfd_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30}]},
+        "right": {"pages": [{"layout": "combinedassault:mfd_flight", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_caution", "kind": "mfd", "max_fps": 30}]},
+        "ufd_left": {"layout": "combinedassault:ufd_caution", "kind": "mfd", "max_fps": 30},
+        "ufd_right": {"layout": "combinedassault:ufd_fuel", "kind": "mfd", "max_fps": 30}
+    },
     "model": "combinedassault:models/aircraft/f22a/f22a.glb",
     "display": {
         "icon": "combinedassault:textures/slot/f22a.png",

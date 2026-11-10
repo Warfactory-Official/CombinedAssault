@@ -96,7 +96,7 @@ public final class VehicleNodes {
                 continue;
             }
             if (AccessActions.isDoor(part)) {
-                door(out, (SwitchableUnit<?>) part, VehicleHits.anchor(hits, part).add(drift), part == looked,
+                door(out, vehicle, player, (SwitchableUnit<?>) part, VehicleHits.anchor(hits, part).add(drift), part == looked,
                         vehicle.towing.towable.stowedBy);
             } else if (tool && part instanceof WeaponUnit unit && unit.isInteractive() && unit.weapons.size() > 1
                     && !unit.isHardpoint()) {
@@ -119,7 +119,7 @@ public final class VehicleNodes {
                         .claimed(part == looked));
             }
         }
-        if (!vehicle.uav) {
+        if (!vehicle.uav && vehicle.entries().isEmpty()) {
             for (AbstractVehicle.Seat seat : vehicle.seats) {
                 if (seat.passengerId != -1 || seat.partUnit.isDetached()) {
                     continue;
@@ -161,7 +161,9 @@ public final class VehicleNodes {
         }
     }
 
-    private static void door(List<ProbeNode> out, SwitchableUnit<?> door, Vec3 at, boolean looked, String stowedBy) {
+    /** Vehicle {@code entry} open and in reach: + board, one row per free seat it leads to. */
+    private static void door(List<ProbeNode> out, AbstractVehicle vehicle, Player player, SwitchableUnit<?> door, Vec3 at,
+                             boolean looked, String stowedBy) {
         boolean jammed = door.isDestroyed();
         out.add(new ProbeNode("door:" + door.getIndex(), at, info -> {
             info.title(PartNames.name(door));
@@ -169,6 +171,14 @@ public final class VehicleNodes {
                     Component.translatable(KEY + (door.getId().equals(stowedBy) ? (door.isOn() ? "stow" : "deploy")
                             : door.isOn() ? "close" : "open")));
             info.action(jammed ? toggle.unavailable(Component.translatable("door.combinedassault.jammed")) : toggle);
+            if (vehicle.entries().contains(door) && vehicle.reaches(door, player)) {
+                for (AbstractVehicle.Seat seat : vehicle.seats) {
+                    if (seat.passengerId == -1 && !seat.partUnit.isDetached() && vehicle.hatchOpen(seat) && vehicle.serves(door, seat)) {
+                        info.action(ProbeAction.of(AccessActions.BOARD, seat.seatIndex,
+                                Component.translatable(KEY + "enter_seat", PartNames.name(seat.partUnit))));
+                    }
+                }
+            }
         }).colour(jammed ? SystemsHud.colour(ComponentState.BROKEN) : DOOR)
                 .claimed(looked));
     }

@@ -32,6 +32,10 @@ public final class GunComputer implements ScreenView {
     final AbstractVehicle vehicle;
     final WeaponUnit unit;
 
+    public WeaponUnit unit() {
+        return unit;
+    }
+
     private long refreshed = Long.MIN_VALUE / 2;
     private RoundSpec rangeSpec;
     private double rangeElevation = Double.NaN;
@@ -50,6 +54,7 @@ public final class GunComputer implements ScreenView {
     double loadProgress;
     double loadSeconds;
     String round = "";
+    double zoom = 1;
 
     public GunComputer(AbstractVehicle vehicle, WeaponUnit unit) {
         this.vehicle = vehicle;
@@ -71,6 +76,7 @@ public final class GunComputer implements ScreenView {
         stopHigh = -unit.getXRotMin();
         hullPitch = vehicle.getXRot();
         hullRoll = vehicle.getZRot();
+        zoom = unit.getZoom();
         AbstractVehicleWeapon<?> weapon = unit.getCurrentWeapon().orElse(null);
         if (weapon == null) {
             state = State.STOWED;
@@ -135,5 +141,6 @@ public final class GunComputer implements ScreenView {
         Signals.num(s, "load_progress", c -> c.loadProgress);
         Signals.num(s, "load_seconds", c -> c.loadSeconds);
         Signals.text(s, "round", 48, c -> c.round);
+        Signals.num(s, "zoom", c -> c.zoom);
     }
 }

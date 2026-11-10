@@ -89,6 +89,10 @@ public class BaseVehicleDataPojo {
     @SerializedName("protect_passenger")
     public boolean protectPassenger = true;
 
+    /** Switchable part ids: boarding only through one, open and within reach. */
+    @SerializedName("entry")
+    public List<String> entry = List.of();
+
     @SerializedName("experimental")
     public boolean experimental = false;
 

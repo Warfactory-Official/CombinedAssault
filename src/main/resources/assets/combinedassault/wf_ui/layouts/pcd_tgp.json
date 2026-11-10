@@ -1,0 +1,218 @@
+{
+ "scaling": "absolute",
+ "size": [
+  154,
+  100
+ ],
+ "use": [
+  "combinedassault:hud"
+ ],
+ "constants": {
+  "bg": "#ff000000",
+  "fg": "#ff52f06a",
+  "dim": "#ff1f7a30",
+  "warn": "#ffffb02e",
+  "alarm": "#ffff4a3a",
+  "cyan": "#ff46c8ff",
+  "inv": "#ff000000"
+ },
+ "root": {
+  "type": "stack",
+  "children": [
+   {
+    "type": "place",
+    "x": 59.0,
+    "y": 49.6,
+    "child": {
+     "type": "rect",
+     "w": 12,
+     "h": 0.8,
+     "color": "#ffffffff"
+    }
+   },
+   {
+    "type": "place",
+    "x": 83.0,
+    "y": 49.6,
+    "child": {
+     "type": "rect",
+     "w": 12,
+     "h": 0.8,
+     "color": "#ffffffff"
+    }
+   },
+   {
+    "type": "place",
+    "x": 76.6,
+    "y": 32.0,
+    "child": {
+     "type": "rect",
+     "w": 0.8,
+     "h": 12,
+     "color": "#ffffffff"
+    }
+   },
+   {
+    "type": "place",
+    "x": 76.6,
+    "y": 56.0,
+    "child": {
+     "type": "rect",
+     "w": 0.8,
+     "h": 12,
+     "color": "#ffffffff"
+    }
+   },
+   {
+    "type": "place",
+    "x": 27.72,
+    "y": 17.6,
+    "child": {
+     "type": "rect",
+     "w": 8,
+     "h": 0.8,
+     "color": "#ffffffff"
+    }
+   },
+   {
+    "type": "place",
+    "x": 27.32,
+    "y": 18.0,
+    "child": {
+     "type": "rect",
+     "w": 0.8,
+     "h": 8,
+     "color": "#ffffffff"
+    }
+   },
+   {
+    "type": "place",
+    "x": 118.28,
+    "y": 17.6,
+    "child": {
+     "type": "rect",
+     "w": 8,
+     "h": 0.8,
+     "color": "#ffffffff"
+    }
+   },
+   {
+    "type": "place",
+    "x": 125.88,
+    "y": 18.0,
+    "child": {
+     "type": "rect",
+     "w": 0.8,
+     "h": 8,
+     "color": "#ffffffff"
+    }
+   },
+   {
+    "type": "place",
+    "x": 27.72,
+    "y": 81.6,
+    "child": {
+     "type": "rect",
+     "w": 8,
+     "h": 0.8,
+     "color": "#ffffffff"
+    }
+   },
+   {
+    "type": "place",
+    "x": 27.32,
+    "y": 74.0,
+    "child": {
+     "type": "rect",
+     "w": 0.8,
+     "h": 8,
+     "color": "#ffffffff"
+    }
+   },
+   {
+    "type": "place",
+    "x": 118.28,
+    "y": 81.6,
+    "child": {
+     "type": "rect",
+     "w": 8,
+     "h": 0.8,
+     "color": "#ffffffff"
+    }
+   },
+   {
+    "type": "place",
+    "x": 125.88,
+    "y": 74.0,
+    "child": {
+     "type": "rect",
+     "w": 0.8,
+     "h": 8,
+     "color": "#ffffffff"
+    }
+   },
+   {
+    "type": "place",
+    "x": 4,
+    "y": 3,
+    "child": {
+     "type": "text",
+     "text": "TGP",
+     "color": "#ffffffff",
+     "scale": 0.85
+    }
+   },
+   {
+    "type": "place",
+    "x": 150,
+    "y": 3,
+    "child": {
+     "type": "text",
+     "text": "x{round(station.zoom)}",
+     "color": "#ffffffff",
+     "scale": 0.85
+    },
+    "pivot": "top_right"
+   },
+   {
+    "type": "place",
+    "x": 4,
+    "y": 90,
+    "child": {
+     "type": "text",
+     "text": "AZ {computer.bearing|03}",
+     "color": "#ffffffff",
+     "scale": 0.8
+    }
+   },
+   {
+    "type": "place",
+    "x": 150,
+    "y": 90,
+    "child": {
+     "type": "text",
+     "text": "EL {computer.elevation|.0}",
+     "color": "#ffffffff",
+     "scale": 0.8
+    },
+    "pivot": "top_right"
+   },
+   {
+    "type": "place",
+    "x": 77.0,
+    "y": 80,
+    "child": {
+     "type": "when",
+     "if": "local.aim_distance > 0",
+     "then": {
+      "type": "text",
+      "text": "{trunc(local.aim_distance)} m",
+      "color": "#ffffffff",
+      "scale": 0.8
+     }
+    },
+    "pivot": "top"
+   }
+  ]
+ }
+}

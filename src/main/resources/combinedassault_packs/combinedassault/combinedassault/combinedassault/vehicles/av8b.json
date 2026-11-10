@@ -182,6 +182,10 @@
             }
         }
     ],
+    "screens": {
+        "left": {"pages": [{"layout": "combinedassault:mfd_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 3.5}, {"layout": "combinedassault:mfd_flight", "kind": "mfd", "max_fps": 30}]},
+        "right": {"pages": [{"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_caution", "kind": "mfd", "max_fps": 30}]}
+    },
     "model": "combinedassault:models/aircraft/av8b/av8b.glb",
     "display": {
         "icon": "combinedassault:textures/slot/av8b.png",

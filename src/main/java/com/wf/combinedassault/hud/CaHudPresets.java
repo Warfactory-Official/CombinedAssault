@@ -4,6 +4,7 @@ import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.hud.widget.*;
 import com.wf.combinedassault.naval.client.ShipWidgets;
 import com.wf.combinedassault.radar.client.RadarWidgets;
+import com.wf.combinedassault.vehicle.screen.MfdWidgets;
 import com.wf.wflib.ui.api.json.UiWidgetTypes;
 import com.wf.wflib.ui.api.json.WidgetReader;
 import net.minecraft.resources.ResourceLocation;
@@ -41,6 +42,8 @@ public final class CaHudPresets {
         add("engagement_envelope", p -> new ScopeWidgets.EngagementEnvelope(p.expr("color")));
         add("vehicle_schematic", p -> new ScopeWidgets.VehicleSchematic());
         add("debug_dump", p -> new DebugDump());
+        add("mfd_situation", p -> new MfdWidgets.Situation(p.number("w"), p.number("h")));
+        add("mfd_adi", p -> new MfdWidgets.Adi(p.number("w"), p.number("h")));
         add("range_scale", p -> new RangeScale(p.number("w"), p.expr("near"), p.expr("far"), p.expr("max"),
                 p.expr("mark", "0/0"), p.expr("track", "0"), p.expr("scale", "0"), p.expr("band"), p.expr("mark_color"),
                 p.expr("label")));

@@ -120,12 +120,34 @@
             }
         },
         {
+            "id": "pilot_door",
+            "name": "pilot_door",
+            "type": "combinedassault:door",
+            "is_seat": false,
+            "door_for_seat_id": "sighting_system"
+        },
+        {
+            "id": "cpg_door",
+            "name": "cpg_door",
+            "type": "combinedassault:door",
+            "is_seat": false,
+            "door_for_seat_id": "seat2"
+        },
+        {
             "id": "seat2",
             "name": "passenger_seat",
             "type": "combinedassault:generic",
             "is_seat": true
         }
     ],
+    "screens": {
+        "pilot_left": {"pages": [{"layout": "combinedassault:hmfd_flight", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hmfd_caution", "kind": "mfd", "max_fps": 30}]},
+        "pilot_right": {"pages": [{"layout": "combinedassault:hmfd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hmfd_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hmfd_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 3.8}]},
+        "pilot_ufd": {"layout": "combinedassault:hufd", "kind": "mfd", "max_fps": 30},
+        "cpg_left": {"pages": [{"layout": "combinedassault:hmfd_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hmfd_flight", "kind": "mfd", "max_fps": 30}]},
+        "cpg_tads": {"layout": "combinedassault:hmfd_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 3.8},
+        "cpg_right": {"pages": [{"layout": "combinedassault:hmfd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hmfd_caution", "kind": "mfd", "max_fps": 30}]}
+    },
     "model": "combinedassault:models/aircraft/ah64d/ah64d.glb",
     "display": {
         "icon": "combinedassault:textures/slot/ah64d.png",

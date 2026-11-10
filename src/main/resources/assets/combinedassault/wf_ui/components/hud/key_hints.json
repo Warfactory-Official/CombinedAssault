@@ -28,6 +28,24 @@
           },
           {
             "type": "key_hint",
+            "if": "local.turn_out",
+            "label": "{tr:hud.combinedassault.hint.turn_out}",
+            "key": "key.combinedassault.turn_out.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "local.sight_screen_seat",
+            "label": "{tr:hud.combinedassault.hint.gun_sight}",
+            "key": "key.combinedassault.magnification_change.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "local.periscope_seat",
+            "label": "{tr:hud.combinedassault.hint.periscope}",
+            "key": "key.combinedassault.magnification_change.desc"
+          },
+          {
+            "type": "key_hint",
             "if": "!local.scope",
             "label": "{tr:hud.combinedassault.hint.view}",
             "key": "key.combinedassault.switch_view.desc"

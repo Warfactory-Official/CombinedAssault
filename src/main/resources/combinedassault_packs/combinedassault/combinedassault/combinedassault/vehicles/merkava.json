@@ -59,6 +59,11 @@
         "energy_capacity": 1525,
         "energy_consumption_per_tick": 0.004166667
     },
+    "screens": {
+        "gunner_sight": {"layout": "combinedassault:tank_sight", "kind": "sight", "part": "turret", "max_fps": 30},
+        "commander_sight": {"layout": "combinedassault:tank_sight", "kind": "sight", "part": "turret", "max_fps": 20}
+    },
+    "entry": ["rear_door", "driver_hatch", "commander_hatch", "loader_hatch"],
     "parts": [
         {
             "id": "turret",
@@ -104,7 +109,7 @@
                 "loader",
                 "gunner"
             ],
-            "name": "anti_aircraft_machine_gun",
+            "name": "part.combinedassault.merkava.commander_mg",
             "handling": "manual",
             "type": "combinedassault:weapon",
             "max_health": 200,
@@ -119,7 +124,10 @@
             "zoom_max": 2,
             "weapons": [
                 "combinedassault:gun_7.62mm"
-            ]
+            ],
+            "hatch": "commander_hatch",
+            "pose": "stand",
+            "protect_passenger": false
         },
         {
             "id": "seat",
@@ -127,7 +135,8 @@
                 "driver"
             ],
             "name": "seat",
-            "type": "combinedassault:generic"
+            "type": "combinedassault:generic",
+            "turn_out": "driver_out"
         },
         {
             "id": "commander",
@@ -135,7 +144,72 @@
             "type": "combinedassault:generic",
             "crew_roles": [
                 "commander"
-            ]
+            ],
+            "turn_out": "anti_aircraft_machine_gun"
+        },
+        {
+            "id": "driver_out",
+            "name": "part.combinedassault.merkava.driver_out",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "crew_roles": ["driver"],
+            "hatch": "driver_hatch",
+            "protect_passenger": false
+        },
+        {
+            "id": "loader",
+            "name": "loader",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "crew_roles": ["loader"],
+            "turn_out": "loader_out",
+            "pose": "stand"
+        },
+        {
+            "id": "loader_out",
+            "name": "part.combinedassault.merkava.loader_out",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "crew_roles": ["loader"],
+            "hatch": "loader_hatch",
+            "pose": "stand",
+            "protect_passenger": false
+        },
+        {
+            "id": "rear_left",
+            "name": "part.combinedassault.merkava.rear_left",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "rear_right",
+            "name": "part.combinedassault.merkava.rear_right",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "rear_door",
+            "name": "rear_door",
+            "type": "combinedassault:door",
+            "is_seat": false
+        },
+        {
+            "id": "driver_hatch",
+            "name": "driver_hatch",
+            "type": "combinedassault:switchable",
+            "is_seat": false
+        },
+        {
+            "id": "commander_hatch",
+            "name": "commander_hatch",
+            "type": "combinedassault:switchable",
+            "is_seat": false
+        },
+        {
+            "id": "loader_hatch",
+            "name": "loader_hatch",
+            "type": "combinedassault:switchable",
+            "is_seat": false
         },
         {
             "id": "suspension_left",

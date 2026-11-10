@@ -28,10 +28,20 @@ public class PartUnitData {
     protected Boolean protectPassenger;
     protected boolean passengerCanUseItem;
     protected Vec3 ownerViewOffset = null;
+    @Nullable
+    protected Vec3 periscopeOffset;
     protected String sensor;
     protected List<CrewRole> crewRoles;
     protected String needsOn;
     protected String hatch;
+    @Nullable
+    protected String turnOut;
+    @Nullable
+    protected String rideFrame;
+    @Nullable
+    protected String entryVia;
+    @Nullable
+    protected VehicleCubeGroup rideGroup;
     protected Vec3 pivotOffset = Vec3.ZERO;
     protected ResourceLocation displayId;
     protected Vec3 displayOffset;
@@ -64,9 +74,13 @@ public class PartUnitData {
         this.protectPassenger = pojo.protectPassenger;
         this.passengerCanUseItem = pojo.passengerCanUseItem;
         this.ownerViewOffset = pojo.ownerViewOffset;
+        this.periscopeOffset = pojo.periscopeOffset;
         this.crewRoles = pojo.crewRoles;
         this.needsOn = pojo.needsOn;
         this.hatch = pojo.hatch;
+        this.turnOut = pojo.turnOut;
+        this.rideFrame = pojo.rideFrame;
+        this.entryVia = pojo.entryVia;
         this.displayId = pojo.displayId;
         this.displayOffset = pojo.displayOffset;
         this.mounts = pojo.mounts;
@@ -186,12 +200,41 @@ public class PartUnitData {
         return hatch;
     }
 
+    @Nullable
+    public String getTurnOut() {
+        return turnOut;
+    }
+
+    @Nullable
+    public String getEntryVia() {
+        return entryVia;
+    }
+
+    @Nullable
+    public String getRideFrame() {
+        return rideFrame;
+    }
+
+    @Nullable
+    public VehicleCubeGroup getRawRideGroup() {
+        return rideGroup;
+    }
+
+    public void initRide(VehicleCubeGroup group) {
+        rideGroup = group;
+    }
+
     public List<CrewRole> getCrewRoles() {
         return crewRoles;
     }
 
     public Vec3 getOwnerViewOffset() {
         return ownerViewOffset;
+    }
+
+    @Nullable
+    public Vec3 getPeriscopeOffset() {
+        return periscopeOffset;
     }
 
     public Vec3 getPivotOffset() {

@@ -71,6 +71,7 @@ public class BaseVehicleData<T extends AbstractVehicle> {
     protected boolean canWade;
     protected boolean withWarningReceiver;
     protected boolean protectPassenger;
+    protected List<String> entry;
     protected boolean experimental;
     protected Vec3 centerOffset;
     /** Set by the data manager around {@link VehicleDataType#parse}: data types build inside Gson parsing. */
@@ -157,6 +158,7 @@ public class BaseVehicleData<T extends AbstractVehicle> {
         this.canWade = pojo.canWade;
         this.withWarningReceiver = pojo.withWarningReceiver;
         this.protectPassenger = pojo.protectPassenger;
+        this.entry = pojo.entry;
         this.experimental = pojo.experimental;
 
         this.centerOffset = pojo.centerOffset;
@@ -168,6 +170,17 @@ public class BaseVehicleData<T extends AbstractVehicle> {
             int part = model.rig().part(partData.getId());
             int pitch = model.rig().pitch(partData.getId());
             partData.initFrames(part < 0 ? null : frameGroups.get(part), pitch < 0 ? null : frameGroups.get(pitch));
+            String ride = partData.getRideFrame();
+            if (ride != null) {
+                int frame = -1;
+                for (int i = 0; i < model.rig().frames().size() && frame < 0; i++) {
+                    frame = model.rig().frames().get(i).name().equals(ride) ? i : -1;
+                }
+                if (frame < 0) {
+                    throw new IllegalArgumentException("part " + partData.getId() + ": ride_frame " + ride + " is no frame");
+                }
+                partData.initRide(frameGroups.get(frame));
+            }
         }
         if (cargo != CargoInfo.NONE) {
             if (!cargo.enabled()) {
@@ -534,6 +547,10 @@ public class BaseVehicleData<T extends AbstractVehicle> {
 
     public boolean isUav() {
         return uav;
+    }
+
+    public List<String> getEntry() {
+        return entry;
     }
 
     public boolean canPickUp() {

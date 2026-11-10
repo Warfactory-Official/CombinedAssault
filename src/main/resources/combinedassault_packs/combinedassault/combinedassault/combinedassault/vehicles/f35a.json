@@ -158,6 +158,10 @@
             "drag_k": 2
         }
     ],
+    "screens": {
+        "pcd_left": {"pages": [{"layout": "combinedassault:pcd_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 3.9}, {"layout": "combinedassault:pcd_flight", "kind": "mfd", "max_fps": 30}]},
+        "pcd_right": {"pages": [{"layout": "combinedassault:pcd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:pcd_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:pcd_caution", "kind": "mfd", "max_fps": 30}]}
+    },
     "model": "combinedassault:models/aircraft/f35a/f35a.glb",
     "display": {
         "icon": "combinedassault:textures/slot/f35a.png",

@@ -130,6 +130,9 @@ public final class HudSignals {
         Signals.bool(LOCAL, "third_person", l -> l.viewType == LocalVehiclePlayer.ViewType.THIRD_PERSON);
         Signals.bool(LOCAL, "operator", l -> l.viewType == LocalVehiclePlayer.ViewType.OPERATOR);
         Signals.bool(LOCAL, "scope", LocalVehiclePlayer::sighted);
+        Signals.bool(LOCAL, "turn_out", l -> l.vehicle != null && l.seat != null && l.vehicle.turnPartner(l.seat) != null);
+        Signals.bool(LOCAL, "periscope_seat", LocalVehiclePlayer::periscopeSeat);
+        Signals.bool(LOCAL, "sight_screen_seat", LocalVehiclePlayer::sightScreenSeat);
         Signals.bool(LOCAL, "driver", l -> l.vehicle != null && l.getPlayer() != null
                 && l.getPlayer().equals(l.vehicle.getDriver()));
         Signals.num(LOCAL, "g", l -> l.currentG);
@@ -209,6 +212,25 @@ public final class HudSignals {
         });
         Signals.num(FIXED, "throttle", f -> f.getThrottleLevel());
         Signals.bool(FIXED, "brake", f -> (int) f.getThrottleLevel() == 0 && f.controlUnit.backward && f.onGround());
+        Signals.bool(FIXED, "gear_up", com.wf.combinedassault.aircraft.FixedWingVehicle::isLandingGearUp);
+        Signals.bool(FIXED, "airbrake", com.wf.combinedassault.aircraft.FixedWingVehicle::isAirbrakeOn);
+        Signals.num(FIXED, "flaps", f -> f.flapUnits.isEmpty() ? Double.NaN : f.flapUnits.get(0).level(partialTick()));
+        Signals.num(FIXED, "nozzle", f -> f.thrustUnit == null ? Double.NaN : f.thrustUnit.getXRot());
+        Signals.num(FIXED, "bays", f -> {
+            int n = 0;
+            for (var unit : f.getPartUnits()) {
+                n += unit instanceof com.wf.combinedassault.weapon.part.WeaponBayUnit ? 1 : 0;
+            }
+            return n;
+        });
+        Signals.bool(FIXED, "bay_open", f -> {
+            for (var unit : f.getPartUnits()) {
+                if (unit instanceof com.wf.combinedassault.weapon.part.WeaponBayUnit bay && bay.isOn()) {
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 
     private static final Quaternionf FLOW_ROTATION = new Quaternionf();

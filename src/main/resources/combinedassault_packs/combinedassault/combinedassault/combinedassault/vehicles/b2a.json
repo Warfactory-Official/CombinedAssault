@@ -126,6 +126,18 @@
             "drag_k": 2
         }
     ],
+    "screens": {
+        "p_left": {"pages": [{"layout": "combinedassault:mfd_flight", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_caution", "kind": "mfd", "max_fps": 30}]},
+        "p_centre": {"pages": [{"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_stores", "kind": "mfd", "max_fps": 30}]},
+        "p_right": {"pages": [{"layout": "combinedassault:mfd_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 0.8}, {"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30}]},
+        "p_lower": {"pages": [{"layout": "combinedassault:mfd_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_flight", "kind": "mfd", "max_fps": 30}]},
+        "c_left": {"pages": [{"layout": "combinedassault:mfd_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 0.8}, {"layout": "combinedassault:mfd_stores", "kind": "mfd", "max_fps": 30}]},
+        "c_centre": {"pages": [{"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_stores", "kind": "mfd", "max_fps": 30}]},
+        "c_right": {"pages": [{"layout": "combinedassault:mfd_flight", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_caution", "kind": "mfd", "max_fps": 30}]},
+        "c_lower": {"pages": [{"layout": "combinedassault:mfd_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30}]},
+        "upper": {"layout": "combinedassault:ufd_caution", "kind": "mfd", "max_fps": 30},
+        "cdu": {"layout": "combinedassault:ufd_fuel", "kind": "mfd", "max_fps": 30}
+    },
     "model": "combinedassault:models/aircraft/b2a/b2a.glb",
     "display": {
         "icon": "combinedassault:textures/slot/b2a.png",

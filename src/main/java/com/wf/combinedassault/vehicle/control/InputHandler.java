@@ -94,7 +94,9 @@ public class InputHandler {
                 AbstractVehicle vehicle = instance.vehicle;
                 WeaponUnit weaponUnit = instance.getWeaponUnit();
                 WeaponUnit sight = instance.sightUnit();
-                if (matchesKey(SWITCH_VIEW, key, scanCode)) {
+                if (matchesKey(MAGNIFICATION_CHANGE, key, scanCode) && instance.periscopeSeat()) {
+                    instance.periscopeOn = !instance.periscopeOn;
+                } else if (matchesKey(SWITCH_VIEW, key, scanCode)) {
                     instance.switchViewType(null);
                 } else if (matchesKey(SWITCH_SCOPE, key, scanCode)) {
                     if (instance.lensUav() && weaponUnit != null) {
@@ -103,6 +105,8 @@ public class InputHandler {
                         } else {
                             instance.switchViewType(LocalVehiclePlayer.ViewType.OPERATOR);
                         }
+                    } else if (sight != null && instance.sightScreenSeat() && instance.viewType == LocalVehiclePlayer.ViewType.SCOPE) {
+                        sight.stepZoom();
                     } else if (sight != null) {
                         if (instance.viewType != LocalVehiclePlayer.ViewType.SCOPE) {
                             instance.switchViewType(LocalVehiclePlayer.ViewType.SCOPE);
@@ -210,7 +214,14 @@ public class InputHandler {
         }
         LocalVehiclePlayer instance = LocalVehiclePlayer.instance();
         if (instance.onVehicle() && MAGNIFICATION_CHANGE.isDown() && instance.onVehicleTickCount > 5
-                && !StationAds.capable(instance.getWeaponUnit())) {
+                && instance.sightScreenSeat()) {
+            instance.switchViewType(instance.viewType == LocalVehiclePlayer.ViewType.SCOPE
+                    ? LocalVehiclePlayer.ViewType.OPERATOR : LocalVehiclePlayer.ViewType.SCOPE);
+            return;
+        }
+        if (instance.onVehicle() && MAGNIFICATION_CHANGE.isDown() && instance.onVehicleTickCount > 5
+                && !StationAds.capable(instance.getWeaponUnit())
+                && !instance.periscopeSeat()) {
             AbstractVehicle vehicle = instance.vehicle;
             if (instance.sightUnit() instanceof WeaponUnit weaponUnit) {
                 if (instance.viewType == LocalVehiclePlayer.ViewType.SCOPE) {
@@ -274,6 +285,18 @@ public class InputHandler {
             }
             if (!CHANGE_SEAT.isDown()) {
                 waitSwitchSeatTime = System.currentTimeMillis();
+            }
+            while (CYCLE_DISPLAY.consumeClick()) {
+                var screens = com.wf.combinedassault.vehicle.screen.VehicleScreens.of(vehicle);
+                if (screens != null) {
+                    screens.cycleAimed();
+                }
+            }
+            while (TURN_OUT.consumeClick()) {
+                AbstractVehicle.Seat partner = instance.seat == null ? null : vehicle.turnPartner(instance.seat);
+                if (partner != null && partner.partUnit.getOwner() == null) {
+                    sendChangeSeat(vehicle, partner.seatIndex);
+                }
             }
             if (player.equals(vehicle.controlUnit.getOperator())) {
                 if (instance.lostControl) {

@@ -3,12 +3,14 @@ package com.wf.combinedassault.render.gem;
 import com.wf.combinedassault.render.model.VehicleModelInstance;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.screen.ScreenInfo;
+import com.wf.combinedassault.vehicle.screen.SightScreens;
 import com.wf.combinedassault.vehicle.screen.VehicleScreens;
 import com.wf.gemrender.direct.DirectPass;
 import com.wf.gemrender.direct.DirectRenderer;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
 import com.wf.wflib.ui.api.UiLayouts;
 import com.wf.wflib.ui.api.WorldScreens;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -39,18 +41,26 @@ public final class GemScreens {
             return;
         }
         POSE.set(pose);
+        Vector3f look = Minecraft.getInstance().gameRenderer.getMainCamera().getLookVector();
         boolean any = false;
         for (int i = 0; i < state.count; i++) {
             ScreenInfo info = state.infos[i];
             GemRenderGltfModel.SlotFrame frame = state.frames[i];
+            state.aim[i] = Float.NaN;
             if (frame.node() >= snapshot.jointCount()) {
                 state.textures[i] = null;
                 continue;
             }
             snapshot.palette()[frame.node()].transformPosition(frame.centre(), CENTRE);
             POSE.transformPosition(CENTRE);
-            state.textures[i] = WorldScreens.texture(state.views[i], UiLayouts.get(info.layout), state.views[i],
-                    CENTRE.length(), frame.width(), frame.height(), info.unitsWidth, info.maxFps);
+            float distance = CENTRE.length();
+            // Entity pose = camera-relative world axes (camera rotation lives in the model-view matrix).
+            float angle = (float) Math.acos(Math.min(1, CENTRE.dot(look) / distance));
+            state.aim[i] = angle / (float) Math.atan2(0.5 * Math.hypot(frame.width(), frame.height()), distance);
+            state.textures[i] = info.kind == ScreenInfo.Kind.SIGHT
+                    ? SightScreens.texture(state, i, frame.width(), frame.height())
+                    : WorldScreens.texture(state.views[i], UiLayouts.get(info.layout), state.views[i],
+                    distance, frame.width(), frame.height(), info.unitsWidth, info.maxFps);
             if (state.textures[i] != null) {
                 state.views[i].refresh(partialTick);
                 any = true;

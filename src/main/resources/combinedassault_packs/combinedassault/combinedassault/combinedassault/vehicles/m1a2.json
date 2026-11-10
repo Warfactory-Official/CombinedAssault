@@ -83,6 +83,11 @@
             "standoff": 0.35
         }
     ],
+    "screens": {
+        "gunner_sight": {"layout": "combinedassault:tank_sight", "kind": "sight", "part": "turret", "max_fps": 30},
+        "commander_sight": {"layout": "combinedassault:tank_sight", "kind": "sight", "part": "turret", "max_fps": 20}
+    },
+    "entry": ["driver_hatch", "commander_hatch", "loader_hatch"],
     "parts": [
         {
             "id": "turret",
@@ -114,7 +119,8 @@
                     "id": "combinedassault:launcher_smoke_grenade",
                     "part_unit_id": "turret_smoke_grenade"
                 }
-            ]
+            ],
+            "entry_via": "commander_hatch"
         },
         {
             "id": "turret_machine_gun",
@@ -142,7 +148,7 @@
                 "commander",
                 "gunner"
             ],
-            "name": "anti_aircraft_machine_gun",
+            "name": "part.combinedassault.m1a2.commander_mg",
             "type": "combinedassault:weapon",
             "max_health": 200,
             "render_bone": "mg",
@@ -156,7 +162,10 @@
             "zoom_max": 2,
             "weapons": [
                 "combinedassault:gun_12.7mm"
-            ]
+            ],
+            "hatch": "commander_hatch",
+            "pose": "stand",
+            "protect_passenger": false
         },
         {
             "id": "loader_machine_gun",
@@ -164,7 +173,7 @@
                 "loader",
                 "gunner"
             ],
-            "name": "loader_machine_gun",
+            "name": "part.combinedassault.m1a2.loader_mg",
             "handling": "manual",
             "type": "combinedassault:weapon",
             "max_health": 150,
@@ -179,15 +188,46 @@
             "zoom_max": 2,
             "weapons": [
                 "combinedassault:gun_7.62mm"
-            ]
+            ],
+            "hatch": "loader_hatch",
+            "pose": "stand",
+            "protect_passenger": false
         },
         {
             "id": "seat",
             "crew_roles": [
                 "driver"
             ],
-            "name": "seat",
-            "type": "combinedassault:generic"
+            "name": "driver",
+            "type": "combinedassault:generic",
+            "turn_out": "driver_out",
+            "pose": "recline"
+        },
+        {
+            "id": "driver_out",
+            "name": "part.combinedassault.m1a2.driver_out",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "crew_roles": ["driver"],
+            "hatch": "driver_hatch",
+            "protect_passenger": false
+        },
+        {
+            "id": "commander",
+            "name": "commander",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "crew_roles": ["commander"],
+            "turn_out": "anti_aircraft_machine_gun"
+        },
+        {
+            "id": "loader",
+            "name": "loader",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "crew_roles": ["loader"],
+            "turn_out": "loader_machine_gun",
+            "pose": "stand"
         },
         {
             "id": "suspension_left",
@@ -218,9 +258,20 @@
         {
             "id": "loader_hatch",
             "name": "loader_hatch",
-            "type": "combinedassault:door",
-            "is_seat": false,
-            "door_for_seat_id": "loader_machine_gun"
+            "type": "combinedassault:switchable",
+            "is_seat": false
+        },
+        {
+            "id": "driver_hatch",
+            "name": "driver_hatch",
+            "type": "combinedassault:switchable",
+            "is_seat": false
+        },
+        {
+            "id": "commander_hatch",
+            "name": "commander_hatch",
+            "type": "combinedassault:switchable",
+            "is_seat": false
         }
     ],
     "model": "combinedassault:models/ground/m1a2/m1a2.glb",
@@ -230,8 +281,8 @@
         "engine": {
             "start": {"event": "combinedassault:m1a2_engine_start", "range": 144},
             "loops": [
-                {"sound": {"event": "combinedassault:m1a2_engine_idle", "range": 144}, "input": "rpm", "volume": [[0.05, 0], [0.3, 1], [0.6, 1], [0.75, 0]], "pitch": [[0.3, 0.85], [0.6, 1]]},
-                {"sound": {"event": "combinedassault:m1a2_engine_run", "range": 240}, "input": "rpm", "volume": [[0.6, 0], [0.7, 1]], "pitch": [[0.6, 0.8], [1, 1.1]]},
+                {"sound": {"event": "combinedassault:m1a2_turbine_idle", "range": 144}, "input": "rpm", "volume": [[0.05, 0], [0.6, 0.7], [1, 0.8]], "pitch": [[0.3, 0.5], [1.2, 2]]},
+                {"sound": {"event": "combinedassault:m1a2_turbine_run", "range": 240}, "input": "rpm", "volume": [[0.3, 0], [0.6, 0.35], [1, 1]], "pitch": [[0.4, 0.5], [1.6, 2]]},
                 {"sound": {"event": "combinedassault:track_run", "range": 144}, "input": "speed", "volume": [[0.01, 0], [0.1, 0.6], [0.6, 1]], "pitch": [[0, 0.8], [1, 1.1]]}
             ]
         },

@@ -60,6 +60,11 @@
         "energy_capacity": 1525,
         "energy_consumption_per_tick": 0.004166667
     },
+    "screens": {
+        "gunner_sight": {"layout": "combinedassault:tank_sight", "kind": "sight", "part": "turret", "max_fps": 30},
+        "commander_sight": {"layout": "combinedassault:tank_sight", "kind": "sight", "part": "turret", "max_fps": 20}
+    },
+    "entry": ["driver_hatch", "commander_hatch", "gunner_hatch"],
     "parts": [
         {
             "id": "turret",
@@ -88,7 +93,8 @@
                     "part_unit_id": "turret_machine_gun",
                     "secondary": true
                 }
-            ]
+            ],
+            "turn_out": "gunner_out"
         },
         {
             "id": "turret_machine_gun",
@@ -106,7 +112,9 @@
                 "driver"
             ],
             "name": "seat",
-            "type": "combinedassault:generic"
+            "type": "combinedassault:generic",
+            "turn_out": "driver_out",
+            "pose": "recline"
         },
         {
             "id": "commander",
@@ -114,7 +122,55 @@
             "type": "combinedassault:generic",
             "crew_roles": [
                 "commander"
-            ]
+            ],
+            "turn_out": "commander_out"
+        },
+        {
+            "id": "driver_out",
+            "name": "part.combinedassault.t84.driver_out",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "crew_roles": ["driver"],
+            "hatch": "driver_hatch",
+            "protect_passenger": false
+        },
+        {
+            "id": "commander_out",
+            "name": "part.combinedassault.t84.commander_out",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "crew_roles": ["commander"],
+            "hatch": "commander_hatch",
+            "pose": "stand",
+            "protect_passenger": false
+        },
+        {
+            "id": "gunner_out",
+            "name": "part.combinedassault.t84.gunner_out",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "crew_roles": ["gunner"],
+            "hatch": "gunner_hatch",
+            "pose": "stand",
+            "protect_passenger": false
+        },
+        {
+            "id": "driver_hatch",
+            "name": "driver_hatch",
+            "type": "combinedassault:switchable",
+            "is_seat": false
+        },
+        {
+            "id": "commander_hatch",
+            "name": "commander_hatch",
+            "type": "combinedassault:switchable",
+            "is_seat": false
+        },
+        {
+            "id": "gunner_hatch",
+            "name": "gunner_hatch",
+            "type": "combinedassault:switchable",
+            "is_seat": false
         },
         {
             "id": "suspension_left",

@@ -143,6 +143,20 @@
             "drag_k": 0.5
         },
         {
+            "id": "pilot_door",
+            "name": "pilot_door",
+            "type": "combinedassault:door",
+            "is_seat": false,
+            "door_for_seat_id": "sighting_system"
+        },
+        {
+            "id": "gunner_canopy",
+            "name": "gunner_canopy",
+            "type": "combinedassault:door",
+            "is_seat": false,
+            "door_for_seat_id": "seat2"
+        },
+        {
             "id": "seat2",
             "name": "passenger_seat",
             "type": "combinedassault:generic",
@@ -185,6 +199,9 @@
             "is_seat": true
         }
     ],
+    "screens": {
+        "gauges_pilot": {"layout": "combinedassault:mi24_gauges_pilot", "kind": "mfd", "max_fps": 30}
+    },
     "model": "combinedassault:models/aircraft/mi24/mi24.glb",
     "display": {
         "icon": "combinedassault:textures/slot/mi24.png",

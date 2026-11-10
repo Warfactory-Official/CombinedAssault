@@ -1,0 +1,136 @@
+{
+ "scaling": "absolute",
+ "size": [
+  156,
+  60
+ ],
+ "use": [
+  "combinedassault:hud"
+ ],
+ "constants": {
+  "bg": "#ff000000",
+  "fg": "#ff52f06a",
+  "dim": "#ff1f7a30",
+  "warn": "#ffffb02e",
+  "alarm": "#ffff4a3a",
+  "cyan": "#ff46c8ff",
+  "inv": "#ff000000"
+ },
+ "root": {
+  "type": "stack",
+  "children": [
+   {
+    "type": "rect",
+    "w": 156,
+    "h": 60,
+    "color": "$bg"
+   },
+   {
+    "type": "place",
+    "x": 3,
+    "y": 2,
+    "child": {
+     "type": "text",
+     "text": "{mfd.time}",
+     "color": "$dim",
+     "scale": 0.9
+    }
+   },
+   {
+    "type": "place",
+    "x": 153,
+    "y": 2,
+    "child": {
+     "type": "when",
+     "if": "mfd.launch",
+     "then": {
+      "type": "text",
+      "text": "MISSILE",
+      "color": "blink(0.25) ? $alarm : #ff801810",
+      "scale": 1.0
+     },
+     "else": {
+      "type": "when",
+      "if": "mfd.lock",
+      "then": {
+       "type": "text",
+       "text": "LOCK",
+       "color": "$warn",
+       "scale": 1.0
+      },
+      "else": {
+       "type": "text",
+       "text": "NO WCA",
+       "color": "$dim",
+       "scale": 0.9
+      }
+     }
+    },
+    "pivot": "top_right"
+   },
+   {
+    "type": "place",
+    "x": 3,
+    "y": 16,
+    "child": {
+     "type": "text",
+     "text": "FUEL {trunc(vehicle.fuel)}%",
+     "color": "vehicle.fuel < 15 ? $alarm : $fg",
+     "scale": 1.0
+    }
+   },
+   {
+    "type": "place",
+    "x": 153,
+    "y": 16,
+    "child": {
+     "type": "text",
+     "text": "{vehicle.fuel_seconds|clockh}",
+     "color": "vehicle.fuel < 15 ? $alarm : $fg",
+     "scale": 1.0
+    },
+    "pivot": "top_right"
+   },
+   {
+    "type": "place",
+    "x": 3,
+    "y": 30,
+    "child": {
+     "type": "bar",
+     "w": 150,
+     "h": 5,
+     "value": "vehicle.fuel / 100",
+     "fill": "vehicle.fuel < 15 ? $alarm : $fg",
+     "back": "#ff0c2a12"
+    }
+   },
+   {
+    "type": "place",
+    "x": 3,
+    "y": 42,
+    "child": {
+     "type": "when",
+     "if": "vehicle.rotary",
+     "then": {
+      "type": "text",
+      "text": "RPM {trunc(rotary.rpm)}",
+      "color": "$fg",
+      "scale": 1.0
+     }
+    }
+   },
+   {
+    "type": "place",
+    "x": 153,
+    "y": 42,
+    "child": {
+     "type": "text",
+     "text": "HDG {trunc(mfd.heading)|03}",
+     "color": "$fg",
+     "scale": 1.0
+    },
+    "pivot": "top_right"
+   }
+  ]
+ }
+}

@@ -185,6 +185,10 @@
             "drag_k": 2
         }
     ],
+    "screens": {
+        "tv": {"layout": "combinedassault:mfd_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 4.0},
+        "rwr": {"pages": [{"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_flight", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_caution", "kind": "mfd", "max_fps": 30}]}
+    },
     "model": "combinedassault:models/aircraft/a10/a10.glb",
     "display": {
         "icon": "combinedassault:textures/slot/a10.png",

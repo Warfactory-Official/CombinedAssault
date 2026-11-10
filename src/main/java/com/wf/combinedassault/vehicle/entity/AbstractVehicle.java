@@ -399,6 +399,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     private static final int MAX_COLLISION_SUBSTEPS = 16;
     /** Blocks per collision step; half block width hides between samples. */
     private static final double SAFE_STEP = 0.5;
+    /** Rider eye -> {@code entry} part frame, m. */
+    public static final double ENTRY_REACH = 3.0;
     /** Clearance above max step height in sweep hull; avoids clipping on boundary-height steps. */
     private static final double SWEEP_STEP_MARGIN = 0.05;
     protected double structureLength;
@@ -453,6 +455,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     public boolean remote = false;
     public PlayerTeam remoteTeam;
     public boolean protectPassenger;
+    /** Data {@code entry}: the only ways aboard; empty => any side. */
+    private List<SwitchableUnit<?>> entries = List.of();
     protected boolean dataInitialized;
     protected int destroyedTick;
     protected int engineParticleTick;
@@ -964,6 +968,15 @@ public abstract class AbstractVehicle extends ContainerCraft
             map.put(partUnit.getId(), partUnit);
         }
         this.partUnitMap = map;
+        List<SwitchableUnit<?>> entries = new ArrayList<>();
+        List<String> entryIds = vehicleData.getEntry();
+        for (String entryId : entryIds) {
+            if (!(map.get(entryId) instanceof SwitchableUnit<?> switchable)) {
+                throw new IllegalArgumentException(getVehicleId() + ": entry " + entryId + " is not a switchable part");
+            }
+            entries.add(switchable);
+        }
+        this.entries = List.copyOf(entries);
         ClipRig clipRig = vehicleData.getClipRig();
         this.clipTracks = clipRig == null ? null
                 : PartClipTracks.bind(clipRig, map, String.valueOf(vehicleData.getVehicleId()), String.valueOf(getDisplayId()));
@@ -1570,9 +1583,11 @@ public abstract class AbstractVehicle extends ContainerCraft
                         player.xRotO = player.xRotO + dXRot;
                         player.setXRot(player.getXRot() + dXRot);
                     }
-                    player.yRotO = player.yRotO + dYRot;
-                    player.setYRot(player.getYRot() + dYRot);
-                    player.setYBodyRot(player.yBodyRot + dYRot);
+                    PartUnit<?> seat = getOwnOperatorUnit(player);
+                    float dYaw = dYRot + (rotOp && seat != null ? seat.rideYawStep() : 0);
+                    player.yRotO = player.yRotO + dYaw;
+                    player.setYRot(player.getYRot() + dYaw);
+                    player.setYBodyRot(player.yBodyRot + dYaw);
                 }
             }
         } else {
@@ -2120,23 +2135,81 @@ public abstract class AbstractVehicle extends ContainerCraft
         }
     }
 
-    /** Seat's {@code hatch} on and its clip run out; no hatch / no clip => on suffices. */
+    /** Seat's {@code hatch} open; no hatch => true. */
     public boolean hatchOpen(Seat seat) {
         SwitchableUnit<?> hatch = seat.partUnit.hatch();
-        if (hatch == null) {
-            return true;
-        }
-        if (!hatch.isOn()) {
+        return hatch == null || opened(hatch);
+    }
+
+    /** On and its clip run out; no clip => on suffices. */
+    public boolean opened(SwitchableUnit<?> part) {
+        if (!part.isOn()) {
             return false;
         }
-        PartClipTracks.Track track = clipTracks == null ? null : clipTracks.track(hatch.getId());
+        PartClipTracks.Track track = clipTracks == null ? null : clipTracks.track(part.getId());
         return track == null || track.progress(1) >= 1;
     }
 
-    /** Boards {@code seatIndex} (free, hatch open) instead of the default pick. */
+    public List<SwitchableUnit<?>> entries() {
+        return entries;
+    }
+
+    /** Seats {@code entry} leads to: its {@code entry_via} seats, those it is the {@code hatch} of + their turn-in partners; it is none's => every seat. */
+    public boolean serves(SwitchableUnit<?> entry, Seat seat) {
+        if (seat.partUnit.entryVia() == entry) {
+            return true;
+        }
+        boolean hatch = false;
+        for (Seat other : seats) {
+            if (other.partUnit.hatch() == entry) {
+                hatch = true;
+                if (other == seat || seat.partUnit.turnOut() == other.partUnit) {
+                    return true;
+                }
+            }
+        }
+        return !hatch;
+    }
+
+    /** {@code entry} open and {@code entity}'s eye within {@link #ENTRY_REACH} m of it. */
+    public boolean reaches(SwitchableUnit<?> entry, Entity entity) {
+        return !entry.isDetached() && opened(entry)
+                && entry.worldPosition(entry.getPivotOffset()).distanceTo(entity.getEyePosition()) <= ENTRY_REACH;
+    }
+
+    /** No {@code entry}, or one leading to {@code seat} {@link #reaches} {@code entity}. */
+    public boolean mayBoard(Entity entity, Seat seat) {
+        if (entries.isEmpty()) {
+            return true;
+        }
+        for (SwitchableUnit<?> entry : entries) {
+            if (serves(entry, seat) && reaches(entry, entity)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** A free seat with its hatch open that {@code entity} {@link #mayBoard}. */
+    public boolean mayBoard(Entity entity) {
+        return seats.stream().anyMatch(seat -> seat.passengerId == -1 && hatchOpen(seat) && mayBoard(entity, seat));
+    }
+
+    /** Other end of a {@code turn_out} pair, or null. */
+    @Nullable
+    public Seat turnPartner(Seat seat) {
+        for (Seat other : seats) {
+            if (seat.partUnit.turnOut() == other.partUnit || other.partUnit.turnOut() == seat.partUnit) {
+                return other;
+            }
+        }
+        return null;
+    }
+
+    /** Boards {@code seatIndex} (free, hatch open, {@link #mayBoard}) instead of the default pick; -1 => default pick. */
     public boolean board(LivingEntity rider, int seatIndex) {
-        if (seatIndex < 0 || seatIndex >= seats.size() || seats.get(seatIndex).passengerId != -1
-                || !hatchOpen(seats.get(seatIndex))) {
+        if (seatIndex != -1 && (seatIndex < 0 || seatIndex >= seats.size() || seats.get(seatIndex).passengerId != -1
+                || !hatchOpen(seats.get(seatIndex)) || !mayBoard(rider, seats.get(seatIndex)))) {
             return false;
         }
         requestedSeat = seatIndex;
@@ -2157,24 +2230,31 @@ public abstract class AbstractVehicle extends ContainerCraft
             }
             ServerLevel serverLevel = (ServerLevel) level();
             Seat targetSeat = requestedSeat >= 0 ? seats.get(requestedSeat) : null;
-            if (targetSeat == null && drivingSeat() == null) {
-                // First aboard takes the wheel, not the gun that happens to be seat 0 (Centauro: turret).
-                targetSeat = seats.stream()
-                        .filter(seat -> seat.passengerId == -1 && hatchOpen(seat) && CrewRules.roles(seat).contains(CrewRole.DRIVER))
-                        .findFirst().orElse(null);
+            // Reachable through an entry first; forced mounts (/ride) take any open seat.
+            for (boolean reach : new boolean[]{true, false}) {
+                if (targetSeat == null && drivingSeat() == null) {
+                    // First aboard takes the wheel, not the gun that happens to be seat 0 (Centauro: turret).
+                    targetSeat = seats.stream()
+                            .filter(seat -> seat.passengerId == -1 && hatchOpen(seat) && (!reach || mayBoard(livingEntity, seat))
+                                    && CrewRules.roles(seat).contains(CrewRole.DRIVER))
+                            .findFirst().orElse(null);
+                }
+                if (targetSeat == null) {
+                    targetSeat = seats.stream()
+                            .filter(seat -> seat.passengerId == -1 && hatchOpen(seat) && (!reach || mayBoard(livingEntity, seat)))
+                            .findFirst().orElse(null);
+                }
             }
             if (targetSeat == null) {
-                Optional<Seat> emptySeatOptional = seats.stream().filter(seat -> seat.passengerId == -1 && hatchOpen(seat)).findFirst();
-                if (emptySeatOptional.isEmpty()) {
-                    return;
-                }
-                targetSeat = emptySeatOptional.get();
+                return;
             }
             targetSeat.partUnit.setOwner(livingEntity);
             targetSeat.passengerId = livingEntity.getId();
             if (CrewRules.drives(this, targetSeat)) {
                 partUnits.forEach(partUnit -> {
-                    if (partUnit instanceof DoorUnit doorUnit && (cargoHold == null || cargoHold.mayClose(doorUnit, null))) {
+                    // Entries stay as left: the rest of the crew boards through them.
+                    if (partUnit instanceof DoorUnit doorUnit && !entries.contains(doorUnit)
+                            && (cargoHold == null || cargoHold.mayClose(doorUnit, null))) {
                         doorUnit.setOn(false);
                     }
                 });
@@ -2265,6 +2345,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         }
     }
 
+    /** Turning in ({@code to}'s {@code turn_out} = left seat) closes that hatch unless another occupied seat has it. */
     private boolean moveSeat(LivingEntity pPassenger, int toSeatIndex) {
         Optional<Seat> ownSeat = seats.stream().filter(seat -> seat.passengerId == pPassenger.getId()).findFirst();
         if (ownSeat.isPresent()) {
@@ -2275,6 +2356,12 @@ public abstract class AbstractVehicle extends ContainerCraft
         Seat toSeat = seats.get(toSeatIndex);
         toSeat.partUnit.setOwner(pPassenger);
         toSeat.passengerId = pPassenger.getId();
+        if (ownSeat.isPresent() && toSeat.partUnit.turnOut() == ownSeat.get().partUnit) {
+            SwitchableUnit<?> hatch = ownSeat.get().partUnit.hatch();
+            if (seats.stream().noneMatch(seat -> seat.passengerId != -1 && seat.partUnit.hatch() == hatch)) {
+                hatch.setOn(false);
+            }
+        }
         refreshDriver();
         toSeat.partUnit.applySeatRot(pPassenger);
         PacketDistributor.sendToPlayersTrackingEntity(this, new ServerVehicleSeatsChange(this));
@@ -2370,7 +2457,7 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     @Override
     protected boolean canAddPassenger(@NotNull Entity pPassenger) {
-        return seats.stream().anyMatch(seat -> seat.passengerId == -1 && hatchOpen(seat));
+        return mayBoard(pPassenger);
     }
 
     @Override

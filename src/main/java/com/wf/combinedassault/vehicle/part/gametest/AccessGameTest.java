@@ -1,5 +1,7 @@
 package com.wf.combinedassault.vehicle.part.gametest;
 
+import org.joml.Quaternionf;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
 import com.mojang.authlib.GameProfile;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.dynamics.part.PartClipTracks;
@@ -300,6 +302,207 @@ public class AccessGameTest {
                     rider.discard();
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * Centauro {@code entry}: rear door closed => refused; open but far (bow) => refused; open at the door => driver seat
+     * (default pick), then the turret seat by index.
+     */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    public static void theRearDoorIsTheOnlyWayIn(GameTestHelper helper) {
+        AbstractVehicle centauro = spawn(helper, "centauro");
+        if (centauro == null) {
+            return;
+        }
+        SwitchableUnit<?> door = switchable(centauro, "rear_door");
+        Vec3 frame = door.worldPosition(door.getPivotOffset());
+        ArmorStand rider = stand(helper, frame.subtract(0, 1.5, 0));
+        ArmorStand gunner = stand(helper, frame.subtract(0, 1.5, 0));
+        ArmorStand far = stand(helper, centauro.position().add(centauro.position().subtract(frame).multiply(1, 0, 1)));
+        String[] state = new String[1];
+        // Boarded after the hull's first tick: that tick ejects riders attached before it.
+        helper.startSequence()
+                .thenIdle(3)
+                .thenExecute(() -> {
+                    centauro.clipTracks().tick();
+                    boolean closed = centauro.board(rider, -1);
+                    door.setOn(true);
+                    for (int t = 0; t < 40; t++) {
+                        centauro.clipTracks().tick();
+                    }
+                    boolean fromBow = centauro.board(far, -1);
+                    boolean atDoor = centauro.board(rider, -1);
+                    boolean turret = centauro.board(gunner, seatIndex(centauro, "turret"));
+                    state[0] = "closed " + closed + ", bow " + fromBow + ", door " + atDoor + " -> " + seatOf(centauro, rider)
+                            + ", turret " + turret + " -> " + seatOf(centauro, gunner);
+                    helper.assertTrue(!closed && !fromBow && atDoor && "driver".equals(seatOf(centauro, rider))
+                            && turret && "turret".equals(seatOf(centauro, gunner)), state[0]);
+                })
+                .thenExecute(() -> {
+                    centauro.discard();
+                    rider.discard();
+                    gunner.discard();
+                    far.discard();
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * Centauro commander hatch open, rider beside it: driver refused (not its seat), commander boarded; turn out
+     * (mg_r) then back in => commander again, hatch closed.
+     */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    public static void aRoofHatchLeadsToItsSeatsAndTurningInClosesIt(GameTestHelper helper) {
+        AbstractVehicle centauro = spawn(helper, "centauro");
+        if (centauro == null) {
+            return;
+        }
+        SwitchableUnit<?> hatch = switchable(centauro, "commander_hatch");
+        Vec3 frame = hatch.worldPosition(hatch.getPivotOffset());
+        ArmorStand rider = stand(helper, frame.subtract(0, 1.5, 0));
+        String[] state = new String[1];
+        helper.startSequence()
+                .thenIdle(3)
+                .thenExecute(() -> {
+                    hatch.setOn(true);
+                    for (int t = 0; t < 40; t++) {
+                        centauro.clipTracks().tick();
+                    }
+                    boolean driver = centauro.board(rider, seatIndex(centauro, "driver"));
+                    boolean commander = centauro.board(rider, seatIndex(centauro, "commander"));
+                    boolean out = centauro.changeSeat(rider, seatIndex(centauro, "mg_r"));
+                    String outSeat = seatOf(centauro, rider);
+                    boolean in = centauro.changeSeat(rider, seatIndex(centauro, "commander"));
+                    state[0] = "driver " + driver + ", commander " + commander + ", out " + out + " -> " + outSeat + ", in " + in
+                            + " -> " + seatOf(centauro, rider) + ", hatch on " + hatch.isOn();
+                    helper.assertTrue(!driver && commander && out && "mg_r".equals(outSeat) && in
+                            && "commander".equals(seatOf(centauro, rider)) && !hatch.isOn(), state[0]);
+                })
+                .thenExecute(() -> {
+                    centauro.discard();
+                    rider.discard();
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
+    public static void m1a2CrewBoardsThroughItsHatches(GameTestHelper helper) {
+        crewThroughHatches(helper, "m1a2");
+    }
+
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
+    public static void t90CrewBoardsThroughItsHatches(GameTestHelper helper) {
+        crewThroughHatches(helper, "t90");
+    }
+
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
+    public static void t84CrewBoardsThroughItsHatches(GameTestHelper helper) {
+        crewThroughHatches(helper, "t84");
+    }
+
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
+    public static void merkavaCrewBoardsThroughItsHatches(GameTestHelper helper) {
+        crewThroughHatches(helper, "merkava");
+    }
+
+    /**
+     * Every seat: some entry leads to it; rider at that entry's frame boards it; a {@code turn_out} seat goes out
+     * (hatch seat) and back in, hatch closed after.
+     */
+    private static void crewThroughHatches(GameTestHelper helper, String id) {
+        AbstractVehicle vehicle = spawn(helper, id);
+        if (vehicle == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenIdle(3)
+                .thenExecute(() -> {
+                    StringBuilder log = new StringBuilder();
+                    boolean ok = true;
+                    for (AbstractVehicle.Seat seat : vehicle.seats) {
+                        SwitchableUnit<?> own = seat.partUnit.hatch() != null ? seat.partUnit.hatch()
+                                : seat.partUnit.turnOut() != null ? seat.partUnit.turnOut().hatch() : null;
+                        SwitchableUnit<?> entry = vehicle.entries().stream().filter(e -> vehicle.serves(e, seat))
+                                .min(java.util.Comparator.comparingInt(e -> e == own ? 0 : 1)).orElse(null);
+                        if (entry == null) {
+                            log.append(seat.partUnit.getId()).append(": no entry; ");
+                            ok = false;
+                            continue;
+                        }
+                        vehicle.entries().forEach(e -> e.setOn(e == entry));
+                        for (int t = 0; t < 60; t++) {
+                            vehicle.clipTracks().tick();
+                        }
+                        ArmorStand rider = stand(helper, entry.worldPosition(entry.getPivotOffset()).subtract(0, 1.5, 0));
+                        boolean boarded = vehicle.board(rider, seat.seatIndex) && seat.partUnit.getId().equals(seatOf(vehicle, rider));
+                        String trip = "";
+                        PartUnit<?> out = seat.partUnit.turnOut();
+                        if (boarded && out != null) {
+                            boolean wentOut = vehicle.changeSeat(rider, seatIndex(vehicle, out.getId())) && out.getId().equals(seatOf(vehicle, rider));
+                            boolean cameIn = vehicle.changeSeat(rider, seat.seatIndex) && seat.partUnit.getId().equals(seatOf(vehicle, rider));
+                            boolean closed = !out.hatch().isOn();
+                            trip = " out " + wentOut + " in " + cameIn + " closed " + closed;
+                            ok &= wentOut && cameIn && closed;
+                        }
+                        log.append(seat.partUnit.getId()).append(" via ").append(entry.getId()).append(": ").append(boarded).append(trip).append("; ");
+                        ok &= boarded;
+                        rider.stopRiding();
+                        rider.discard();
+                    }
+                    helper.assertTrue(ok, log.toString());
+                })
+                .thenExecute(vehicle::discard)
+                .thenSucceed();
+    }
+
+    /** Centauro commander rides the turret frame: turret yawed 90 deg => seat swung 90 deg about the turret pivot. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    public static void aTurretSeatTurnsWithTheTurret(GameTestHelper helper) {
+        AbstractVehicle centauro = spawn(helper, "centauro");
+        if (centauro == null) {
+            return;
+        }
+        PartUnit<?> commander = centauro.getPartUnit("commander").orElseThrow();
+        VehicleCubeGroup turret = centauro.getPartUnit("turret").orElseThrow().getStructureGroup();
+        helper.startSequence()
+                .thenIdle(3)
+                .thenExecute(() -> {
+                    Vec3 seat = commander.getSeatOffset();
+                    Quaternionf hull = centauro.rotYXZ().invert();
+                    Vec3 centre = centauro.position().add(centauro.centerOffset);
+                    java.util.function.Function<Vec3, Vec3> local = w -> new Vec3(hull.transform(w.subtract(centre).toVector3f()));
+                    Vec3 before = local.apply(commander.worldPosition(seat));
+                    Quaternionf rest = new Quaternionf(turret.rotation);
+                    turret.rotation.rotateY((float) Math.toRadians(90));
+                    Vec3 after = local.apply(commander.worldPosition(seat));
+                    turret.rotation.set(rest);
+                    Vec3 pivot = turret.globalTransform().offset().subtract(centauro.centerOffset);
+                    double r0 = Math.hypot(before.x - pivot.x, before.z - pivot.z);
+                    double r1 = Math.hypot(after.x - pivot.x, after.z - pivot.z);
+                    double turned = Math.toDegrees(Math.atan2(after.x - pivot.x, after.z - pivot.z)
+                            - Math.atan2(before.x - pivot.x, before.z - pivot.z));
+                    turned = ((turned % 360) + 540) % 360 - 180;
+                    helper.assertTrue(Math.abs(r0 - r1) < 1e-3 && Math.abs(Math.abs(turned) - 90) < 1 && r0 > 0.2,
+                            "before " + before + " after " + after + " pivot " + pivot + " turned " + turned);
+                })
+                .thenExecute(centauro::discard)
+                .thenSucceed();
+    }
+
+    private static SwitchableUnit<?> switchable(AbstractVehicle vehicle, String id) {
+        return vehicle.getPartUnits().stream().filter(part -> part.getId().equals(id)).map(part -> (SwitchableUnit<?>) part)
+                .findFirst().orElseThrow();
+    }
+
+    private static int seatIndex(AbstractVehicle vehicle, String id) {
+        return vehicle.seats.stream().filter(seat -> seat.partUnit.getId().equals(id)).findFirst().orElseThrow().seatIndex;
+    }
+
+    private static ArmorStand stand(GameTestHelper helper, Vec3 at) {
+        ArmorStand stand = new ArmorStand(helper.getLevel(), at.x, at.y, at.z);
+        stand.setInvulnerable(true);
+        helper.getLevel().addFreshEntity(stand);
+        return stand;
     }
 
     private static int roofSeat(AbstractVehicle vehicle) {

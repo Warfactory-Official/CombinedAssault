@@ -42,7 +42,8 @@ public final class MountDefaults {
     private static final float WELD = 1.0e-4f;
     /** Node-only def keys -> socket role. */
     private static final Map<String, String> NODE_ONLY_PART = Map.of("seat_offset", "seat", "seat_rot", "seat",
-            "owner_view_offset", "view", "operator_view_offset", "view", "optical_sight_offset", "sight");
+            "owner_view_offset", "view", "operator_view_offset", "view", "optical_sight_offset", "sight", "periscope_offset", "sight",
+            "ride_frame", "seat");
     private static final Map<String, String> NODE_ONLY_VIEW = Map.of("third_person_center_offset", "camera",
             "third_person_center_offset_zoomed", "camera_zoomed");
 
@@ -122,6 +123,11 @@ public final class MountDefaults {
                 } else {
                     put(part, "seat_offset", vec(origin), target + ".seat_offset");
                     put(part, "seat_rot", angle(euler(mount.rotation())[0]), target + ".seat_rot");
+                    ModelRig.Frame frame = mounts.rig().frames().get(mounts.rig().nodeFrame()[mount.node()]);
+                    if (frame.node() != mounts.rig().frames().get(ModelRig.BODY).node() && !target.equals(frame.part())
+                            && mounts.partFrame(target, false) < 0) {
+                        put(part, "ride_frame", new JsonPrimitive(frame.name()), target + ".ride_frame");
+                    }
                 }
             }
             case "dismount" -> put(part(mount, target), "dismount_offset", vec(origin), target + ".dismount_offset");
@@ -134,10 +140,14 @@ public final class MountDefaults {
                 }
             }
             case "sight", "sight_lens" -> {
-                if (!weapon(part(mount, target))) {
+                JsonObject part = part(mount, target);
+                if (field.equals("sight") && mount.kit() == null && !weapon(part)) {
+                    put(part, "periscope_offset", vec(origin), target + ".periscope_offset");
+                } else if (!weapon(part)) {
                     throw fail(mount, field + " on part " + target + ", which is not a weapon");
+                } else {
+                    relative.add(new Relative(target, field, 0, mount));
                 }
-                relative.add(new Relative(target, field, 0, mount));
             }
             case "bolt" -> bolt(mount, target);
             case "eject" -> eject(mount, target);

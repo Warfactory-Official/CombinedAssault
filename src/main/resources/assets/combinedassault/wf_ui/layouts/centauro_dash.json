@@ -1,0 +1,1483 @@
+{
+ "scaling": "absolute",
+ "size": [
+  184,
+  100
+ ],
+ "use": [
+  "combinedassault:hud"
+ ],
+ "constants": {
+  "panel": "#ff20231c",
+  "plate": "#ff2b2f25",
+  "bezel": "#ff4a4c40",
+  "face": "#ff0c0c0c",
+  "lamp_bg": "#ff151515",
+  "lamp_off": "#ff333333",
+  "lcd": "#ff1a2414",
+  "lcd_on": "#ff8cff6a",
+  "needle": "#fff2f2e6",
+  "green": "#ff30e050",
+  "lit": "dash.engine_on",
+  "speed_angle": "225 - min(dash.speed, 120) / 120 * 270",
+  "rpm_angle": "225 - min(dash.rpm, 3000) / 3000 * 270",
+  "redline": "225 - dash.max_rpm / 3000 * 270",
+  "oil": "1.2 + 3.6 * dash.rpm / dash.max_rpm",
+  "air": "7.8",
+  "coolant": "85"
+ },
+ "root": {
+  "type": "stack",
+  "children": [
+   {
+    "type": "rect",
+    "w": 184,
+    "h": 100,
+    "color": "$panel"
+   },
+   {
+    "type": "place",
+    "x": 2,
+    "y": 2,
+    "child": {
+     "type": "rect",
+     "w": 180,
+     "h": 96,
+     "color": "$plate"
+    }
+   },
+   {
+    "type": "place",
+    "x": 30,
+    "y": 38,
+    "child": {
+     "type": "poly",
+     "points": [
+      28.0,
+      0.0,
+      27.05,
+      7.25,
+      24.25,
+      14.0,
+      19.8,
+      19.8,
+      14.0,
+      24.25,
+      7.25,
+      27.05,
+      0.0,
+      28.0,
+      -7.25,
+      27.05,
+      -14.0,
+      24.25,
+      -19.8,
+      19.8,
+      -24.25,
+      14.0,
+      -27.05,
+      7.25,
+      -28.0,
+      0.0,
+      -27.05,
+      -7.25,
+      -24.25,
+      -14.0,
+      -19.8,
+      -19.8,
+      -14.0,
+      -24.25,
+      -7.25,
+      -27.05,
+      -0.0,
+      -28.0,
+      7.25,
+      -27.05,
+      14.0,
+      -24.25,
+      19.8,
+      -19.8,
+      24.25,
+      -14.0,
+      27.05,
+      -7.25
+     ],
+     "color": "$bezel"
+    }
+   },
+   {
+    "type": "place",
+    "x": 30,
+    "y": 38,
+    "child": {
+     "type": "poly",
+     "points": [
+      26.0,
+      0.0,
+      25.11,
+      6.73,
+      22.52,
+      13.0,
+      18.38,
+      18.38,
+      13.0,
+      22.52,
+      6.73,
+      25.11,
+      0.0,
+      26.0,
+      -6.73,
+      25.11,
+      -13.0,
+      22.52,
+      -18.38,
+      18.38,
+      -22.52,
+      13.0,
+      -25.11,
+      6.73,
+      -26.0,
+      0.0,
+      -25.11,
+      -6.73,
+      -22.52,
+      -13.0,
+      -18.38,
+      -18.38,
+      -13.0,
+      -22.52,
+      -6.73,
+      -25.11,
+      -0.0,
+      -26.0,
+      6.73,
+      -25.11,
+      13.0,
+      -22.52,
+      18.38,
+      -18.38,
+      22.52,
+      -13.0,
+      25.11,
+      -6.73
+     ],
+     "color": "$face"
+    }
+   },
+   {
+    "type": "place",
+    "x": 154,
+    "y": 38,
+    "child": {
+     "type": "poly",
+     "points": [
+      28.0,
+      0.0,
+      27.05,
+      7.25,
+      24.25,
+      14.0,
+      19.8,
+      19.8,
+      14.0,
+      24.25,
+      7.25,
+      27.05,
+      0.0,
+      28.0,
+      -7.25,
+      27.05,
+      -14.0,
+      24.25,
+      -19.8,
+      19.8,
+      -24.25,
+      14.0,
+      -27.05,
+      7.25,
+      -28.0,
+      0.0,
+      -27.05,
+      -7.25,
+      -24.25,
+      -14.0,
+      -19.8,
+      -19.8,
+      -14.0,
+      -24.25,
+      -7.25,
+      -27.05,
+      -0.0,
+      -28.0,
+      7.25,
+      -27.05,
+      14.0,
+      -24.25,
+      19.8,
+      -19.8,
+      24.25,
+      -14.0,
+      27.05,
+      -7.25
+     ],
+     "color": "$bezel"
+    }
+   },
+   {
+    "type": "place",
+    "x": 154,
+    "y": 38,
+    "child": {
+     "type": "poly",
+     "points": [
+      26.0,
+      0.0,
+      25.11,
+      6.73,
+      22.52,
+      13.0,
+      18.38,
+      18.38,
+      13.0,
+      22.52,
+      6.73,
+      25.11,
+      0.0,
+      26.0,
+      -6.73,
+      25.11,
+      -13.0,
+      22.52,
+      -18.38,
+      18.38,
+      -22.52,
+      13.0,
+      -25.11,
+      6.73,
+      -26.0,
+      0.0,
+      -25.11,
+      -6.73,
+      -22.52,
+      -13.0,
+      -18.38,
+      -18.38,
+      -13.0,
+      -22.52,
+      -6.73,
+      -25.11,
+      -0.0,
+      -26.0,
+      6.73,
+      -25.11,
+      13.0,
+      -22.52,
+      18.38,
+      -18.38,
+      22.52,
+      -13.0,
+      25.11,
+      -6.73
+     ],
+     "color": "$face"
+    }
+   },
+   {
+    "type": "place",
+    "x": 30,
+    "y": 38,
+    "child": {
+     "type": "dial",
+     "radius": 24,
+     "from": -45,
+     "to": 225,
+     "minor_step": 9,
+     "minor_color": "$scale",
+     "major_step": 45,
+     "major_length": 3,
+     "major_color": "$label",
+     "accent_step": 0,
+     "accent_color": "$label",
+     "band_from": "-45",
+     "band_to": "-45",
+     "band_offset": -2,
+     "band_size": 1.5,
+     "band_color": "#00000000",
+     "needles": [
+      {
+       "value": "$lit ? $speed_angle : 225",
+       "inner": 2,
+       "outer": 22,
+       "size": 1.5,
+       "color": "$needle"
+      }
+     ]
+    }
+   },
+   {
+    "type": "place",
+    "x": 18.69,
+    "y": 49.31,
+    "child": {
+     "type": "text",
+     "text": "0",
+     "color": "$label",
+     "scale": "0.4"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 14.0,
+    "y": 38.0,
+    "child": {
+     "type": "text",
+     "text": "20",
+     "color": "$label",
+     "scale": "0.4"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 18.69,
+    "y": 26.69,
+    "child": {
+     "type": "text",
+     "text": "40",
+     "color": "$label",
+     "scale": "0.4"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 30.0,
+    "y": 22.0,
+    "child": {
+     "type": "text",
+     "text": "60",
+     "color": "$label",
+     "scale": "0.4"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 41.31,
+    "y": 26.69,
+    "child": {
+     "type": "text",
+     "text": "80",
+     "color": "$label",
+     "scale": "0.4"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 46.0,
+    "y": 38.0,
+    "child": {
+     "type": "text",
+     "text": "100",
+     "color": "$label",
+     "scale": "0.4"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 41.31,
+    "y": 49.31,
+    "child": {
+     "type": "text",
+     "text": "120",
+     "color": "$label",
+     "scale": "0.4"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 30,
+    "y": 47,
+    "child": {
+     "type": "text",
+     "text": "km/h",
+     "color": "$scale",
+     "scale": "0.4"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 30,
+    "y": 56,
+    "child": {
+     "type": "text",
+     "text": "{round(dash.speed)}",
+     "color": "$lit ? $white : $lamp_off",
+     "scale": "0.55"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 154,
+    "y": 38,
+    "child": {
+     "type": "dial",
+     "radius": 24,
+     "from": -45,
+     "to": 225,
+     "minor_step": 9,
+     "minor_color": "$scale",
+     "major_step": 27,
+     "major_length": 3,
+     "major_color": "$label",
+     "accent_step": 0,
+     "accent_color": "$label",
+     "band_from": "-45",
+     "band_to": "$redline",
+     "band_offset": -2,
+     "band_size": 1.5,
+     "band_color": "$red",
+     "needles": [
+      {
+       "value": "$lit ? $rpm_angle : 225",
+       "inner": 2,
+       "outer": 22,
+       "size": 1.5,
+       "color": "$needle"
+      }
+     ]
+    }
+   },
+   {
+    "type": "place",
+    "x": 142.69,
+    "y": 49.31,
+    "child": {
+     "type": "text",
+     "text": "0",
+     "color": "$label",
+     "scale": "0.4"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 138.0,
+    "y": 38.0,
+    "child": {
+     "type": "text",
+     "text": "5",
+     "color": "$label",
+     "scale": "0.4"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 142.69,
+    "y": 26.69,
+    "child": {
+     "type": "text",
+     "text": "10",
+     "color": "$label",
+     "scale": "0.4"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 154.0,
+    "y": 22.0,
+    "child": {
+     "type": "text",
+     "text": "15",
+     "color": "$label",
+     "scale": "0.4"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 165.31,
+    "y": 26.69,
+    "child": {
+     "type": "text",
+     "text": "20",
+     "color": "$label",
+     "scale": "0.4"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 170.0,
+    "y": 38.0,
+    "child": {
+     "type": "text",
+     "text": "25",
+     "color": "$label",
+     "scale": "0.4"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 165.31,
+    "y": 49.31,
+    "child": {
+     "type": "text",
+     "text": "30",
+     "color": "$label",
+     "scale": "0.4"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 154,
+    "y": 47,
+    "child": {
+     "type": "text",
+     "text": "x100",
+     "color": "$scale",
+     "scale": "0.4"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 76,
+    "y": 20,
+    "child": {
+     "type": "poly",
+     "points": [
+      14.0,
+      0.0,
+      13.52,
+      3.62,
+      12.12,
+      7.0,
+      9.9,
+      9.9,
+      7.0,
+      12.12,
+      3.62,
+      13.52,
+      0.0,
+      14.0,
+      -3.62,
+      13.52,
+      -7.0,
+      12.12,
+      -9.9,
+      9.9,
+      -12.12,
+      7.0,
+      -13.52,
+      3.62,
+      -14.0,
+      0.0,
+      -13.52,
+      -3.62,
+      -12.12,
+      -7.0,
+      -9.9,
+      -9.9,
+      -7.0,
+      -12.12,
+      -3.62,
+      -13.52,
+      -0.0,
+      -14.0,
+      3.62,
+      -13.52,
+      7.0,
+      -12.12,
+      9.9,
+      -9.9,
+      12.12,
+      -7.0,
+      13.52,
+      -3.62
+     ],
+     "color": "$bezel"
+    }
+   },
+   {
+    "type": "place",
+    "x": 76,
+    "y": 20,
+    "child": {
+     "type": "poly",
+     "points": [
+      12.0,
+      0.0,
+      11.59,
+      3.11,
+      10.39,
+      6.0,
+      8.49,
+      8.49,
+      6.0,
+      10.39,
+      3.11,
+      11.59,
+      0.0,
+      12.0,
+      -3.11,
+      11.59,
+      -6.0,
+      10.39,
+      -8.49,
+      8.49,
+      -10.39,
+      6.0,
+      -11.59,
+      3.11,
+      -12.0,
+      0.0,
+      -11.59,
+      -3.11,
+      -10.39,
+      -6.0,
+      -8.49,
+      -8.49,
+      -6.0,
+      -10.39,
+      -3.11,
+      -11.59,
+      -0.0,
+      -12.0,
+      3.11,
+      -11.59,
+      6.0,
+      -10.39,
+      8.49,
+      -8.49,
+      10.39,
+      -6.0,
+      11.59,
+      -3.11
+     ],
+     "color": "$face"
+    }
+   },
+   {
+    "type": "place",
+    "x": 76,
+    "y": 20,
+    "child": {
+     "type": "dial",
+     "radius": 11,
+     "from": 0,
+     "to": 180,
+     "minor_step": 22.5,
+     "minor_color": "$scale",
+     "major_step": 90,
+     "major_length": 2,
+     "major_color": "$label",
+     "accent_step": 0,
+     "accent_color": "$label",
+     "band_from": "135",
+     "band_to": "180",
+     "band_offset": -2,
+     "band_size": 1.5,
+     "band_color": "$red",
+     "needles": [
+      {
+       "value": "$lit ? 180 - dash.fuel * 180 : 180",
+       "inner": 2,
+       "outer": 9,
+       "size": 1,
+       "color": "$needle"
+      }
+     ]
+    }
+   },
+   {
+    "type": "place",
+    "x": 76,
+    "y": 25,
+    "child": {
+     "type": "text",
+     "text": "FUEL",
+     "color": "$scale",
+     "scale": "0.35"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 67,
+    "y": 23,
+    "child": {
+     "type": "text",
+     "text": "E",
+     "color": "$scale",
+     "scale": "0.3"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 85,
+    "y": 23,
+    "child": {
+     "type": "text",
+     "text": "F",
+     "color": "$scale",
+     "scale": "0.3"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 108,
+    "y": 20,
+    "child": {
+     "type": "poly",
+     "points": [
+      14.0,
+      0.0,
+      13.52,
+      3.62,
+      12.12,
+      7.0,
+      9.9,
+      9.9,
+      7.0,
+      12.12,
+      3.62,
+      13.52,
+      0.0,
+      14.0,
+      -3.62,
+      13.52,
+      -7.0,
+      12.12,
+      -9.9,
+      9.9,
+      -12.12,
+      7.0,
+      -13.52,
+      3.62,
+      -14.0,
+      0.0,
+      -13.52,
+      -3.62,
+      -12.12,
+      -7.0,
+      -9.9,
+      -9.9,
+      -7.0,
+      -12.12,
+      -3.62,
+      -13.52,
+      -0.0,
+      -14.0,
+      3.62,
+      -13.52,
+      7.0,
+      -12.12,
+      9.9,
+      -9.9,
+      12.12,
+      -7.0,
+      13.52,
+      -3.62
+     ],
+     "color": "$bezel"
+    }
+   },
+   {
+    "type": "place",
+    "x": 108,
+    "y": 20,
+    "child": {
+     "type": "poly",
+     "points": [
+      12.0,
+      0.0,
+      11.59,
+      3.11,
+      10.39,
+      6.0,
+      8.49,
+      8.49,
+      6.0,
+      10.39,
+      3.11,
+      11.59,
+      0.0,
+      12.0,
+      -3.11,
+      11.59,
+      -6.0,
+      10.39,
+      -8.49,
+      8.49,
+      -10.39,
+      6.0,
+      -11.59,
+      3.11,
+      -12.0,
+      0.0,
+      -11.59,
+      -3.11,
+      -10.39,
+      -6.0,
+      -8.49,
+      -8.49,
+      -6.0,
+      -10.39,
+      -3.11,
+      -11.59,
+      -0.0,
+      -12.0,
+      3.11,
+      -11.59,
+      6.0,
+      -10.39,
+      8.49,
+      -8.49,
+      10.39,
+      -6.0,
+      11.59,
+      -3.11
+     ],
+     "color": "$face"
+    }
+   },
+   {
+    "type": "place",
+    "x": 108,
+    "y": 20,
+    "child": {
+     "type": "dial",
+     "radius": 11,
+     "from": 0,
+     "to": 180,
+     "minor_step": 22.5,
+     "minor_color": "$scale",
+     "major_step": 90,
+     "major_length": 2,
+     "major_color": "$label",
+     "accent_step": 0,
+     "accent_color": "$label",
+     "band_from": "153",
+     "band_to": "180",
+     "band_offset": -2,
+     "band_size": 1.5,
+     "band_color": "$red",
+     "needles": [
+      {
+       "value": "$lit ? 180 - min($air, 10) / 10 * 180 : 180",
+       "inner": 2,
+       "outer": 9,
+       "size": 1,
+       "color": "$needle"
+      }
+     ]
+    }
+   },
+   {
+    "type": "place",
+    "x": 108,
+    "y": 25,
+    "child": {
+     "type": "text",
+     "text": "BAR",
+     "color": "$scale",
+     "scale": "0.35"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 99,
+    "y": 23,
+    "child": {
+     "type": "text",
+     "text": "0",
+     "color": "$scale",
+     "scale": "0.3"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 117,
+    "y": 23,
+    "child": {
+     "type": "text",
+     "text": "10",
+     "color": "$scale",
+     "scale": "0.3"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 76,
+    "y": 52,
+    "child": {
+     "type": "poly",
+     "points": [
+      14.0,
+      0.0,
+      13.52,
+      3.62,
+      12.12,
+      7.0,
+      9.9,
+      9.9,
+      7.0,
+      12.12,
+      3.62,
+      13.52,
+      0.0,
+      14.0,
+      -3.62,
+      13.52,
+      -7.0,
+      12.12,
+      -9.9,
+      9.9,
+      -12.12,
+      7.0,
+      -13.52,
+      3.62,
+      -14.0,
+      0.0,
+      -13.52,
+      -3.62,
+      -12.12,
+      -7.0,
+      -9.9,
+      -9.9,
+      -7.0,
+      -12.12,
+      -3.62,
+      -13.52,
+      -0.0,
+      -14.0,
+      3.62,
+      -13.52,
+      7.0,
+      -12.12,
+      9.9,
+      -9.9,
+      12.12,
+      -7.0,
+      13.52,
+      -3.62
+     ],
+     "color": "$bezel"
+    }
+   },
+   {
+    "type": "place",
+    "x": 76,
+    "y": 52,
+    "child": {
+     "type": "poly",
+     "points": [
+      12.0,
+      0.0,
+      11.59,
+      3.11,
+      10.39,
+      6.0,
+      8.49,
+      8.49,
+      6.0,
+      10.39,
+      3.11,
+      11.59,
+      0.0,
+      12.0,
+      -3.11,
+      11.59,
+      -6.0,
+      10.39,
+      -8.49,
+      8.49,
+      -10.39,
+      6.0,
+      -11.59,
+      3.11,
+      -12.0,
+      0.0,
+      -11.59,
+      -3.11,
+      -10.39,
+      -6.0,
+      -8.49,
+      -8.49,
+      -6.0,
+      -10.39,
+      -3.11,
+      -11.59,
+      -0.0,
+      -12.0,
+      3.11,
+      -11.59,
+      6.0,
+      -10.39,
+      8.49,
+      -8.49,
+      10.39,
+      -6.0,
+      11.59,
+      -3.11
+     ],
+     "color": "$face"
+    }
+   },
+   {
+    "type": "place",
+    "x": 76,
+    "y": 52,
+    "child": {
+     "type": "dial",
+     "radius": 11,
+     "from": 0,
+     "to": 180,
+     "minor_step": 22.5,
+     "minor_color": "$scale",
+     "major_step": 90,
+     "major_length": 2,
+     "major_color": "$label",
+     "accent_step": 0,
+     "accent_color": "$label",
+     "band_from": "150",
+     "band_to": "180",
+     "band_offset": -2,
+     "band_size": 1.5,
+     "band_color": "$red",
+     "needles": [
+      {
+       "value": "$lit ? 180 - min($oil, 6) / 6 * 180 : 180",
+       "inner": 2,
+       "outer": 9,
+       "size": 1,
+       "color": "$needle"
+      }
+     ]
+    }
+   },
+   {
+    "type": "place",
+    "x": 76,
+    "y": 57,
+    "child": {
+     "type": "text",
+     "text": "OIL",
+     "color": "$scale",
+     "scale": "0.35"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 67,
+    "y": 55,
+    "child": {
+     "type": "text",
+     "text": "0",
+     "color": "$scale",
+     "scale": "0.3"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 85,
+    "y": 55,
+    "child": {
+     "type": "text",
+     "text": "6",
+     "color": "$scale",
+     "scale": "0.3"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 108,
+    "y": 52,
+    "child": {
+     "type": "poly",
+     "points": [
+      14.0,
+      0.0,
+      13.52,
+      3.62,
+      12.12,
+      7.0,
+      9.9,
+      9.9,
+      7.0,
+      12.12,
+      3.62,
+      13.52,
+      0.0,
+      14.0,
+      -3.62,
+      13.52,
+      -7.0,
+      12.12,
+      -9.9,
+      9.9,
+      -12.12,
+      7.0,
+      -13.52,
+      3.62,
+      -14.0,
+      0.0,
+      -13.52,
+      -3.62,
+      -12.12,
+      -7.0,
+      -9.9,
+      -9.9,
+      -7.0,
+      -12.12,
+      -3.62,
+      -13.52,
+      -0.0,
+      -14.0,
+      3.62,
+      -13.52,
+      7.0,
+      -12.12,
+      9.9,
+      -9.9,
+      12.12,
+      -7.0,
+      13.52,
+      -3.62
+     ],
+     "color": "$bezel"
+    }
+   },
+   {
+    "type": "place",
+    "x": 108,
+    "y": 52,
+    "child": {
+     "type": "poly",
+     "points": [
+      12.0,
+      0.0,
+      11.59,
+      3.11,
+      10.39,
+      6.0,
+      8.49,
+      8.49,
+      6.0,
+      10.39,
+      3.11,
+      11.59,
+      0.0,
+      12.0,
+      -3.11,
+      11.59,
+      -6.0,
+      10.39,
+      -8.49,
+      8.49,
+      -10.39,
+      6.0,
+      -11.59,
+      3.11,
+      -12.0,
+      0.0,
+      -11.59,
+      -3.11,
+      -10.39,
+      -6.0,
+      -8.49,
+      -8.49,
+      -6.0,
+      -10.39,
+      -3.11,
+      -11.59,
+      -0.0,
+      -12.0,
+      3.11,
+      -11.59,
+      6.0,
+      -10.39,
+      8.49,
+      -8.49,
+      10.39,
+      -6.0,
+      11.59,
+      -3.11
+     ],
+     "color": "$face"
+    }
+   },
+   {
+    "type": "place",
+    "x": 108,
+    "y": 52,
+    "child": {
+     "type": "dial",
+     "radius": 11,
+     "from": 0,
+     "to": 180,
+     "minor_step": 22.5,
+     "minor_color": "$scale",
+     "major_step": 90,
+     "major_length": 2,
+     "major_color": "$label",
+     "accent_step": 0,
+     "accent_color": "$label",
+     "band_from": "0",
+     "band_to": "34",
+     "band_offset": -2,
+     "band_size": 1.5,
+     "band_color": "$red",
+     "needles": [
+      {
+       "value": "$lit ? 180 - ($coolant - 40) / 80 * 180 : 180",
+       "inner": 2,
+       "outer": 9,
+       "size": 1,
+       "color": "$needle"
+      }
+     ]
+    }
+   },
+   {
+    "type": "place",
+    "x": 108,
+    "y": 57,
+    "child": {
+     "type": "text",
+     "text": "°C",
+     "color": "$scale",
+     "scale": "0.35"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 99,
+    "y": 55,
+    "child": {
+     "type": "text",
+     "text": "40",
+     "color": "$scale",
+     "scale": "0.3"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 117,
+    "y": 55,
+    "child": {
+     "type": "text",
+     "text": "120",
+     "color": "$scale",
+     "scale": "0.3"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 7,
+    "y": 77,
+    "child": {
+     "type": "rect",
+     "w": 14,
+     "h": 9,
+     "color": "$lamp_bg"
+    }
+   },
+   {
+    "type": "place",
+    "x": 14,
+    "y": 81.5,
+    "child": {
+     "type": "text",
+     "text": "ENG",
+     "color": "$lit && dash.check_engine ? $amber : $lamp_off",
+     "scale": "0.38"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 23,
+    "y": 77,
+    "child": {
+     "type": "rect",
+     "w": 14,
+     "h": 9,
+     "color": "$lamp_bg"
+    }
+   },
+   {
+    "type": "place",
+    "x": 30,
+    "y": 81.5,
+    "child": {
+     "type": "text",
+     "text": "CTIS",
+     "color": "$lit && dash.check_tires ? $amber : $lamp_off",
+     "scale": "0.38"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 39,
+    "y": 77,
+    "child": {
+     "type": "rect",
+     "w": 14,
+     "h": 9,
+     "color": "$lamp_bg"
+    }
+   },
+   {
+    "type": "place",
+    "x": 46,
+    "y": 81.5,
+    "child": {
+     "type": "text",
+     "text": "P-BRK",
+     "color": "$lit && dash.handbrake ? $red : $lamp_off",
+     "scale": "0.38"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 55,
+    "y": 77,
+    "child": {
+     "type": "rect",
+     "w": 14,
+     "h": 9,
+     "color": "$lamp_bg"
+    }
+   },
+   {
+    "type": "place",
+    "x": 62,
+    "y": 81.5,
+    "child": {
+     "type": "text",
+     "text": "CHG",
+     "color": "dash.engine_on ? $lamp_off : $red",
+     "scale": "0.38"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 71,
+    "y": 77,
+    "child": {
+     "type": "rect",
+     "w": 14,
+     "h": 9,
+     "color": "$lamp_bg"
+    }
+   },
+   {
+    "type": "place",
+    "x": 78,
+    "y": 81.5,
+    "child": {
+     "type": "text",
+     "text": "NBC",
+     "color": "$lamp_off",
+     "scale": "0.38"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 87,
+    "y": 77,
+    "child": {
+     "type": "rect",
+     "w": 14,
+     "h": 9,
+     "color": "$lamp_bg"
+    }
+   },
+   {
+    "type": "place",
+    "x": 94,
+    "y": 81.5,
+    "child": {
+     "type": "text",
+     "text": "ON",
+     "color": "$lit ? $green : $lamp_off",
+     "scale": "0.38"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 116,
+    "y": 74,
+    "child": {
+     "type": "rect",
+     "w": 56,
+     "h": 15,
+     "color": "$bezel"
+    }
+   },
+   {
+    "type": "place",
+    "x": 118,
+    "y": 76,
+    "child": {
+     "type": "rect",
+     "w": 52,
+     "h": 11,
+     "color": "$lcd"
+    }
+   },
+   {
+    "type": "place",
+    "x": 130,
+    "y": 81.5,
+    "child": {
+     "type": "text",
+     "text": "GEAR",
+     "color": "$lit ? $lcd_on : $lamp_off",
+     "scale": "0.4"
+    },
+    "pivot": "center"
+   },
+   {
+    "type": "place",
+    "x": 156,
+    "y": 81.5,
+    "child": {
+     "type": "text",
+     "text": "{dash.gear}",
+     "color": "$lit ? $lcd_on : $lamp_off",
+     "scale": "0.8"
+    },
+    "pivot": "center"
+   }
+  ]
+ }
+}

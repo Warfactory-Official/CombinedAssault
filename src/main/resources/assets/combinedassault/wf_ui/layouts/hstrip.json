@@ -1,0 +1,130 @@
+{
+ "scaling": "absolute",
+ "size": [
+  56,
+  122
+ ],
+ "use": [
+  "combinedassault:hud"
+ ],
+ "constants": {
+  "bg": "#ff000000",
+  "fg": "#ff52f06a",
+  "dim": "#ff1f7a30",
+  "warn": "#ffffb02e",
+  "alarm": "#ffff4a3a",
+  "cyan": "#ff46c8ff",
+  "inv": "#ff000000"
+ },
+ "root": {
+  "type": "stack",
+  "children": [
+   {
+    "type": "rect",
+    "w": 56,
+    "h": 122,
+    "color": "$bg"
+   },
+   {
+    "type": "place",
+    "x": 28,
+    "y": 3,
+    "child": {
+     "type": "text",
+     "text": "ENG",
+     "color": "$dim",
+     "scale": 0.85
+    },
+    "pivot": "top"
+   },
+   {
+    "type": "place",
+    "x": 10,
+    "y": 16,
+    "child": {
+     "type": "bar",
+     "w": 12,
+     "h": 70,
+     "value": "min(rotary.rpm, 110) / 110",
+     "fill": "rotary.rpm > 100 ? $warn : $fg",
+     "back": "#ff0c2a12",
+     "direction": "up"
+    }
+   },
+   {
+    "type": "place",
+    "x": 34,
+    "y": 16,
+    "child": {
+     "type": "bar",
+     "w": 12,
+     "h": 70,
+     "value": "vehicle.fuel / 100",
+     "fill": "vehicle.fuel < 15 ? $alarm : $fg",
+     "back": "#ff0c2a12",
+     "direction": "up"
+    }
+   },
+   {
+    "type": "place",
+    "x": 16,
+    "y": 90,
+    "child": {
+     "type": "text",
+     "text": "NR",
+     "color": "$dim",
+     "scale": 0.7
+    },
+    "pivot": "top"
+   },
+   {
+    "type": "place",
+    "x": 40,
+    "y": 90,
+    "child": {
+     "type": "text",
+     "text": "FU",
+     "color": "$dim",
+     "scale": 0.7
+    },
+    "pivot": "top"
+   },
+   {
+    "type": "place",
+    "x": 16,
+    "y": 100,
+    "child": {
+     "type": "text",
+     "text": "{trunc(rotary.rpm)}",
+     "color": "$fg",
+     "scale": 0.75
+    },
+    "pivot": "top"
+   },
+   {
+    "type": "place",
+    "x": 40,
+    "y": 100,
+    "child": {
+     "type": "text",
+     "text": "{trunc(vehicle.fuel)}",
+     "color": "$fg",
+     "scale": 0.75
+    },
+    "pivot": "top"
+   },
+   {
+    "type": "place",
+    "x": 28,
+    "y": 111,
+    "child": {
+     "type": "text",
+     "text": "{mfd.time}",
+     "color": "$dim",
+     "scale": 0.75
+    },
+    "pivot": "top"
+   }
+  ]
+ }
+}

@@ -194,6 +194,11 @@
             "is_seat": true
         }
     ],
+    "screens": {
+        "gauges_op": {"layout": "combinedassault:w3_gauges_op", "kind": "mfd", "max_fps": 30},
+        "gauges_centre": {"layout": "combinedassault:w3_gauges_centre", "kind": "mfd", "max_fps": 30},
+        "gauges_pilot": {"layout": "combinedassault:w3_gauges_pilot", "kind": "mfd", "max_fps": 30}
+    },
     "model": "combinedassault:models/aircraft/w3/w3.glb",
     "display": {
         "icon": "combinedassault:textures/slot/w3.png",

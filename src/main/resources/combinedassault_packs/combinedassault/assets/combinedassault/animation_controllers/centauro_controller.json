@@ -40,6 +40,24 @@
                 "multiplier": 0.5,
                 "min": -10,
                 "max": 10
+                        },
+            {
+                "bones": ["steering_wheel"],
+                "source": "steering_angle",
+                "axis": "y",
+                "multiplier": -6.0
+            },
+            {
+                "bones": ["pedal_throttle"],
+                "source": "throttle_pedal",
+                "axis": "x",
+                "multiplier": -18.0
+            },
+            {
+                "bones": ["pedal_brake"],
+                "source": "brake_pedal",
+                "axis": "x",
+                "multiplier": -18.0
             }
         ]
     }

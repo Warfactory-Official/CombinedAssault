@@ -20,6 +20,7 @@ final class WeaponClient {
         NeoForge.EVENT_BUS.register(AmmoSelect.class);
         NeoForge.EVENT_BUS.register(StationAds.class);
         NeoForge.EVENT_BUS.register(StationPip.class);
+        NeoForge.EVENT_BUS.register(com.wf.combinedassault.vehicle.screen.SightScreens.class);
         NeoForge.EVENT_BUS.register(StationRecoil.class);
     }
 }

@@ -49,6 +49,8 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
     protected final Component name;
     protected final AbstractVehicle vehicle;
     protected VehicleCubeGroup structureGroup;
+    @Nullable
+    protected VehicleCubeGroup rideGroup;
     protected List<VehicleCubeOBB> partCubeOBBs;
     protected LivingEntity owner;
     protected int ownerId;
@@ -74,6 +76,10 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
     private SwitchableUnit<?> needsOn;
     @Nullable
     private SwitchableUnit<?> hatch;
+    @Nullable
+    private PartUnit<?> turnOut;
+    @Nullable
+    private SwitchableUnit<?> entryVia;
 
     public PartUnit(int index, AbstractVehicle vehicle, T data) {
         this.index = index;
@@ -103,6 +109,22 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
         this.partCubeOBBs = data.getRawPartCubeOBBs().stream().map(VehicleCubeOBB::new).collect(Collectors.toList());
         this.partCubeOBBs.forEach(cubeOBB -> cubeOBB.group = vehicleCubeGroupCopy.get(cubeOBB.group));
         this.structureGroup = vehicleCubeGroupCopy.get(data.getRawStructureGroup());
+        this.rideGroup = vehicleCubeGroupCopy.get(data.getRawRideGroup());
+    }
+
+    /** Hull, or for a {@code ride_frame} seat its frame: rider position and look follow it. */
+    public Quaternionf rideRotation(float partialTick) {
+        Quaternionf rot = vehicle.rotYXZ(partialTick);
+        return rideGroup == null ? rot : rot.mul(rideGroup.globalTransform(partialTick).rotation());
+    }
+
+    /** Yaw the ride frame turned last tick relative to the hull, deg (vehicle yaw sense); 0 without one. */
+    public float rideYawStep() {
+        if (rideGroup == null || rideGroup.rotationO == null) {
+            return 0;
+        }
+        Quaternionf step = new Quaternionf(rideGroup.rotationO).invert().mul(rideGroup.rotation);
+        return (float) -Math.toDegrees(step.getEulerAnglesYXZ(new Vector3f()).y);
     }
 
     /** Per part, after all parts of the vehicle exist; vehicle not yet attached to parts or added to the world. */
@@ -120,6 +142,21 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
                 throw new IllegalArgumentException("part " + id + ": hatch " + hatch + " is not a switchable part");
             }
             this.hatch = switchable;
+        }
+        String turnOut = data.getTurnOut();
+        if (turnOut != null) {
+            PartUnit<?> out = partUnitsView.get(turnOut);
+            if (out == null || !out.getData().isSeat() || out.getData().getHatch() == null) {
+                throw new IllegalArgumentException("part " + id + ": turn_out " + turnOut + " is not a seat with a hatch");
+            }
+            this.turnOut = out;
+        }
+        String via = data.getEntryVia();
+        if (via != null) {
+            if (!(partUnitsView.get(via) instanceof SwitchableUnit<?> switchable)) {
+                throw new IllegalArgumentException("part " + id + ": entry_via " + via + " is not a switchable part");
+            }
+            this.entryVia = switchable;
         }
         for (String subPartUnitId : data.getSubPartUnitIds()) {
             PartUnit<?> subPartUnit = partUnitsView.get(subPartUnitId);
@@ -145,6 +182,18 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
     @Nullable
     public SwitchableUnit<?> hatch() {
         return hatch;
+    }
+
+    /** Seat {@code entry_via} part, or null. */
+    @Nullable
+    public SwitchableUnit<?> entryVia() {
+        return entryVia;
+    }
+
+    /** Seat {@code turn_out} part, or null. */
+    @Nullable
+    public PartUnit<?> turnOut() {
+        return turnOut;
     }
 
     public void onRemoved() {}
@@ -253,6 +302,10 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
         return worldPosition(ownerViewOffset == null ? seatOffset : ownerViewOffset, partialTick);
     }
 
+    public Vec3 worldPeriscopePosition(float partialTick) {
+        return worldPosition(data.getPeriscopeOffset(), partialTick);
+    }
+
     /**
      * {@code offsetFromVehicle}: pivot-relative offset in the unrotated frame; rotated through hull/part/attachment
      * to world space.
@@ -284,10 +337,11 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
     }
 
     public Vec3 worldPositionWithSelfRot(Vec3 offsetFromVehicle, float partialTick) {
-        if (structureGroup == null) {
+        VehicleCubeGroup group = structureGroup != null ? structureGroup : rideGroup;
+        if (group == null) {
             return worldPositionWithVehicleRot(offsetFromVehicle, partialTick);
         }
-        return worldPositionWithGroupRot(offsetFromVehicle, structureGroup, partialTick);
+        return worldPositionWithGroupRot(offsetFromVehicle, group, partialTick);
     }
 
     public Vec3 worldPositionWithGroupRot(Vec3 offsetFromVehicle, VehicleCubeGroup group, float partialTick) {

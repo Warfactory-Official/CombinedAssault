@@ -56,6 +56,10 @@ public class LocalVehiclePlayer {
     private static final float STICK_GAIN = 0.01F;
     private static final float STICK_RECENTRE = 0.8F;
     private static final float HEAD_RECENTRE = 0.6F;
+    /** Periscope field: head yaw / pitch limits, deg. */
+    private static final float PERISCOPE_YAW = 45;
+    private static final float PERISCOPE_UP = -10;
+    private static final float PERISCOPE_DOWN = 15;
     private static final float HELI_PITCH = 30;
     private static final float HELI_HEADING_LEAD = 60;
     public float cameraAimRotX;
@@ -69,6 +73,7 @@ public class LocalVehiclePlayer {
     public float playerLerpYRot;
     public float playerLocalXRot;
     public float playerLocalYRot;
+    public boolean periscopeOn;
     /** FPV mouse turn since the last input sample, body frame, deg ({@link ControlUnit#turnX} axes). */
     public float fpvTurnX;
     public float fpvTurnY;
@@ -293,7 +298,7 @@ public class LocalVehiclePlayer {
                     }
                 }
                 if (cockpitLook()) {
-                    Quaternionf vehicleRot = vehicle.rotYXZ();
+                    Quaternionf vehicleRot = partUnit instanceof WeaponUnit ? vehicle.rotYXZ() : partUnit.rideRotation(1.0F);
                     if (aircraftCockpit()) {
                         // Head fixed in the airframe; free look released => recentres on the nose. Gunner: head = gun.
                         if (!InputHandler.freeCamera() && (cockpitPilot() || !(partUnit instanceof WeaponUnit))) {
@@ -311,8 +316,11 @@ public class LocalVehiclePlayer {
                         playerLocalXRot = (float) Math.toDegrees(localEuler.x);
                         playerLocalYRot = (float) Math.toDegrees(-localEuler.y);
                     }
-                    vehicleRot.rotateY((float) Math.toRadians(-playerLocalYRot));
-                    vehicleRot.rotateX((float) Math.toRadians(playerLocalXRot));
+                    boolean periscope = periscope();
+                    vehicleRot.rotateY((float) Math.toRadians(-(periscope
+                            ? Mth.clamp(playerLocalYRot, -PERISCOPE_YAW, PERISCOPE_YAW) : playerLocalYRot)));
+                    vehicleRot.rotateX((float) Math.toRadians(periscope
+                            ? Mth.clamp(playerLocalXRot, PERISCOPE_UP, PERISCOPE_DOWN) : playerLocalXRot));
                     Vector3f rot = new Vector3f();
                     vehicleRot.getEulerAnglesYXZ(rot);
                     cameraAimRotX = (float) Math.toDegrees(rot.x);
@@ -443,6 +451,9 @@ public class LocalVehiclePlayer {
 
     public void toSeat(AbstractVehicle.Seat seat, AbstractVehicle vehicle) {
         boolean enter = this.seat == null && seat != null;
+        if (seat != this.seat) {
+            periscopeOn = false;
+        }
         if (seat == null) {
             AbstractVehicle left = this.vehicle;
             toLeave = false;
@@ -530,6 +541,23 @@ public class LocalVehiclePlayer {
     /** Looking through a sight: SCOPE, or {@link #lensSight}. */
     public boolean sighted() {
         return viewType == ViewType.SCOPE || lensSight();
+    }
+
+    public boolean periscopeSeat() {
+        return seat != null && seat.partUnit.getData().getPeriscopeOffset() != null;
+    }
+
+    /** Sight unit has a {@code sight} screen: magnification key toggles OPERATOR <-> SCOPE, scope key zooms. */
+    public boolean sightScreenSeat() {
+        WeaponUnit sight = sightUnit();
+        return sight != null && vehicle != null && vehicle.screens.values().stream().flatMap(s -> s.pages().stream())
+                .anyMatch(s -> s.kind == com.wf.combinedassault.vehicle.screen.ScreenInfo.Kind.SIGHT && s.scopeToggle
+                        && sight.getId().equals(s.part));
+    }
+
+    /** OPERATOR through the seat's periscope; magnification key toggles, seat change resets. */
+    public boolean periscope() {
+        return viewType == ViewType.OPERATOR && periscopeOn && periscopeSeat();
     }
 
     /** OPERATOR look relative to the hull; {@link #lensUav} OPERATOR = lens camera, world-frame look like third person. */
@@ -781,7 +809,8 @@ public class LocalVehiclePlayer {
                 && weaponUnit.getOpticalSightType() != WeaponUnitData.OpticalSightType.NONE) {
             position = weaponUnit.worldOpticalSightPosition(partialTick);
         } else if (viewType == LocalVehiclePlayer.ViewType.OPERATOR) {
-            position = operatorUnit.worldOwnerViewPosition(partialTick);
+            position = periscope() ? operatorUnit.worldPeriscopePosition(partialTick)
+                    : operatorUnit.worldOwnerViewPosition(partialTick);
         } else if (viewType == LocalVehiclePlayer.ViewType.THIRD_PERSON) {
             position = vehicle.thirdPersonPosition(partialTick);
         } else {
@@ -853,6 +882,7 @@ public class LocalVehiclePlayer {
 
     public void clear() {
         seat = null;
+        periscopeOn = false;
         vehicle = null;
         serverEntities.clear();
         missiles.clear();

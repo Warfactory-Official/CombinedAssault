@@ -59,6 +59,9 @@ public class VehicleKeys {
     public static final KeyMapping OPEN_PARACHUTE = key("open_parachute", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_SPACE);
 
     public static final KeyMapping CHANGE_SEAT = key("change_seat", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT);
+    public static final KeyMapping TURN_OUT = key("turn_out", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_PERIOD);
+    /** Next page of the vehicle screen looked at. */
+    public static final KeyMapping CYCLE_DISPLAY = key("cycle_display", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_COMMA);
 
     public static final KeyMapping TOGGLE_COLLISION_DEBUG = key("toggle_collision_debug", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K);
 
@@ -68,7 +71,7 @@ public class VehicleKeys {
             MAIN_WEAPON_SHOOT, SECONDARY_WEAPON_SHOOT, SECONDARY_WEAPON_SWITCH, SWITCH_AMMO,
             MAGNIFICATION_CHANGE, FIRE_CONTROL_LOCK, PRESET_COORDINATE_INPUT, DECOY_FLARE_LAUNCH, SMOKE_GRENADE_LAUNCH, TOGGLE_SEEKER, TOGGLE_WEAPON_BAY,
             SWITCH_VIEW, SWITCH_SCOPE, FREE_CAMERA, OPEN_INVENTORY, LEAVE_VEHICLE, INSPECT_VEHICLE, OPEN_PARACHUTE,
-            CHANGE_SEAT, TOGGLE_AEROBATIC_SMOKE,
+            CHANGE_SEAT, TURN_OUT, CYCLE_DISPLAY, TOGGLE_AEROBATIC_SMOKE,
             TOGGLE_COLLISION_DEBUG
     };
 

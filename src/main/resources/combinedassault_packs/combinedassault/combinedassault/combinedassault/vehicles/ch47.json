@@ -230,6 +230,11 @@
             "is_seat": true
         }
     ],
+    "screens": {
+        "gauges_left": {"layout": "combinedassault:ch47_gauges_left", "kind": "mfd", "max_fps": 30},
+        "gauges_centre": {"layout": "combinedassault:ch47_gauges_centre", "kind": "mfd", "max_fps": 30},
+        "gauges_right": {"layout": "combinedassault:ch47_gauges_right", "kind": "mfd", "max_fps": 30}
+    },
     "model": "combinedassault:models/aircraft/ch47/ch47.glb",
     "display": {
         "icon": "combinedassault:textures/slot/ch47.png",

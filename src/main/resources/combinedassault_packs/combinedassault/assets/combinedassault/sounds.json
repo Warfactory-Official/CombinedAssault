@@ -337,5 +337,30 @@
             "combinedassault:vehicle/m1a2/m1a2_engine_run"
         ],
         "subtitle": "combinedassault.sounds.m1a2_engine_run"
+    },
+    "m1a2_turbine_idle": {
+        "sounds": [
+            "combinedassault:vehicle/m1a2/m1a2_turbine_idle"
+        ]
+    },
+    "m1a2_turbine_run": {
+        "sounds": [
+            "combinedassault:vehicle/m1a2/m1a2_turbine_run"
+        ]
+    },
+    "humvee_engine_idle": {
+        "sounds": [
+            "combinedassault:vehicle/humvee/humvee_engine_idle"
+        ]
+    },
+    "humvee_engine_mid": {
+        "sounds": [
+            "combinedassault:vehicle/humvee/humvee_engine_mid"
+        ]
+    },
+    "humvee_engine_high": {
+        "sounds": [
+            "combinedassault:vehicle/humvee/humvee_engine_high"
+        ]
     }
 }

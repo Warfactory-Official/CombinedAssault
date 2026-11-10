@@ -194,6 +194,12 @@
             "is_seat": true
         }
     ],
+    "screens": {
+        "pilot_outer": {"pages": [{"layout": "combinedassault:hwide_flight", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hwide_caution", "kind": "mfd", "max_fps": 30}]},
+        "pilot_inner": {"pages": [{"layout": "combinedassault:hwide_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hwide_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 4.8}]},
+        "copilot_inner": {"pages": [{"layout": "combinedassault:hwide_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hwide_sa", "kind": "mfd", "max_fps": 30}]},
+        "copilot_outer": {"pages": [{"layout": "combinedassault:hwide_flight", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hwide_caution", "kind": "mfd", "max_fps": 30}]}
+    },
     "model": "combinedassault:models/aircraft/mh60l/mh60l.glb",
     "display": {
         "icon": "combinedassault:textures/slot/mh60l.png",

@@ -101,6 +101,9 @@
             "passenger_can_use_item": true
         }
     ],
+    "screens": {
+        "gauges": {"layout": "combinedassault:ah_6_gauges", "kind": "mfd", "max_fps": 30}
+    },
     "model": "combinedassault:models/aircraft/ah_6/ah_6.glb",
     "display": {
         "icon": "combinedassault:textures/slot/ah_6.png",

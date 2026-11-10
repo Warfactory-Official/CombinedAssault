@@ -1,0 +1,113 @@
+{
+ "scaling": "absolute",
+ "size": [
+  144,
+  100
+ ],
+ "use": [
+  "combinedassault:hud"
+ ],
+ "constants": {
+  "bg": "#ff000000",
+  "fg": "#ff52f06a",
+  "dim": "#ff1f7a30",
+  "warn": "#ffffb02e",
+  "alarm": "#ffff4a3a",
+  "cyan": "#ff46c8ff",
+  "inv": "#ff000000"
+ },
+ "root": {
+  "type": "stack",
+  "children": [
+   {
+    "type": "rect",
+    "w": 144,
+    "h": 100,
+    "color": "$bg"
+   },
+   {
+    "type": "place",
+    "x": 3,
+    "y": 2,
+    "child": {
+     "type": "text",
+     "text": "FUEL",
+     "color": "$dim",
+     "scale": 0.9
+    }
+   },
+   {
+    "type": "place",
+    "x": 141,
+    "y": 2,
+    "child": {
+     "type": "text",
+     "text": "{mfd.time}",
+     "color": "$dim",
+     "scale": 0.9
+    },
+    "pivot": "top_right"
+   },
+   {
+    "type": "place",
+    "x": 72,
+    "y": 18,
+    "child": {
+     "type": "text",
+     "text": "{trunc(vehicle.fuel)} %",
+     "color": "vehicle.fuel < 15 ? $alarm : $fg",
+     "scale": 1.6
+    },
+    "pivot": "top"
+   },
+   {
+    "type": "place",
+    "x": 72,
+    "y": 40,
+    "child": {
+     "type": "text",
+     "text": "{vehicle.fuel_seconds|clockh}",
+     "color": "$fg",
+     "scale": 1.1
+    },
+    "pivot": "top"
+   },
+   {
+    "type": "place",
+    "x": 10,
+    "y": 58,
+    "child": {
+     "type": "bar",
+     "w": 124,
+     "h": 7,
+     "value": "vehicle.fuel / 100",
+     "fill": "vehicle.fuel < 15 ? $alarm : $fg",
+     "back": "#ff0c2a12"
+    }
+   },
+   {
+    "type": "place",
+    "x": 3,
+    "y": 74,
+    "child": {
+     "type": "text",
+     "text": "THR {trunc(fixed_wing.throttle)}",
+     "color": "$fg",
+     "scale": 1.0
+    }
+   },
+   {
+    "type": "place",
+    "x": 141,
+    "y": 74,
+    "child": {
+     "type": "text",
+     "text": "G {local.g|.1}",
+     "color": "$fg",
+     "scale": 1.0
+    },
+    "pivot": "top_right"
+   }
+  ]
+ }
+}

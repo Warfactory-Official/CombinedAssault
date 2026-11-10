@@ -1,0 +1,128 @@
+{
+ "scaling": "absolute",
+ "size": [
+  144,
+  100
+ ],
+ "use": [
+  "combinedassault:hud"
+ ],
+ "constants": {
+  "bg": "#ff000000",
+  "fg": "#ff52f06a",
+  "dim": "#ff1f7a30",
+  "warn": "#ffffb02e",
+  "alarm": "#ffff4a3a",
+  "cyan": "#ff46c8ff",
+  "inv": "#ff000000"
+ },
+ "root": {
+  "type": "stack",
+  "children": [
+   {
+    "type": "rect",
+    "w": 144,
+    "h": 100,
+    "color": "$bg"
+   },
+   {
+    "type": "place",
+    "x": 3,
+    "y": 2,
+    "child": {
+     "type": "text",
+     "text": "ICAW",
+     "color": "$dim",
+     "scale": 0.9
+    }
+   },
+   {
+    "type": "place",
+    "x": 3,
+    "y": 14,
+    "child": {
+     "type": "column",
+     "gap": 3,
+     "children": [
+      {
+       "type": "when",
+       "if": "mfd.launch",
+       "then": {
+        "type": "text",
+        "text": "MISSILE LAUNCH",
+        "color": "$alarm",
+        "scale": 1.0
+       }
+      },
+      {
+       "type": "when",
+       "if": "mfd.lock",
+       "then": {
+        "type": "text",
+        "text": "RADAR LOCK",
+        "color": "$warn",
+        "scale": 1.0
+       }
+      },
+      {
+       "type": "when",
+       "if": "vehicle.fuel < 15",
+       "then": {
+        "type": "text",
+        "text": "FUEL LOW",
+        "color": "$alarm",
+        "scale": 1.0
+       }
+      },
+      {
+       "type": "when",
+       "if": "vehicle.hull < 0.5",
+       "then": {
+        "type": "text",
+        "text": "AIRFRAME DMG",
+        "color": "$warn",
+        "scale": 1.0
+       }
+      },
+      {
+       "type": "when",
+       "if": "local.overload",
+       "then": {
+        "type": "text",
+        "text": "OVER G",
+        "color": "$warn",
+        "scale": 1.0
+       }
+      },
+      {
+       "type": "when",
+       "if": "vehicle.power <= 0",
+       "then": {
+        "type": "text",
+        "text": "ENGINE OFF",
+        "color": "$alarm",
+        "scale": 1.0
+       }
+      }
+     ]
+    }
+   },
+   {
+    "type": "when",
+    "if": "!(mfd.launch || mfd.lock || vehicle.fuel < 15 || vehicle.hull < 0.5 || local.overload || vehicle.power <= 0)",
+    "then": {
+     "type": "place",
+     "x": 72,
+     "y": 45,
+     "child": {
+      "type": "text",
+      "text": "NO ALERTS",
+      "color": "$dim",
+      "scale": 1.0
+     },
+     "pivot": "top"
+    }
+   }
+  ]
+ }
+}

@@ -127,6 +127,13 @@
             "is_seat": true
         }
     ],
+    "screens": {
+        "pilot_outer": {"pages": [{"layout": "combinedassault:hwide_flight", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hwide_caution", "kind": "mfd", "max_fps": 30}]},
+        "pilot_inner": {"pages": [{"layout": "combinedassault:hwide_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hwide_stores", "kind": "mfd", "max_fps": 30}]},
+        "cpg_inner": {"pages": [{"layout": "combinedassault:hwide_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 3.1}, {"layout": "combinedassault:hwide_sa", "kind": "mfd", "max_fps": 30}]},
+        "cpg_outer": {"pages": [{"layout": "combinedassault:hwide_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hwide_flight", "kind": "mfd", "max_fps": 30}]},
+        "cpg_strip": {"layout": "combinedassault:hstrip", "kind": "mfd", "max_fps": 30}
+    },
     "model": "combinedassault:models/aircraft/ka52/ka52.glb",
     "display": {
         "icon": "combinedassault:textures/slot/ka52.png",

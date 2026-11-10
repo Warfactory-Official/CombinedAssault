@@ -1,0 +1,161 @@
+{
+ "scaling": "absolute",
+ "size": [
+  120,
+  148
+ ],
+ "use": [
+  "combinedassault:hud"
+ ],
+ "constants": {
+  "bg": "#ff000000",
+  "fg": "#ff52f06a",
+  "dim": "#ff1f7a30",
+  "warn": "#ffffb02e",
+  "alarm": "#ffff4a3a",
+  "cyan": "#ff46c8ff",
+  "inv": "#ff000000"
+ },
+ "root": {
+  "type": "stack",
+  "children": [
+   {
+    "type": "rect",
+    "w": 120,
+    "h": 148,
+    "color": "$bg"
+   },
+   {
+    "type": "place",
+    "x": 3,
+    "y": 2,
+    "child": {
+     "type": "text",
+     "text": "ENG/WCA",
+     "color": "$fg",
+     "scale": 0.85
+    }
+   },
+   {
+    "type": "place",
+    "x": 117,
+    "y": 2,
+    "child": {
+     "type": "text",
+     "text": "{mfd.time}",
+     "color": "$dim",
+     "scale": 0.85
+    },
+    "pivot": "top_right"
+   },
+   {
+    "type": "place",
+    "x": 0,
+    "y": 11,
+    "child": {
+     "type": "rect",
+     "w": 120,
+     "h": 0.7,
+     "color": "$dim"
+    }
+   },
+   {
+    "type": "place",
+    "x": 2,
+    "y": 15,
+    "child": {
+     "type": "repeat",
+     "items": "vehicle.systems",
+     "columns": 3,
+     "gap": 2,
+     "max": 9,
+     "child": {
+      "type": "box",
+      "min_width": 37.333333333333336,
+      "min_height": 11,
+      "align": "center",
+      "border_width": 0,
+      "background": "system.state == 0 ? #ff0c2a12 : system.state == 1 ? #ff6a5a10 : system.state == 2 ? #ff8a4a10 : #ffa01810",
+      "child": {
+       "type": "text",
+       "text": "{system.label}",
+       "color": "system.state == 0 ? $fg : #ffffffff",
+       "scale": 0.7
+      }
+     }
+    }
+   },
+   {
+    "type": "place",
+    "x": 3,
+    "y": 57,
+    "child": {
+     "type": "column",
+     "gap": 2,
+     "children": [
+      {
+       "type": "when",
+       "if": "mfd.launch",
+       "then": {
+        "type": "text",
+        "text": "MISSILE LAUNCH",
+        "color": "$alarm",
+        "scale": 0.85
+       }
+      },
+      {
+       "type": "when",
+       "if": "mfd.lock",
+       "then": {
+        "type": "text",
+        "text": "RADAR LOCK",
+        "color": "$warn",
+        "scale": 0.85
+       }
+      },
+      {
+       "type": "when",
+       "if": "vehicle.fuel < 15",
+       "then": {
+        "type": "text",
+        "text": "FUEL LOW",
+        "color": "$alarm",
+        "scale": 0.85
+       }
+      },
+      {
+       "type": "when",
+       "if": "vehicle.hull < 0.5",
+       "then": {
+        "type": "text",
+        "text": "AIRFRAME DMG",
+        "color": "$warn",
+        "scale": 0.85
+       }
+      },
+      {
+       "type": "when",
+       "if": "local.overload",
+       "then": {
+        "type": "text",
+        "text": "OVER G",
+        "color": "$warn",
+        "scale": 0.85
+       }
+      },
+      {
+       "type": "when",
+       "if": "vehicle.power <= 0",
+       "then": {
+        "type": "text",
+        "text": "ENGINE OFF",
+        "color": "$alarm",
+        "scale": 0.85
+       }
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

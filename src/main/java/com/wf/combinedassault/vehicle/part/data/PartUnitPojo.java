@@ -58,6 +58,10 @@ public class PartUnitPojo {
     @SerializedName("owner_view_offset")
     public Vec3 ownerViewOffset = null;
 
+    /** Seat: periscope camera (vehicle frame); magnification key toggles. */
+    @SerializedName("periscope_offset")
+    public Vec3 periscopeOffset = null;
+
     /** Seat: weapon part whose sight this seat may look through and slew (spotter / WSO); fires nothing. */
     @SerializedName("sensor")
     public String sensor = null;
@@ -72,6 +76,18 @@ public class PartUnitPojo {
     /** Seat: switchable part that must be open (clip run out) to board, leave for another seat or switch into it. */
     @SerializedName("hatch")
     public String hatch = null;
+
+    /** Seat: its turned-out seat (one with a {@code hatch}); turn-out key moves between them, turning in closes it. */
+    @SerializedName("turn_out")
+    public String turnOut = null;
+
+    /** Seat: `entry` part that also leads here though the seat is not gated by it (gunner via commander hatch). */
+    @SerializedName("entry_via")
+    public String entryVia = null;
+
+    /** Frame node a part-less seat rides (its seat socket's frame): seat, view, periscope and look follow it. */
+    @SerializedName("ride_frame")
+    public String rideFrame = null;
 
     @SerializedName("display_id")
     public ResourceLocation displayId;

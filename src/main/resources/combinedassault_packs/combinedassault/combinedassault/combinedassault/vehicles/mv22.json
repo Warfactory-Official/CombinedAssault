@@ -135,6 +135,14 @@
         {"id": "troop_10", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true},
         {"id": "troop_11", "name": "passenger_seat", "type": "combinedassault:generic", "is_seat": true}
     ],
+    "screens": {
+        "pilot_outer": {"pages": [{"layout": "combinedassault:hmfd_flight", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hmfd_caution", "kind": "mfd", "max_fps": 30}]},
+        "pilot_inner": {"pages": [{"layout": "combinedassault:hmfd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hmfd_stores", "kind": "mfd", "max_fps": 30}]},
+        "copilot_inner": {"pages": [{"layout": "combinedassault:hmfd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hmfd_stores", "kind": "mfd", "max_fps": 30}]},
+        "copilot_outer": {"pages": [{"layout": "combinedassault:hmfd_flight", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hmfd_caution", "kind": "mfd", "max_fps": 30}]},
+        "centre": {"pages": [{"layout": "combinedassault:hwide_caution", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hwide_flight", "kind": "mfd", "max_fps": 30}]},
+        "console": {"pages": [{"layout": "combinedassault:hwide_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hwide_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:hwide_flight", "kind": "mfd", "max_fps": 30}]}
+    },
     "model": "combinedassault:models/aircraft/mv22/mv22.glb",
     "display": {
         "icon": "combinedassault:textures/slot/mv22.png",

@@ -167,7 +167,10 @@ public abstract class GroundVehicle extends AbstractVehicle {
         buf.writeByte(getGear());
         buf.writeVarInt(clutchTicks);
         buf.writeByte(getPedals());
-        buf.writeFloat(getEngineSpeed());
+        // no transmission => engine speed server-only (tickEngineSpeed); restoring it rolls the synced value back
+        if (transmission != null) {
+            buf.writeFloat(getEngineSpeed());
+        }
     }
 
     @Override
@@ -176,6 +179,8 @@ public abstract class GroundVehicle extends AbstractVehicle {
         entityData.set(GEAR, buf.readByte());
         clutchTicks = buf.readVarInt();
         entityData.set(PEDALS, buf.readByte());
-        setEngineSpeed(buf.readFloat());
+        if (transmission != null) {
+            setEngineSpeed(buf.readFloat());
+        }
     }
 }

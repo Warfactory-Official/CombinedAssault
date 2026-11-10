@@ -17,18 +17,21 @@ import java.util.WeakHashMap;
 
 /**
  * Screens of one vehicle against its model: each {@code screen_<id>} slot mesh gives pose, size and bone, the pack's
- * {@code screens} entry the layout. Resolved once per model; a binding without a slot, or a slot without a binding,
+ * {@code screens} entry the layout(s). Resolved once per model; a binding without a slot, or a slot without a binding,
  * is logged and skipped.
  */
 @OnlyIn(Dist.CLIENT)
 public final class VehicleScreens {
     private static final Map<AbstractVehicle, State> STATES = new WeakHashMap<>();
+    /** Look ray within this many screen half-diagonals of a screen centre => that screen is aimed at. */
+    private static final float AIM_SLACK = 1.5f;
 
     private VehicleScreens() {
     }
 
-    /** Unlit screen textures of one vehicle, bound per frame. */
+    /** Unlit screen textures of one vehicle, bound per frame. {@link #infos} / {@link #views}: current page. */
     public static final class State implements TextureSlots {
+        public final AbstractVehicle vehicle;
         final GemRenderGltfModel model;
         public final int count;
         public final String[] slots;
@@ -36,8 +39,14 @@ public final class VehicleScreens {
         public final GemRenderGltfModel.SlotFrame[] frames;
         public final ScreenView[] views;
         public final ResourceLocation[] textures;
+        final ScreenInfo[][] pageInfos;
+        final ScreenView[][] pageViews;
+        final int[] page;
+        /** Look-ray angle / screen angular half-diagonal, last drawn frame; NaN = not drawn. */
+        public final float[] aim;
 
-        private State(GemRenderGltfModel model, int count) {
+        private State(AbstractVehicle vehicle, GemRenderGltfModel model, int count) {
+            this.vehicle = vehicle;
             this.model = model;
             this.count = count;
             slots = new String[count];
@@ -45,6 +54,10 @@ public final class VehicleScreens {
             frames = new GemRenderGltfModel.SlotFrame[count];
             views = new ScreenView[count];
             textures = new ResourceLocation[count];
+            pageInfos = new ScreenInfo[count][];
+            pageViews = new ScreenView[count][];
+            page = new int[count];
+            aim = new float[count];
         }
 
         @Override
@@ -62,6 +75,27 @@ public final class VehicleScreens {
         public boolean emissive(String slot) {
             return slot.startsWith(ScreenInfo.SLOT_PREFIX);
         }
+
+        void show(int i, int p) {
+            page[i] = p;
+            infos[i] = pageInfos[i][p];
+            views[i] = pageViews[i][p];
+        }
+
+        /** Next page of the screen the look ray hits; false: none aimed at, or single page. */
+        public boolean cycleAimed() {
+            int best = -1;
+            for (int i = 0; i < count; i++) {
+                if (aim[i] < AIM_SLACK && (best < 0 || aim[i] < aim[best])) {
+                    best = i;
+                }
+            }
+            if (best < 0 || pageInfos[best].length < 2) {
+                return false;
+            }
+            show(best, (page[best] + 1) % pageInfos[best].length);
+            return true;
+        }
     }
 
     /** Null while the vehicle has no screen the model can show. */
@@ -78,6 +112,13 @@ public final class VehicleScreens {
         return state.count == 0 ? null : state;
     }
 
+    /** Resolved screens of {@code vehicle}, or null if none drawn yet. */
+    @Nullable
+    public static State of(AbstractVehicle vehicle) {
+        State state = STATES.get(vehicle);
+        return state == null || state.count == 0 ? null : state;
+    }
+
     private static State resolve(AbstractVehicle vehicle, GemRenderGltfModel model) {
         String id = String.valueOf(vehicle.getVehicleId());
         for (String slot : model.slots()) {
@@ -86,33 +127,56 @@ public final class VehicleScreens {
                 CombinedAssault.LOGGER.warn("{}: model screen {} has no `screens` binding", id, slot);
             }
         }
-        State state = new State(model, vehicle.screens.size());
+        State state = new State(vehicle, model, vehicle.screens.size());
         int n = 0;
+        screens:
         for (Map.Entry<String, ScreenInfo> entry : vehicle.screens.entrySet()) {
             String slot = ScreenInfo.SLOT_PREFIX + entry.getKey();
             GemRenderGltfModel.SlotFrame frame = model.slotFrame(slot);
-            boolean dash = entry.getValue().kind == ScreenInfo.Kind.DASH;
-            WeaponUnit unit = dash ? null : weapon(vehicle, entry.getValue().part);
-            if (frame == null || !dash && unit == null) {
-                CombinedAssault.LOGGER.error("{}: screen {} skipped: {}", id, entry.getKey(),
-                        frame == null ? "model has no textured quad in slot " + slot : "no weapon part");
+            if (frame == null) {
+                CombinedAssault.LOGGER.error("{}: screen {} skipped: model has no textured quad in slot {}", id, entry.getKey(), slot);
                 continue;
             }
+            ScreenInfo[] pages = entry.getValue().pages().toArray(ScreenInfo[]::new);
+            ScreenView[] views = new ScreenView[pages.length];
+            for (int p = 0; p < pages.length; p++) {
+                views[p] = view(vehicle, pages[p]);
+                if (views[p] == null) {
+                    CombinedAssault.LOGGER.error("{}: screen {} skipped: no weapon part", id, entry.getKey());
+                    continue screens;
+                }
+            }
             state.slots[n] = slot;
-            state.infos[n] = entry.getValue();
             state.frames[n] = frame;
-            state.views[n] = dash ? new DashView(vehicle) : new GunComputer(vehicle, unit);
+            state.pageInfos[n] = pages;
+            state.pageViews[n] = views;
+            state.show(n, 0);
             n++;
         }
         return n == state.count ? state : shrink(state, n);
     }
 
+    @Nullable
+    private static ScreenView view(AbstractVehicle vehicle, ScreenInfo info) {
+        return switch (info.kind) {
+            case DASH -> new DashView(vehicle);
+            case MFD -> new MfdView(vehicle);
+            case GUN_COMPUTER, SIGHT -> {
+                WeaponUnit unit = weapon(vehicle, info.part);
+                yield unit == null ? null : new GunComputer(vehicle, unit);
+            }
+        };
+    }
+
     private static State shrink(State from, int n) {
-        State state = new State(from.model, n);
+        State state = new State(from.vehicle, from.model, n);
         System.arraycopy(from.slots, 0, state.slots, 0, n);
-        System.arraycopy(from.infos, 0, state.infos, 0, n);
         System.arraycopy(from.frames, 0, state.frames, 0, n);
-        System.arraycopy(from.views, 0, state.views, 0, n);
+        System.arraycopy(from.pageInfos, 0, state.pageInfos, 0, n);
+        System.arraycopy(from.pageViews, 0, state.pageViews, 0, n);
+        for (int i = 0; i < n; i++) {
+            state.show(i, 0);
+        }
         return state;
     }
 

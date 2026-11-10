@@ -35,6 +35,7 @@ public final class CaHudSource {
         IndirectView.register();
         com.wf.combinedassault.indirect.client.GunComputer.register();
         com.wf.combinedassault.vehicle.screen.DashView.register();
+        com.wf.combinedassault.vehicle.screen.MfdView.register();
         CaHudPresets.registerWidgets();
         UiHud.addSource(UiHud.Layer.MAIN, CombinedAssault.modLocation("main"), 0, CaHudSource::main);
         UiHud.addSource(UiHud.Layer.BACK, CombinedAssault.modLocation("back"), 0, CaHudSource::back);

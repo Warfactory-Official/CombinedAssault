@@ -7,7 +7,15 @@
         "max_speed_forward": 0.6,
         "max_speed_backward": 0.2,
         "turn_step": 0.2,
-        "max_turn": 2
+        "max_turn": 2,
+        "transmission": {
+            "gears": [3.43, 2.01, 1.42, 1.0, 0.83],
+            "idle_rpm": 600,
+            "max_rpm": 2300
+        }
+    },
+    "screens": {
+        "dash": {"layout": "combinedassault:centauro_dash", "kind": "dash"}
     },
     "max_health": 900,
     "armor": {
@@ -61,6 +69,12 @@
         "slots": 18,
         "max_payload": 250
     },
+    "entry": [
+        "rear_door",
+        "driver_hatch",
+        "commander_hatch",
+        "loader_hatch"
+    ],
     "parts": [
         {
             "id": "turret",
@@ -87,14 +101,17 @@
         },
         {
             "id": "mg_l",
-            "name": "mg_l",
+            "name": "part.combinedassault.centauro.mg_l",
             "handling": "manual",
             "type": "combinedassault:weapon",
             "crew_roles": [
-                "commander"
+                "loader"
             ],
             "max_health": 120,
             "render_bone": "mg_l",
+            "hatch": "loader_hatch",
+            "pose": "stand",
+            "protect_passenger": false,
             "operator_on_weapon_unit": false,
             "optical_sight_type": "operator",
             "zoom_max": 2,
@@ -109,14 +126,17 @@
         },
         {
             "id": "mg_r",
-            "name": "mg_r",
+            "name": "part.combinedassault.centauro.mg_r",
             "handling": "manual",
             "type": "combinedassault:weapon",
             "crew_roles": [
-                "loader"
+                "commander"
             ],
             "max_health": 120,
             "render_bone": "mg_r",
+            "hatch": "commander_hatch",
+            "pose": "stand",
+            "protect_passenger": false,
             "operator_on_weapon_unit": false,
             "optical_sight_type": "operator",
             "zoom_max": 2,
@@ -134,9 +154,67 @@
             "name": "driver",
             "type": "combinedassault:generic",
             "is_seat": true,
+            "turn_out": "driver_out",
             "crew_roles": [
                 "driver"
             ]
+        },
+        {
+            "id": "driver_out",
+            "name": "part.combinedassault.centauro.driver_out",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "crew_roles": [
+                "driver"
+            ],
+            "hatch": "driver_hatch",
+            "protect_passenger": false
+        },
+        {
+            "id": "commander",
+            "name": "commander",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "turn_out": "mg_r",
+            "crew_roles": [
+                "commander"
+            ],
+            "pose": "stand"
+        },
+        {
+            "id": "loader",
+            "name": "loader",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "turn_out": "mg_l",
+            "crew_roles": [
+                "loader"
+            ],
+            "pose": "stand"
+        },
+        {
+            "id": "rear_door",
+            "name": "rear_door",
+            "type": "combinedassault:door",
+            "is_seat": false
+        },
+        {
+            "id": "driver_hatch",
+            "name": "driver_hatch",
+            "type": "combinedassault:switchable",
+            "is_seat": false
+        },
+        {
+            "id": "commander_hatch",
+            "name": "commander_hatch",
+            "type": "combinedassault:switchable",
+            "is_seat": false
+        },
+        {
+            "id": "loader_hatch",
+            "name": "loader_hatch",
+            "type": "combinedassault:switchable",
+            "is_seat": false
         },
         {
             "id": "wheel_0_l",
