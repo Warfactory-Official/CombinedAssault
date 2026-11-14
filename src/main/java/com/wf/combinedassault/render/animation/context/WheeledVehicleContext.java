@@ -7,6 +7,7 @@ public class WheeledVehicleContext extends VehicleContext<WheeledVehicle> {
 
     /** {@code distance*360}, pre-circumference; {@link #getWheelDegrees} divides by {@code 2*pi*radius}. */
     private float wheelRotation = 0f;
+    private static final float STEER_SMOOTH_SECONDS = 0.05f;
     private float steeringAngle = 0f;
     private final DriverControls controls = new DriverControls();
     /** Half-track belts. */
@@ -43,7 +44,8 @@ public class WheeledVehicleContext extends VehicleContext<WheeledVehicle> {
     }
 
     private void updateSteeringAngle() {
-        steeringAngle = -this.getTurnAngle() * 16f;
+        float target = -this.getTurnAngle() * 16f;
+        steeringAngle += (target - steeringAngle) * (1 - (float) Math.exp(-this.frameSeconds() / STEER_SMOOTH_SECONDS));
     }
 
     /** {@code radius} in blocks. */
