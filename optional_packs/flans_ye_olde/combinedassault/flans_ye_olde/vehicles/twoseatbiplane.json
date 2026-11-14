@@ -1,0 +1,119 @@
+{
+  "type": "combinedassault:fixed_wing_vehicle",
+  "attributes": {
+    "thrust": 4288,
+    "thrust_k": 1.0,
+    "ceiling": 400,
+    "x_rot_input_step": 0.2,
+    "y_rot_input_step": 0.5,
+    "z_rot_input_step": 0.2,
+    "air_drag_k_min": 1.54,
+    "air_drag_k_max": 6.17,
+    "lift_to_drag_k": 6.0,
+    "x_rot_input_drag_k": 1.0,
+    "y_rot_input_drag_k": 0.25,
+    "z_rot_input_drag_k": 0.125,
+    "turn_rate_by_speed": 0.4,
+    "x_turn_rate": 2.0,
+    "y_turn_rate": 3.0,
+    "z_turn_rate": 7.0,
+    "ground_pitch": 5.71
+  },
+  "physics_info": {
+    "mass": 900,
+    "friction": 450
+  },
+  "landing_gear_part_id": "landing_gear",
+  "max_health": 250,
+  "view_info": {
+    "third_person_distance": 6.0,
+    "third_person_distance_zoomed": 4
+  },
+  "energy_info": {
+    "energy_capacity": 180,
+    "energy_consumption_per_tick": 0.001125
+  },
+  "defense_stats": {
+    "damage_threshold": 10,
+    "impact_multiplier": 3
+  },
+  "parts": [
+    {
+      "id": "pilot",
+      "name": "part.flans_ye_olde.twoseatbiplane.pilot",
+      "type": "combinedassault:generic",
+      "crew_roles": [
+        "driver"
+      ]
+    },
+    {
+      "id": "landing_gear",
+      "name": "part.flans_ye_olde.twoseatbiplane.landing_gear",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0.5
+    },
+    {
+      "id": "seat_1",
+      "name": "part.flans_ye_olde.twoseatbiplane.seat_1",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    }
+  ],
+  "model": "flans_ye_olde:models/vehicle/twoseatbiplane/twoseatbiplane.glb",
+  "display": {
+    "icon": "flans_ye_olde:textures/slot/twoseatbiplane.png",
+    "tab_index": 910,
+    "controller": "flans_ye_olde:twoseatbiplane_controller",
+    "engine": {
+      "start": {
+        "event": "combinedassault:piston_engine_start",
+        "range": 400
+      },
+      "stop": {
+        "event": "combinedassault:piston_engine_stop",
+        "range": 400
+      },
+      "loops": [
+        {
+          "sound": {
+            "event": "combinedassault:piston_engine_run",
+            "range": 700
+          },
+          "input": "throttle",
+          "volume": [
+            [
+              0,
+              0.5
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "pitch": [
+            [
+              0,
+              0.8
+            ],
+            [
+              1,
+              1.2
+            ]
+          ],
+          "gate": [
+            [
+              0.1,
+              0
+            ],
+            [
+              0.3,
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "cabin_muffle": 0.5
+  }
+}

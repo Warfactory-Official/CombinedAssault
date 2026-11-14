@@ -6,6 +6,7 @@ import com.wf.combinedassault.indirect.LayingMode;
 import com.wf.combinedassault.indirect.RoundSpec;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -42,11 +43,26 @@ public final class IndirectFireInput {
         int key = event.getKey();
         int scan = event.getScanCode();
 
+        if (action == GLFW.GLFW_PRESS && unit.rangefinder() != null && matches(IndirectFireKeys.RANGEFINDER, key, scan)) {
+            lase(player, unit, laying);
+            return;
+        }
+
         if (action == GLFW.GLFW_PRESS && matches(IndirectFireKeys.TOGGLE_INDIRECT, key, scan)) {
             cycleMode(player, unit, laying);
             return;
         }
         if (!laying.isIndirect()) {
+            boolean up = matches(IndirectFireKeys.ELEVATION_UP, key, scan);
+            if (up || matches(IndirectFireKeys.ELEVATION_DOWN, key, scan)) {
+                if (unit.stepZero(up ? 1 : -1)) {
+                    int range = unit.zeroRange();
+                    player.displayClientMessage(range == 0 ? Component.translatable("tips.zero.boresight")
+                            : Component.translatable("tips.zero", range), true);
+                } else {
+                    say(player, up ? "tips.zero.limit" : "tips.zero.boresight");
+                }
+            }
             return;
         }
         // success says nothing (board shows it; an action bar message would cover the sky); refusal is
@@ -66,6 +82,25 @@ public final class IndirectFireInput {
             if (spec == null || !laying.toggleArc(spec, IndirectFire.muzzleOf(unit))) {
                 say(player, "tips.indirect.no_solution");
             }
+        }
+    }
+
+    /** Reading along the sight; {@code zero} finder in DIRECT => zero := reading (whole m). */
+    private static void lase(LocalPlayer player, WeaponUnit unit, GunLaying laying) {
+        WeaponUnitData.Rangefinder rf = unit.rangefinder();
+        LocalVehiclePlayer local = LocalVehiclePlayer.instance();
+        local.rangeFinding(local.scopeAimPos());
+        long metres = Math.round(local.aimLocationDistance);
+        boolean returned = !local.outOfRangeFinding && metres >= 1 && metres <= rf.maxRange();
+        unit.setRangeReading(returned ? metres : 0);
+        if (!returned) {
+            say(player, "tips.rangefinder.no_return");
+        } else if (!rf.zero() || laying.isIndirect()) {
+            player.displayClientMessage(Component.translatable("tips.rangefinder", metres), true);
+        } else if (unit.setZero((int) metres)) {
+            player.displayClientMessage(Component.translatable("tips.rangefinder.zeroed", metres), true);
+        } else {
+            player.displayClientMessage(Component.translatable("tips.rangefinder.limit", metres), true);
         }
     }
 

@@ -1,0 +1,216 @@
+{
+  "type": "combinedassault:rotary_wing_vehicle",
+  "attributes": {
+    "main_rotor_force": 142500.0,
+    "ceiling": 256,
+    "x_rot_speed_acceleration": 1.5,
+    "x_rot_speed_max": 4.0,
+    "y_rot_speed_acceleration": 1.5,
+    "y_rot_speed_max": 4.0,
+    "z_rot_speed_acceleration": 1.5,
+    "z_rot_speed_max": 4.0,
+    "max_air_speed": 4.07
+  },
+  "physics_info": {
+    "mass": 7500,
+    "friction": 15000
+  },
+  "landing_gear_part_id": "landing_gear",
+  "max_health": 700,
+  "view_info": {
+    "third_person_distance": 17.5,
+    "third_person_distance_zoomed": 4
+  },
+  "energy_info": {
+    "energy_capacity": 1500,
+    "energy_consumption_per_tick": 0.009375
+  },
+  "defense_stats": {
+    "damage_threshold": 10,
+    "impact_multiplier": 3
+  },
+  "parts": [
+    {
+      "id": "pilot",
+      "name": "part.flans_modern.apacheah64.pilot",
+      "type": "combinedassault:weapon",
+      "crew_roles": [
+        "driver",
+        "gunner"
+      ],
+      "operator_on_weapon_unit": false,
+      "crosshair_style": "cross",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "weapons": [
+        {
+          "id": "combinedassault:hydra_70",
+          "part_unit_id": "rocket_l",
+          "salvo": "rocket"
+        },
+        {
+          "id": "combinedassault:hydra_70",
+          "part_unit_id": "rocket_r",
+          "salvo": "rocket"
+        },
+        {
+          "id": "combinedassault:agm_114",
+          "part_unit_id": "missile_l",
+          "secondary": true,
+          "salvo": "missile"
+        },
+        {
+          "id": "combinedassault:agm_114",
+          "part_unit_id": "missile_r",
+          "secondary": true,
+          "salvo": "missile"
+        }
+      ]
+    },
+    {
+      "id": "landing_gear",
+      "name": "part.flans_modern.apacheah64.landing_gear",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0.5
+    },
+    {
+      "id": "landing_gear_l",
+      "name": "part.flans_modern.apacheah64.landing_gear_l",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0,
+      "on_system": "left wing"
+    },
+    {
+      "id": "landing_gear_r",
+      "name": "part.flans_modern.apacheah64.landing_gear_r",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0,
+      "on_system": "right wing"
+    },
+    {
+      "id": "rocket_l",
+      "name": "part.flans_modern.apacheah64.rocket_l",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "left wing",
+      "ammo_capacity": 19,
+      "parent_weapon_unit_aim": true
+    },
+    {
+      "id": "rocket_r",
+      "name": "part.flans_modern.apacheah64.rocket_r",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "right wing",
+      "ammo_capacity": 19,
+      "parent_weapon_unit_aim": true
+    },
+    {
+      "id": "missile_l",
+      "name": "part.flans_modern.apacheah64.missile_l",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "left wing",
+      "ammo_capacity": 4,
+      "parent_weapon_unit_aim": true
+    },
+    {
+      "id": "missile_r",
+      "name": "part.flans_modern.apacheah64.missile_r",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "right wing",
+      "ammo_capacity": 4,
+      "parent_weapon_unit_aim": true
+    },
+    {
+      "id": "seat_1",
+      "name": "part.flans_modern.apacheah64.seat_1",
+      "type": "combinedassault:weapon",
+      "protect_passenger": false,
+      "crosshair_style": "cross",
+      "operator_on_weapon_unit": true,
+      "rot_info": {
+        "x_rot_speed": 4,
+        "y_rot_speed": 4,
+        "y_rot_min": -360.0,
+        "y_rot_max": 360.0,
+        "y_rot": 0.0
+      },
+      "weapons": [
+        "flans_modern:m230_30mm"
+      ]
+    }
+  ],
+  "model": "flans_modern:models/vehicle/apacheah64/apacheah64.glb",
+  "display": {
+    "icon": "flans_modern:textures/slot/apacheah64.png",
+    "tab_index": 910,
+    "controller": "flans_modern:apacheah64_controller",
+    "engine": {
+      "start": {
+        "event": "combinedassault:z10_engine_start",
+        "range": 360
+      },
+      "stop": {
+        "event": "combinedassault:z10_engine_stop",
+        "range": 360
+      },
+      "loops": [
+        {
+          "sound": {
+            "event": "combinedassault:z10_engine_run",
+            "range": 600
+          },
+          "input": "power",
+          "volume": [
+            [
+              0.2,
+              0
+            ],
+            [
+              0.5,
+              1
+            ]
+          ],
+          "pitch": [
+            [
+              0.5,
+              0.8
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "cabin_muffle": 0.5
+  }
+}

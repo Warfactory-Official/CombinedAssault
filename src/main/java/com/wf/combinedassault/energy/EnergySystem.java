@@ -36,6 +36,8 @@ public final class EnergySystem implements CombinedAssaultSystem {
         EnergyContent.ITEMS.register(modBus);
         EnergyContent.DATA_COMPONENTS.register(modBus);
         EnergyFluids.register(modBus);
+        com.wf.wflib.mist.spray.SprayPayloads.register(EnergyFluids.FUEL_SOURCE.getId(),
+                com.wf.wflib.mist.spray.SprayPayload.INERT);
         VehicleTabs.addMisc(EnergyContent.FUEL_TANK);
         container.registerConfig(ModConfig.Type.COMMON, EnergyConfig.SPEC, "combinedassault-energy.toml");
         modBus.addListener(ModConfigEvent.Loading.class, EnergyConfig::onLoad);
@@ -61,7 +63,7 @@ public final class EnergySystem implements CombinedAssaultSystem {
     /** Tank/battery as capabilities: pump/charger sees a vehicle as a machine; only the one it runs on answers. */
     private static <T extends AbstractVehicle> void registerVehicleEnergy(RegisterCapabilitiesEvent event, EntityType<T> type) {
         event.registerEntity(Capabilities.FluidHandler.ENTITY, type,
-                (vehicle, context) -> vehicle.isElectric() ? null : vehicle.fuelTank());
+                (vehicle, context) -> vehicle.fluids());
         event.registerEntity(Capabilities.EnergyStorage.ENTITY, type,
                 (vehicle, context) -> vehicle.isElectric() ? vehicle.energyBuffer() : null);
     }

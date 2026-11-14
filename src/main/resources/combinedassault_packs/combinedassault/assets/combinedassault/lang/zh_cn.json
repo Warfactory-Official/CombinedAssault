@@ -151,5 +151,17 @@
   "part.combinedassault.m777_loader": "装填手",
   "part.combinedassault.m777_assistant": "弹药手",
   "part.combinedassault.m777_deploy": "炮架",
-  "vehicle.weapon.m777": "155毫米 M777"
+  "vehicle.weapon.m777": "155毫米 M777",
+  "combinedassault.m113": "M113装甲运兵车",
+  "entity.combinedassault.m113": "M113装甲运兵车",
+  "part.combinedassault.m113.driver_out": "驾驶员（探身）",
+  "part.combinedassault.m113.mg": "车长机枪",
+  "part.combinedassault.m113.troop_l1": "载员（左1）",
+  "part.combinedassault.m113.troop_l2": "载员（左2）",
+  "part.combinedassault.m113.troop_l3": "载员（左3）",
+  "part.combinedassault.m113.troop_l4": "载员（左4）",
+  "part.combinedassault.m113.troop_r1": "载员（右1）",
+  "part.combinedassault.m113.troop_r2": "载员（右2）",
+  "part.combinedassault.m113.troop_r3": "载员（右3）",
+  "part.combinedassault.m113.troop_r4": "载员（右4）"
 }

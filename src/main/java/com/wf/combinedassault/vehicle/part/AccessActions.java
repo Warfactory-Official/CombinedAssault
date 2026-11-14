@@ -1,9 +1,11 @@
 package com.wf.combinedassault.vehicle.part;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.hit.VehicleHits;
 import com.wf.combinedassault.tow.TowLinks;
 import com.wf.combinedassault.vehicle.VehicleContent;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.lock.VehicleLock;
 import com.wf.combinedassault.vehicle.item.VehicleSpawnItem;
 import com.wf.combinedassault.weapon.part.WeaponBayUnit;
 import com.wf.wflib.probe.api.ProbeActions;
@@ -22,16 +24,18 @@ public final class AccessActions {
     public static final ResourceLocation BOARD = CombinedAssault.modLocation("board_seat");
     public static final ResourceLocation STORAGE = CombinedAssault.modLocation("open_storage");
     public static final ResourceLocation PICK_UP = CombinedAssault.modLocation("pick_up");
+    /** arg = target {@link VehicleLock} ordinal. */
+    public static final ResourceLocation LOCK = CombinedAssault.modLocation("lock");
 
     private AccessActions() {
     }
 
     public static void register() {
         ProbeActions.registerEntity(TOGGLE, (player, entity, arg) -> entity instanceof AbstractVehicle vehicle
-                && toggle(player, vehicle, arg));
+                && VehicleLock.check(vehicle, player) && sees(player, vehicle, arg) && toggle(player, vehicle, arg));
         ProbeActions.registerEntity(BOARD, (player, entity, arg) -> entity instanceof AbstractVehicle vehicle
                 && !vehicle.uav && !vehicle.isDestroyed() && !player.isPassenger() && !player.isShiftKeyDown()
-                && vehicle.board(player, arg));
+                && VehicleLock.check(vehicle, player) && vehicle.board(player, arg));
         ProbeActions.registerEntity(STORAGE, (player, entity, arg) -> {
             if (!(entity instanceof AbstractVehicle vehicle) || !vehicle.hasContainer() || player.isPassenger()) {
                 return false;
@@ -40,7 +44,9 @@ public final class AccessActions {
             return true;
         });
         ProbeActions.registerEntity(PICK_UP, (player, entity, arg) -> entity instanceof AbstractVehicle vehicle
-                && pickUp(player, vehicle));
+                && VehicleLock.check(vehicle, player) && pickUp(player, vehicle));
+        ProbeActions.registerEntity(LOCK, (player, entity, arg) -> entity instanceof AbstractVehicle vehicle
+                && arg >= 0 && arg < VehicleLock.values().length && VehicleLock.set(player, vehicle, VehicleLock.values()[arg]));
     }
 
     /** Crewed, operated, carried or wrecked => refused. Autonomy state (route, orders) not kept; engine off. */
@@ -71,6 +77,16 @@ public final class AccessActions {
     public static boolean isDoor(PartUnit<?> part) {
         return part instanceof DoorUnit || part.getClass() == SwitchableUnit.class
                 || part instanceof WeaponBayUnit bay && bay.handWorked();
+    }
+
+    /** Probe line of sight to part {@code index}'s anchor ({@link VehicleHits#probeReaches}); bad index => true. */
+    public static boolean sees(ServerPlayer player, AbstractVehicle vehicle, int index) {
+        VehicleHits hits = vehicle.hits();
+        if (hits == null || index < 0 || index >= vehicle.getPartUnits().size()) {
+            return true;
+        }
+        PartUnit<?> part = vehicle.getPartUnits().get(index);
+        return hits.probeReaches(player.getEyePosition(), VehicleHits.anchor(hits, part), hits.ofPart(part));
     }
 
     public static boolean toggle(ServerPlayer player, AbstractVehicle vehicle, int index) {

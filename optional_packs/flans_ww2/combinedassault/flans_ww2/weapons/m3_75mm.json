@@ -1,0 +1,28 @@
+{
+  "type": "combinedassault:cannon",
+  "name": "75mm Gun M3",
+  "recoil": 0.8,
+  "inaccuracy": 0.05,
+  "shoot_interval": 500,
+  "max_capacity": 1,
+  "reload": {
+    "time": 50,
+    "ammo": "wflib:cartridge_75x350r"
+  },
+  "casing_delay": 1.0,
+  "sounds": {
+    "fire": {
+      "event": "combinedassault:cannon_125mm_shot",
+      "range": 1000,
+      "pitch_random": 0.1
+    },
+    "shell": {
+      "event": "combinedassault:cannon_shell_drop",
+      "range": 24
+    },
+    "reload": {
+      "event": "combinedassault:artillery_reload",
+      "range": 24
+    }
+  }
+}

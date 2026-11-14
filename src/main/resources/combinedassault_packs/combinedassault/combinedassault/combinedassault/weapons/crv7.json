@@ -10,5 +10,12 @@
             "combinedassault:rocket_crv7",
             "#wflib:rocket/70mm"
         ]
+    },
+    "sounds": {
+        "fire": {
+            "event": "combinedassault:rocket_launch",
+            "range": 500,
+            "pitch_random": 0.1
+        }
     }
 }

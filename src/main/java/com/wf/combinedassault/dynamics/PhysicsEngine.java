@@ -26,6 +26,7 @@ import org.joml.Matrix3f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -282,6 +283,54 @@ public class PhysicsEngine {
 
     public boolean suspended() {
         return vehicle.hasRunningGear();
+    }
+
+    /** Island task: per spring slot (stiffness, travel stop) of this step's rows; stiffness 0 = skipped. */
+    private float[] springSlots = new float[16];
+    private int springSlotCount;
+    private float springEnergyAtStart;
+
+    /** Island task, before {@link #springSlot}s: this step's rows start. */
+    public void clearSpringSlots() {
+        springSlotCount = 0;
+        springEnergyAtStart = 0;
+    }
+
+    /** Island task, in row order; {@code stiffness} 0 for a skipped row. */
+    public void springSlot(float stiffness, float compression, float max) {
+        if (springSlots.length < (springSlotCount + 1) * 2) {
+            springSlots = Arrays.copyOf(springSlots, springSlots.length * 2);
+        }
+        springSlots[springSlotCount * 2] = stiffness;
+        springSlots[springSlotCount * 2 + 1] = max;
+        springSlotCount++;
+        springEnergyAtStart += springEnergy(stiffness, compression, max);
+    }
+
+    /** Spring energy at the last solve's end, its tick; island task. */
+    public float lastSpringEnergy;
+    public long lastSpringTick = Long.MIN_VALUE;
+
+    /** Spring energy at the step's start (rows as sampled), mass (b/t)^2. */
+    public float springEnergyAtStart() {
+        return springEnergyAtStart;
+    }
+
+    /** Spring energy at the solver's last evaluation; NaN entries = ungrounded. */
+    public float springEnergy(float[] compression, int rows) {
+        float energy = 0;
+        for (int i = 0, n = Math.min(rows, springSlotCount); i < n; i++) {
+            if (!Float.isNaN(compression[i])) {
+                energy += springEnergy(springSlots[i * 2], compression[i], springSlots[i * 2 + 1]);
+            }
+        }
+        return energy;
+    }
+
+    /** Past the travel stop the row is a rigid stop: stores nothing more. */
+    private static float springEnergy(float stiffness, float compression, float max) {
+        float x = Mth.clamp(compression, 0, max);
+        return 0.5f * stiffness * x * x;
     }
 
     /** Tick thread, before a solve is launched: suspension frames are read off-thread. */

@@ -61,7 +61,18 @@ public final class VehicleLab {
             return null;
         }
         Object[] r = rows.get(0);
-        return new Row((String) r[7], new Vec3((Double) r[24], (Double) r[25], (Double) r[26]));
+        return new Row((String) r[column("verdict")], new Vec3((Double) r[column("hit_x_m")],
+                (Double) r[column("hit_y_m")], (Double) r[column("hit_z_m")]));
+    }
+
+    private static int column(String name) {
+        List<com.wf.wflib.labs.api.LabTable.Column> columns = VehicleProducer.TABLE.columns();
+        for (int i = 0; i < columns.size(); i++) {
+            if (columns.get(i).name().equals(name)) {
+                return i;
+            }
+        }
+        throw new IllegalArgumentException("no column " + name);
     }
 
     /** Nanoseconds per {@code Spall.onPenetration} for the shot, {@code n} calls. */
@@ -69,14 +80,42 @@ public final class VehicleLab {
         StrikeSource source = new StrikeSource(level, threat, shot.ray().start(), velocity);
         Vec3 hit = shot.ray().hit().point();
         com.wf.wflib.armor.api.hull.HullResult r = com.wf.combinedassault.ballistics.Ballistics.resolve(shot.rig().vehicle, source,
-                damage, hit, 1.0f);
-        if (r == null || !r.outcome().isThrough()) {
+                damage, hit, null);
+        if (r == null || !r.through()) {
             throw new IllegalStateException("shot does not penetrate: " + (r == null ? "no model" : r.outcome()));
         }
         long t0 = System.nanoTime();
         for (int i = 0; i < n; i++) {
-            com.wf.combinedassault.ballistics.spall.Spall.onPenetration(shot.rig().vehicle, source, r, hit, damage, damage);
+            com.wf.combinedassault.ballistics.spall.Spall.onPenetration(shot.rig().vehicle, source, r, damage, damage);
         }
         return (System.nanoTime() - t0) / (double) n;
+    }
+
+    /**
+     * Nanoseconds per whole {@code DamageSystem.hurt} of the shot (resolver, spall, systems, effects, readout), and per
+     * {@code Ballistics.resolve} alone, {@code n} calls each; hull healed between.
+     *
+     * @return {hurt, resolve}
+     */
+    public static double[] strikeNanos(ServerLevel level, Shot shot, Vec3 velocity, Threat threat, float damage, int n) {
+        AbstractVehicle vehicle = shot.rig().vehicle;
+        Vec3 hit = shot.ray().hit().point();
+        Vec3 position = hit.subtract(velocity.normalize().scale(velocity.length() * 0.5));
+        StrikeSource source = new StrikeSource(level, threat, position, velocity);
+        for (int i = 0; i < n / 4; i++) {
+            vehicle.setHealth(vehicle.getMaxHealth());
+            com.wf.combinedassault.ballistics.DamageSystem.hurt(source, damage, vehicle);
+        }
+        long t0 = System.nanoTime();
+        for (int i = 0; i < n; i++) {
+            vehicle.setHealth(vehicle.getMaxHealth());
+            com.wf.combinedassault.ballistics.DamageSystem.hurt(source, damage, vehicle);
+        }
+        double hurt = (System.nanoTime() - t0) / (double) n;
+        t0 = System.nanoTime();
+        for (int i = 0; i < n; i++) {
+            com.wf.combinedassault.ballistics.Ballistics.resolve(vehicle, source, damage, hit, null);
+        }
+        return new double[]{hurt, (System.nanoTime() - t0) / (double) n};
     }
 }

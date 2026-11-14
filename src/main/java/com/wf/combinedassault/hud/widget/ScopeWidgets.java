@@ -1,9 +1,13 @@
 package com.wf.combinedassault.hud.widget;
 
+import com.wf.combinedassault.ballistics.component.ComponentState;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 import com.wf.combinedassault.hud.CaDraw;
 import com.wf.combinedassault.hud.HudCache;
 import com.wf.combinedassault.hud.HudSubjects;
+import com.wf.combinedassault.render.gem.SchematicBake;
+import com.wf.combinedassault.render.gem.SchematicSprites;
+import com.wf.combinedassault.render.model.VehicleModelInstance;
 import com.wf.combinedassault.render.util.GuiHelper;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
@@ -20,10 +24,14 @@ import com.wf.gemrender.ui.TextBuffer;
 import com.wf.wflib.ui.api.*;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
+import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /** Scope-view instruments of a weapon station; GUI coordinates, size 0. */
 public final class ScopeWidgets {
@@ -86,6 +94,19 @@ public final class ScopeWidgets {
                         }
                         text.append((long) local.aimLocationDistance).append(" m");
                         canvas.textCentred(text, px, py + 40, argb, true);
+                        if (unit.zeroRange() > 0) {
+                            text.clear().append("Z ").append((long) unit.zeroRange()).append(" m");
+                            canvas.textCentred(text, px, py + 52, argb, true);
+                        }
+                        if (unit.rangefinder() != null && unit.rangeReadingLive()) {
+                            text.clear().append("LRF ");
+                            if (unit.rangeReading > 0) {
+                                text.append((long) unit.rangeReading).append(" m");
+                            } else {
+                                text.append("----");
+                            }
+                            canvas.textCentred(text, px, py + 64, argb, true);
+                        }
                         text.clear().append('x').append(unit.getZoom(), 1);
                         canvas.text(text, px + 25, py + 16, argb, true);
                         if (unit.withStabilizer()) {
@@ -174,10 +195,11 @@ public final class ScopeWidgets {
     }
 
     /**
-     * Top-down hull schematic rotated to the operator's traverse: hull boxes green, own station blue,
-     * destroyed parts red. Scaled so any hull fits ~5 units per block of length.
+     * Top-down hull schematic rotated to the operator's traverse, one baked sprite per part bone
+     * ({@link SchematicSprites}); own station blue, damage steps yellow/orange/red, destroyed red. Boxes while the
+     * model has no sprites. Scaled so any hull is {@code length} units long (default 50); {@code hullUp} keeps the hull's nose up instead of following the traverse.
      */
-    public record VehicleSchematic() implements WidgetDef {
+    public record VehicleSchematic(float length, boolean hullUp) implements WidgetDef {
         @Override
         public Widget create(Binder binder) {
             SubjectRef<AbstractVehicle> vehicleRef = binder.subject(HudSubjects.VEHICLE);
@@ -187,6 +209,14 @@ public final class ScopeWidgets {
                 private final Vector3f forward = new Vector3f();
                 private final Quaternionf rotation = new Quaternionf();
                 private final Quaternionf slerped = new Quaternionf();
+                private final Vector3f origin = new Vector3f();
+                private final Vector3f along = new Vector3f();
+                private AbstractVehicle bound;
+                private SchematicSprites.Sheet sheet;
+                private final Map<String, PartUnit<?>> boneParts = new LinkedHashMap<>();
+                private SchematicSprites.Sheet resolved;
+                private PartUnit<?>[] spriteParts = new PartUnit<?>[0];
+                private int[] spriteBones = new int[0];
 
                 @Override
                 public void draw(UiEval ev, float x, float y, float w, float h) {
@@ -196,11 +226,15 @@ public final class ScopeWidgets {
                     }
                     float pt = ev.partialTick;
                     Canvas canvas = ev.canvas;
-                    float scale = (float) (5.0 / Math.max(4.0, vehicle.getStructureLength()));
+                    float scale = (length > 0 ? length : 50.0f) / 10.0f / (float) Math.max(4.0, vehicle.getStructureLength());
                     Player player = LocalVehiclePlayer.instance().getPlayer();
                     PartUnit<?> own = vehicle.getOwnOperatorUnit(player);
-                    float zRot = own instanceof RotatableUnit<?> rotatable ? turretYaw(rotatable, vehicle, pt) : 0;
+                    float zRot = !hullUp && own instanceof RotatableUnit<?> rotatable ? turretYaw(rotatable, vehicle, pt) : 0;
                     canvas.push().translate(x, y).scale(scale).rotate((float) Math.toRadians(180 - zRot));
+                    if (sprites(canvas, vehicle, player, pt)) {
+                        canvas.pop();
+                        return;
+                    }
                     double vx = Mth.lerp(pt, vehicle.xo, vehicle.getX());
                     double vy = Mth.lerp(pt, vehicle.yo, vehicle.getY());
                     double vz = Mth.lerp(pt, vehicle.zo, vehicle.getZ());
@@ -238,6 +272,104 @@ public final class ScopeWidgets {
                         }
                     }
                     canvas.pop();
+                }
+
+                /** @return false: model has no sprites, draw boxes. */
+                private boolean sprites(Canvas canvas, AbstractVehicle vehicle, Player player, float pt) {
+                    if (vehicle != bound || !sheet.valid()) {
+                        bind(vehicle);
+                    }
+                    SchematicSprites.Sheet.State state = sheet.state();
+                    if (state == SchematicSprites.Sheet.State.FAILED) {
+                        return false;
+                    }
+                    VehicleModelInstance instance = vehicle.getVehicleModelInstance();
+                    if (state == SchematicSprites.Sheet.State.PENDING || !instance.posed()) {
+                        return true;
+                    }
+                    SchematicBake.Result result = sheet.result();
+                    if (resolved != sheet) {
+                        resolve(instance, result);
+                    }
+                    canvas.push().scale(10);
+                    for (int i = 0; i < spriteParts.length; i++) {
+                        SchematicBake.Sprite sprite = result.sprites().get(i);
+                        float angle = 0;
+                        float ox = 0;
+                        float oz = 0;
+                        if (spriteBones[i] >= 0) {
+                            // TODO: globalTransform allocates a Matrix4f per call; paid per sprite per frame while scoped.
+                            Matrix4f bone = instance.globalTransform(spriteBones[i]);
+                            bone.transformPosition(0, 0, 0, origin);
+                            bone.transformDirection(1, 0, 0, along);
+                            ox = origin.x;
+                            oz = origin.z;
+                            angle = (float) Math.atan2(along.z, along.x);
+                        }
+                        canvas.push().translate(ox - result.centreX(), oz - result.centreZ()).rotate(angle);
+                        float u = 1.0f / result.width();
+                        float v = 1.0f / result.height();
+                        canvas.sprite(sheet.texture(), sprite.minX(), sprite.minZ(), sprite.maxX(), sprite.maxZ(),
+                                sprite.x() * u, sprite.y() * v, (sprite.x() + sprite.w()) * u,
+                                (sprite.y() + sprite.h()) * v, tint(vehicle, spriteParts[i], player));
+                        canvas.pop();
+                    }
+                    canvas.pop();
+                    return true;
+                }
+
+                private void bind(AbstractVehicle vehicle) {
+                    bound = vehicle;
+                    boneParts.clear();
+                    List<PartUnit<?>> parts = vehicle.getPartUnits();
+                    for (int p = 0; p < parts.size(); p++) {
+                        PartUnit<?> part = parts.get(p);
+                        claim(part);
+                        if (part instanceof WeaponUnit weapon) {
+                            List<WeaponUnit> subs = weapon.getSubWeaponUnits();
+                            for (int s = 0; s < subs.size(); s++) {
+                                claim(subs.get(s));
+                            }
+                        }
+                    }
+                    sheet = SchematicSprites.request(vehicle.getVehicleModelInstance(), new ArrayList<>(boneParts.keySet()));
+                    resolved = null;
+                }
+
+                private void claim(PartUnit<?> part) {
+                    String bone = part.getRenderBoneName();
+                    if (bone != null && !bone.isBlank()) {
+                        boneParts.putIfAbsent(bone, part);
+                    }
+                }
+
+                private void resolve(VehicleModelInstance instance, SchematicBake.Result result) {
+                    int count = result.sprites().size();
+                    spriteParts = new PartUnit<?>[count];
+                    spriteBones = new int[count];
+                    for (int i = 0; i < count; i++) {
+                        String bone = result.sprites().get(i).bone();
+                        spriteParts[i] = boneParts.get(bone);
+                        spriteBones[i] = bone.isEmpty() ? -1 : instance.boneIndex(bone);
+                    }
+                    resolved = sheet;
+                }
+
+                private int tint(AbstractVehicle vehicle, PartUnit<?> part, Player player) {
+                    if (part == null) {
+                        return CaDraw.WHITE;
+                    }
+                    if (part.isDestroyed()) {
+                        return CaDraw.RED;
+                    }
+                    float max = part.getMaxHealth();
+                    ComponentState state = ComponentState.of(max <= 0 ? 1 : Math.max(0, part.getHealth() / max));
+                    return switch (state) {
+                        case PRISTINE -> part.getOwner() == player ? CaDraw.BLUE : CaDraw.WHITE;
+                        case WORN -> 0xFFE8D060;
+                        case DAMAGED -> 0xFFE08830;
+                        case BROKEN -> 0xFFB82820;
+                    };
                 }
 
                 private void box(Canvas canvas, VehicleCubeOBB obb, double vx, double vy, double vz, float yaw, float pt, int argb) {

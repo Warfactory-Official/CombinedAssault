@@ -20,6 +20,7 @@ build
 # other
 eclipse
 tools/internal
+/optional_packs/bvp/
 /run/
 /legacy/
 .narrafork/

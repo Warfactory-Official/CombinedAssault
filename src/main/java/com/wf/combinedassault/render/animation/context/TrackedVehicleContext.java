@@ -1,15 +1,10 @@
 package com.wf.combinedassault.render.animation.context;
 
-import com.wf.combinedassault.dynamics.part.TrackUnit;
 import com.wf.combinedassault.vehicle.entity.TrackedVehicle;
-
-import java.util.OptionalDouble;
 
 public class TrackedVehicleContext extends VehicleContext<TrackedVehicle> {
     private final DriverControls controls = new DriverControls();
-
-    private float leftTrackDisplacement;
-    private float rightTrackDisplacement;
+    private final TrackWheels trackWheels = new TrackWheels();
 
     public TrackedVehicleContext(TrackedVehicle vehicle) {
         super(vehicle);
@@ -26,61 +21,19 @@ public class TrackedVehicleContext extends VehicleContext<TrackedVehicle> {
     @Override
     public void tick() {
         super.tick();
-        this.advanceTrackProgress();
-        controls.update(entity, (this.currentTimeMillis() - this.lastRenderTime()) / 1000f);
-    }
-
-    public void advanceTrackProgress() {
-        float deltaTime = (this.currentTimeMillis() - this.lastRenderTime()) / 1000f;
-        float forwardSpeed = this.getForwardSpeed();
-        float turnSpeed = this.getTurnSpeed();
-        float linearSpeed = forwardSpeed * 20;
-        firstTrackLateralOffset(true).ifPresent(offset ->
-                leftTrackDisplacement += (float) (linearSpeed + turnSpeed * offset) * deltaTime);
-        firstTrackLateralOffset(false).ifPresent(offset ->
-                rightTrackDisplacement += (float) (linearSpeed + turnSpeed * offset) * deltaTime);
-    }
-
-    public float getLeftWheelDegrees(float leftDriveRadius) {
-        return wheelRotation(leftTrackDisplacement, leftDriveRadius);
-    }
-
-    public float getRightWheelDegrees(float rightDriveRadius) {
-        return wheelRotation(rightTrackDisplacement, rightDriveRadius);
-    }
-
-    private OptionalDouble firstTrackLateralOffset(boolean left) {
-        for (var partUnit : entity.getPartUnits()) {
-            if (partUnit instanceof TrackUnit trackUnit) {
-                OptionalDouble offset = left
-                        ? trackUnit.getFirstLeftTrackLateralOffset()
-                        : trackUnit.getFirstRightTrackLateralOffset();
-                if (offset.isPresent()) {
-                    return offset;
-                }
-            }
-        }
-        return OptionalDouble.empty();
-    }
-
-    private static float wheelRotation(float displacement, float radius) {
-        if (radius == 0) {
-            return 0;
-        }
-        return displacement / (2f * (float) Math.PI * radius) * 360f;
+        float deltaTime = this.frameSeconds();
+        trackWheels.advance(entity, deltaTime);
+        controls.update(entity, deltaTime);
     }
 
     @Override
     public float getBindingValue(String source, Float param) {
-        float paramValue = param != null ? param : 0f;
-        return switch (source) {
-            case "left_wheel_rotation" -> getLeftWheelDegrees(paramValue);
-            case "right_wheel_rotation" -> getRightWheelDegrees(paramValue);
-            default -> {
-                float control = controls.value(source);
-                yield Float.isNaN(control) ? super.getBindingValue(source, param) : control;
-            }
-        };
+        float wheel = trackWheels.binding(source, param != null ? param : 0f);
+        if (!Float.isNaN(wheel)) {
+            return wheel;
+        }
+        float control = controls.value(source);
+        return Float.isNaN(control) ? super.getBindingValue(source, param) : control;
     }
 
 }

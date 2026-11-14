@@ -1,0 +1,286 @@
+{
+  "type": "combinedassault:fixed_wing_vehicle",
+  "attributes": {
+    "thrust": 132300,
+    "thrust_k": 1.0,
+    "ceiling": 512,
+    "x_rot_input_step": 0.2,
+    "y_rot_input_step": 0.5,
+    "z_rot_input_step": 0.2,
+    "air_drag_k_min": 25.71,
+    "air_drag_k_max": 102.86,
+    "lift_to_drag_k": 4.0,
+    "x_rot_input_drag_k": 1.0,
+    "y_rot_input_drag_k": 0.25,
+    "z_rot_input_drag_k": 0.125,
+    "turn_rate_by_speed": 0.4,
+    "x_turn_rate": 1.5,
+    "y_turn_rate": 2.2,
+    "z_turn_rate": 4.0
+  },
+  "physics_info": {
+    "mass": 15000,
+    "friction": 7500
+  },
+  "landing_gear_part_id": "landing_gear",
+  "max_health": 900,
+  "view_info": {
+    "third_person_distance": 15.0,
+    "third_person_distance_zoomed": 4
+  },
+  "energy_info": {
+    "energy_capacity": 3000,
+    "energy_consumption_per_tick": 0.01875
+  },
+  "defense_stats": {
+    "damage_threshold": 10,
+    "impact_multiplier": 3
+  },
+  "parts": [
+    {
+      "id": "pilot",
+      "name": "part.flans_modern.a10.pilot",
+      "type": "combinedassault:weapon",
+      "crew_roles": [
+        "driver",
+        "gunner"
+      ],
+      "operator_on_weapon_unit": false,
+      "crosshair_style": "cross",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "weapons": [
+        {
+          "id": "combinedassault:gau_8",
+          "part_unit_id": "gun"
+        },
+        {
+          "id": "combinedassault:hydra_70",
+          "part_unit_id": "rocket_l",
+          "secondary": true,
+          "salvo": "rocket"
+        },
+        {
+          "id": "combinedassault:hydra_70",
+          "part_unit_id": "rocket_r",
+          "secondary": true,
+          "salvo": "rocket"
+        },
+        {
+          "id": "combinedassault:agm_65",
+          "part_unit_id": "missile_l",
+          "secondary": true,
+          "salvo": "missile"
+        },
+        {
+          "id": "combinedassault:agm_65",
+          "part_unit_id": "missile_r",
+          "secondary": true,
+          "salvo": "missile"
+        },
+        {
+          "id": "combinedassault:mk_82",
+          "part_unit_id": "bomb_l",
+          "secondary": true,
+          "salvo": "bomb"
+        },
+        {
+          "id": "combinedassault:mk_82",
+          "part_unit_id": "bomb_r",
+          "secondary": true,
+          "salvo": "bomb"
+        }
+      ]
+    },
+    {
+      "id": "landing_gear",
+      "name": "part.flans_modern.a10.landing_gear",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0.5
+    },
+    {
+      "id": "landing_gear_l",
+      "name": "part.flans_modern.a10.landing_gear_l",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0,
+      "on_system": "left wing"
+    },
+    {
+      "id": "landing_gear_r",
+      "name": "part.flans_modern.a10.landing_gear_r",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0,
+      "on_system": "right wing"
+    },
+    {
+      "id": "gun",
+      "name": "part.flans_modern.a10.gun",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      }
+    },
+    {
+      "id": "rocket_l",
+      "name": "part.flans_modern.a10.rocket_l",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "left wing",
+      "ammo_capacity": 19,
+      "parent_weapon_unit_aim": true
+    },
+    {
+      "id": "rocket_r",
+      "name": "part.flans_modern.a10.rocket_r",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "right wing",
+      "ammo_capacity": 19,
+      "parent_weapon_unit_aim": true
+    },
+    {
+      "id": "missile_l",
+      "name": "part.flans_modern.a10.missile_l",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "left wing",
+      "ammo_capacity": 3,
+      "parent_weapon_unit_aim": true
+    },
+    {
+      "id": "missile_r",
+      "name": "part.flans_modern.a10.missile_r",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "right wing",
+      "ammo_capacity": 3,
+      "parent_weapon_unit_aim": true
+    },
+    {
+      "id": "bomb_l",
+      "name": "part.flans_modern.a10.bomb_l",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "left wing",
+      "ammo_capacity": 2,
+      "parent_weapon_unit_aim": true
+    },
+    {
+      "id": "bomb_r",
+      "name": "part.flans_modern.a10.bomb_r",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "right wing",
+      "ammo_capacity": 2,
+      "parent_weapon_unit_aim": true
+    }
+  ],
+  "model": "flans_modern:models/vehicle/a10/a10.glb",
+  "display": {
+    "icon": "flans_modern:textures/slot/a10.png",
+    "tab_index": 910,
+    "controller": "flans_modern:a10_controller",
+    "engine": {
+      "start": {
+        "event": "combinedassault:jet_engine_start",
+        "range": 540
+      },
+      "stop": {
+        "event": "combinedassault:jet_engine_stop",
+        "range": 540
+      },
+      "loops": [
+        {
+          "sound": {
+            "event": "combinedassault:jet_engine_run",
+            "range": 900
+          },
+          "input": "throttle",
+          "volume": [
+            [
+              0,
+              0.55
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "pitch": [
+            [
+              0,
+              0.85
+            ],
+            [
+              1,
+              1.05
+            ],
+            [
+              1.5,
+              1.15
+            ]
+          ],
+          "aspect": [
+            [
+              0,
+              0.55
+            ],
+            [
+              120,
+              1
+            ]
+          ],
+          "gate": [
+            [
+              0.2,
+              0
+            ],
+            [
+              0.5,
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "cabin_muffle": 0.85
+  }
+}

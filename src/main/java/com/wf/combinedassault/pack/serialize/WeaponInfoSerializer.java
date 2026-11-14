@@ -30,6 +30,7 @@ public class WeaponInfoSerializer implements JsonDeserializer<WeaponInfo> {
             String saveId = GsonHelper.getAsString(obj, "save_id", partUnitId);
             WeaponInfo info = new WeaponInfo(id == null ? null : ResourceLocation.tryParse(id), partUnitId,
                     weaponBayUnitId, secondary, fullSalvo, saveId);
+            info.salvo = GsonHelper.getAsString(obj, "salvo", null);
             if (obj.has("kit")) {
                 info.kit = ResourceLocation.parse(obj.get("kit").getAsString());
             }

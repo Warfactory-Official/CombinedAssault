@@ -1,0 +1,45 @@
+{
+  "type": "combinedassault:generic",
+  "attributes": {},
+  "physics_info": {
+    "mass": 300
+  },
+  "max_health": 300,
+  "view_info": {
+    "third_person_distance": 7
+  },
+  "energy_info": {
+    "energy_capacity": 600,
+    "energy_consumption_per_tick": 0.004
+  },
+  "storage": {
+    "slots": 9
+  },
+  "parts": [
+    {
+      "id": "gun",
+      "name": "part.combinedassault.turret",
+      "type": "combinedassault:weapon",
+      "max_health": 100,
+      "component": "barrel",
+      "detachable": false,
+      "operator_on_weapon_unit": true,
+      "crosshair_style": "cross",
+      "rot_info": {
+        "x_rot_speed": 3,
+        "y_rot_speed": 4,
+        "need_power": false
+      },
+      "weapons": [
+        "combinedassault:m134"
+      ],
+      "pose": "sit",
+      "protect_passenger": false
+    }
+  ],
+  "model": "flans_modern:models/vehicle/sentrygun/sentrygun.glb",
+  "display": {
+    "tab_index": 900,
+    "icon": "flans_modern:textures/slot/sentrygun.png"
+  }
+}

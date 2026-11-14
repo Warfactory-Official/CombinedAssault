@@ -39,6 +39,8 @@ public class ClientVehicleMoveControl implements CustomPacketPayload {
     public float reportedYRot;
     public float reportedZRot;
     public byte gearRequest = ControlUnit.NO_GEAR;
+    public boolean wheelSteer;
+    public float wheel;
 
     public ClientVehicleMoveControl() {}
 
@@ -74,6 +76,10 @@ public class ClientVehicleMoveControl implements CustomPacketPayload {
             control.reportedZRot = buf.readFloat();
         }
         control.gearRequest = buf.readByte();
+        control.wheelSteer = buf.readBoolean();
+        if (control.wheelSteer) {
+            control.wheel = buf.readFloat();
+        }
         return control;
     }
 
@@ -108,6 +114,10 @@ public class ClientVehicleMoveControl implements CustomPacketPayload {
             buf.writeFloat(reportedZRot);
         }
         buf.writeByte(gearRequest);
+        buf.writeBoolean(wheelSteer);
+        if (wheelSteer) {
+            buf.writeFloat(wheel);
+        }
     }
 
     public static void handle(ClientVehicleMoveControl message, IPayloadContext ctx) {

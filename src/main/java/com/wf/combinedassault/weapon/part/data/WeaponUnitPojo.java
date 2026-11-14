@@ -84,6 +84,18 @@ public class WeaponUnitPojo extends RotatableUnitPojo {
     @SerializedName("optic")
     public OpticSpec optic = null;
 
+    /** Absent => no laser rangefinder. */
+    @SerializedName("rangefinder")
+    public RangefinderPojo rangefinder = null;
+
+    public static final class RangefinderPojo {
+        /** {@code info}: reading only; {@code zero}: reading also zeroes the gun. */
+        @SerializedName("mode")
+        public String mode = "zero";
+        @SerializedName("max_range")
+        public float maxRange = 4000;
+    }
+
     /** Absent => direct fire only. */
     @SerializedName("indirect_fire")
     public IndirectFirePojo indirectFire = null;

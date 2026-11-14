@@ -30,6 +30,9 @@ Install: `python3 tools/blender/build_addon.py` -> `build/combinedassault_tools.
   working); elsewhere => copied to `textures/<model dir>/`.
 - Import keeps every node / material extra; panels override only what they show.
 - Scene tab > Merge coplanar faces: selected colliders, dissolve at 1e-3 rad (fixes the "share a plane" warning).
+- Make convex hull = hull triangle planes pushed over every point, intersected; face with 2 x area or an edge
+  `< 4e-4` => drop the touching plane growing the solid least. Growth reported (antenna whip ~0.04). Angle dissolve
+  FORBIDDEN: bends large faces past 1e-4, leaves bevel slivers under `ConvexHull` 2 x area 1e-4.
 - Colliders round-trip face for face (one glTF primitive per face). One triangulated primitive => the game regroups
   by plane and sliver triangles fail its 1e-4 flatness (EMB4 hulls are convex only to ~2e-3 per sliver).
 - Object tab: mount state node names (`ammo_can`, `round@<k>`, `barrel@<variant>`) labelled.
@@ -38,6 +41,20 @@ Install: `python3 tools/blender/build_addon.py` -> `build/combinedassault_tools.
 - Test: `blender -b --factory-startup --python "$PWD/tools/blender/test_combinedassault_tools.py"` (Flatpak:
   absolute path; its `/tmp` is private). Round-trips Humvee, C-5, T-90, Mavic, M777, M142; vocabularies parsed from the
 Java sources.
+
+## Plates (`tools/def_sockets.py plates`)
+
+| task | command |
+|---|---|
+| bind report | `plates <vehicle> [--pack DIR]`: ids mesh <-> `armor.plates`; per plate faces, area, declared (or fitted) normal, mesh deviation mean / max, faces > 10 deg; exit 1 on mismatch |
+| assign faces | `plates <vehicle> --assign ID --node N --box x0,y0,z0,x1,y1,z1 [--dry]`: triangles of node N whose centroid is in the box (model frame, parts at rest, = F3 `Model x y z`) |
+| assign by index | `--faces i,j,..`: triangle indices of node N's mesh, primitive order |
+| unbind | `--assign -` |
+
+- Material = copy of the face's material named `<base>_armor:ID`, so texture / paint / surface tokens survive; primitive split in place (index accessor shrunk, one primitive + accessor appended); every other byte of the glTF kept. `.gltf` keeps compact JSON.
+- Node whose mesh other nodes share => refused. Mirroring world matrix => winding reversed for the normal.
+- Deviation is two-sided: meshes carry coincident back-face duplicates, so a plate binds both copies (a hit reads whichever the BVH meets first).
+- Box selects by centroid: thick volumes catch inner faces; check the report's coherence / deviation.
 
 ## Blockbench plugin (`tools/blockbench/combinedassault.js`)
 
@@ -52,7 +69,7 @@ Install: Blockbench 5.1 desktop > File > Plugins > Load Plugin from File. Menu a
 | collider from geometry | Make convex hull (selected cubes / meshes, first one's frame); Merge coplanar faces (shared face tag per plane) |
 | tyre hit surface | Make hit cylinder: `hit_surface` prism per selected group (`genHulls` extras, regenerable by `gen_hulls.py --hit-cylinder`) |
 | screen | Add screen: `screen_<id>` quad (UV 0..1, faces the rider) + material `textureSlot` |
-| armour, hit effect, decor | Material tags: renames the texture (= material name). Assign armour to faces: per-face material copy `<stem>_armor_<mm>` (mesh face select) |
+| armour, hit effect, decor | Material tags: renames the texture (= material name). Gap: Armour mm / Assign armour still write `armor_<mm>`, which the game no longer reads; bind plates by naming the material `<stem>_armor:<id>` (pack doc §3.7) or `def_sockets.py plates` |
 | part clip | Key part clip: start / end key (offsets from rest) on selected groups / locators, clip `<part id>[.<suffix>]` |
 | lights | Preview lights: cone outline per `light` socket (kind defaults resolved). Rebuilt per call; never exported |
 | player size | CombinedAssault > Add player reference (standing / seated, 15/16 model; seat locator selected => eye on it). Never exported |

@@ -91,6 +91,9 @@
   "tips.hover_mode_on": "悬停模式: 开",
   "tips.hover_mode_off": "悬停模式: 关",
   "tips.thrust_vector": "推力矢量: %s°",
+  "tips.zero": "归零距离: %s 米",
+  "tips.zero.boresight": "归零: 炮膛轴线",
+  "tips.zero.limit": "无法继续归零: 弹种射程或火炮仰角受限",
   "tips.use_weapon": "选择武器: %s",
   "tips.experimental": "开发中",
   "tips.edit_decoration": "下蹲并右键以编辑",
@@ -254,8 +257,8 @@
   "tips.indirect.no_correction": "该修正超出火炮射程",
   "tips.indirect.no_round": "该武器没有可计算弹道的弹种",
   "key.combinedassault.indirect_mode.desc": "瞄准模式：直瞄 / 手动 / 自动",
-  "key.combinedassault.indirect_elevation_up.desc": "抬高炮口 / 增加射程",
-  "key.combinedassault.indirect_elevation_down.desc": "压低炮口 / 减少射程",
+  "key.combinedassault.indirect_elevation_up.desc": "抬高炮口 / 增加射程 / 归零距离增加",
+  "key.combinedassault.indirect_elevation_down.desc": "压低炮口 / 减少射程 / 归零距离减少",
   "key.combinedassault.indirect_traverse_left.desc": "火炮左转 / 向左修正",
   "key.combinedassault.indirect_traverse_right.desc": "火炮右转 / 向右修正",
   "key.combinedassault.indirect_step.desc": "切换调整档位",
@@ -479,5 +482,10 @@
   "barrel.combinedassault.wear": "磨损 %s%%",
   "barrel.combinedassault.jammed": "卡壳",
   "barrel.combinedassault.change": "更换枪管",
-  "barrel.combinedassault.change_coop": "更换枪管（协助射手）"
+  "barrel.combinedassault.change_coop": "更换枪管（协助射手）",
+  "key.combinedassault.rangefinder.desc": "激光测距（点按）",
+  "tips.rangefinder": "测距: %s 米",
+  "tips.rangefinder.zeroed": "测距: %s 米，已归零",
+  "tips.rangefinder.limit": "测距: %s 米，无法归零: 弹种射程或火炮仰角受限",
+  "tips.rangefinder.no_return": "测距: 无回波"
 }

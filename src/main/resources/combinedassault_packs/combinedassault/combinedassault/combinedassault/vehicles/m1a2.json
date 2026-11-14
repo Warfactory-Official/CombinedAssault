@@ -4,6 +4,7 @@
         "brake_acceleration": 0.025,
         "forward_acceleration": 0.01,
         "backward_acceleration": 0.01,
+        "engine_power": 1120,
         "max_speed_forward": 0.5,
         "max_speed_backward": 0.2,
         "turn_acceleration": 1,
@@ -47,12 +48,27 @@
         },
         "zones": [
             {"name": "turret_ring", "face": "front", "min": [-1.3, 1.25, 1.3], "max": [1.3, 1.7, 2.2], "ke": 150, "ce": 200},
-            {"name": "skirt_front", "face": "side", "min": [-1.9, 0.4, 1.2], "max": [1.9, 1.45, 3.7], "ke": 130, "ce": 300},
-            {"name": "barrel", "part": "turret", "min": [-0.3, 1.6, 2.45], "max": [0.3, 2.1, 5.6], "ke": 60},
             {"name": "mantlet", "part": "turret", "face": "front", "min": [-0.4, 1.5, 1.3], "max": [0.4, 2.15, 2.45], "ke": 450, "ce": 700},
-            {"name": "sight_block", "part": "turret", "face": "front", "min": [-1.8, 2.15, 0.0], "max": [1.8, 2.9, 1.1], "ke": 250, "ce": 350},
-            {"name": "bustle_side", "part": "turret", "face": "side", "min": [-1.9, 1.4, -4.0], "max": [1.9, 3.0, -0.6], "ke": 60, "ce": 80}
-        ]
+            {"name": "sight_block", "part": "turret", "face": "front", "min": [-1.8, 2.15, 0.0], "max": [1.8, 2.9, 1.1], "ke": 250, "ce": 350}
+        ],
+        "plates": {
+            "hull_glacis": {"facing": "front", "slope": 75, "los": {"ke": 600, "ce": 880}},
+            "hull_nose": {"facing": "front", "slope": 40, "los": {"ke": 300, "ce": 450}},
+            "hull_side": {"facing": "side", "los": {"ke": 60, "ce": 80}},
+            "skirt_front": {"facing": "side", "los": {"ke": 130, "ce": 300}},
+            "hull_lfp": {"curved": true, "layers": [{"mm": 150, "mat": "rha"}]},
+            "hull_roof": {"facing": "top", "layers": [{"mm": 40, "mat": "rha"}]},
+            "hull_belly": {"facing": "bottom", "layers": [{"mm": 30, "mat": "rha"}]},
+            "hull_rear": {"facing": "rear", "layers": [{"mm": 40, "mat": "rha"}]},
+            "turret_cheek_a": {"facing": "35", "slope": 35, "los": {"ke": 770, "ce": 1150}},
+            "turret_cheek_b": {"facing": "-35", "slope": 35, "los": {"ke": 770, "ce": 1150}},
+            "turret_side": {"facing": "side", "los": {"ke": 300, "ce": 450}},
+            "turret_flank": {"facing": "side", "slope": 32, "los": {"ke": 300, "ce": 450}},
+            "turret_bustle": {"facing": "side", "los": {"ke": 60, "ce": 80}},
+            "turret_roof": {"facing": "top", "layers": [{"mm": 40, "mat": "rha"}]},
+            "turret_rear": {"facing": "rear", "layers": [{"mm": 50, "mat": "rha"}]},
+            "barrel": {"curved": true, "layers": [{"mm": 60, "mat": "rha"}]}
+        }
     },
     "view_info": {
         "third_person_distance": 7
@@ -84,13 +100,14 @@
         }
     ],
     "screens": {
-        "gunner_sight": {"layout": "combinedassault:tank_sight", "kind": "sight", "part": "turret", "max_fps": 30},
-        "commander_sight": {"layout": "combinedassault:tank_sight", "kind": "sight", "part": "turret", "max_fps": 20}
+        "gunner_sight": {"layout": "combinedassault:tank_sight", "kind": "sight", "part": "turret", "max_fps": 30, "objective": 0},
+        "commander_sight": {"layout": "combinedassault:tank_sight", "kind": "sight", "part": "anti_aircraft_machine_gun", "max_fps": 20, "objective": 0}
     },
     "entry": ["driver_hatch", "commander_hatch", "loader_hatch"],
     "parts": [
         {
             "id": "turret",
+            "rangefinder": {"mode": "zero", "max_range": 4000},
             "crew_roles": [
                 "gunner"
             ],
@@ -144,6 +161,7 @@
         },
         {
             "id": "anti_aircraft_machine_gun",
+            "rangefinder": {"mode": "info", "max_range": 4000},
             "crew_roles": [
                 "commander",
                 "gunner"
@@ -158,14 +176,12 @@
                 "y_rot_speed": 4.5,
                 "need_power": false
             },
-            "optical_sight_type": "operator",
+            "optical_sight_type": "crt",
             "zoom_max": 2,
             "weapons": [
                 "combinedassault:gun_12.7mm"
             ],
-            "hatch": "commander_hatch",
-            "pose": "stand",
-            "protect_passenger": false
+            "turn_out": "commander_out"
         },
         {
             "id": "loader_machine_gun",
@@ -213,12 +229,14 @@
             "protect_passenger": false
         },
         {
-            "id": "commander",
-            "name": "commander",
+            "id": "commander_out",
+            "name": "part.combinedassault.m1a2.commander_out",
             "type": "combinedassault:generic",
             "is_seat": true,
             "crew_roles": ["commander"],
-            "turn_out": "anti_aircraft_machine_gun"
+            "hatch": "commander_hatch",
+            "pose": "stand",
+            "protect_passenger": false
         },
         {
             "id": "loader",

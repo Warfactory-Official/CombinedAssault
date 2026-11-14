@@ -18,7 +18,7 @@ public class RotaryWingVehicleContext extends VehicleContext<RotaryWingVehicle> 
         super.tick();
         float yawRate = Mth.wrapDegrees(entity.getYRot() - entity.yRotO) / entity.yRotSpeedMax;
         controls.update(-getPitchInput(), getRollInput(), yawRate, 0f, getCollectivePitch() / 100f,
-                (currentTimeMillis() - lastRenderTime()) / 1000f);
+                frameSeconds());
     }
 
     @Override

@@ -26,6 +26,9 @@ public class PartUnitPojo {
     @SerializedName("component")
     public String component = null;
 
+    @SerializedName("on_system")
+    public String onSystem = null;
+
 
     @SerializedName("render_bone")
     public String renderBone = null;
@@ -84,6 +87,10 @@ public class PartUnitPojo {
     /** Seat: `entry` part that also leads here though the seat is not gated by it (gunner via commander hatch). */
     @SerializedName("entry_via")
     public String entryVia = null;
+
+    /** Seat: nodes hidden while it is in first person; each wholly within {@code ViewHide.LIMIT} of a seat eye. */
+    @SerializedName("view_hide")
+    public List<String> viewHide = List.of();
 
     /** Frame node a part-less seat rides (its seat socket's frame): seat, view, periscope and look follow it. */
     @SerializedName("ride_frame")

@@ -2,6 +2,7 @@ package com.wf.combinedassault.pack;
 
 import com.google.gson.JsonObject;
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.addon.EraTypePacks;
 import com.wf.combinedassault.ballistics.hit.ModelData;
 import com.wf.combinedassault.ballistics.hit.ModelDataManager;
 import com.wf.combinedassault.vehicle.api.VehicleCatalogue;
@@ -54,6 +55,7 @@ public final class CommonAssetsManager {
         Map<ResourceLocation, JsonObject> vehicleDefs = json(vehicleFiles);
         OffSystemDefs.skip(vehicleDefs);
         VehicleCatalogue.DEF_PATCHES.values().forEach(patch -> vehicleDefs.forEach(patch));
+        EraTypePacks.load(json(CombinedAssault.packs().defs("era_types")), problems);
         HardwareKits.load(json(CombinedAssault.packs().defs("hardware")), problems);
         vehicleDefs.entrySet().removeIf(e -> {
             try {

@@ -1,0 +1,18 @@
+{
+  "name": "fokker_controller",
+  "script": "flans_ww2:fokker",
+  "parameters": {},
+  "graph": {
+    "type": "merge",
+    "inputs": [
+      {
+        "type": "script",
+        "function": "updateBones"
+      },
+      {
+        "type": "bone_binding",
+        "special_bindings": []
+      }
+    ]
+  }
+}

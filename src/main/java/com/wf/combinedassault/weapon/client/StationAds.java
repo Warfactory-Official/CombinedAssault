@@ -34,10 +34,7 @@ public final class StationAds {
     }
 
     public static boolean capable(@Nullable WeaponUnit unit) {
-        return unit != null && unit.getData().getHandling() == WeaponUnitData.Handling.MANUAL
-                && unit.getOpticalSightOffset() != null
-                && (unit.getOpticalSightType() == WeaponUnitData.OpticalSightType.OPERATOR
-                || unit.optic() != null && unit.lensNode() != null);
+        return unit != null && unit.adsCapable();
     }
 
     @Nullable

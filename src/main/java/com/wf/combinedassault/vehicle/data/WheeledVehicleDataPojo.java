@@ -19,6 +19,10 @@ public class WheeledVehicleDataPojo extends BaseVehicleDataPojo {
         @SerializedName("backward_force")
         public float backwardForce;
 
+        /** kW at the wheels; 0 => none (force/acceleration to top speed). */
+        @SerializedName("engine_power")
+        public float enginePower;
+
         @SerializedName("max_speed_forward")
         public float maxSpeedForward;
 

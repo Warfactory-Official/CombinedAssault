@@ -5,6 +5,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.wf.combinedassault.aircraft.FixedWingVehicle;
 import com.wf.combinedassault.aircraft.RotorStrike;
+import com.wf.combinedassault.aircraft.WingLoss;
+import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.ballistics.component.HullComponents;
 import com.wf.combinedassault.ballistics.hit.HitModel;
 import com.wf.combinedassault.ballistics.hit.VehicleHits;
@@ -115,6 +117,7 @@ public class VehicleRender<T extends AbstractVehicle> extends EntityRenderer<T> 
         try {
             super.render(vehicle, pEntityYaw, pPartialTick, pPoseStack, bufferSource, pPackedLight);
             applyDetachedPart(vehicle, modelInstance);
+            applyViewHide(vehicle, modelInstance);
             applyVehicleRotation(vehicle, pPartialTick, pPoseStack);
             applyAnimationPose(vehicle, pPartialTick, modelInstance, isCabinView);
             RoundStations.apply(vehicle, modelInstance);
@@ -282,7 +285,7 @@ public class VehicleRender<T extends AbstractVehicle> extends EntityRenderer<T> 
         bufferSource.endBatch(DebugRenderTypes.LINES_NO_DEPTH);
     }
 
-    /** Hides the bones of parts that have fallen off, and of rotors whose pool is spent ({@link RotorStrike}). */
+    /** Hides the bones of parts that have fallen off, and of rotors and wings whose pool is spent ({@link RotorStrike}, {@link WingLoss}). */
     public static void applyDetachedPart(AbstractVehicle vehicle, VehicleModelInstance modelInstance) {
         for (PartUnit<?> partUnit : vehicle.getPartUnits()) {
             String renderBoneName = partUnit.getRenderBoneName();
@@ -301,7 +304,34 @@ public class VehicleRender<T extends AbstractVehicle> extends EntityRenderer<T> 
             if (node.mesh().disc() != null && RotorStrike.rotor(node.kind())) {
                 int pool = pools.indexOf(node.systemId());
                 modelInstance.setBoneVisible(node.mesh().name(), pool < 0 || pools.health(pool) > 0);
+            } else if (node.kind() == ComponentKind.WING && node.mesh().mesh() != null) {
+                modelInstance.setBoneVisible(node.mesh().name(), !WingLoss.spent(node, pools));
             }
+        }
+    }
+
+    /** Per instance: the {@code view_hide} nodes it hid last frame. */
+    private static final Map<VehicleModelInstance, List<String>> VIEW_HIDDEN = new java.util.WeakHashMap<>();
+
+    /** Local rider's seat {@code view_hide} hidden while in first person (after {@link #applyDetachedPart}: wins). */
+    public static void applyViewHide(AbstractVehicle vehicle, VehicleModelInstance modelInstance) {
+        LocalVehiclePlayer local = LocalVehiclePlayer.instance();
+        List<String> now = local.vehicle == vehicle && local.seat != null
+                && local.viewType != LocalVehiclePlayer.ViewType.THIRD_PERSON
+                ? local.seat.partUnit.getData().getViewHide() : List.of();
+        List<String> before = VIEW_HIDDEN.getOrDefault(modelInstance, List.of());
+        for (String node : before) {
+            if (!now.contains(node)) {
+                modelInstance.setBoneVisible(node, true);
+            }
+        }
+        for (String node : now) {
+            modelInstance.setBoneVisible(node, false);
+        }
+        if (now.isEmpty()) {
+            VIEW_HIDDEN.remove(modelInstance);
+        } else {
+            VIEW_HIDDEN.put(modelInstance, now);
         }
     }
 

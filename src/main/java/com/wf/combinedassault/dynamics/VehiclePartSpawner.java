@@ -27,6 +27,7 @@ public final class VehiclePartSpawner {
                 continue;
             }
             vehiclePart.setDestroyed();
+            vehiclePart.flungFrom(vehicle);
             vehiclePart.setDeltaMovement(flingVelocity(vehicle, partUnit));
             vehicle.level().addFreshEntity(vehiclePart);
         }
@@ -43,6 +44,7 @@ public final class VehiclePartSpawner {
         Vec3 out = partUnit.worldPivotPosition().subtract(vehicle.position().add(vehicle.centerOffset)).multiply(1, 0, 1);
         out = out.lengthSqr() < 1e-6 ? Vec3.ZERO : out.normalize();
         vehiclePart.setDestroyed();
+        vehiclePart.flungFrom(vehicle);
         vehiclePart.setDeltaMovement(vehicle.getDeltaMovement().add(out.scale(POP_SPEED)).add(0, POP_SPEED, 0));
         // Box of a wheel stands on its tread face: top tipped outward (up x out) or it never falls.
         vehiclePart.physicsEngine.angularVelocity.set(new Vec3(0, 1, 0).cross(out).scale(POP_TOPPLE).toVector3f());

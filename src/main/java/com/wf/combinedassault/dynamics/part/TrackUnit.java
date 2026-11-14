@@ -5,10 +5,10 @@ import com.wf.combinedassault.dynamics.part.data.TrackUnitData;
 import com.wf.combinedassault.dynamics.part.data.TrackUnitPojo;
 import com.wf.combinedassault.pack.client.ClientAssetsManager;
 import com.wf.combinedassault.pack.client.vehicle.TrackConfig;
-import com.wf.combinedassault.pack.client.vehicle.TrackedVehicleDisplay;
+import com.wf.combinedassault.pack.client.vehicle.VehicleDisplay;
 import com.wf.combinedassault.render.gem.GemModels;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.combinedassault.vehicle.entity.TrackedVehicle;
+import com.wf.combinedassault.vehicle.entity.GroundVehicle;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -113,11 +113,8 @@ public class TrackUnit extends SuspensionUnit<TrackUnitData> {
         if (isDetached() || tracks.isEmpty()) {
             return;
         }
-        TrackedVehicleDisplay display = getTrackedVehicleDisplay();
-        if (display == null) {
-            return;
-        }
-        TrackConfig config = display.getTrackConfig();
+        TrackConfig config = ClientAssetsManager.INSTANCE.getVehicleDisplay(vehicle.getDisplayId())
+                .map(display -> display instanceof VehicleDisplay<?, ?> v ? v.getTrackConfig() : null).orElse(null);
         if (config == null) {
             return;
         }
@@ -150,15 +147,6 @@ public class TrackUnit extends SuspensionUnit<TrackUnitData> {
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
-    private TrackedVehicleDisplay getTrackedVehicleDisplay() {
-        var displayOptional = ClientAssetsManager.INSTANCE.getVehicleDisplay(vehicle.getDisplayId());
-        if (displayOptional.isPresent() && displayOptional.get() instanceof TrackedVehicleDisplay trackedVehicleDisplay) {
-            return trackedVehicleDisplay;
-        }
-        return null;
-    }
-
     public OptionalDouble getFirstLeftTrackLateralOffset() {
         return firstTrackLateralOffset(true);
     }
@@ -184,16 +172,29 @@ public class TrackUnit extends SuspensionUnit<TrackUnitData> {
         }
         double deltaSeconds = Math.min((now - lastRenderNanos) / 1_000_000_000.0, MAX_FRAME_SECONDS);
         lastRenderNanos = now;
-        if (!(vehicle instanceof TrackedVehicle trackedVehicle)) {
-            return;
-        }
-        double forwardSpeed = trackedVehicle.getForwardSpeed() * 20.0;
-        double turnSpeed = trackedVehicle.getTurnSpeed();
         for (TrackPath track : tracks) {
             if (track.isValid()) {
-                track.advance((forwardSpeed + turnSpeed * track.lateralOffset()) * deltaSeconds);
+                track.advance(linkSpeed(track) * deltaSeconds);
             }
         }
+    }
+
+    /** Blocks/s per track loop, along the loop; 0 off a ground vehicle. */
+    public double[] linkSpeeds() {
+        double[] out = new double[tracks.size()];
+        for (int i = 0; i < out.length; i++) {
+            out[i] = linkSpeed(tracks.get(i));
+        }
+        return out;
+    }
+
+    /** Track loop {@code i}: centroid x, model space (+ = left). */
+    public double lateralOffset(int i) {
+        return tracks.get(i).lateralOffset();
+    }
+
+    private double linkSpeed(TrackPath track) {
+        return vehicle instanceof GroundVehicle ground ? ground.trackSpeed(track.lateralOffset()) : 0;
     }
 
     @OnlyIn(Dist.CLIENT)

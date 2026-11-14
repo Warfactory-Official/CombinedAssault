@@ -10,6 +10,8 @@ import com.wf.combinedassault.ballistics.component.VehicleMobility;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
 import com.wf.combinedassault.ballistics.hit.HitMesh;
 import com.wf.combinedassault.ballistics.hit.HitModel;
+import com.wf.combinedassault.ballistics.hit.PlateBinding;
+import com.wf.combinedassault.ballistics.hit.TriangleBvh;
 import com.wf.combinedassault.ballistics.hit.VehicleHits;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 import com.wf.combinedassault.pack.CommonAssetsManager;
@@ -21,7 +23,9 @@ import com.wf.combinedassault.weapon.data.BaseVehicleWeaponData;
 import com.wf.wflib.ammo.api.Ammo;
 import com.wf.wflib.ammo.api.AmmoVariant;
 import com.wf.wflib.armor.api.hull.HullProfile;
+import com.wf.wflib.armor.api.hull.HullResolver;
 import com.wf.wflib.armor.api.hull.HullResult;
+import com.wf.wflib.damage.api.Threat;
 import com.wf.wflib.damage.api.ThreatKind;
 import com.wf.wflib.geom.api.OBB;
 import com.wf.wflib.physics.api.HullTag;
@@ -159,7 +163,7 @@ public final class BallisticsCommand {
         }
         PartUnit<?> part = VectorUtil.hitPartUnit(vehicle, start, end, false);
         HullResult result = new ArmorResolver().resolve(vehicle, start, look, hitPos,
-                penetration, PROBE_DAMAGE, ThreatKind.KINETIC);
+                new Threat(ThreatKind.KINETIC, 20, penetration), PROBE_DAMAGE, null);
         if (result == null) {
             source.sendFailure(Component.literal("no answer: the face hit has no armour set"));
             return 0;
@@ -169,10 +173,14 @@ public final class BallisticsCommand {
                 : Math.min(1.0, result.nominalThickness() / result.effectiveThickness());
         double incidence = Math.toDegrees(Math.acos(cos));
         String partName = part == null ? "hull" : part.getId();
+        HullResolver.Plate plate = HullResolver.plate(vehicle, profile, start, hitPos.add(look.scale(0.1)), look, false);
+        String plateText = plate == null || plate.plateId() == null ? "" : String.format(Locale.ROOT,
+                " | plate %s (%s): declared %.1f deg, mesh %.1f deg", plate.plateId(),
+                PlateBinding.describe(profile.plates.get(plate.plateId())), plate.incidence(), plate.meshIncidence());
         source.sendSuccess(() -> Component.empty().append(vehicle.getDisplayName()).append(String.format(Locale.ROOT,
-                " @ %s | %.0f mm at %.0f deg = %.0f mm effective | pen %.0f -> ratio %.2f | %s | %.0f of %.0f damage",
+                " @ %s | %.0f mm at %.0f deg = %.0f mm effective%s | pen %.0f -> ratio %.2f | %s | %.0f of %.0f damage",
                 partName,
-                result.nominalThickness(), incidence, result.effectiveThickness(),
+                result.nominalThickness(), incidence, result.effectiveThickness(), plateText,
                 result.penetration(), result.ratio(), result.outcome().name(),
                 result.hullDamage(), PROBE_DAMAGE)), false);
         return 1;
@@ -301,9 +309,21 @@ public final class BallisticsCommand {
                             : node.kind() != null ? "system " + node.systemId() : "structure",
                     mesh.module() ? ", module" : "",
                     mesh.disc() != null ? String.format(Locale.ROOT, "disc r=%.2f", mesh.disc().radius())
-                            : mesh.mesh().triangleCount() + " tris" + (mesh.mesh().hasArmor() ? ", armoured" : ""));
+                            : mesh.mesh().triangleCount() + " tris" + plates(hits, mesh.mesh()));
             source.sendSuccess(() -> Component.literal(line), false);
         }
+    }
+
+    /** {@code , plates a, b} of the plate ids on the node's faces. */
+    private static String plates(VehicleHits hits, TriangleBvh bvh) {
+        java.util.Set<String> ids = new java.util.TreeSet<>();
+        for (int t = 0; t < bvh.triangleCount(); t++) {
+            String id = hits.model().mesh().plateId(bvh.plate(t));
+            if (id != null) {
+                ids.add(id);
+            }
+        }
+        return ids.isEmpty() ? "" : ", plates " + String.join(", ", ids);
     }
 
     private static String boneOf(VehicleCubeOBB cube) {

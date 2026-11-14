@@ -39,7 +39,7 @@ public class DisplayTypes {
         register(
                 "tracked_vehicle",
                 json -> {
-                    var pojo = GsonUtil.GSON.fromJson(json, TrackedVehicleDisplayPojo.class);
+                    var pojo = GsonUtil.GSON.fromJson(json, VehicleDisplayPojo.class);
                     return new TrackedVehicleDisplay(pojo);
                 },
                 AnimationContextFactory.trackedVehicle()

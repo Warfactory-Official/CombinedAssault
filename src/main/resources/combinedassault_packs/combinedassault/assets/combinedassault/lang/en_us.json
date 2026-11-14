@@ -184,6 +184,7 @@
   "part.combinedassault.m1a2.commander_mg": "Commander MG",
   "part.combinedassault.m1a2.loader_mg": "Loader MG",
   "part.combinedassault.m1a2.driver_out": "Driver (turned out)",
+  "part.combinedassault.m1a2.commander_out": "Commander (turned out)",
   "part.combinedassault.t90.driver_out": "Driver (turned out)",
   "part.combinedassault.t90.commander_out": "Commander (turned out)",
   "part.combinedassault.t90.gunner_out": "Gunner (turned out)",
@@ -194,5 +195,17 @@
   "part.combinedassault.merkava.driver_out": "Driver (turned out)",
   "part.combinedassault.merkava.loader_out": "Loader (turned out)",
   "part.combinedassault.merkava.rear_left": "Rear compartment (left)",
-  "part.combinedassault.merkava.rear_right": "Rear compartment (right)"
+  "part.combinedassault.merkava.rear_right": "Rear compartment (right)",
+  "combinedassault.m113": "M113",
+  "entity.combinedassault.m113": "M113",
+  "part.combinedassault.m113.driver_out": "Driver (turned out)",
+  "part.combinedassault.m113.mg": "Commander MG",
+  "part.combinedassault.m113.troop_l1": "Troop (left 1)",
+  "part.combinedassault.m113.troop_l2": "Troop (left 2)",
+  "part.combinedassault.m113.troop_l3": "Troop (left 3)",
+  "part.combinedassault.m113.troop_l4": "Troop (left 4)",
+  "part.combinedassault.m113.troop_r1": "Troop (right 1)",
+  "part.combinedassault.m113.troop_r2": "Troop (right 2)",
+  "part.combinedassault.m113.troop_r3": "Troop (right 3)",
+  "part.combinedassault.m113.troop_r4": "Troop (right 4)"
 }

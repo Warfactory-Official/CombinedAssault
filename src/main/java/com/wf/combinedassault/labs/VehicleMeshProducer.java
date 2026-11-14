@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.wf.combinedassault.ballistics.hit.HitMesh;
 import com.wf.combinedassault.ballistics.hit.HitModel;
 import com.wf.combinedassault.ballistics.hit.TriangleBvh;
+import com.wf.wflib.armor.api.hull.HullProfile;
 import com.wf.wflib.labs.api.LabContext;
 import com.wf.wflib.labs.api.LabProducer;
 import com.wf.wflib.labs.api.LabSink;
@@ -26,7 +27,7 @@ import java.util.HexFormat;
 /**
  * The hit geometry the resolver traces, per vehicle, in the lab frame at rest: {@code meshes/<ns>_<vehicle>.glb} in the
  * output dir, one glTF node per hit-model node (extras {@code part}, {@code kind} surface|module|disc), non-indexed
- * triangles, vertex attribute {@code _ARMOR} = real plate mm of the triangle (0 = none). The table lists each file
+ * triangles, vertex attribute {@code _ARMOR} = declared normal thickness (KE mm) of the triangle's plate (0 = unbound). The table lists each file
  * with its SHA-256.
  */
 public final class VehicleMeshProducer implements LabProducer {
@@ -94,8 +95,10 @@ public final class VehicleMeshProducer implements LabProducer {
                 TriangleBvh bvh = mesh.mesh();
                 t = bvh.triangles();
                 mm = new float[bvh.triangleCount()];
+                HullProfile profile = rig.vehicle.armorProfile;
                 for (int k = 0; k < mm.length; k++) {
-                    mm[k] = bvh.armor(k);
+                    String id = rig.hits.model().mesh().plateId(bvh.plate(k));
+                    mm[k] = id == null ? 0 : profile.plates.get(id).nominal(false);
                 }
                 kind = mesh.module() ? "module" : "surface";
             } else {
@@ -134,6 +137,7 @@ public final class VehicleMeshProducer implements LabProducer {
             JsonObject extras = new JsonObject();
             extras.addProperty("part", n.part() == null ? "" : n.part());
             extras.addProperty("kind", kind);
+
             JsonObject node = new JsonObject();
             node.addProperty("name", mesh.name());
             node.addProperty("mesh", meshes.size() - 1);

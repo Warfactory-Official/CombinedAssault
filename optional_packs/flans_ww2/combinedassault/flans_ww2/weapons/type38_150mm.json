@@ -1,0 +1,28 @@
+{
+  "type": "combinedassault:cannon",
+  "name": "15 cm Type 38 Howitzer",
+  "recoil": 1.5,
+  "inaccuracy": 0.1,
+  "shoot_interval": 1500,
+  "max_capacity": 1,
+  "reload": {
+    "time": 250,
+    "ammo": "wflib:cartridge_150mm_type38"
+  },
+  "casing_delay": 1.0,
+  "sounds": {
+    "fire": {
+      "event": "combinedassault:cannon_125mm_shot",
+      "range": 1500,
+      "pitch_random": 0.1
+    },
+    "shell": {
+      "event": "combinedassault:cannon_shell_drop",
+      "range": 24
+    },
+    "reload": {
+      "event": "combinedassault:artillery_reload",
+      "range": 24
+    }
+  }
+}

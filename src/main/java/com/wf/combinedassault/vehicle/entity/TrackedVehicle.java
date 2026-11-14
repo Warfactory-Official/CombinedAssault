@@ -3,6 +3,7 @@ package com.wf.combinedassault.vehicle.entity;
 import com.wf.combinedassault.vehicle.drive.Transmission;
 import com.wf.combinedassault.ballistics.component.VehicleMobility;
 import com.wf.combinedassault.dynamics.PhysicsEngine;
+import com.wf.combinedassault.dynamics.PhysicsHelper;
 import com.wf.combinedassault.pack.IAnimationEntity;
 import com.wf.combinedassault.pack.IAnimationInstance;
 import com.wf.combinedassault.pack.client.vehicle.TrackedVehicleDisplay;
@@ -85,6 +86,11 @@ public class TrackedVehicle extends GroundVehicle
         return this.entityData.get(FORWARD_SPEED);
     }
 
+    @Override
+    public double trackSpeed(double lateral) {
+        return getForwardSpeed() * 20.0 + getTurnSpeed() * lateral;
+    }
+
     public float getTurnSpeed() {
         return this.entityData.get(TURN_SPEED);
     }
@@ -106,6 +112,12 @@ public class TrackedVehicle extends GroundVehicle
         if (partUnits.get(partUnitIndex) instanceof WeaponUnit weaponUnit) {
             weaponUnit.shoot(weaponIndex, aimContexts, operator);
         }
+    }
+
+    /** Speed gain (b/t per tick) at {@code speed} under the engine's power; {@code load} = laden / pack mass. */
+    private double powerLimited(double gain, double speed, float load) {
+        double perTick = PhysicsHelper.accelerationPerTick(1, physicsEngine.mass * load);
+        return powerLimited(gain / perTick, speed) * perTick;
     }
 
     @Override
@@ -148,9 +160,9 @@ public class TrackedVehicle extends GroundVehicle
                 float stop = braking ? brake : brake * ENGINE_BRAKE;
                 vf = vf > 0 ? Math.max(0, vf - stop) : Math.min(0, vf + stop);
             } else if (push > 0) {
-                vf = Math.max(vf, Math.min(pushCap, vf + forwardAcceleration * pushScale * strain / load));
+                vf = Math.max(vf, Math.min(pushCap, vf + (float) powerLimited(forwardAcceleration * pushScale * strain / load, vf, load)));
             } else if (push < 0) {
-                vf = Math.min(vf, Math.max(-pushCap, vf - backwardAcceleration * strain / load));
+                vf = Math.min(vf, Math.max(-pushCap, vf - (float) powerLimited(backwardAcceleration * strain / load, vf, load)));
             }
         } else if (controlUnit.forward || controlUnit.backward) {
             setPedals((controlUnit.forward ? THROTTLE : 0) | (controlUnit.backward ? BRAKE : 0));
@@ -158,13 +170,13 @@ public class TrackedVehicle extends GroundVehicle
                 if (vf < 0) {
                     vf += brake;
                 } else {
-                    vf += forwardAcceleration * strain / load;
+                    vf += (float) powerLimited(forwardAcceleration * strain / load, vf, load);
                 }
             } else {
                 if (vf > 0) {
                     vf -= brake;
                 } else {
-                    vf -= backwardAcceleration * strain / load;
+                    vf -= (float) powerLimited(backwardAcceleration * strain / load, vf, load);
                 }
             }
         }

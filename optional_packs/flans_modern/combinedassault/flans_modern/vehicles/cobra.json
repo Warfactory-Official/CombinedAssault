@@ -1,0 +1,173 @@
+{
+  "type": "combinedassault:rotary_wing_vehicle",
+  "attributes": {
+    "main_rotor_force": 85500.0,
+    "ceiling": 256,
+    "x_rot_speed_acceleration": 1.5,
+    "x_rot_speed_max": 4.0,
+    "y_rot_speed_acceleration": 1.5,
+    "y_rot_speed_max": 4.0,
+    "z_rot_speed_acceleration": 1.5,
+    "z_rot_speed_max": 4.0,
+    "max_air_speed": 3.85
+  },
+  "physics_info": {
+    "mass": 4500,
+    "friction": 9000
+  },
+  "landing_gear_part_id": "landing_gear",
+  "max_health": 500,
+  "view_info": {
+    "third_person_distance": 15.0,
+    "third_person_distance_zoomed": 4
+  },
+  "energy_info": {
+    "energy_capacity": 900,
+    "energy_consumption_per_tick": 0.005625
+  },
+  "defense_stats": {
+    "damage_threshold": 10,
+    "impact_multiplier": 3
+  },
+  "parts": [
+    {
+      "id": "pilot",
+      "name": "part.flans_modern.cobra.pilot",
+      "type": "combinedassault:weapon",
+      "crew_roles": [
+        "driver",
+        "gunner"
+      ],
+      "operator_on_weapon_unit": false,
+      "crosshair_style": "cross",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "weapons": [
+        {
+          "id": "combinedassault:hydra_70",
+          "part_unit_id": "rocket_l",
+          "salvo": "rocket"
+        },
+        {
+          "id": "combinedassault:hydra_70",
+          "part_unit_id": "rocket_r",
+          "salvo": "rocket"
+        }
+      ]
+    },
+    {
+      "id": "landing_gear",
+      "name": "part.flans_modern.cobra.landing_gear",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0.5
+    },
+    {
+      "id": "rocket_l",
+      "name": "part.flans_modern.cobra.rocket_l",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "left wing",
+      "ammo_capacity": 19,
+      "parent_weapon_unit_aim": true
+    },
+    {
+      "id": "rocket_r",
+      "name": "part.flans_modern.cobra.rocket_r",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "right wing",
+      "ammo_capacity": 19,
+      "parent_weapon_unit_aim": true
+    },
+    {
+      "id": "seat_1",
+      "name": "part.flans_modern.cobra.seat_1",
+      "type": "combinedassault:weapon",
+      "protect_passenger": false,
+      "crew_roles": [
+        "gunner"
+      ],
+      "render_bone": "seat_1_gun",
+      "handling": "manual",
+      "operator_on_weapon_unit": false,
+      "rot_info": {
+        "x_rot_speed": 5,
+        "y_rot_speed": 5,
+        "y_rot_min": -30.0,
+        "y_rot_max": 30.0,
+        "y_rot": 0.0,
+        "need_power": false
+      },
+      "optical_sight_type": "operator",
+      "zoom_max": 2,
+      "crosshair_style": "cross",
+      "hardpoint": {
+        "node": "seat_1_gun_pitch",
+        "accepts": [
+          "door",
+          "pintle"
+        ],
+        "fitted": "combinedassault:m134"
+      }
+    }
+  ],
+  "model": "flans_modern:models/vehicle/cobra/cobra.glb",
+  "display": {
+    "icon": "flans_modern:textures/slot/cobra.png",
+    "tab_index": 910,
+    "controller": "flans_modern:cobra_controller",
+    "engine": {
+      "start": {
+        "event": "combinedassault:z10_engine_start",
+        "range": 360
+      },
+      "stop": {
+        "event": "combinedassault:z10_engine_stop",
+        "range": 360
+      },
+      "loops": [
+        {
+          "sound": {
+            "event": "combinedassault:z10_engine_run",
+            "range": 600
+          },
+          "input": "power",
+          "volume": [
+            [
+              0.2,
+              0
+            ],
+            [
+              0.5,
+              1
+            ]
+          ],
+          "pitch": [
+            [
+              0.5,
+              0.8
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "cabin_muffle": 0.5
+  }
+}

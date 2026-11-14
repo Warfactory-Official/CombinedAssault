@@ -11,7 +11,9 @@
             "then": {"type": "text", "text": "{trunc(fixed_wing.throttle)}", "color": "$white", "shadow": true},
             "else": {"type": "text", "text": "{tr:ui.war_emergency_power}", "color": "$red", "shadow": true}}}
       ]},
-      {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.speed(trunc(vehicle.speed))}", "color": "$white", "shadow": true},
+      {"type": "when", "if": "fixed_wing.can_lift_off",
+        "then": {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.speed(trunc(vehicle.speed))}", "color": "$green", "shadow": true},
+        "else": {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.speed(trunc(vehicle.speed))}", "color": "$white", "shadow": true}},
       {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.altitude(trunc(vehicle.altitude))}", "color": "$white", "shadow": true},
       {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.fuel(vehicle.fuel_seconds|clockh)}", "color": "$white", "shadow": true}
     ]}},

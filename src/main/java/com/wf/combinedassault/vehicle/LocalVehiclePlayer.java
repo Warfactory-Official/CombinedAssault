@@ -12,6 +12,7 @@ import com.wf.combinedassault.vehicle.control.ControlUnit;
 import com.wf.combinedassault.vehicle.control.InputHandler;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.entity.RemoteTickEntity;
+import com.wf.combinedassault.vehicle.entity.WheeledVehicle;
 import com.wf.combinedassault.vehicle.light.IrSightMessage;
 import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
 import com.wf.combinedassault.vehicle.part.PartUnit;
@@ -55,6 +56,10 @@ public class LocalVehiclePlayer {
     /** Stick deflection per mouse turn unit (vanilla turn delta; x0.15 = deg). */
     private static final float STICK_GAIN = 0.01F;
     private static final float STICK_RECENTRE = 0.8F;
+    /** Mouse degrees (camera scale) for full wheel lock. */
+    private static final float WHEEL_FULL_LOCK = 60F;
+    private static final float WHEEL_FADE_IN = 0.35F;
+    private static final float WHEEL_FADE_OUT = 0.08F;
     private static final float HEAD_RECENTRE = 0.6F;
     /** Periscope field: head yaw / pitch limits, deg. */
     private static final float PERISCOPE_YAW = 45;
@@ -82,6 +87,11 @@ public class LocalVehiclePlayer {
     public float stickY;
     /** Helicopter cockpit: commanded pitch / heading ({@link ControlUnit#xRot}/{@link ControlUnit#yRot}) the mouse moves. */
     public float heliPitch;
+    /** Steering wheel lock wanted, -1..1 (+ right); {@link #wheelKeyed}: A / D moved it, recentres on release. */
+    public float wheel;
+    private boolean wheelKeyed;
+    public float wheelFade;
+    public float wheelFadeO;
     public float heliHeading;
     private boolean wasCockpitPilot;
     public float currentG = 1;
@@ -276,6 +286,10 @@ public class LocalVehiclePlayer {
             return;
         }
         StationRecoil.tick(this, partUnit);
+        if (partUnit instanceof WeaponUnit own) {
+            own.tickZero();
+            own.getSubWeaponUnits().forEach(WeaponUnit::tickZero);
+        }
         cameraAimRotXO = cameraAimRotX;
         cameraAimRotYO = cameraAimRotY;
         cameraAimRotZO = cameraAimRotZ;
@@ -283,6 +297,19 @@ public class LocalVehiclePlayer {
         if (fpv != null && viewType != ViewType.SCOPE) {
             try {
                 fpvCamera(fpv, partUnit);
+            } finally {
+                fixLerp();
+            }
+        } else if (gunLook()) {
+            try {
+                layGun((WeaponUnit) partUnit);
+                Quaternionf look = new Quaternionf(vehicle.rotYXZ()).invert().mul(new Quaternionf()
+                        .rotateY((float) Math.toRadians(-player.getYRot())).rotateX((float) Math.toRadians(player.getXRot())));
+                Vector3f localEuler = look.getEulerAnglesYXZ(new Vector3f());
+                playerLocalXRot = (float) Math.toDegrees(localEuler.x);
+                playerLocalYRot = (float) Math.toDegrees(-localEuler.y);
+            } catch (Exception exception) {
+                exception.printStackTrace();
             } finally {
                 fixLerp();
             }
@@ -300,7 +327,7 @@ public class LocalVehiclePlayer {
                 if (cockpitLook()) {
                     Quaternionf vehicleRot = partUnit instanceof WeaponUnit ? vehicle.rotYXZ() : partUnit.rideRotation(1.0F);
                     if (aircraftCockpit()) {
-                        // Head fixed in the airframe; free look released => recentres on the nose. Gunner: head = gun.
+                        // Head fixed in the airframe; free look released => recentres on the nose.
                         if (!InputHandler.freeCamera() && (cockpitPilot() || !(partUnit instanceof WeaponUnit))) {
                             playerLocalXRot *= HEAD_RECENTRE;
                             playerLocalYRot *= HEAD_RECENTRE;
@@ -344,19 +371,7 @@ public class LocalVehiclePlayer {
             if (sightUnit() instanceof WeaponUnit weaponUnit
                     && weaponUnit.getOpticalSightType() != WeaponUnitData.OpticalSightType.NONE) {
                 try {
-                    cameraAimWith(weaponUnit);
-                    Vec3 hitPosition = weaponUnit.aimHitPosition();
-                    rangeFinding(hitPosition);
-                    if (weaponUnit.spottedBy(player)) {
-                        return;
-                    }
-                    ClientVehicleAction control = new ClientVehicleAction();
-                    control.vehicleEntityId = vehicle.getId();
-                    control.partUnitIndex = weaponUnit.getIndex();
-                    control.xAimRot = weaponUnit.getXAimRot();
-                    control.yAimRot = weaponUnit.getYAimRot();
-                    PacketDistributor.sendToServer(control);
-                    weaponUnit.getSubWeaponUnits().forEach(subWeaponUnit -> subWeaponUnit.aim(hitPosition));
+                    layGun(weaponUnit);
                 } catch (Exception exception) {
                     exception.printStackTrace();
                 } finally {
@@ -366,6 +381,23 @@ public class LocalVehiclePlayer {
                 switchViewType(ViewType.OPERATOR);
             }
         }
+    }
+
+    /** Camera = barrel; aim from the mouse ({@link #handlePlayerTurn}) sent on. */
+    private void layGun(WeaponUnit weaponUnit) {
+        cameraAimWith(weaponUnit);
+        Vec3 hitPosition = weaponUnit.aimHitPosition();
+        rangeFinding(hitPosition);
+        if (weaponUnit.spottedBy(getPlayer())) {
+            return;
+        }
+        ClientVehicleAction control = new ClientVehicleAction();
+        control.vehicleEntityId = vehicle.getId();
+        control.partUnitIndex = weaponUnit.getIndex();
+        control.xAimRot = weaponUnit.getXAimRot();
+        control.yAimRot = weaponUnit.getYAimRot();
+        PacketDistributor.sendToServer(control);
+        weaponUnit.getSubWeaponUnits().forEach(subWeaponUnit -> subWeaponUnit.aim(hitPosition));
     }
 
     /** Left vehicle => server clears the vacated seat; no message. */
@@ -565,10 +597,60 @@ public class LocalVehiclePlayer {
         return viewType == ViewType.OPERATOR && !lensUav();
     }
 
-    /** Aircraft OPERATOR: head fixed in the airframe, mouse turns it only in free look. */
+    /** OPERATOR at an own traversing station outside free look: head bound to the barrel, mouse lays the gun as SCOPE. */
+    public boolean gunLook() {
+        // Aircraft head is playerLocal-led => no player-rot lerp back; snaps.
+        return cockpitLook() && !InputHandler.freeCamera() && (playerLerpSteps == 0 || aircraftCockpit()) && !periscope() && !cockpitPilot()
+                && fpvFlight() == null && vehicle.getOwnOperatorUnit(getPlayer()) instanceof WeaponUnit unit
+                && !unit.indirectFire().isIndirect() && (unit.yRotMax > unit.yRotMin || unit.xRotMax > unit.xRotMin);
+    }
+
+    /** Aircraft OPERATOR, or {@link #wheelDriver}: head fixed in the hull, mouse turns it only in free look. */
     public boolean aircraftCockpit() {
         return cockpitLook() && (vehicle instanceof FixedWingVehicle || vehicle instanceof RotaryWingVehicle && !vehicle.uav)
-                && fpvFlight() == null;
+                && fpvFlight() == null || wheelDriver();
+    }
+
+    /** Wheeled driver in the cockpit view, no weapon at the seat: mouse X = steering wheel outside free look. */
+    public boolean wheelDriver() {
+        return cockpitLook() && vehicle instanceof WheeledVehicle && vehicle.controlUnit.getOperator() == getPlayer()
+                && !periscope() && !(vehicle.getOwnOperatorUnit(getPlayer()) instanceof WeaponUnit);
+    }
+
+    /** Client tick: keys move {@link #wheel} at the keyed turn rate, released => back to centre; fade follows the lock. */
+    public void tickWheel(boolean left, boolean right) {
+        wheelFadeO = wheelFade;
+        float lock = 0;
+        if (vehicle instanceof WheeledVehicle wheeled && getPlayer() != null && getPlayer().equals(vehicle.getDriver())) {
+            lock = Math.abs(Mth.lerp(0.5F, wheeled.turnAngleO, wheeled.turnAngle)) / wheeled.maxTurn;
+            if (!wheelDriver()) {
+                wheel = 0;
+                wheelKeyed = false;
+            } else {
+                float step = wheeled.turnStep / wheeled.maxTurn;
+                if (left != right) {
+                    wheel = Mth.clamp(wheel + (right ? step : -step), -1, 1);
+                    wheelKeyed = true;
+                } else if (wheelKeyed) {
+                    wheel = wheel < 0 ? Math.min(wheel + step, 0) : Math.max(wheel - step, 0);
+                    wheelKeyed = wheel != 0;
+                }
+            }
+        } else {
+            wheel = 0;
+            wheelKeyed = false;
+        }
+        float target = lock > 0.02F ? 1 : 0;
+        wheelFade += (target - wheelFade) * (target > wheelFade ? WHEEL_FADE_IN : WHEEL_FADE_OUT);
+        if (target == 0 && wheelFade < 0.01F) {
+            wheelFade = 0;
+        }
+    }
+
+    /** Wheel lock shown, -1..1 (+ right), from the hull's actual steering. */
+    public float wheelShown(float partialTick) {
+        return vehicle instanceof WheeledVehicle wheeled
+                ? Mth.clamp(Mth.lerp(partialTick, wheeled.turnAngleO, wheeled.turnAngle) / wheeled.maxTurn, -1, 1) : 0;
     }
 
     /** {@link #aircraftCockpit} as the pilot: mouse = stick (fixed wing) or attitude command (helicopter) outside free look. */
@@ -606,6 +688,11 @@ public class LocalVehiclePlayer {
             fpvTurnY += (float) (pYRot * 0.15F);
             return true;
         }
+        if (wheelDriver() && !InputHandler.freeCamera()) {
+            wheel = Mth.clamp(wheel + (float) pYRot * 0.15F / WHEEL_FULL_LOCK, -1, 1);
+            wheelKeyed = false;
+            return true;
+        }
         if (cockpitPilot() && !InputHandler.freeCamera()) {
             if (vehicle instanceof FixedWingVehicle) {
                 stickX = Mth.clamp(stickX + (float) pYRot * STICK_GAIN, -1, 1);
@@ -622,7 +709,7 @@ public class LocalVehiclePlayer {
                 pYRot += Math.abs(pXRot) * (pYRot > 0 ? 1 : -1);
                 pXRot = 0;
             }
-        } else if (viewType == ViewType.OPERATOR) {
+        } else if (viewType == ViewType.OPERATOR && !gunLook()) {
             if (playerLocalXRot >= 60 && pXRot > 0) {
                 pXRot = 0;
             } else if (playerLocalXRot <= -60 && pXRot < 0) {
@@ -631,20 +718,21 @@ public class LocalVehiclePlayer {
         }
         AbstractVehicle vehicle = this.vehicle;
         if (sightUnit() instanceof WeaponUnit weaponUnit) {
-            if (viewType == LocalVehiclePlayer.ViewType.SCOPE) {
+            boolean scope = viewType == LocalVehiclePlayer.ViewType.SCOPE;
+            if (scope || gunLook()) {
                 if (weaponUnit.spottedBy(player)) {
                     return true;
                 }
-                if (!mouseTurnedAfterScope) {
+                if (scope && !mouseTurnedAfterScope) {
                     scopeTurnX += pXRot;
                     scopeTurnY += pYRot;
                 }
-                if (!mouseTurnedAfterScope && (Math.abs(scopeTurnX) >= 0.5 || Math.abs(scopeTurnY) >= 0.5)) {
+                if (scope && !mouseTurnedAfterScope && (Math.abs(scopeTurnX) >= 0.5 || Math.abs(scopeTurnY) >= 0.5)) {
                     weaponUnit.setXAimRot(weaponUnit.getXRot());
                     weaponUnit.setYAimRot(weaponUnit.getYRot());
                     mouseTurnedAfterScope = true;
                 }
-                if (!mouseTurnedAfterScope) {
+                if (scope && !mouseTurnedAfterScope) {
                     return true;
                 }
                 if (weaponUnit.getFocusLockPos() != null) {
@@ -760,7 +848,8 @@ public class LocalVehiclePlayer {
     }
 
     public void cameraAimWith(WeaponUnit weaponUnit) {
-        Vec2 rot = weaponUnit.worldRot(weaponUnit.getXRot() + weaponUnit.xBarrelSelfRot, weaponUnit.getYRot() + weaponUnit.yBarrelSelfRot);
+        Vec2 rot = weaponUnit.worldRot(weaponUnit.getXRot() + weaponUnit.xBarrelSelfRot + weaponUnit.zeroElevation(),
+                weaponUnit.getYRot() + weaponUnit.yBarrelSelfRot);
         cameraAimRotX = rot.x;
         cameraAimRotY = rot.y;
         cameraAimRotZ = weaponUnit.worldZRot();
@@ -895,6 +984,11 @@ public class LocalVehiclePlayer {
 
     public Vec3 freeAimPos() {
         return cameraAimHit(CAMERA_UPWARD_ANGLE);
+    }
+
+    /** Where the view points the gun: barrel line in SCOPE / {@link #gunLook}, else the free aim. */
+    public Vec3 viewAimPos() {
+        return viewType == ViewType.SCOPE || gunLook() ? scopeAimPos() : freeAimPos();
     }
 
     public Vec3 scopeAimPos() {

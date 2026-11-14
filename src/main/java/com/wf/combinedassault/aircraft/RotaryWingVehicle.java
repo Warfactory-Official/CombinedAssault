@@ -162,7 +162,7 @@ public class RotaryWingVehicle extends AbstractVehicle
             multirotor.load(compound);
         }
         if (landingGear != null) {
-            landingGear.setOn(isLandingGearUp());
+            LandingGearUnit.setAll(this, isLandingGearUp());
         }
     }
 
@@ -176,7 +176,7 @@ public class RotaryWingVehicle extends AbstractVehicle
     public void readSpawnData(RegistryFriendlyByteBuf buffer) {
         super.readSpawnData(buffer);
         if (landingGear != null) {
-            landingGear.setOn(isLandingGearUp());
+            LandingGearUnit.setAll(this, isLandingGearUp());
         }
     }
 
@@ -615,7 +615,7 @@ public class RotaryWingVehicle extends AbstractVehicle
             if (landingGear == null) {
                 player.displayClientMessage(Component.translatable("tips.no_landing_gear"), true);
             } else if (hasPower()) {
-                landingGear.setOn(!isLandingGearUp());
+                LandingGearUnit.setAll(this, !isLandingGearUp());
             }
         }
         if (message.toggleHoverMode && multirotor != null) {
@@ -820,10 +820,18 @@ public class RotaryWingVehicle extends AbstractVehicle
         return super.controlsNeutral() && !isEngineOn();
     }
 
-    /** FPV/multirotor: attitude owned outside the snapshot. */
     @Override
     protected boolean predictable() {
-        return fpvFlight == null && multirotor == null;
+        return true;
+    }
+
+    /** Client {@code multirotor.fpv} is never toggled locally: the synced flag is the mode. */
+    @Override
+    public void predictStep() {
+        if (multirotor != null) {
+            multirotor.setFpv(entityData.get(MULTIROTOR_FPV));
+        }
+        super.predictStep();
     }
 
     @Override
@@ -843,6 +851,9 @@ public class RotaryWingVehicle extends AbstractVehicle
         buf.writeFloat(hoverRoll);
         buf.writeDouble(hoverVyO);
         aerodynamics.writePrediction(buf);
+        if (multirotor != null) {
+            multirotor.writePrediction(buf);
+        }
     }
 
     @Override
@@ -857,6 +868,9 @@ public class RotaryWingVehicle extends AbstractVehicle
         hoverRoll = buf.readFloat();
         hoverVyO = buf.readDouble();
         aerodynamics.readPrediction(buf);
+        if (multirotor != null) {
+            multirotor.readPrediction(buf);
+        }
     }
 
     public float getCollectivePitch() {

@@ -114,6 +114,19 @@ public final class ShipHydrodynamics {
     /** Horizontal velocity written last tick; distinguishes world changes from engine deadband. */
     private double writtenVx = Double.NaN, writtenVz;
 
+    public double writtenVx() {
+        return writtenVx;
+    }
+
+    public double writtenVz() {
+        return writtenVz;
+    }
+
+    public void setWritten(double vx, double vz) {
+        writtenVx = vx;
+        writtenVz = vz;
+    }
+
     /**
      * Advances one tick.
      *

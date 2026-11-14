@@ -1,0 +1,56 @@
+{
+  "name": "crusader_controller",
+  "parameters": {},
+  "graph": {
+    "type": "merge",
+    "inputs": [
+      {
+        "type": "bone_binding",
+        "special_bindings": [
+          {
+            "bones": [
+              "wheel_left_0",
+              "wheel_left_2"
+            ],
+            "source": "left_wheel_rotation",
+            "axis": "x",
+            "param": 0.18
+          },
+          {
+            "bones": [
+              "wheel_left_1",
+              "wheel_left_3",
+              "wheel_left_4",
+              "wheel_left_5",
+              "wheel_left_6"
+            ],
+            "source": "left_wheel_rotation",
+            "axis": "x",
+            "param": 0.4
+          },
+          {
+            "bones": [
+              "wheel_right_0",
+              "wheel_right_1"
+            ],
+            "source": "right_wheel_rotation",
+            "axis": "x",
+            "param": 0.18
+          },
+          {
+            "bones": [
+              "wheel_right_2",
+              "wheel_right_3",
+              "wheel_right_4",
+              "wheel_right_5",
+              "wheel_right_6"
+            ],
+            "source": "right_wheel_rotation",
+            "axis": "x",
+            "param": 0.4
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -34,13 +34,14 @@ public final class CaHudPresets {
         add("impact_markers", p -> new AimWidgets.ImpactMarkers(p.expr("color")));
         add("lock_markers", p -> new AimWidgets.LockMarkers());
         add("radar_scopes", p -> new RadarWidgets.RadarScopes());
+        add("radar_full", p -> new RadarWidgets.FullScope());
         add("rwr", p -> new RadarWidgets.Rwr());
         add("sounder", p -> new ShipWidgets.Sounder());
         add("depth_gauge", p -> new ShipWidgets.DepthGauge());
         add("optical_scope", p -> new ScopeWidgets.OpticalScope());
         add("scope_sight", p -> new ScopeWidgets.ScopeSight(p.expr("color")));
         add("engagement_envelope", p -> new ScopeWidgets.EngagementEnvelope(p.expr("color")));
-        add("vehicle_schematic", p -> new ScopeWidgets.VehicleSchematic());
+        add("vehicle_schematic", p -> new ScopeWidgets.VehicleSchematic(p.number("length", 0), p.flag("hull_up", false)));
         add("debug_dump", p -> new DebugDump());
         add("mfd_situation", p -> new MfdWidgets.Situation(p.number("w"), p.number("h")));
         add("mfd_adi", p -> new MfdWidgets.Adi(p.number("w"), p.number("h")));

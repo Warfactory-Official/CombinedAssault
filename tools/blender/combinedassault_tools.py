@@ -60,7 +60,12 @@ STATE_NODES = [(re.compile(r"^ammo_can$"), "has rounds or is reloading"),
 
 PLANAR_EPS = 1.0e-4
 CONVEX_EPS = 1.0e-4
-DEGENERATE_EPS = 1.0e-6
+# ConvexHull.EPS: Newell length (2 x area) below => game refuses the hull.
+DEGENERATE_EPS = 1.0e-4
+# Hull faces / edges kept this far above ConvexHull.EPS / WELD: float32 export + world matrix rounding.
+HULL_MARGIN = 4.0e-4
+# Hull vertices closer than this are one vertex (plane triples meeting at one corner).
+HULL_WELD = 1.0e-5
 IDENTITY_EPS = 1.0e-5
 CLIP_NAME = ca_validate.CLIP_NAME
 PLACES = 5
@@ -175,7 +180,7 @@ def check_collider(obj, depsgraph=None):
     for index, face in enumerate(faces):
         plane = plane_of(points, face)
         if plane is None:
-            problems.append("face %d is degenerate" % index)
+            problems.append("face %d is degenerate (2 x area < %g)" % (index, DEGENERATE_EPS))
             continue
         normal, offset = plane
         if normal.dot(interior) > offset:
@@ -336,20 +341,134 @@ def used_materials(scene):
 # ---------------------------------------------------------------- colliders
 
 
+# Clip side tolerance (blocks); << ConvexHull.EPS.
+CLIP_TOL = 1.0e-7
+
+
+def clip_polygon(poly, side):
+    """poly (k, 3) cut to side <= 0 (side = signed distance per vertex)."""
+    out = []
+    for k in range(len(poly)):
+        sa, sb = side[k], side[(k + 1) % len(poly)]
+        if sa <= CLIP_TOL:
+            out.append(poly[k])
+        if (sa <= CLIP_TOL) != (sb <= CLIP_TOL):
+            a, b = poly[k], poly[(k + 1) % len(poly)]
+            out.append(a + (b - a) * (sa / (sa - sb)))
+    return np.array(out)
+
+
+def face_polygon(normals, offsets, i, others, reach):
+    """Plane i's face: square of half-size reach on it, clipped by planes `others`, consecutive vertices within
+    HULL_WELD merged; None under 3 vertices."""
+    n = normals[i]
+    u = np.cross(n, (1.0, 0.0, 0.0) if abs(n[0]) < 0.9 else (0.0, 1.0, 0.0))
+    u /= np.linalg.norm(u)
+    w = np.cross(n, u)
+    poly = n * offsets[i] + reach * np.array([-u - w, u - w, u + w, w - u])
+    # Each plane cuts once: re-cutting by rounding residue ping-pongs between near-parallel planes forever.
+    while len(poly) >= 3 and len(others):
+        side = poly @ normals[others].T - offsets[others]
+        j = side.max(axis=0).argmax()
+        if side[:, j].max() <= CLIP_TOL:
+            break
+        poly = clip_polygon(poly, side[:, j])
+        others = np.delete(others, j)
+    if len(poly) < 3:
+        return None
+    ring = [poly[0]]
+    for p in poly[1:]:
+        if np.linalg.norm(p - ring[-1]) >= HULL_WELD:
+            ring.append(p)
+    if len(ring) > 1 and np.linalg.norm(ring[-1] - ring[0]) < HULL_WELD:
+        ring.pop()
+    return np.array(ring) if len(ring) >= 3 else None
+
+
+def too_small(ring):
+    """Points of a face under HULL_MARGIN: its short edge's ends, or the whole ring when 2 x area is short."""
+    if np.linalg.norm(np.cross(ring, np.roll(ring, -1, axis=0)).sum(axis=0)) < HULL_MARGIN:
+        return ring
+    edges = np.linalg.norm(ring - np.roll(ring, -1, axis=0), axis=1)
+    k = int(edges.argmin())
+    return ring[[k, (k + 1) % len(ring)]] if edges[k] < HULL_MARGIN else None
+
+
 def hull_into(data, points):
-    """data = convex hull of points, coplanar triangles merged back into flat faces (every face a separating axis)."""
+    """data = convex hull of points as ConvexHull.of accepts it: hull triangle planes pushed out over every point,
+    merged when within EPS/4, intersected. While a face is under HULL_MARGIN (2 x area or an edge), drop the plane,
+    among those touching it there, whose removal grows the solid least. Returns the growth (blocks)."""
     mesh = bmesh.new()
     try:
         for point in points:
             mesh.verts.new(point)
         bmesh.ops.remove_doubles(mesh, verts=mesh.verts, dist=ca_validate.EPS)
-        result = bmesh.ops.convex_hull(mesh, input=mesh.verts, use_existing_faces=False)
-        bmesh.ops.delete(mesh, geom=list({v for v in result["geom_interior"] + result["geom_unused"]
-                                          if isinstance(v, bmesh.types.BMVert)}), context="VERTS")
-        bmesh.ops.dissolve_limit(mesh, angle_limit=0.0017, verts=mesh.verts, edges=mesh.edges)
-        mesh.to_mesh(data)
+        bmesh.ops.convex_hull(mesh, input=mesh.verts, use_existing_faces=False)
+        cloud = np.array([v.co for v in mesh.verts], dtype=np.float64)
+        triangles = np.array([[v.co for v in f.verts] for f in mesh.faces if len(f.verts) == 3], dtype=np.float64)
     finally:
         mesh.free()
+    if len(triangles) < 4:
+        raise ValueError("selection spans no volume")
+    centre = triangles.reshape(-1, 3).mean(axis=0)
+    cross = np.cross(triangles[:, 1] - triangles[:, 0], triangles[:, 2] - triangles[:, 0])
+    area = np.linalg.norm(cross, axis=1)
+    keep = area > 1.0e-12
+    triangles, cross, area = triangles[keep], cross[keep], area[keep]
+    normals = cross / area[:, None]
+    normals[np.einsum("ij,ij->i", normals, triangles[:, 0] - centre) < 0] *= -1
+    exact = np.einsum("ij,ij->i", normals, triangles[:, 0])
+    planes = []
+    for k in np.argsort(-area):
+        if not any(normals[k] @ normals[p] > 0.99 and np.abs(triangles[k] @ normals[p] - exact[p]).max()
+                   < ca_validate.EPS / 4 for p in planes):
+            planes.append(k)
+    lo, hi = cloud.min(axis=0) - 1.0e-3, cloud.max(axis=0) + 1.0e-3
+    plane_normals = np.vstack([normals[planes], np.eye(3), -np.eye(3)])
+    plane_offsets = np.concatenate([(cloud @ normals[planes].T).max(axis=0), hi, -lo])
+    reach = 4.0 * (np.abs(plane_offsets).max() + 1.0)
+
+    def solve(i, active):
+        return face_polygon(plane_normals, plane_offsets, i, np.array(sorted(active - {i})), reach)
+
+    def touching(ring, skip):
+        return [i for i, other in faces.items()
+                if i != skip and np.linalg.norm(other[:, None] - ring[None], axis=2).min() < HULL_WELD]
+
+    active = set(range(len(plane_normals)))
+    faces = {i: ring for i in active if (ring := solve(i, active)) is not None}
+    while (corner := next((c for r in faces.values() if (c := too_small(r)) is not None), None)) is not None:
+        bounding = np.array(sorted(active))
+        best = None
+        for drop in touching(corner, None):
+            rest = active - {drop}
+            trial = {i: solve(i, rest) for i in touching(faces[drop], drop) + [i for i in rest if i not in faces]}
+            grown = max(((ring @ plane_normals[bounding].T - plane_offsets[bounding]).max()
+                         for ring in trial.values() if ring is not None), default=0.0)
+            if best is None or grown < best[0]:
+                best = (grown, drop, trial)
+        _, drop, trial = best
+        active.discard(drop)
+        del faces[drop]
+        for i, ring in trial.items():
+            if ring is None:
+                faces.pop(i, None)
+            else:
+                faces[i] = ring
+    vertices, loops = [], []
+    for ring in faces.values():
+        loop = []
+        for p in ring:
+            index = next((k for k, q in enumerate(vertices) if np.linalg.norm(p - q) < HULL_WELD), None)
+            if index is None:
+                vertices.append(p)
+                index = len(vertices) - 1
+            loop.append(index)
+        loops.append(loop)
+    vertices = np.array(vertices)
+    data.from_pydata([tuple(v) for v in vertices], [], loops)
+    data.update()
+    return max(0.0, float((vertices @ plane_normals.T - plane_offsets).max()))
 
 
 def style_collider(obj):
@@ -1343,7 +1462,12 @@ class COMBINEDASSAULT_OT_make_hull(Operator):
         sources = [obj for obj in context.selected_objects if obj.type == "MESH"]
         depsgraph = context.evaluated_depsgraph_get()
         data = bpy.data.meshes.new(sources[0].name + "_hull")
-        hull_into(data, [p for source in sources for p in faces_of(source, depsgraph)[0]])
+        try:
+            growth = hull_into(data, [p for source in sources for p in faces_of(source, depsgraph)[0]])
+        except ValueError as error:
+            bpy.data.meshes.remove(data)
+            self.report({"ERROR"}, str(error))
+            return {"CANCELLED"}
         hull = bpy.data.objects.new(sources[0].name + "_hull", data)
         context.collection.objects.link(hull)
         frame = frame_of(sources[0])
@@ -1359,7 +1483,8 @@ class COMBINEDASSAULT_OT_make_hull(Operator):
             obj.select_set(False)
         hull.select_set(True)
         context.view_layer.objects.active = hull
-        self.report({"INFO"}, "hull: %d vertices, %d faces" % (len(data.vertices), len(data.polygons)))
+        self.report({"INFO"}, "hull: %d vertices, %d faces, grown up to %.4f to drop slivers"
+                    % (len(data.vertices), len(data.polygons), growth))
         return {"FINISHED"}
 
 

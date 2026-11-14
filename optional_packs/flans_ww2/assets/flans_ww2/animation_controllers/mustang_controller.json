@@ -1,0 +1,43 @@
+{
+  "name": "mustang_controller",
+  "script": "flans_ww2:mustang",
+  "parameters": {},
+  "graph": {
+    "type": "merge",
+    "inputs": [
+      {
+        "type": "script",
+        "function": "updateBones"
+      },
+      {
+        "type": "bone_binding",
+        "special_bindings": [
+          {
+            "bones": [
+              "gear_0_wheel0"
+            ],
+            "source": "wheel_rotation",
+            "axis": "x",
+            "param": 0.141
+          },
+          {
+            "bones": [
+              "gear_2_wheel0"
+            ],
+            "source": "wheel_rotation",
+            "axis": "x",
+            "param": 0.394
+          },
+          {
+            "bones": [
+              "gear_3_wheel0"
+            ],
+            "source": "wheel_rotation",
+            "axis": "x",
+            "param": 0.394
+          }
+        ]
+      }
+    ]
+  }
+}

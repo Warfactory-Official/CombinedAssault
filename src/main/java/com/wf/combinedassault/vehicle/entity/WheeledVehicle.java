@@ -48,6 +48,8 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
     public float trackSize = 0.1f;
     /** Sliding sideways past tyre grip this tick. */
     public boolean loseTraction;
+    /** Mouse wheel: lock slew in {@link #turnStep}s per tick; the client already ramps keyed input at 1. */
+    private static final float WHEEL_SLEW = 4;
     /** Grip fraction with the handbrake on. */
     private static final double HANDBRAKE_GRIP = 0.3;
     /** Drive per unit belly share (frictionless belly): 1 = as if the wheels carried it. */
@@ -136,7 +138,10 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
         }
 
         float turnAngle = getTurnAngle();
-        if (controlUnit.left || controlUnit.right) {
+        if (controlUnit.wheelSteer) {
+            float slew = turnStep * WHEEL_SLEW;
+            turnAngle += Mth.clamp(controlUnit.wheel * maxTurn - turnAngle, -slew, slew);
+        } else if (controlUnit.left || controlUnit.right) {
             turnAngle += controlUnit.right ? turnStep : -turnStep;
             turnAngle = Mth.clamp(turnAngle, -maxTurn, maxTurn);
         } else {
@@ -164,7 +169,7 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
                 propulsiveForce = vehicleDirection.normalize().scale(brakeForce);
             } else {
                 if (motion < maxSpeedForward) {
-                    propulsiveForce = vehicleDirection.normalize().scale(forwardForce * (powerScale*mobility.speedScale()));
+                    propulsiveForce = vehicleDirection.normalize().scale(powerLimited(forwardForce * (powerScale*mobility.speedScale()), motion));
                 }
             }
         } else if (controlUnit.backward) {
@@ -172,7 +177,7 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
                 propulsiveForce = vehicleDirection.normalize().scale(-brakeForce);
             } else {
                 if (motion < maxSpeedBackward) {
-                    propulsiveForce = vehicleDirection.normalize().scale(-backwardForce * (powerScale*mobility.speedScale()));
+                    propulsiveForce = vehicleDirection.normalize().scale(-powerLimited(backwardForce * (powerScale*mobility.speedScale()), motion));
                 }
             }
         }
@@ -232,7 +237,7 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
             return -Math.signum(along) * Math.min(brakeForce * (braking ? 1 : ENGINE_BRAKE), Math.abs(along) / perForce);
         }
         if (push != 0 && push * along < pushCap) {
-            return push * (push > 0 ? forwardForce * pushScale : backwardForce) * driveScale;
+            return Math.signum(push) * powerLimited(Math.abs(push) * (push > 0 ? forwardForce * pushScale : backwardForce) * driveScale, along);
         }
         return 0;
     }
@@ -343,6 +348,12 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
     @Override
     public float getForwardSpeed() {
         return this.entityData.get(FORWARD_SPEED);
+    }
+
+    /** Half-track: belts follow the ground, yaw rate measured (front wheels steer, tracks only roll). */
+    @Override
+    public double trackSpeed(double lateral) {
+        return getForwardSpeed() * 20.0 + Math.toRadians(Mth.wrapDegrees(getYRot() - yRotO)) * 20.0 * lateral;
     }
 
     public float getTurnAngle() {

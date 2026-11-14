@@ -1,0 +1,94 @@
+{
+  "name": "t34_controller",
+  "parameters": {},
+  "graph": {
+    "type": "merge",
+    "inputs": [
+      {
+        "type": "bone_binding",
+        "special_bindings": [
+          {
+            "bones": [
+              "wheel_left_2",
+              "wheel_left_3",
+              "wheel_left_4",
+              "wheel_left_5",
+              "wheel_left_6"
+            ],
+            "source": "left_wheel_rotation",
+            "axis": "x",
+            "param": 0.13
+          },
+          {
+            "bones": [
+              "wheel_left_0"
+            ],
+            "source": "left_wheel_rotation",
+            "axis": "x",
+            "param": 0.25
+          },
+          {
+            "bones": [
+              "wheel_left_1"
+            ],
+            "source": "left_wheel_rotation",
+            "axis": "x",
+            "param": 0.32
+          },
+          {
+            "bones": [
+              "wheel_left_7",
+              "wheel_left_8",
+              "wheel_left_9",
+              "wheel_left_10",
+              "wheel_left_11"
+            ],
+            "source": "left_wheel_rotation",
+            "axis": "x",
+            "param": 0.41
+          },
+          {
+            "bones": [
+              "wheel_right_1",
+              "wheel_right_8",
+              "wheel_right_9",
+              "wheel_right_10",
+              "wheel_right_11"
+            ],
+            "source": "right_wheel_rotation",
+            "axis": "x",
+            "param": 0.13
+          },
+          {
+            "bones": [
+              "wheel_right_2"
+            ],
+            "source": "right_wheel_rotation",
+            "axis": "x",
+            "param": 0.25
+          },
+          {
+            "bones": [
+              "wheel_right_3"
+            ],
+            "source": "right_wheel_rotation",
+            "axis": "x",
+            "param": 0.32
+          },
+          {
+            "bones": [
+              "wheel_right_0",
+              "wheel_right_4",
+              "wheel_right_5",
+              "wheel_right_6",
+              "wheel_right_7"
+            ],
+            "source": "right_wheel_rotation",
+            "axis": "x",
+            "param": 0.41
+          }
+        ]
+      }
+    ]
+  }
+}

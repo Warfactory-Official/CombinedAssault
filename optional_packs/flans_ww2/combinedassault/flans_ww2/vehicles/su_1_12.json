@@ -1,0 +1,183 @@
+{
+  "type": "combinedassault:wheeled_vehicle",
+  "attributes": {
+    "brake_force": 20200,
+    "forward_force": 22220.0,
+    "backward_force": 11312.0,
+    "max_speed_forward": 0.694,
+    "max_speed_backward": 0.2,
+    "steer_fade_speed": 0.6,
+    "turn_step": 0.25,
+    "max_turn": 2.5,
+    "engine_power": 29.9
+  },
+  "physics_info": {
+    "mass": 4000
+  },
+  "max_health": 400,
+  "view_info": {
+    "third_person_distance": 7.5
+  },
+  "energy_info": {
+    "energy_capacity": 40,
+    "energy_consumption_per_tick": 0.004
+  },
+  "storage": {
+    "slots": 20
+  },
+  "parts": [
+    {
+      "id": "turret",
+      "name": "part.combinedassault.turret",
+      "type": "combinedassault:weapon",
+      "crew_roles": [
+        "driver",
+        "gunner"
+      ],
+      "max_health": 600,
+      "render_bone": "turret",
+      "rot_info": {
+        "x_rot_speed": 1.5,
+        "y_rot_speed": 2
+      },
+      "optical_sight_type": "optical_scope",
+      "zoom_max": 4,
+      "weapons": [
+        "flans_ww2:m1927_76mm"
+      ],
+      "protect_passenger": true
+    },
+    {
+      "id": "wheel_fl",
+      "name": "part.flans_ww2.su_1_12.wheel_fl",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 98980,
+      "damping": 5999,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "wheel_fr",
+      "name": "part.flans_ww2.su_1_12.wheel_fr",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 98980,
+      "damping": 5999,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "wheel_r",
+      "name": "part.flans_ww2.su_1_12.wheel_r",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 98980,
+      "damping": 5999,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "wheel_r_1",
+      "name": "part.flans_ww2.su_1_12.wheel_r_1",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 98980,
+      "damping": 5999,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "seat_1",
+      "name": "part.flans_ww2.seat_1",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    }
+  ],
+  "model": "flans_ww2:models/vehicle/su_1_12/su_1_12.glb",
+  "display": {
+    "tab_index": 900,
+    "icon": "flans_ww2:textures/slot/su_1_12.png",
+    "engine": {
+      "start": {
+        "event": "combinedassault:lav150_engine_start",
+        "range": 96
+      },
+      "loops": [
+        {
+          "sound": {
+            "event": "combinedassault:truck_engine_idle",
+            "range": 96
+          },
+          "input": "rpm",
+          "volume": [
+            [
+              0.05,
+              0
+            ],
+            [
+              0.3,
+              1
+            ],
+            [
+              0.6,
+              1
+            ],
+            [
+              0.75,
+              0
+            ]
+          ],
+          "pitch": [
+            [
+              0.3,
+              0.85
+            ],
+            [
+              0.6,
+              1
+            ]
+          ]
+        },
+        {
+          "sound": {
+            "event": "combinedassault:truck_engine_run",
+            "range": 160
+          },
+          "input": "rpm",
+          "volume": [
+            [
+              0.6,
+              0
+            ],
+            [
+              0.7,
+              1
+            ]
+          ],
+          "pitch": [
+            [
+              0.6,
+              0.8
+            ],
+            [
+              1,
+              1.1
+            ]
+          ]
+        }
+      ]
+    },
+    "cabin_muffle": 0.6,
+    "controller": "flans_ww2:su_1_12_controller",
+    "description": "Soviet Light SPG"
+  }
+}

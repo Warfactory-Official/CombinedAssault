@@ -18,6 +18,7 @@ public final class IndirectFireKeys {
     public static final KeyMapping TRAVERSE_RIGHT = key("indirect_traverse_right", GLFW.GLFW_KEY_PERIOD);
     public static final KeyMapping CYCLE_STEP = key("indirect_step", GLFW.GLFW_KEY_SEMICOLON);
     public static final KeyMapping TOGGLE_ARC = key("indirect_arc", GLFW.GLFW_KEY_APOSTROPHE);
+    public static final KeyMapping RANGEFINDER = key("rangefinder", GLFW.GLFW_KEY_SLASH);
 
     private IndirectFireKeys() {
     }
@@ -37,6 +38,7 @@ public final class IndirectFireKeys {
         event.register(TRAVERSE_RIGHT);
         event.register(CYCLE_STEP);
         event.register(TOGGLE_ARC);
+        event.register(RANGEFINDER);
     }
 
 }

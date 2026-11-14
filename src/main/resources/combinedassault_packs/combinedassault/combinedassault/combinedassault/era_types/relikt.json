@@ -1,0 +1,13 @@
+{
+  "heat_cut": 0.7,
+  "kinetic_cut": 0.40,
+  "tandem_cut": 0.45,
+  "kinetic_initiation_mm": 30,
+  "he_initiation_mm": 40,
+  "fragment_initiation_j": 9000,
+  "thickness": 0.12,
+  "back_plate_mm": 40,
+  "sympathetic": 0.05,
+  "blast_kg": 0.25,
+  "fragments": {"count": 8, "mass_g": 5, "speed": 900}
+}

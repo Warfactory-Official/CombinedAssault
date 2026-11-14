@@ -1,0 +1,24 @@
+{
+  "type": "combinedassault:cannon",
+  "name": "MG 3",
+  "shoot_interval": 50,
+  "max_capacity": 120,
+  "reload": {
+    "time": 100,
+    "ammo": "wflib:cartridge_7_62x51",
+    "magazines": "wflib:ammo_can_7_62x51",
+    "loose": true
+  },
+  "casing_delay": 0.03,
+  "sounds": {
+    "fire": {
+      "event": "combinedassault:gun_7.62mm_shot",
+      "range": 300,
+      "pitch_random": 0.1
+    },
+    "reload": {
+      "event": "combinedassault:gun_reload",
+      "range": 24
+    }
+  }
+}

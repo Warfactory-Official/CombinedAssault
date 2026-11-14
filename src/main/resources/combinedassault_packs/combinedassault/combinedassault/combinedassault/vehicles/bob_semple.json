@@ -4,6 +4,7 @@
         "brake_acceleration": 0.025,
         "forward_acceleration": 0.01,
         "backward_acceleration": 0.008,
+        "engine_power": 24,
         "max_speed_forward": 0.2,
         "max_speed_backward": 0.1,
         "turn_acceleration": 0.6,

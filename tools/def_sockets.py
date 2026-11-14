@@ -13,6 +13,12 @@
                                                         SIGHT_EYE_BACK behind its rearmost point; sight line || bore.
                                                         target "" = kit model (all meshes), else the part subtree, at rest
     python3 tools/def_sockets.py lens                   LENSES -> drawn `sight_lens` disc nodes (station `optic`)
+    python3 tools/def_sockets.py plates <vehicle> [--pack DIR]
+                                                        armor:<id> binding report: ids mesh <-> def `armor.plates`, per plate faces / area /
+                                                        declared (or fitted) normal vs mesh normals; > PLATE_DEVIATION deg => exit 1
+    python3 tools/def_sockets.py plates <vehicle> --assign ID --node N (--box x0,y0,z0,x1,y1,z1 | --faces i,j,..) [--dry]
+                                                        faces of node N (model frame, parts at rest = F3 `Model x y z`) -> material
+                                                        `<base>_armor:ID`, primitive split in place; ID `-` unbinds
 
 Model shared by several defs: a value moves only if every def has it equal. A socket the model already has for that
 field + target + index: left alone (def value is an override).
@@ -514,6 +520,248 @@ def cmd_lens(args):
                 open(model.path, "w").write(json.dumps(json.load(open(model.path)), separators=(",", ":")))
 
 
+PLATE = re.compile(r"(?:^|[\s_.])armor:([A-Za-z0-9_]+)(?:\.\d+)?$")
+# Same bar as the load-time fit: a plate whose faces disagree with its declared normal by more is mis-declared or curved.
+PLATE_DEVIATION = 10.0
+
+
+def plate_of(name):
+    m = PLATE.search(name or "")
+    return m.group(1) if m else None
+
+
+def unplated(name):
+    return PLATE.sub("", name).rstrip("_. ") if PLATE.search(name or "") else name
+
+
+def declared_normals(spec):
+    """PlateSpec.build: (positive-x normal, negative-x normal) or None (curved / undeclared => mesh normal)."""
+    facing = spec.get("facing")
+    if facing is None:
+        return None
+    f = str(facing).strip().lower()
+    if f in ("top", "bottom"):
+        n = np.array([0.0, 1.0 if f == "top" else -1.0, 0.0])
+        return n, n
+    slope = math.radians(spec.get("slope", 0))
+    if f in ("front", "rear", "side"):
+        hx, hz = {"front": (0, 1), "rear": (0, -1), "side": (1, 0)}[f]
+    else:
+        az = math.radians(float(f))
+        hx, hz = -math.sin(az), math.cos(az)
+    c, u = math.cos(slope), math.sin(slope)
+    pos = np.array([hx * c, u, hz * c])
+    return pos, (np.array([-hx * c, u, hz * c]) if f == "side" else pos)
+
+
+def plate_faces(g, node):
+    """Per triangle of node's mesh, primitive order (the order the game reads): (primitive, material, vertex rows in
+    the model frame, true outward normal * 2 x area). A mirroring world matrix reverses winding."""
+    world = g.world(node)
+    flip = np.linalg.det(world[:3, :3]) < 0
+    out = []
+    for k, prim in enumerate(g.doc["meshes"][g.nodes[node]["mesh"]]["primitives"]):
+        if prim.get("mode", 4) != 4:
+            continue
+        pos = accessor_array(g, prim["attributes"]["POSITION"])
+        pos = (world @ np.c_[pos, np.ones(len(pos))].T).T[:, :3]
+        idx = primitive_indices(g, prim, len(pos))
+        for tri in pos[idx[: len(idx) // 3 * 3].reshape(-1, 3)]:
+            n = np.cross(tri[1] - tri[0], tri[2] - tri[0])
+            out.append((k, prim.get("material"), tri, -n if flip else n))
+    return out
+
+
+def accessor_array(g, i):
+    acc = g.doc["accessors"][i]
+    view = g.doc["bufferViews"][acc["bufferView"]]
+    dtype = {5126: "<f4", 5125: "<u4", 5123: "<u2", 5121: "<u1"}[acc["componentType"]]
+    width = {"SCALAR": 1, "VEC2": 2, "VEC3": 3}[acc["type"]]
+    start = view.get("byteOffset", 0) + acc.get("byteOffset", 0)
+    stride = view.get("byteStride", 0)
+    blob = bytes(g.buffers[view["buffer"]])
+    item = np.dtype(dtype).itemsize
+    if stride and stride != width * item:
+        return np.array([np.frombuffer(blob, dtype, width, start + r * stride) for r in range(acc["count"])], dtype=float)
+    return np.frombuffer(blob, dtype, acc["count"] * width, start).reshape(acc["count"], width).astype(float)
+
+
+def primitive_indices(g, prim, count):
+    if "indices" not in prim:
+        return np.arange(count)
+    return accessor_array(g, prim["indices"]).reshape(-1).astype(int)
+
+
+def cmd_plates(args):
+    global PACK
+    if args.pack:
+        PACK = args.pack
+    vid = args.vehicle if ":" in args.vehicle else "combinedassault:" + args.vehicle
+    path = defs().get(vid)
+    if path is None:
+        sys.exit(vid + ": no def under " + PACK)
+    d = json.load(open(path))
+    model = Model(d["model"])
+    g = model.gltf
+    if args.assign:
+        return assign_plate(model, args)
+    specs = (d.get("armor") or {}).get("plates", {})
+    names = [m.get("name", "") for m in g.doc.get("materials", [])]
+    area, normal, count, worst, far, mean = {}, {}, {}, {}, {}, {}
+    nodes = [i for i, n in enumerate(g.nodes) if "mesh" in n]
+    for i in nodes:
+        for _, m, tri, n in plate_faces(g, i):
+            pid = plate_of(names[m]) if m is not None else None
+            if pid is None:
+                continue
+            a = np.linalg.norm(n) / 2
+            if a <= 0:
+                continue
+            count[pid] = count.get(pid, 0) + 1
+            area[pid] = area.get(pid, 0) + a
+            normal[pid] = normal.get(pid, 0) + n / 2
+    bad = False
+    for pid in sorted(set(count) | set(specs)):
+        if pid not in specs:
+            print("%s: mesh binds '%s' (%d faces), def has no armor.plates entry" % (vid, pid, count[pid]))
+            bad = True
+        elif pid not in count:
+            print("%s: armor.plates '%s' is bound by no face" % (vid, pid))
+            bad = True
+    for pid in sorted(count):
+        spec = specs.get(pid, {})
+        fit = normal[pid] / np.linalg.norm(normal[pid]) if np.linalg.norm(normal[pid]) > 0 else np.zeros(3)
+        coherence = np.linalg.norm(normal[pid]) / area[pid]
+        declared = declared_normals(spec)
+        label = "curved" if spec.get("curved") else "declared" if declared else "fitted"
+        dev_max = dev_mean = 0.0
+        far_faces = 0
+        if not spec.get("curved"):
+            for i in nodes:
+                for _, m, tri, n in plate_faces(g, i):
+                    if m is None or plate_of(names[m]) != pid or np.linalg.norm(n) == 0:
+                        continue
+                    want = fit if declared is None else declared[0 if tri[:, 0].mean() >= 0 else 1]
+                    dev = math.degrees(math.acos(max(-1.0, min(1.0, abs(float(np.dot(n / np.linalg.norm(n), want)))))))
+                    dev_max = max(dev_max, dev)
+                    dev_mean += dev * np.linalg.norm(n) / 2 / area[pid]
+                    far_faces += dev > PLATE_DEVIATION
+        print("%s plate %-14s %4d faces %8.3f m2  %-8s n=(%.3f, %.3f, %.3f)  mesh vs normal: mean %.1f max %.1f deg, %d > %g%s"
+              % (vid, pid, count[pid], area[pid], label, *(declared[0] if declared else fit), dev_mean, dev_max,
+                 far_faces, PLATE_DEVIATION, "" if declared or spec.get("curved") else "  (coherence %.2f)" % coherence))
+        if far_faces:
+            print("  => fix the declaration or mark `curved`")
+            bad = True
+    if bad:
+        sys.exit(1)
+
+
+def assign_plate(model, args):
+    g = model.gltf
+    hits = [i for i, n in enumerate(g.nodes) if n.get("name") == args.node and "mesh" in n]
+    if len(hits) != 1:
+        sys.exit("node %s: %d mesh nodes of that name" % (args.node, len(hits)))
+    node = hits[0]
+    mesh = g.nodes[node]["mesh"]
+    if sum(1 for n in g.nodes if n.get("mesh") == mesh) > 1:
+        sys.exit("node %s shares its mesh with another node: assigning would bind both" % args.node)
+    if bool(args.box) == bool(args.faces):
+        sys.exit("--assign needs exactly one of --box, --faces")
+    plate = None if args.assign == "-" else args.assign
+    if plate is not None and not re.fullmatch(r"[A-Za-z0-9_]+", plate):
+        sys.exit("plate id %r: [A-Za-z0-9_]+" % plate)
+    faces = plate_faces(g, node)
+    if args.box:
+        lo_hi = [float(v) for v in args.box.split(",")]
+        if len(lo_hi) != 6:
+            sys.exit("--box x0,y0,z0,x1,y1,z1")
+        lo, hi = np.array(lo_hi[:3]), np.array(lo_hi[3:])
+        picked = {t for t, (_, _, tri, _) in enumerate(faces)
+                  if np.all(tri.mean(0) >= np.minimum(lo, hi)) and np.all(tri.mean(0) <= np.maximum(lo, hi))}
+    else:
+        picked = {int(v) for v in args.faces.split(",")}
+        if max(picked) >= len(faces):
+            sys.exit("--faces: node has %d triangles" % len(faces))
+    if not picked:
+        sys.exit("no face selected")
+    materials = g.doc.setdefault("materials", [])
+    by_name = {m.get("name", ""): i for i, m in enumerate(materials)}
+    prims = g.doc["meshes"][mesh]["primitives"]
+    first = {}
+    t = 0
+    for k, prim in enumerate(prims):
+        if prim.get("mode", 4) != 4:
+            continue
+        first[k] = t
+        t += len(primitive_indices(g, prim, g.doc["accessors"][prim["attributes"]["POSITION"]]["count"])) // 3
+    moved = 0
+    for k in sorted(first, reverse=True):
+        prim = prims[k]
+        base = first[k]
+        pos_count = g.doc["accessors"][prim["attributes"]["POSITION"]]["count"]
+        idx = primitive_indices(g, prim, pos_count)
+        tris = idx[: len(idx) // 3 * 3].reshape(-1, 3)
+        sel = np.array([base + r in picked for r in range(len(tris))])
+        if not sel.any():
+            continue
+        material = prim.get("material")
+        name = materials[material].get("name", "") if material is not None else "plate"
+        target = unplated(name) + ("_armor:" + plate if plate else "")
+        if plate is not None and plate_of(name) == plate:
+            continue
+        if target not in by_name:
+            copy = json.loads(json.dumps(materials[material])) if material is not None else {}
+            copy["name"] = target
+            materials.append(copy)
+            by_name[target] = len(materials) - 1
+        moved += int(sel.sum())
+        if args.dry:
+            continue
+        kept = tris[~sel].reshape(-1)
+        new = {key: value for key, value in prim.items() if key != "indices"}
+        new["material"] = by_name[target]
+        new["indices"] = add_indices(g, tris[sel].reshape(-1))
+        if len(kept):
+            if "indices" in prim:
+                rewrite_indices(g, prim["indices"], kept)
+            else:
+                prim["indices"] = add_indices(g, kept)
+            prims.insert(k + 1, new)
+        else:
+            prims[k] = new
+    print("%s: %d of %d faces -> %s%s" % (args.node, moved, len(picked), plate or "unbound", " (dry)" if args.dry else ""))
+    if moved and not args.dry:
+        compact = g.path.lower().endswith(".gltf") and "\n" not in open(g.path).read().strip()
+        g.save(g.path, lambda r, data: open(asset(r), "wb").write(data))
+        if compact:
+            open(g.path, "w").write(json.dumps(json.load(open(g.path)), separators=(",", ":")))
+
+
+def add_indices(g, values):
+    buf = g.buffers[0]
+    while len(buf) % 4:
+        buf.append(0)
+    offset = len(buf)
+    buf += np.asarray(values, dtype="<u4").tobytes()
+    views = g.doc["bufferViews"]
+    views.append({"buffer": 0, "byteOffset": offset, "byteLength": len(values) * 4, "target": 34963})
+    g.doc["accessors"].append({"bufferView": len(views) - 1, "componentType": 5125, "count": len(values), "type": "SCALAR"})
+    return len(g.doc["accessors"]) - 1
+
+
+def rewrite_indices(g, accessor, values):
+    """Shrink an index accessor in place (same view, same component type); the tail of its range goes unread."""
+    acc = g.doc["accessors"][accessor]
+    view = g.doc["bufferViews"][acc["bufferView"]]
+    dtype = {5121: "<u1", 5123: "<u2", 5125: "<u4"}[acc["componentType"]]
+    start = view.get("byteOffset", 0) + acc.get("byteOffset", 0)
+    data = np.asarray(values, dtype=dtype).tobytes()
+    g.buffers[view["buffer"]][start:start + len(data)] = data
+    acc["count"] = len(values)
+    acc.pop("min", None)
+    acc.pop("max", None)
+
+
 def main():
     os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
     ap = argparse.ArgumentParser()
@@ -527,8 +775,16 @@ def main():
     si = sub.add_parser("sights")
     si.add_argument("targets", nargs="*")
     sub.add_parser("lens")
+    pl = sub.add_parser("plates")
+    pl.add_argument("vehicle")
+    pl.add_argument("--pack")
+    pl.add_argument("--assign")
+    pl.add_argument("--node")
+    pl.add_argument("--box")
+    pl.add_argument("--faces")
+    pl.add_argument("--dry", action="store_true")
     args = ap.parse_args()
-    {"move": cmd_move, "prune": cmd_prune, "stations": cmd_stations, "sights": cmd_sights, "lens": cmd_lens}[args.cmd](args)
+    {"move": cmd_move, "prune": cmd_prune, "stations": cmd_stations, "sights": cmd_sights, "lens": cmd_lens, "plates": cmd_plates}[args.cmd](args)
 
 
 if __name__ == "__main__":

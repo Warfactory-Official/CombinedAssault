@@ -3,6 +3,7 @@ package com.wf.combinedassault.labs;
 import com.wf.wflib.armor.api.hull.HullFace;
 import com.wf.wflib.armor.api.hull.HullFaces;
 import com.wf.wflib.armor.api.hull.HullProfile;
+import com.wf.wflib.armor.api.hull.PlateLayer;
 import com.wf.wflib.geom.api.OBB;
 import com.wf.wflib.labs.api.LabContext;
 import com.wf.wflib.labs.api.LabProducer;
@@ -11,7 +12,7 @@ import com.wf.wflib.labs.api.LabTable;
 
 import java.util.Locale;
 
-/** Armour data the resolver reads: hull faces, part faces, zones, main box (lab frame). */
+/** Armour data the resolver reads: hull faces, part faces, zones, plates (plate = 1; face = facing), main box (lab frame). */
 public final class VehicleArmorProducer implements LabProducer {
 
     static final LabTable TABLE = LabTable.of("combinedassault:vehicle_armor")
@@ -20,7 +21,8 @@ public final class VehicleArmorProducer implements LabProducer {
             .measureStr("part")
             .measure("min_x_m", "m").measure("min_y_m", "m").measure("min_z_m", "m")
             .measure("max_x_m", "m").measure("max_y_m", "m").measure("max_z_m", "m")
-            .measure("ricochet_angle_deg", "deg").measure("wear_floor", "").measure("max_health", "")
+            .measure("wear_floor", "").measure("max_health", "")
+            .measure("layers", "").measure("gap_m", "m")
             .build();
 
     @Override
@@ -47,15 +49,19 @@ public final class VehicleArmorProducer implements LabProducer {
             OBB box = rig.vehicle.mainBox();
             double[] c = {box.centerX() - rig.vehicle.getX(), box.centerY() - rig.vehicle.getY(), box.centerZ() - rig.vehicle.getZ()};
             sink.row(vehicle, "box", "*", null, null, 0, "", c[0] - box.extents().x, c[1] - box.extents().y, c[2] - box.extents().z,
-                    c[0] + box.extents().x, c[1] + box.extents().y, c[2] + box.extents().z, p.ricochetAngle, p.wearFloor, health);
+                    c[0] + box.extents().x, c[1] + box.extents().y, c[2] + box.extents().z, p.wearFloor, health, 0, 0);
             faces(sink, vehicle, "hull", "", p, p, health);
             p.parts.forEach((part, f) -> faces(sink, vehicle, "part:" + part, part, f, p, health));
             for (HullProfile.Zone z : p.zones) {
                 sink.row(vehicle, "zone:" + z.name(), z.face() == null ? "*" : z.face().name().toLowerCase(Locale.ROOT),
-                        z.ke(), z.ce(), z.plate() ? 1 : 0, z.part() == null ? "" : z.part(),
+                        z.ke(), z.ce(), 0, z.part() == null ? "" : z.part(),
                         z.min()[0], z.min()[1], z.min()[2], z.max()[0], z.max()[1], z.max()[2],
-                        p.ricochetAngle, p.wearFloor, health);
+                        p.wearFloor, health, 0, 0);
             }
+            p.plates.forEach((id, spec) -> sink.row(vehicle, "plate:" + id, spec.facing == null ? "*" : spec.facing,
+                    spec.nominal(false), spec.nominal(true), 1, "", null, null, null, null, null, null, p.wearFloor,
+                    health, spec.layers == null ? 0 : spec.layers.stream().filter(l -> !l.isGap()).count(),
+                    spec.layers == null ? 0 : spec.layers.stream().filter(l -> l.isGap()).mapToDouble(PlateLayer::gap).sum()));
             rig.vehicle.discard();
         }
     }
@@ -65,7 +71,7 @@ public final class VehicleArmorProducer implements LabProducer {
             float ke = f.nominal(face);
             float ce = f.nominal(face, true);
             sink.row(vehicle, scope, face.name().toLowerCase(Locale.ROOT), ke, ce, 0, part, null, null, null, null, null, null,
-                    p.ricochetAngle, p.wearFloor, health);
+                    p.wearFloor, health, 0, 0);
         }
     }
 }

@@ -134,7 +134,7 @@ public final class StationRecoil {
         if (yaw == 0 && pitch == 0) {
             return;
         }
-        if (local.viewType == LocalVehiclePlayer.ViewType.SCOPE) {
+        if (local.viewType == LocalVehiclePlayer.ViewType.SCOPE || local.gunLook()) {
             WeaponUnit unit = station;
             unit.setXAimRot(Mth.clamp(unit.getXAimRot() + pitch, unit.xRotMin - unit.xSelfRot,
                     unit.xRotMax - unit.xSelfRot));

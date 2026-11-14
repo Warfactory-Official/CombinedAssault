@@ -69,6 +69,20 @@ public enum ComponentKind {
         return this == TRACK || this == WHEEL;
     }
 
+    /**
+     * mm RHA a {@code hit_*} module of this kind consumes from a penetrator crossing it.
+     * TODO estimates: engine block, ammo rack walls, fuel cell skin, optics housing.
+     */
+    public float moduleRha() {
+        return switch (this) {
+            case ENGINE -> 40.0f;
+            case AMMO -> 6.0f;
+            case FUEL -> 3.0f;
+            case OPTICS -> 1.0f;
+            default -> 0.0f;
+        };
+    }
+
     /** Every name a pack may write (error message: what was allowed). */
     public static String names() {
         StringBuilder out = new StringBuilder();

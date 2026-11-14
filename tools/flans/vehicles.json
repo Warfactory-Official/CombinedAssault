@@ -1,0 +1,1634 @@
+{
+  "A10": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 30,
+        "count": 1,
+        "name": "GAU-8/A Avenger"
+      },
+      {
+        "calibre_mm": 70,
+        "count": 38,
+        "name": "Hydra 70"
+      },
+      {
+        "calibre_mm": 305,
+        "count": 6,
+        "name": "AGM-65 Maverick"
+      }
+    ],
+    "class": "plane",
+    "crew": 1,
+    "health": 900,
+    "length": 16.26,
+    "mass": 15000,
+    "speed_kmh": 706,
+    "type": "fixed_wing_vehicle"
+  },
+  "ApacheAH64": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 30,
+        "count": 1,
+        "name": "M230 Chain Gun"
+      },
+      {
+        "calibre_mm": 178,
+        "count": 16,
+        "name": "AGM-114 Hellfire"
+      },
+      {
+        "calibre_mm": 70,
+        "count": 38,
+        "name": "Hydra 70"
+      }
+    ],
+    "class": "helicopter",
+    "crew": 2,
+    "health": 700,
+    "length": 14.97,
+    "mass": 7500,
+    "speed_kmh": 293,
+    "type": "rotary_wing_vehicle"
+  },
+  "B1": {
+    "armor": {
+      "bottom": 20,
+      "front": 60,
+      "parts": {
+        "turret": {
+          "bottom": 25,
+          "front": 56,
+          "rear": 46,
+          "side": 46,
+          "top": 25
+        }
+      },
+      "rear": 55,
+      "side": 55,
+      "top": 20
+    },
+    "class": "tank",
+    "crew": 4,
+    "engine_class": "ww2_tank",
+    "fuel": 400,
+    "health": 1400,
+    "length": 6.37,
+    "main_gun": {
+      "calibre_mm": 75,
+      "cartridge_hint": "75x? SA35; 47x? SA35",
+      "name": "75mm SA 35 L/17 (hull) + 47mm SA 35 L/32 (turret)"
+    },
+    "mass": 31500,
+    "speed_kmh": 28,
+    "type": "tracked_vehicle"
+  },
+  "B52": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 20,
+        "count": 1,
+        "name": "M61 Vulcan (tail, B-52G/early)"
+      },
+      {
+        "calibre_mm": 0,
+        "count": 51,
+        "name": "Mk 82 bomb"
+      }
+    ],
+    "class": "plane",
+    "crew": 5,
+    "health": 1200,
+    "length": 48.5,
+    "mass": 185000,
+    "speed_kmh": 1000,
+    "type": "fixed_wing_vehicle"
+  },
+  "BF109": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 13,
+        "count": 2,
+        "name": "MG 131"
+      },
+      {
+        "calibre_mm": 20,
+        "count": 1,
+        "name": "MG 151/20"
+      }
+    ],
+    "class": "plane",
+    "crew": 1,
+    "health": 450,
+    "length": 8.95,
+    "mass": 3400,
+    "speed_kmh": 640,
+    "type": "fixed_wing_vehicle"
+  },
+  "BMWR75": {
+    "class": "motorcycle",
+    "crew": 2,
+    "engine_kw": 19,
+    "fuel": 24,
+    "health": 200,
+    "length": 2.4,
+    "mass": 420,
+    "real_mass": 420,
+    "speed_kmh": 92,
+    "type": "wheeled_vehicle"
+  },
+  "Biplane": {
+    "aircraft_weapons": [],
+    "class": "plane",
+    "crew": 1,
+    "fictional": true,
+    "health": 250,
+    "length": 6.5,
+    "mass": 700,
+    "speed_kmh": 170,
+    "type": "fixed_wing_vehicle"
+  },
+  "BlackHawk": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 7.62,
+        "count": 2,
+        "name": "M134 Minigun (door)"
+      }
+    ],
+    "class": "helicopter",
+    "crew": 4,
+    "health": 600,
+    "length": 15.26,
+    "mass": 7700,
+    "speed_kmh": 295,
+    "type": "rotary_wing_vehicle"
+  },
+  "Camel": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 7.7,
+        "count": 2,
+        "name": "Vickers .303"
+      }
+    ],
+    "class": "plane",
+    "crew": 1,
+    "health": 250,
+    "length": 5.72,
+    "mass": 659,
+    "speed_kmh": 185,
+    "type": "fixed_wing_vehicle"
+  },
+  "Chaffee": {
+    "armor": {
+      "bottom": 13,
+      "front": 25,
+      "parts": {
+        "turret": {
+          "bottom": 13,
+          "front": 38,
+          "rear": 25,
+          "side": 25,
+          "top": 13
+        }
+      },
+      "rear": 19,
+      "side": 19,
+      "top": 13
+    },
+    "class": "tank",
+    "crew": 5,
+    "engine_kw": 164,
+    "fuel": 416,
+    "health": 900,
+    "length": 5.56,
+    "main_gun": {
+      "calibre_mm": 75,
+      "cartridge_hint": "75x350R",
+      "name": "75mm M6 L/39"
+    },
+    "mass": 18370,
+    "real_mass": 18400,
+    "speed_kmh": 55,
+    "type": "tracked_vehicle"
+  },
+  "ChallyII": {
+    "armor": {
+      "bottom": 25,
+      "front": 600,
+      "parts": {
+        "turret": {
+          "bottom": 50,
+          "front": 1000,
+          "rear": 70,
+          "side": 300,
+          "top": 50
+        }
+      },
+      "rear": 50,
+      "side": 120,
+      "top": 45
+    },
+    "class": "tank",
+    "crew": 4,
+    "engine_kw": 895,
+    "fuel": 1592,
+    "health": 2500,
+    "length": 8.33,
+    "main_gun": {
+      "calibre_mm": 120,
+      "cartridge_hint": "120x? separate-loading",
+      "name": "120mm L30A1 rifled L/55"
+    },
+    "mass": 62500,
+    "real_mass": 62500,
+    "speed_kmh": 59,
+    "type": "tracked_vehicle"
+  },
+  "ChiHa": {
+    "armor": {
+      "bottom": 8,
+      "front": 25,
+      "parts": {
+        "turret": {
+          "bottom": 10,
+          "front": 25,
+          "rear": 20,
+          "side": 25,
+          "top": 10
+        }
+      },
+      "rear": 20,
+      "side": 20,
+      "top": 10
+    },
+    "class": "tank",
+    "crew": 4,
+    "engine_kw": 125,
+    "fuel": 290,
+    "health": 700,
+    "length": 5.5,
+    "main_gun": {
+      "calibre_mm": 57,
+      "cartridge_hint": "57x? Type 97",
+      "name": "57mm Type 97 L/18.4"
+    },
+    "mass": 15800,
+    "real_mass": 15000,
+    "speed_kmh": 38,
+    "type": "tracked_vehicle"
+  },
+  "ChiNu": {
+    "armor": {
+      "bottom": 8,
+      "front": 50,
+      "parts": {
+        "turret": {
+          "bottom": 12,
+          "front": 50,
+          "rear": 25,
+          "side": 50,
+          "top": 12
+        }
+      },
+      "rear": 20,
+      "side": 25,
+      "top": 12
+    },
+    "bake_wheels": "components",
+    "class": "tank",
+    "crew": 5,
+    "engine_class": "ww2_tank",
+    "fuel": 290,
+    "health": 1000,
+    "length": 5.73,
+    "main_gun": {
+      "calibre_mm": 75,
+      "cartridge_hint": "75x? Type 3",
+      "name": "75mm Type 3 L/38"
+    },
+    "mass": 18800,
+    "speed_kmh": 39,
+    "type": "tracked_vehicle"
+  },
+  "Churchill": {
+    "armor": {
+      "bottom": 19,
+      "front": 152,
+      "parts": {
+        "turret": {
+          "bottom": 20,
+          "front": 152,
+          "rear": 95,
+          "side": 95,
+          "top": 20
+        }
+      },
+      "rear": 95,
+      "side": 95,
+      "top": 20
+    },
+    "bake_wheels": "components",
+    "class": "tank",
+    "crew": 5,
+    "engine_kw": 261,
+    "fuel": 680,
+    "health": 2000,
+    "length": 7.44,
+    "main_gun": {
+      "calibre_mm": 75,
+      "cartridge_hint": "75x? OQF",
+      "name": "75mm OQF L/36.5"
+    },
+    "mass": 40640,
+    "real_mass": 39000,
+    "speed_kmh": 20,
+    "type": "tracked_vehicle"
+  },
+  "Cromwell": {
+    "armor": {
+      "bottom": 14,
+      "front": 76,
+      "parts": {
+        "turret": {
+          "bottom": 20,
+          "front": 76,
+          "rear": 57,
+          "side": 63,
+          "top": 20
+        }
+      },
+      "rear": 63,
+      "side": 63,
+      "top": 14
+    },
+    "bake_wheels": "components",
+    "class": "tank",
+    "crew": 5,
+    "engine_kw": 447,
+    "fuel": 530,
+    "health": 1300,
+    "length": 6.35,
+    "main_gun": {
+      "calibre_mm": 75,
+      "cartridge_hint": "75x? QF 75",
+      "name": "75mm QF L/36.5"
+    },
+    "mass": 27940,
+    "real_mass": 27900,
+    "speed_kmh": 64,
+    "type": "tracked_vehicle"
+  },
+  "Crusader": {
+    "armor": {
+      "bottom": 14,
+      "front": 51,
+      "parts": {
+        "turret": {
+          "bottom": 14,
+          "front": 51,
+          "rear": 32,
+          "side": 32,
+          "top": 14
+        }
+      },
+      "rear": 32,
+      "side": 32,
+      "top": 14
+    },
+    "bake_wheels": "components",
+    "class": "tank",
+    "crew": 4,
+    "engine_kw": 254,
+    "fuel": 450,
+    "health": 800,
+    "length": 5.99,
+    "main_gun": {
+      "calibre_mm": 57,
+      "cartridge_hint": "57x441R",
+      "name": "QF 6-pounder Mk III L/43"
+    },
+    "mass": 19700,
+    "real_mass": 19700,
+    "speed_kmh": 43,
+    "type": "tracked_vehicle"
+  },
+  "EC665": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 30,
+        "count": 1,
+        "name": "GIAT 30"
+      },
+      {
+        "calibre_mm": 150,
+        "count": 8,
+        "name": "Trigat-LR"
+      },
+      {
+        "calibre_mm": 90,
+        "count": 4,
+        "name": "Mistral"
+      }
+    ],
+    "class": "helicopter",
+    "crew": 2,
+    "health": 700,
+    "length": 14.08,
+    "mass": 5300,
+    "speed_kmh": 290,
+    "type": "rotary_wing_vehicle"
+  },
+  "Flak88": {
+    "class": "aa_gun",
+    "crew": 5,
+    "health": 900,
+    "length": 5.8,
+    "length_note": "firing order on cruciform mount, barrel excluded (travel on Sd.Ah.201 ~7.6 m incl barrel)",
+    "main_gun": {
+      "calibre_mm": 88,
+      "cartridge_hint": "88x571R",
+      "name": "88mm FlaK 36/37 L/56"
+    },
+    "mass": 5000,
+    "speed_kmh": 50,
+    "type": "generic"
+  },
+  "Fokker": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 7.92,
+        "count": 2,
+        "name": "LMG 08/15"
+      }
+    ],
+    "class": "plane",
+    "crew": 1,
+    "health": 250,
+    "length": 5.77,
+    "mass": 586,
+    "speed_kmh": 185,
+    "type": "fixed_wing_vehicle"
+  },
+  "Fury": {
+    "armor": {
+      "bottom": 13,
+      "front": 64,
+      "parts": {
+        "turret": {
+          "bottom": 25,
+          "front": 76,
+          "rear": 50,
+          "side": 50,
+          "top": 25
+        }
+      },
+      "rear": 38,
+      "side": 38,
+      "top": 19
+    },
+    "bake_wheels": "keys",
+    "class": "tank",
+    "crew": 5,
+    "engine_class": "ww2_tank",
+    "fuel": 600,
+    "health": 1500,
+    "length": 6.27,
+    "main_gun": {
+      "calibre_mm": 76,
+      "cartridge_hint": "76x? M62 APC",
+      "name": "76mm M1A2 L/55"
+    },
+    "mass": 33600,
+    "speed_kmh": 48,
+    "type": "tracked_vehicle"
+  },
+  "Greyhound": {
+    "armor": {
+      "bottom": 6,
+      "front": 19,
+      "parts": {
+        "turret": {
+          "bottom": 6,
+          "front": 19,
+          "rear": 19,
+          "side": 19,
+          "top": 6
+        }
+      },
+      "rear": 10,
+      "side": 10,
+      "top": 6
+    },
+    "class": "armoured_car",
+    "crew": 4,
+    "engine_kw": 82,
+    "fuel": 212,
+    "health": 550,
+    "length": 5.0,
+    "main_gun": {
+      "calibre_mm": 37,
+      "cartridge_hint": "37x223R",
+      "name": "37mm M6 L/53"
+    },
+    "mass": 7830,
+    "real_mass": 7800,
+    "speed_kmh": 89,
+    "type": "wheeled_vehicle"
+  },
+  "Hellcat": {
+    "armor": {
+      "bottom": 8,
+      "front": 25,
+      "parts": {
+        "turret": {
+          "bottom": 0,
+          "front": 25,
+          "rear": 19,
+          "side": 19,
+          "top": 0
+        }
+      },
+      "rear": 12,
+      "side": 12,
+      "top": 8
+    },
+    "class": "tank_destroyer",
+    "crew": 5,
+    "engine_kw": 298,
+    "fuel": 570,
+    "health": 800,
+    "length": 5.54,
+    "main_gun": {
+      "calibre_mm": 76,
+      "cartridge_hint": "76x? M62",
+      "name": "76mm M1A1 L/55"
+    },
+    "mass": 17000,
+    "real_mass": 17000,
+    "speed_kmh": 88,
+    "type": "tracked_vehicle"
+  },
+  "Humvee": {
+    "class": "car",
+    "crew": 4,
+    "engine_kw": 142,
+    "fuel": 95,
+    "health": 300,
+    "length": 4.57,
+    "mass": 2500,
+    "real_mass": 4700,
+    "speed_kmh": 113,
+    "type": "wheeled_vehicle"
+  },
+  "IS2": {
+    "armor": {
+      "bottom": 20,
+      "front": 120,
+      "parts": {
+        "turret": {
+          "bottom": 30,
+          "front": 160,
+          "rear": 100,
+          "side": 100,
+          "top": 30
+        }
+      },
+      "rear": 60,
+      "side": 90,
+      "top": 30
+    },
+    "class": "tank",
+    "crew": 4,
+    "engine_kw": 382,
+    "fuel": 520,
+    "health": 2400,
+    "length": 6.77,
+    "main_gun": {
+      "calibre_mm": 122,
+      "cartridge_hint": "122x? separate-loading",
+      "name": "122mm D-25T L/43"
+    },
+    "mass": 46000,
+    "real_mass": 46000,
+    "speed_kmh": 37,
+    "type": "tracked_vehicle"
+  },
+  "Jeep": {
+    "class": "car",
+    "crew": 2,
+    "engine_kw": 45,
+    "fuel": 57,
+    "health": 250,
+    "length": 3.35,
+    "mass": 1100,
+    "real_mass": 1040,
+    "speed_kmh": 105,
+    "type": "wheeled_vehicle"
+  },
+  "KV1": {
+    "armor": {
+      "bottom": 30,
+      "front": 75,
+      "parts": {
+        "turret": {
+          "bottom": 30,
+          "front": 75,
+          "rear": 75,
+          "side": 75,
+          "top": 30
+        }
+      },
+      "rear": 60,
+      "side": 75,
+      "top": 30
+    },
+    "class": "tank",
+    "crew": 5,
+    "engine_kw": 450,
+    "fuel": 600,
+    "health": 2200,
+    "length": 6.9,
+    "main_gun": {
+      "calibre_mm": 76,
+      "cartridge_hint": "76x385R",
+      "name": "76mm F-34 L/41.5 (KV-1 M1941) / ZiS-5 L/41.6"
+    },
+    "mass": 45000,
+    "real_mass": 45000,
+    "speed_kmh": 35,
+    "type": "tracked_vehicle"
+  },
+  "Kubel": {
+    "class": "car",
+    "crew": 2,
+    "engine_kw": 18,
+    "fuel": 40,
+    "health": 250,
+    "length": 3.74,
+    "mass": 715,
+    "real_mass": 715,
+    "speed_kmh": 80,
+    "type": "wheeled_vehicle"
+  },
+  "Lancaster": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 7.7,
+        "count": 8,
+        "name": "Browning .303 Mk II"
+      },
+      {
+        "calibre_mm": 0,
+        "count": 1,
+        "name": "bomb load up to 6350 kg (e.g. 4000 lb HC / 500 lb GP)"
+      }
+    ],
+    "class": "plane",
+    "crew": 7,
+    "health": 1200,
+    "length": 21.18,
+    "mass": 29000,
+    "speed_kmh": 454,
+    "type": "fixed_wing_vehicle"
+  },
+  "Leo2A6": {
+    "armor": {
+      "bottom": 25,
+      "front": 600,
+      "parts": {
+        "turret": {
+          "bottom": 50,
+          "front": 850,
+          "rear": 70,
+          "side": 350,
+          "top": 50
+        }
+      },
+      "rear": 50,
+      "side": 80,
+      "top": 45
+    },
+    "class": "tank",
+    "crew": 4,
+    "engine_kw": 1100,
+    "fuel": 1200,
+    "health": 2500,
+    "length": 7.72,
+    "main_gun": {
+      "calibre_mm": 120,
+      "cartridge_hint": "120x570",
+      "name": "120mm Rh120 L/55"
+    },
+    "mass": 62000,
+    "real_mass": 62000,
+    "speed_kmh": 68,
+    "type": "tracked_vehicle"
+  },
+  "LittleBird": {
+    "aircraft_weapons": [],
+    "class": "helicopter",
+    "crew": 2,
+    "health": 300,
+    "length": 7.0,
+    "mass": 1400,
+    "speed_kmh": 282,
+    "type": "rotary_wing_vehicle"
+  },
+  "M10": {
+    "armor": {
+      "bottom": 13,
+      "front": 57,
+      "parts": {
+        "turret": {
+          "bottom": 0,
+          "front": 57,
+          "rear": 32,
+          "side": 32,
+          "top": 0
+        }
+      },
+      "rear": 19,
+      "side": 19,
+      "top": 8
+    },
+    "class": "tank_destroyer",
+    "crew": 5,
+    "engine_kw": 280,
+    "fuel": 620,
+    "health": 1000,
+    "length": 5.97,
+    "main_gun": {
+      "calibre_mm": 76.2,
+      "cartridge_hint": "76.2x? M7",
+      "name": "3-inch Gun M7 L/50"
+    },
+    "mass": 29900,
+    "real_mass": 29600,
+    "speed_kmh": 51,
+    "type": "tracked_vehicle"
+  },
+  "M157mm": {
+    "class": "towed_gun",
+    "crew": 5,
+    "health": 400,
+    "length": 4.5,
+    "length_note": "travel/firing order, trails spread ~4.5 m, barrel excluded",
+    "main_gun": {
+      "calibre_mm": 57,
+      "cartridge_hint": "57x? M1",
+      "name": "57mm Gun M1 (6-pounder) L/50"
+    },
+    "mass": 1215,
+    "speed_kmh": 60,
+    "type": "generic"
+  },
+  "M3Halftrack": {
+    "armor": {
+      "bottom": 6,
+      "front": 13,
+      "rear": 8,
+      "side": 8,
+      "top": 0
+    },
+    "class": "halftrack",
+    "crew": 2,
+    "engine_kw": 110,
+    "fuel": 227,
+    "halftrack": true,
+    "health": 700,
+    "length": 6.19,
+    "mass": 9000,
+    "real_mass": 9000,
+    "speed_kmh": 72,
+    "type": "wheeled_vehicle"
+  },
+  "M45Quad": {
+    "class": "aa_gun",
+    "crew": 3,
+    "health": 400,
+    "length": 3.0,
+    "length_note": "firing order, M20 trailer deployed",
+    "mass": 2300,
+    "speed_kmh": 60,
+    "type": "generic"
+  },
+  "Mustang": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 12.7,
+        "count": 6,
+        "name": "M2 Browning"
+      },
+      {
+        "calibre_mm": 0,
+        "count": 2,
+        "name": "M64 500lb bomb"
+      }
+    ],
+    "class": "plane",
+    "crew": 1,
+    "health": 500,
+    "length": 9.83,
+    "mass": 5262,
+    "speed_kmh": 703,
+    "type": "fixed_wing_vehicle"
+  },
+  "Pak40": {
+    "class": "towed_gun",
+    "crew": 5,
+    "health": 500,
+    "length": 3.6,
+    "length_note": "firing order, trails spread, barrel excluded (travel 6.2 m incl barrel)",
+    "main_gun": {
+      "calibre_mm": 75,
+      "cartridge_hint": "75x714R",
+      "name": "75mm PaK 40 L/46"
+    },
+    "mass": 1425,
+    "speed_kmh": 40,
+    "type": "generic"
+  },
+  "Panzer": {
+    "armor": {
+      "bottom": 10,
+      "front": 80,
+      "parts": {
+        "turret": {
+          "bottom": 16,
+          "front": 50,
+          "rear": 30,
+          "side": 30,
+          "top": 16
+        }
+      },
+      "rear": 20,
+      "side": 30,
+      "top": 12
+    },
+    "class": "tank",
+    "crew": 5,
+    "engine_kw": 220,
+    "fuel": 470,
+    "health": 1300,
+    "length": 5.92,
+    "main_gun": {
+      "calibre_mm": 75,
+      "cartridge_hint": "75x495R",
+      "name": "75mm KwK 40 L/48"
+    },
+    "mass": 25000,
+    "real_mass": 22000,
+    "speed_kmh": 38,
+    "type": "tracked_vehicle"
+  },
+  "PanzerIIL": {
+    "armor": {
+      "bottom": 10,
+      "front": 30,
+      "parts": {
+        "turret": {
+          "bottom": 10,
+          "front": 30,
+          "rear": 20,
+          "side": 20,
+          "top": 10
+        }
+      },
+      "rear": 20,
+      "side": 20,
+      "top": 10
+    },
+    "class": "tank",
+    "crew": 4,
+    "engine_kw": 103,
+    "fuel": 235,
+    "health": 600,
+    "length": 4.63,
+    "main_gun": {
+      "calibre_mm": 20,
+      "cartridge_hint": "20x138B",
+      "name": "20mm KwK 38 L/55"
+    },
+    "mass": 13100,
+    "real_mass": 8900,
+    "speed_kmh": 60,
+    "type": "tracked_vehicle"
+  },
+  "S100": {
+    "class": "other",
+    "crew": 24,
+    "health": 1000,
+    "hulls": [
+      "--nodes",
+      "body",
+      "--budget",
+      "1"
+    ],
+    "length": 34.94,
+    "length_note": "Schnellboot hull, 2x 533mm torpedo tubes (G7a) + 20mm Flak 38 mounts",
+    "mass": 100000,
+    "speed_kmh": 80,
+    "type": "ship"
+  },
+  "SASJeep": {
+    "class": "car",
+    "crew": 4,
+    "engine_class": "ww2_light",
+    "fuel": 57,
+    "health": 250,
+    "length": 3.35,
+    "mass": 1200,
+    "speed_kmh": 100,
+    "type": "wheeled_vehicle"
+  },
+  "SU-1-12": {
+    "class": "spg",
+    "crew": 5,
+    "engine_kw": 37,
+    "fuel": 40,
+    "health": 400,
+    "length": 5.34,
+    "length_note": "GAZ-AAA truck-mounted gun, length = truck; unarmoured",
+    "main_gun": {
+      "calibre_mm": 76.2,
+      "cartridge_hint": "76.2x? 1927",
+      "name": "76.2mm Regimental Gun Mod. 1927 L/16.5"
+    },
+    "mass": 4000,
+    "real_mass": 5000,
+    "speed_kmh": 50,
+    "type": "wheeled_vehicle"
+  },
+  "SU25": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 30,
+        "count": 1,
+        "name": "GSh-30-2"
+      },
+      {
+        "calibre_mm": 80,
+        "count": 80,
+        "name": "S-8 rocket"
+      }
+    ],
+    "class": "plane",
+    "crew": 1,
+    "health": 800,
+    "length": 15.53,
+    "mass": 17600,
+    "speed_kmh": 975,
+    "type": "fixed_wing_vehicle"
+  },
+  "SdkFz2": {
+    "class": "halftrack",
+    "crew": 1,
+    "engine_kw": 26,
+    "fuel": 42,
+    "halftrack": true,
+    "health": 250,
+    "length": 2.74,
+    "length_note": "Kettenkrad",
+    "mass": 1200,
+    "real_mass": 1280,
+    "speed_kmh": 70,
+    "type": "wheeled_vehicle"
+  },
+  "SdkFz222": {
+    "armor": {
+      "bottom": 5,
+      "front": 14.5,
+      "rear": 8,
+      "side": 8,
+      "top": 0
+    },
+    "class": "armoured_car",
+    "crew": 3,
+    "engine_kw": 66,
+    "fuel": 110,
+    "health": 500,
+    "length": 4.8,
+    "main_gun": {
+      "calibre_mm": 20,
+      "cartridge_hint": "20x138B",
+      "name": "20mm KwK 30 L/55"
+    },
+    "mass": 4800,
+    "real_mass": 4800,
+    "speed_kmh": 80,
+    "type": "wheeled_vehicle"
+  },
+  "SdkFz251": {
+    "armor": {
+      "bottom": 6,
+      "front": 14.5,
+      "rear": 8,
+      "side": 8,
+      "top": 0
+    },
+    "class": "halftrack",
+    "crew": 2,
+    "engine_kw": 74,
+    "fuel": 160,
+    "halftrack": true,
+    "health": 700,
+    "length": 5.98,
+    "mass": 8500,
+    "real_mass": 8500,
+    "speed_kmh": 53,
+    "type": "wheeled_vehicle"
+  },
+  "Sherman": {
+    "armor": {
+      "bottom": 13,
+      "front": 76,
+      "parts": {
+        "turret": {
+          "bottom": 25,
+          "front": 76,
+          "rear": 51,
+          "side": 51,
+          "top": 25
+        }
+      },
+      "rear": 38,
+      "side": 38,
+      "top": 19
+    },
+    "bake_wheels": "keys",
+    "class": "tank",
+    "crew": 5,
+    "engine_kw": 298,
+    "fuel": 660,
+    "health": 1200,
+    "length": 5.84,
+    "main_gun": {
+      "calibre_mm": 75,
+      "cartridge_hint": "75x350R",
+      "name": "75mm M3 L/40"
+    },
+    "mass": 30300,
+    "real_mass": 30300,
+    "speed_kmh": 40,
+    "type": "tracked_vehicle"
+  },
+  "Spitfire": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 20,
+        "count": 2,
+        "name": "Hispano Mk II"
+      },
+      {
+        "calibre_mm": 7.7,
+        "count": 4,
+        "name": "Browning .303"
+      }
+    ],
+    "class": "plane",
+    "crew": 1,
+    "health": 450,
+    "length": 9.54,
+    "mass": 3400,
+    "speed_kmh": 657,
+    "type": "fixed_wing_vehicle"
+  },
+  "StuG": {
+    "armor": {
+      "bottom": 10,
+      "front": 80,
+      "rear": 30,
+      "side": 30,
+      "top": 11
+    },
+    "class": "tank_destroyer",
+    "crew": 4,
+    "engine_kw": 220,
+    "fuel": 310,
+    "health": 1100,
+    "length": 5.95,
+    "main_gun": {
+      "calibre_mm": 75,
+      "cartridge_hint": "75x495R",
+      "name": "75mm StuK 40 L/48"
+    },
+    "mass": 23000,
+    "real_mass": 23900,
+    "speed_kmh": 40,
+    "type": "tracked_vehicle"
+  },
+  "T34": {
+    "armor": {
+      "bottom": 20,
+      "front": 90,
+      "parts": {
+        "turret": {
+          "bottom": 20,
+          "front": 90,
+          "rear": 52,
+          "side": 75,
+          "top": 20
+        }
+      },
+      "rear": 45,
+      "side": 45,
+      "top": 20
+    },
+    "class": "tank",
+    "crew": 5,
+    "engine_kw": 370,
+    "fuel": 540,
+    "health": 1400,
+    "length": 6.1,
+    "main_gun": {
+      "calibre_mm": 85,
+      "cartridge_hint": "85x629R",
+      "name": "85mm ZiS-S-53 L/54.6"
+    },
+    "mass": 32000,
+    "real_mass": 26500,
+    "speed_kmh": 55,
+    "type": "tracked_vehicle"
+  },
+  "T90": {
+    "armor": {
+      "bottom": 25,
+      "front": 600,
+      "parts": {
+        "turret": {
+          "bottom": 50,
+          "front": 900,
+          "rear": 70,
+          "side": 350,
+          "top": 50
+        }
+      },
+      "rear": 50,
+      "side": 80,
+      "top": 45
+    },
+    "class": "tank",
+    "crew": 3,
+    "engine_kw": 840,
+    "fuel": 1200,
+    "health": 2500,
+    "length": 6.86,
+    "main_gun": {
+      "calibre_mm": 125,
+      "cartridge_hint": "125x? separate-loading",
+      "name": "125mm 2A46M-5 L/48"
+    },
+    "mass": 48000,
+    "real_mass": 46500,
+    "speed_kmh": 60,
+    "type": "tracked_vehicle"
+  },
+  "Tiger": {
+    "armor": {
+      "bottom": 26,
+      "front": 100,
+      "parts": {
+        "turret": {
+          "bottom": 25,
+          "front": 100,
+          "rear": 80,
+          "side": 80,
+          "top": 25
+        }
+      },
+      "rear": 80,
+      "side": 80,
+      "top": 25
+    },
+    "bake_wheels": "components",
+    "class": "tank",
+    "crew": 5,
+    "engine_kw": 515,
+    "fuel": 540,
+    "health": 2000,
+    "length": 6.32,
+    "main_gun": {
+      "calibre_mm": 88,
+      "cartridge_hint": "88x570R",
+      "name": "88mm KwK 36 L/56"
+    },
+    "mass": 54000,
+    "real_mass": 54000,
+    "speed_kmh": 38,
+    "type": "tracked_vehicle"
+  },
+  "Tiger131": {
+    "armor": {
+      "bottom": 26,
+      "front": 100,
+      "parts": {
+        "turret": {
+          "bottom": 25,
+          "front": 100,
+          "rear": 80,
+          "side": 80,
+          "top": 25
+        }
+      },
+      "rear": 80,
+      "side": 80,
+      "top": 25
+    },
+    "bake_wheels": "components",
+    "class": "tank",
+    "crew": 5,
+    "engine_class": "ww2_tank",
+    "fuel": 540,
+    "health": 2000,
+    "length": 6.32,
+    "main_gun": {
+      "calibre_mm": 88,
+      "cartridge_hint": "88x570R",
+      "name": "88mm KwK 36 L/56"
+    },
+    "mass": 54000,
+    "speed_kmh": 38,
+    "type": "tracked_vehicle"
+  },
+  "TigerII": {
+    "armor": {
+      "bottom": 25,
+      "front": 150,
+      "parts": {
+        "turret": {
+          "bottom": 44,
+          "front": 180,
+          "rear": 80,
+          "side": 80,
+          "top": 44
+        }
+      },
+      "rear": 80,
+      "side": 80,
+      "top": 40
+    },
+    "class": "tank",
+    "crew": 5,
+    "engine_kw": 515,
+    "fuel": 860,
+    "health": 2500,
+    "length": 7.38,
+    "main_gun": {
+      "calibre_mm": 88,
+      "cartridge_hint": "88x822R",
+      "name": "88mm KwK 43 L/71"
+    },
+    "mass": 69800,
+    "real_mass": 69800,
+    "speed_kmh": 38,
+    "type": "tracked_vehicle"
+  },
+  "TwoSeatBiplane": {
+    "aircraft_weapons": [],
+    "class": "plane",
+    "crew": 2,
+    "fictional": true,
+    "health": 250,
+    "length": 7.5,
+    "mass": 900,
+    "speed_kmh": 160,
+    "type": "fixed_wing_vehicle"
+  },
+  "Type4HoRo": {
+    "armor": {
+      "bottom": 8,
+      "front": 25,
+      "rear": 12,
+      "side": 12,
+      "top": 8
+    },
+    "class": "spg",
+    "crew": 5,
+    "engine_class": "ww2_tank",
+    "fuel": 290,
+    "health": 800,
+    "length": 5.5,
+    "main_gun": {
+      "calibre_mm": 105,
+      "cartridge_hint": "105x? separate-loading",
+      "name": "105mm Type 38 improved howitzer L/24.5"
+    },
+    "mass": 16000,
+    "speed_kmh": 38,
+    "type": "tracked_vehicle"
+  },
+  "UC2Pdr": {
+    "armor": {
+      "bottom": 6,
+      "front": 10,
+      "rear": 7,
+      "side": 7,
+      "top": 0
+    },
+    "class": "apc",
+    "crew": 3,
+    "engine_kw": 63,
+    "fuel": 110,
+    "health": 500,
+    "length": 3.65,
+    "length_note": "Universal Carrier hull",
+    "main_gun": {
+      "calibre_mm": 40,
+      "cartridge_hint": "40x304R",
+      "name": "QF 2-pounder L/52"
+    },
+    "mass": 4000,
+    "real_mass": 3800,
+    "speed_kmh": 48,
+    "type": "tracked_vehicle"
+  },
+  "_engine_wpkg": {
+    "modern_mbt": 18,
+    "modern_wheeled": 25,
+    "ww2_armoured": 11,
+    "ww2_light": 30,
+    "ww2_tank": 10,
+    "ww2_tank_fast": 15
+  },
+  "_fuel_default": {
+    "modern_mbt": 1500,
+    "modern_wheeled": 60,
+    "ww2_armoured": 150,
+    "ww2_light": 40,
+    "ww2_tank": 450
+  },
+  "abrams": {
+    "armor": {
+      "bottom": 25,
+      "front": 600,
+      "parts": {
+        "turret": {
+          "bottom": 50,
+          "front": 900,
+          "rear": 70,
+          "side": 300,
+          "top": 50
+        }
+      },
+      "rear": 50,
+      "side": 120,
+      "top": 45
+    },
+    "class": "tank",
+    "crew": 4,
+    "engine": "tank_turbine",
+    "engine_kw": 1120,
+    "fuel": 1900,
+    "health": 2500,
+    "length": 7.93,
+    "main_gun": {
+      "calibre_mm": 120,
+      "cartridge_hint": "120x570",
+      "name": "120mm M256 L/44"
+    },
+    "mass": 62000,
+    "real_mass": 62000,
+    "speed_kmh": 67,
+    "type": "tracked_vehicle"
+  },
+  "bofors": {
+    "class": "aa_gun",
+    "crew": 4,
+    "health": 400,
+    "length": 3.0,
+    "length_note": "firing order, carriage on outriggers (travel ~5.7 m with trailer)",
+    "main_gun": {
+      "calibre_mm": 40,
+      "cartridge_hint": "40x311R",
+      "name": "40mm Bofors L/60"
+    },
+    "mass": 2400,
+    "speed_kmh": 0,
+    "type": "generic"
+  },
+  "buggy": {
+    "class": "car",
+    "crew": 2,
+    "engine_class": "modern_wheeled",
+    "fictional": true,
+    "health": 300,
+    "length": 4.4,
+    "mass": 900,
+    "speed_kmh": 110,
+    "type": "wheeled_vehicle"
+  },
+  "chinook": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 7.62,
+        "count": 3,
+        "name": "M134 Minigun (door/ramp)"
+      }
+    ],
+    "class": "helicopter",
+    "crew": 3,
+    "health": 900,
+    "length": 15.46,
+    "mass": 15000,
+    "speed_kmh": 315,
+    "type": "rotary_wing_vehicle"
+  },
+  "cobra": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 7.62,
+        "count": 1,
+        "name": "M134 Minigun"
+      },
+      {
+        "calibre_mm": 40,
+        "count": 1,
+        "name": "M129 grenade launcher"
+      },
+      {
+        "calibre_mm": 70,
+        "count": 38,
+        "name": "Hydra 70"
+      }
+    ],
+    "class": "helicopter",
+    "crew": 2,
+    "health": 500,
+    "length": 13.59,
+    "mass": 4500,
+    "speed_kmh": 277,
+    "type": "rotary_wing_vehicle"
+  },
+  "f22": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 20,
+        "count": 1,
+        "name": "M61A2 Vulcan"
+      },
+      {
+        "calibre_mm": 178,
+        "count": 6,
+        "name": "AIM-120 AMRAAM"
+      },
+      {
+        "calibre_mm": 127,
+        "count": 2,
+        "name": "AIM-9X Sidewinder"
+      }
+    ],
+    "class": "plane",
+    "crew": 1,
+    "health": 700,
+    "length": 18.9,
+    "mass": 29000,
+    "speed_kmh": 2414,
+    "type": "fixed_wing_vehicle"
+  },
+  "flakvierling": {
+    "class": "aa_gun",
+    "crew": 5,
+    "health": 500,
+    "length": 3.0,
+    "length_note": "firing order; outriggers deployed",
+    "main_gun": {
+      "calibre_mm": 20,
+      "cartridge_hint": "20x138B",
+      "count": 4,
+      "name": "2cm Flak 38 L/112.5 (x4)"
+    },
+    "mass": 1514,
+    "speed_kmh": 0,
+    "type": "generic"
+  },
+  "hind": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 12.7,
+        "count": 1,
+        "name": "YakB-12.7"
+      },
+      {
+        "calibre_mm": 57,
+        "count": 128,
+        "name": "S-5 rocket"
+      },
+      {
+        "calibre_mm": 130,
+        "count": 4,
+        "name": "9M114 Shturm"
+      }
+    ],
+    "class": "helicopter",
+    "crew": 2,
+    "health": 800,
+    "length": 17.51,
+    "mass": 11500,
+    "speed_kmh": 335,
+    "type": "rotary_wing_vehicle"
+  },
+  "mim23": {
+    "class": "sam",
+    "crew": 3,
+    "fictional": false,
+    "health": 500,
+    "length": 5.6,
+    "length_note": "M192 triple launcher deployed; missile 5.08 m",
+    "mass": 4400,
+    "speed_kmh": 0,
+    "type": "generic"
+  },
+  "sentryGun": {
+    "class": "other",
+    "crew": 0,
+    "fictional": true,
+    "health": 300,
+    "length": 1.2,
+    "length_note": "4-barrel minigun sentry, plausible",
+    "mass": 300,
+    "speed_kmh": 0,
+    "type": "generic"
+  },
+  "tornado": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 27,
+        "count": 2,
+        "name": "Mauser BK-27"
+      },
+      {
+        "calibre_mm": 166,
+        "count": 2,
+        "name": "ASRAAM"
+      },
+      {
+        "calibre_mm": 0,
+        "count": 4,
+        "name": "Paveway IV"
+      }
+    ],
+    "class": "plane",
+    "crew": 2,
+    "health": 900,
+    "length": 16.72,
+    "mass": 20000,
+    "speed_kmh": 2340,
+    "type": "fixed_wing_vehicle"
+  },
+  "tunnelBore": {
+    "class": "other",
+    "crew": 2,
+    "engine_class": "ww2_tank",
+    "fictional": true,
+    "health": 800,
+    "length": 6.0,
+    "length_note": "plausible drilling machine on tracks",
+    "mass": 12000,
+    "speed_kmh": 10,
+    "type": "tracked_vehicle"
+  },
+  "yak9": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 20,
+        "count": 1,
+        "name": "ShVAK"
+      },
+      {
+        "calibre_mm": 12.7,
+        "count": 1,
+        "name": "UBS"
+      }
+    ],
+    "class": "plane",
+    "crew": 1,
+    "health": 450,
+    "length": 8.5,
+    "mass": 3100,
+    "speed_kmh": 600,
+    "type": "fixed_wing_vehicle"
+  },
+  "zero": {
+    "aircraft_weapons": [
+      {
+        "calibre_mm": 7.7,
+        "count": 2,
+        "name": "Type 97"
+      },
+      {
+        "calibre_mm": 20,
+        "count": 2,
+        "name": "Type 99-1"
+      }
+    ],
+    "class": "plane",
+    "crew": 1,
+    "health": 400,
+    "length": 9.06,
+    "mass": 2410,
+    "speed_kmh": 534,
+    "type": "fixed_wing_vehicle"
+  }
+}

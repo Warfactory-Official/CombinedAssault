@@ -1,9 +1,11 @@
 package com.wf.combinedassault.labs;
 
 import com.wf.combinedassault.ballistics.DamageSystem;
+import com.wf.combinedassault.ballistics.VehicleBlastResolver;
 import com.wf.combinedassault.vehicle.VehicleDamageTypes;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.explosion.api.BlastPayload;
 import com.wf.wflib.labs.api.LabContext;
 import com.wf.wflib.labs.api.LabProducer;
 import com.wf.wflib.labs.api.LabSink;
@@ -20,7 +22,7 @@ import java.util.Set;
 /**
  * What reaches a seated occupant (a mob: vanilla health; players' wounds and armour run in WFMedical in game), through
  * the real paths: a ballistic hit {@code DamageSystem.hurt} (debris behind a defeated plate), blast and breech fire
- * on the occupant under {@code protect_passenger}, the wreck's dismount + blast + fire.
+ * on the occupant under {@code protect_passenger}, warhead payloads (HE outside, HESH, burst inside), the wreck's dismount + blast + fire.
  */
 public final class CrewExposureProducer implements LabProducer {
 
@@ -76,6 +78,9 @@ public final class CrewExposureProducer implements LabProducer {
             }
             direct(ctx, e.getKey(), e.getValue(), "breech_fire", 6, sink, (v, z) -> VehicleDamageTypes.Sources.breechFire(
                     v.level().registryAccess(), v, null));
+            payload(ctx, e.getKey(), e.getValue(), "he_3m", 10.8, BlastPayload.blast(10.8f), false, sink);
+            payload(ctx, e.getKey(), e.getValue(), "hesh_120", 3.0, BlastPayload.blast(3.0f).withHesh(120.0f), false, sink);
+            payload(ctx, e.getKey(), e.getValue(), "burst_inside", 0.8, BlastPayload.blast(0.8f), true, sink);
             wreck(ctx, e.getKey(), e.getValue(), sink);
             sink.row(vehicle, "emp", "", 0.0, "", 0, "", 0.0, 0, 0, "no EMP handler touches vehicles or occupants");
         }
@@ -136,6 +141,38 @@ public final class CrewExposureProducer implements LabProducer {
             double loss = z.getMaxHealth() - z.getHealth();
             sink.row(id.toString(), threat, "", amount, "", 1, "", loss, z.isAlive() ? 0 : 1, z.isOnFire() ? 1 : 0,
                     loss > 0 ? "reaches seated crew" : rig.vehicle.protectPassenger ? "protect_passenger: occupants take no damage" : "no damage");
+            z.discard();
+        } finally {
+            rig.vehicle.discard();
+        }
+    }
+
+    /** Warhead payload on the vehicle: outside = charge 3 m off the left side, else a burst at the hull's centre. */
+    private static void payload(LabContext ctx, ResourceLocation id, BaseVehicleData data, String threat, double kg,
+                                BlastPayload payload, boolean inside, LabSink sink) {
+        VehicleRig rig = VehicleRig.spawnLive(ctx.level(), id, data, false);
+        try {
+            VehicleShots.Ray ray = VehicleShots.ray(rig, rig.aims.get(0).point(), 90, 0);
+            if (ray.hit() == null) {
+                return;
+            }
+            Vec3 centre = inside ? rig.vehicle.getMainCubeOBB().obb().centerVec() : ray.hit().point().subtract(ray.dir().scale(3));
+            Zombie z = seat(rig.vehicle, inside ? centre.add(0.6, 0, 0) : ray.hit().point().add(ray.dir().scale(1.2)));
+            if (z == null) {
+                sink.row(id.toString(), threat, "", kg, "left", 1, "", 0.0, 0, 0, "occupant could not be seated");
+                return;
+            }
+            if (inside) {
+                VehicleBlastResolver.interior(rig.vehicle, null, payload, centre);
+            } else {
+                float size = VehicleBlastResolver.sizeForKg((float) kg);
+                VehicleBlastResolver.resolve(rig.vehicle, new net.minecraft.world.level.Explosion(rig.vehicle.level(), null,
+                        centre.x, centre.y, centre.z, size, false, net.minecraft.world.level.Explosion.BlockInteraction.KEEP),
+                        null, payload, centre);
+            }
+            double loss = z.getMaxHealth() - z.getHealth();
+            sink.row(id.toString(), threat, "", kg, "left", 1, "", loss, z.isAlive() ? 0 : 1, z.isOnFire() ? 1 : 0,
+                    loss > 0 ? (inside ? "burst inside: direct" : "reaches seated crew behind the plate") : "plate held");
             z.discard();
         } finally {
             rig.vehicle.discard();

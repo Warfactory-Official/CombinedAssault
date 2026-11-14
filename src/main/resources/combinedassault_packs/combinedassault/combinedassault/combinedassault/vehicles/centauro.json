@@ -4,6 +4,7 @@
         "brake_force": 12000,
         "forward_force": 13200,
         "backward_force": 7200,
+        "engine_power": 38,
         "max_speed_forward": 0.6,
         "max_speed_backward": 0.2,
         "turn_step": 0.2,
@@ -78,6 +79,7 @@
     "parts": [
         {
             "id": "turret",
+            "rangefinder": {"mode": "zero", "max_range": 4000},
             "name": "turret",
             "type": "combinedassault:weapon",
             "crew_roles": [

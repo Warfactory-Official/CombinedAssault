@@ -1,0 +1,171 @@
+{
+  "type": "combinedassault:fixed_wing_vehicle",
+  "attributes": {
+    "thrust": 27295,
+    "thrust_k": 1.0,
+    "ceiling": 400,
+    "x_rot_input_step": 0.2,
+    "y_rot_input_step": 0.5,
+    "z_rot_input_step": 0.2,
+    "air_drag_k_min": 5.31,
+    "air_drag_k_max": 21.26,
+    "lift_to_drag_k": 6.0,
+    "x_rot_input_drag_k": 1.0,
+    "y_rot_input_drag_k": 0.25,
+    "z_rot_input_drag_k": 0.125,
+    "turn_rate_by_speed": 0.4,
+    "x_turn_rate": 2.0,
+    "y_turn_rate": 3.0,
+    "z_turn_rate": 7.0,
+    "ground_pitch": 9.8
+  },
+  "physics_info": {
+    "mass": 3100,
+    "friction": 1550
+  },
+  "landing_gear_part_id": "landing_gear",
+  "max_health": 450,
+  "view_info": {
+    "third_person_distance": 10.0,
+    "third_person_distance_zoomed": 4
+  },
+  "energy_info": {
+    "energy_capacity": 620,
+    "energy_consumption_per_tick": 0.003875
+  },
+  "defense_stats": {
+    "damage_threshold": 10,
+    "impact_multiplier": 3
+  },
+  "parts": [
+    {
+      "id": "pilot",
+      "name": "part.flans_ww2.yak9.pilot",
+      "type": "combinedassault:weapon",
+      "crew_roles": [
+        "driver",
+        "gunner"
+      ],
+      "operator_on_weapon_unit": false,
+      "crosshair_style": "cross",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "weapons": [
+        {
+          "id": "flans_ww2:shvak_20mm",
+          "part_unit_id": "gun"
+        },
+        {
+          "id": "combinedassault:aerial_bomb",
+          "part_unit_id": "bomb",
+          "secondary": true
+        }
+      ]
+    },
+    {
+      "id": "landing_gear",
+      "name": "part.flans_ww2.yak9.landing_gear",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0.5
+    },
+    {
+      "id": "landing_gear_l",
+      "name": "part.flans_ww2.yak9.landing_gear_l",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0,
+      "on_system": "left wing"
+    },
+    {
+      "id": "landing_gear_r",
+      "name": "part.flans_ww2.yak9.landing_gear_r",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0,
+      "on_system": "right wing"
+    },
+    {
+      "id": "gun",
+      "name": "part.flans_ww2.yak9.gun",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      }
+    },
+    {
+      "id": "bomb",
+      "name": "part.flans_ww2.yak9.bomb",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "ammo_capacity": 3,
+      "parent_weapon_unit_aim": true
+    }
+  ],
+  "model": "flans_ww2:models/vehicle/yak9/yak9.glb",
+  "display": {
+    "icon": "flans_ww2:textures/slot/yak9.png",
+    "tab_index": 910,
+    "controller": "flans_ww2:yak9_controller",
+    "engine": {
+      "start": {
+        "event": "combinedassault:piston_engine_start",
+        "range": 400
+      },
+      "stop": {
+        "event": "combinedassault:piston_engine_stop",
+        "range": 400
+      },
+      "loops": [
+        {
+          "sound": {
+            "event": "combinedassault:piston_engine_run",
+            "range": 700
+          },
+          "input": "throttle",
+          "volume": [
+            [
+              0,
+              0.5
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "pitch": [
+            [
+              0,
+              0.8
+            ],
+            [
+              1,
+              1.2
+            ]
+          ],
+          "gate": [
+            [
+              0.1,
+              0
+            ],
+            [
+              0.3,
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "cabin_muffle": 0.5
+  }
+}

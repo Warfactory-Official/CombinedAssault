@@ -72,6 +72,7 @@ public class FixedWingVehicle extends AbstractVehicle
     public float airDragKMin = 2f;
     public float airDragKMax = 8f;
     public float liftToDragK = 6;
+    public float groundPitch = 0;
     public float angleOfAttackMin = -10f;
     public float angleOfAttackMax = 25f;
     public float xRotInputDragK = 1f;
@@ -101,6 +102,7 @@ public class FixedWingVehicle extends AbstractVehicle
 
     /** Arcade flight response. Fixed-wing uses only its sideslip term; the rest is its own. */
     protected final AircraftAerodynamics aerodynamics = new AircraftAerodynamics();
+    private final WingLoss wingLoss = new WingLoss();
 
     public FixedWingVehicle(EntityType<? extends AbstractVehicle> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
@@ -148,7 +150,7 @@ public class FixedWingVehicle extends AbstractVehicle
             setThrottleLevel(Mth.clamp(compound.getFloat("ThrottleLevel"), 0, 100));
         }
         if (landingGear != null) {
-            landingGear.setOn(isLandingGearUp());
+            LandingGearUnit.setAll(this, isLandingGearUp());
         }
     }
 
@@ -162,7 +164,7 @@ public class FixedWingVehicle extends AbstractVehicle
     public void readSpawnData(RegistryFriendlyByteBuf buffer) {
         super.readSpawnData(buffer);
         if (landingGear != null) {
-            landingGear.setOn(isLandingGearUp());
+            LandingGearUnit.setAll(this, isLandingGearUp());
         }
     }
 
@@ -172,7 +174,7 @@ public class FixedWingVehicle extends AbstractVehicle
             if (landingGear == null) {
                 player.displayClientMessage(Component.translatable("tips.no_landing_gear"), true);
             } else if (hasPower()) {
-                landingGear.setOn(!isLandingGearUp());
+                LandingGearUnit.setAll(this, !isLandingGearUp());
             }
         }
         if (message.toggleAirbrake) {
@@ -221,6 +223,8 @@ public class FixedWingVehicle extends AbstractVehicle
         super.tick();
         if (level().isClientSide()) {
             tickInput();
+        } else {
+            wingLoss.tick(this);
         }
     }
 
@@ -258,7 +262,8 @@ public class FixedWingVehicle extends AbstractVehicle
             return Vec3.ZERO;
         }
         Vector3f[] axes;
-        boolean onGround = groundedOrOnDeck();
+        // gear feet resting: onGround(); groundedOrOnDeck() tests the block under the origin (> 1 block up on tall gear)
+        boolean onGround = onGround() || groundedOrOnDeck();
         if (onGround) {
             axes = getMainCubeOBB().obb().getAxes();
         } else {
@@ -385,8 +390,7 @@ public class FixedWingVehicle extends AbstractVehicle
         // angle of attack
         double angelX = VectorUtil.angleBetween(airSpeed, upDirection) - Math.PI / 2;
         // air drag
-        float scaleAir = position().y < 64 ? 1 : (float) (Math.pow(Math.max(0, ceiling - position().y), 0.5) / Math.pow(ceiling - 64, 0.5));
-        scaleAir = (float) Math.max(0.001, scaleAir);
+        float scaleAir = airDensityScale();
         double liftToDragK = this.liftToDragK * scaleAir;
         double k = ((airDragKMax - airDragKMin) * Math.abs(Math.sin(angelX)) + airDragKMin);
         double al = airSpeed.length();
@@ -401,7 +405,9 @@ public class FixedWingVehicle extends AbstractVehicle
         }
         double aRaw = airSpeed.length();
         double degreeX = Math.toDegrees(angelX);
-        double fl = lift(f, degreeX, liftToDragK, scaleAir);
+        float[] wings = WingLoss.intact(hullComponents());
+        float wingLift = (wings[0] + wings[1]) / 2;
+        double fl = lift(f, degreeX, liftToDragK, scaleAir) * wingLift;
         Vec3 force = upDirection.scale(fl);
         if (fl != 0) {
             airSpeed = airSpeed.add(upDirection.scale(PhysicsHelper.accelerationPerTick(fl, mass)));
@@ -458,15 +464,20 @@ public class FixedWingVehicle extends AbstractVehicle
             double kvd = Math.min(1.5, vd);
             q.rotateY((float) (Math.PI / 72 * kvd));
         }
+        if (wings[0] != wings[1]) {
+            double horizontal = Math.sqrt(airSpeed.x * airSpeed.x + airSpeed.z * airSpeed.z);
+            q.rotateZ((float) Math.toRadians((wings[0] < wings[1] ? -1 : 1) * WING_LOSS_ROLL * horizontal));
+        }
         Vector3f rot = new Vector3f();
         q.getEulerAnglesYXZ(rot);
         if (onGround && !isLandingGearUp()) {
             // lockCenterRot => contacts never rotate the hull: look-up 10 deg sat an A-10 on its tail at 0.07 b/t,
-            // landed one parked at -10. Gear stance eases level (pre-rewrite AUTO_LEVEL_EASE), released as lift at
+            // landed one parked at -10. Gear stance eases to ground_pitch (pre-rewrite AUTO_LEVEL_EASE), released as lift at
             // the stall angle reaches weight (current lift: ease held AoA down, never flew). TODO: ease toward the ground slope.
-            double stallLift = lift(f, angleOfAttackMax - flaps(Flap.STALL_SHIFT), liftToDragK, scaleAir);
+            double stallLift = lift(f, angleOfAttackMax - flaps(Flap.STALL_SHIFT), liftToDragK, scaleAir) * wingLift;
             float keep = GEAR_LEVEL_EASE + (1 - GEAR_LEVEL_EASE) * Mth.clamp((float) (stallLift / (mass * PhysicsHelper.GRAVITY)), 0, 1);
-            rot.x *= keep;
+            float rest = (float) Math.toRadians(-groundPitch);
+            rot.x = rest + (rot.x - rest) * keep;
             rot.z *= keep;
         }
         setXRot((float) Math.toDegrees(rot.x));
@@ -477,6 +488,25 @@ public class FixedWingVehicle extends AbstractVehicle
         setYawInput(yRotInput);
         setRollInput(zRotInput);
         return force;
+    }
+
+    private float airDensityScale() {
+        float scale = position().y < 64 ? 1 : (float) (Math.pow(Math.max(0, ceiling - position().y), 0.5) / Math.pow(ceiling - 64, 0.5));
+        return Math.max(0.001f, scale);
+    }
+
+    /** Blocks/tick at which stall-angle lift == weight (current flaps, wing loss, altitude); gear stance releases at the same point. */
+    public double liftOffSpeed() {
+        float scaleAir = airDensityScale();
+        double stall = angleOfAttackMax - flaps(Flap.STALL_SHIFT);
+        float[] wings = WingLoss.intact(hullComponents());
+        double wingLift = (wings[0] + wings[1]) / 2;
+        double perF = lift(1, stall, liftToDragK * scaleAir, scaleAir) * wingLift;
+        if (perF <= 0) {
+            return Double.POSITIVE_INFINITY;
+        }
+        double k = (airDragKMax - airDragKMin) * Math.abs(Math.sin(Math.toRadians(stall))) + airDragKMin;
+        return Math.sqrt(physicsEngine.mass * PhysicsHelper.GRAVITY / (perF * k)) / PhysicsHelper.TICKS_PER_SECOND;
     }
 
     /** Lift force at angle of attack {@code degreeX}: linear to the (flap-lowered) stall angle, decaying past it. */
@@ -572,10 +602,17 @@ public class FixedWingVehicle extends AbstractVehicle
         return super.controlsNeutral() && !isEngineOn();
     }
 
-    /** Thrust vectoring: nozzle aim is part state turning over ticks, not in the snapshot. */
     @Override
     protected boolean predictable() {
-        return thrustUnit == null;
+        return true;
+    }
+
+    @Override
+    public void predictStep() {
+        super.predictStep();
+        if (thrustUnit != null) {
+            thrustUnit.predictRot();
+        }
     }
 
     @Override
@@ -586,6 +623,9 @@ public class FixedWingVehicle extends AbstractVehicle
         buf.writeFloat(getYawInput());
         buf.writeFloat(getRollInput());
         aerodynamics.writePrediction(buf);
+        if (thrustUnit != null) {
+            thrustUnit.writePrediction(buf);
+        }
     }
 
     @Override
@@ -596,6 +636,9 @@ public class FixedWingVehicle extends AbstractVehicle
         setYawInput(buf.readFloat());
         setRollInput(buf.readFloat());
         aerodynamics.readPrediction(buf);
+        if (thrustUnit != null) {
+            thrustUnit.readPrediction(buf);
+        }
     }
 
     public float getThrottleLevel() {
@@ -639,6 +682,8 @@ public class FixedWingVehicle extends AbstractVehicle
     }
 
     private static final float GEAR_LEVEL_EASE = 0.7f;
+    /** Deg/tick per b/t horizontal airspeed with one wing gone (Flan's EntityPlane). */
+    private static final float WING_LOSS_ROLL = 7;
 
     @Override
     public boolean rollsOnGear() {

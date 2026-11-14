@@ -31,6 +31,8 @@ public final class AddonArmorLayer {
     /** Instance groups; parts attach after {@link #bind} => resolved lazily on first pose. */
     @Nullable
     private VehicleCubeGroup[] groups;
+    /** Integral ERA arrays ({@code armor.plates} {@code era} layers): plate id -> bit i = brick i spent. */
+    private final Map<String, Long> spentArrays = new HashMap<>();
     private int version;
     private boolean dirty;
 
@@ -72,6 +74,39 @@ public final class AddonArmorLayer {
             }
         }
         return false;
+    }
+
+    /** Brick {@code cell} of plate {@code plateId}'s integral array still live. */
+    public boolean arrayLive(String plateId, int cell) {
+        return spentArrays.isEmpty() || (spentArrays.getOrDefault(plateId, 0L) >>> cell & 1L) == 0;
+    }
+
+    /** @return the brick was live */
+    public boolean spendArrayCell(String plateId, int cell) {
+        long spent = spentArrays.getOrDefault(plateId, 0L);
+        if ((spent >>> cell & 1L) != 0) {
+            return false;
+        }
+        spentArrays.put(plateId, spent | 1L << cell);
+        changed();
+        return true;
+    }
+
+    /** Bricks of the plate's array of {@code cells} that are still live. */
+    public int arrayLiveCells(String plateId, int cells) {
+        return cells - Long.bitCount(spentArrays.getOrDefault(plateId, 0L) & (cells == 64 ? -1L : (1L << cells) - 1));
+    }
+
+    public boolean anySpentArrays() {
+        return !spentArrays.isEmpty();
+    }
+
+    /** Every integral array whole again. */
+    public void refillArrays() {
+        if (!spentArrays.isEmpty()) {
+            spentArrays.clear();
+            changed();
+        }
     }
 
     /** kg: live ERA bricks, slat by intact bars. */
@@ -118,10 +153,23 @@ public final class AddonArmorLayer {
         }
         CompoundTag tag = new CompoundTag();
         tag.put("Mounts", list);
+        if (!spentArrays.isEmpty()) {
+            CompoundTag arrays = new CompoundTag();
+            spentArrays.forEach(arrays::putLong);
+            tag.put("Arrays", arrays);
+        }
         return tag;
     }
 
     public void load(CompoundTag tag) {
+        spentArrays.clear();
+        CompoundTag arrays = tag.getCompound("Arrays");
+        for (String plate : arrays.getAllKeys()) {
+            long spent = arrays.getLong(plate);
+            if (spent != 0) {
+                spentArrays.put(plate, spent);
+            }
+        }
         Map<String, CompoundTag> byId = new HashMap<>();
         for (Tag entry : tag.getList("Mounts", Tag.TAG_COMPOUND)) {
             CompoundTag mountTag = (CompoundTag) entry;

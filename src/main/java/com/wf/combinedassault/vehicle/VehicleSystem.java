@@ -13,6 +13,7 @@ import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
 import com.wf.combinedassault.vehicle.gametest.WreckGameTest;
 import com.wf.combinedassault.vehicle.light.IrSightMessage;
 import com.wf.combinedassault.vehicle.light.LightToggleMessage;
+import com.wf.combinedassault.vehicle.lock.VehicleLockMessage;
 import com.wf.combinedassault.vehicle.message.*;
 import com.wf.combinedassault.vehicle.part.AccessActions;
 import com.wf.combinedassault.vehicle.part.gametest.AccessGameTest;
@@ -70,13 +71,17 @@ public final class VehicleSystem implements CombinedAssaultSystem {
             registrar.playToClient(ServerVehicleChangeDisplay.TYPE, ServerVehicleChangeDisplay.STREAM_CODEC, ServerVehicleChangeDisplay::handle);
             registrar.playToServer(ClientVehicleChangeDisplay.TYPE, ClientVehicleChangeDisplay.STREAM_CODEC, ClientVehicleChangeDisplay::handle);
             registrar.playToServer(LightToggleMessage.TYPE, LightToggleMessage.STREAM_CODEC, LightToggleMessage::handle);
+            registrar.playToServer(VehicleLockMessage.TYPE, VehicleLockMessage.STREAM_CODEC, VehicleLockMessage::handle);
             registrar.playToServer(IrSightMessage.TYPE, IrSightMessage.STREAM_CODEC, IrSightMessage::handle);
         });
         RootCommand.SUBCOMMANDS.register(CombinedAssault.modLocation("summon"), 0, SummonCommand::get);
         RootCommand.SUBCOMMANDS.register(CombinedAssault.modLocation("spawn"), 0, SpawnCommand::get);
+        RootCommand.SUBCOMMANDS.register(CombinedAssault.modLocation("camaudit"), 0,
+                com.wf.combinedassault.vehicle.sightline.CamAudit::command);
         RootCommand.SUBCOMMANDS.register(CombinedAssault.modLocation("crew"), 0, CrewCommand::get);
         NeoForge.EVENT_BUS.register(VehicleEvents.class);
         AccessActions.register();
+        com.wf.combinedassault.vehicle.interact.InteractionActions.register();
         SeatPoses.register();
         SableCompat.init(modBus);
         CreateCompat.init();

@@ -80,6 +80,12 @@ public final class BallisticSolver {
                 trajectory.speedAt(ticks), range, arc);
     }
 
+    /** Zero: bore above the sight line, deg, landing a level shot at {@code range}; NaN out of reach. */
+    public static double zeroElevation(RoundSpec spec, double range) {
+        FireSolution solution = solve(spec, range, 0, FireArc.LOW);
+        return solution == null ? Double.NaN : solution.elevationDegrees();
+    }
+
     /** As {@link #solve}, with the azimuth filled in and the geometry taken off two world positions. */
     @Nullable
     public static FireSolution solve(RoundSpec spec, Vec3 muzzle, Vec3 target, FireArc arc) {

@@ -1,0 +1,24 @@
+{
+  "type": "combinedassault:cannon",
+  "name": "MG 151/20",
+  "recoil": 0.2,
+  "inaccuracy": 0.12,
+  "shoot_interval": 85,
+  "max_capacity": 200,
+  "reload": {
+    "time": 100,
+    "ammo": "wflib:cartridge_20x82"
+  },
+  "casing_delay": 0.03,
+  "sounds": {
+    "fire": {
+      "event": "combinedassault:auto_cannon_shot",
+      "range": 600,
+      "pitch_random": 0.1
+    },
+    "reload": {
+      "event": "combinedassault:gun_reload",
+      "range": 24
+    }
+  }
+}

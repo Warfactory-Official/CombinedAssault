@@ -1,0 +1,35 @@
+{
+  "name": "tornado_controller",
+  "script": "flans_modern:tornado",
+  "parameters": {},
+  "graph": {
+    "type": "merge",
+    "inputs": [
+      {
+        "type": "script",
+        "function": "updateBones"
+      },
+      {
+        "type": "bone_binding",
+        "special_bindings": [
+          {
+            "bones": [
+              "gear_0_wheel0"
+            ],
+            "source": "wheel_rotation",
+            "axis": "x",
+            "param": 0.35
+          },
+          {
+            "bones": [
+              "gear_2_wheel0"
+            ],
+            "source": "wheel_rotation",
+            "axis": "x",
+            "param": 0.35
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -85,6 +85,9 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bench') ? 'combinedassaultbench' : mod_id
             systemProperty 'combinedassault.bench.filter', project.findProperty('bench') ?: ''
             systemProperty 'combinedassault.test.filter', project.findProperty('testFilter') ?: ''
+            // -PoptionalPacks[=flans_ww2,...] => those optional_packs/* run too (OptionalPackGameTest); -PoptionalOnly=a,b vehicle paths
+            systemProperty 'combinedassault.optionalPacks', optionalPacks()
+            systemProperty 'combinedassault.optionalPacks.only', project.findProperty('optionalOnly') ?: ''
             systemProperty 'combinedassault.bench.trace', project.hasProperty('benchTrace') ? 'true' : 'false'
             systemProperty 'wflib.physics.debug', project.hasProperty('rigidDebug') ? 'true' : 'false'
             systemProperty 'wflib.physics.debugAll', project.hasProperty('rigidDebugAll') ? 'true' : 'false'
@@ -153,13 +156,14 @@ configurations {
     gemRenderRuntimeJar { transitive = false }
     localRuntime
     runtimeClasspath.extendsFrom localRuntime
-    all { resolutionStrategy.cacheChangingModulesFor(0, 'seconds') }
+    all { resolutionStrategy.cacheChangingModulesFor(0, 'seconds'); resolutionStrategy.cacheDynamicVersionsFor(0, 'seconds') }
 }
 
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     // NeoForge pins slf4j-api strictly (2.0.9); ArchUnit's 2.0.12 conflicts.
     testImplementation('com.tngtech.archunit:archunit-junit5:1.3.0') { exclude group: 'org.slf4j' }
+    testImplementation("com.wf.gemrender:gemrender-1.21.1:[${gemrender_version}-SNAPSHOT,1)") { transitive = false }
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     // JS支持
     jarJar(implementation('org.ywzj:rhino:1.8.1')) {
@@ -212,8 +216,8 @@ dependencies {
     implementation "dev.kosmx.player-anim:player-animation-lib-forge:${project.playeranimator_version}"
 
     // GemRender (+ Flywheel): required on the client, absent on a server run => compileOnly; runtime via installClientMods.
-    compileOnly "com.wf.gemrender:gemrender-1.21.1:${gemrender_version}-SNAPSHOT"
-    gemRenderRuntimeJar "com.wf.gemrender:gemrender-1.21.1:${gemrender_version}-SNAPSHOT"
+    compileOnly "com.wf.gemrender:gemrender-1.21.1:[${gemrender_version}-SNAPSHOT,1)"
+    gemRenderRuntimeJar "com.wf.gemrender:gemrender-1.21.1:[${gemrender_version}-SNAPSHOT,1)"
     compileOnly "dev.engine-room.flywheel:flywheel-neoforge-1.21.1:1.0.6"
 
     // Immersive Railroading, so a vehicle can be strapped to a flatcar. compileOnly only:
@@ -272,13 +276,28 @@ neoForge.ideSyncTask(installClientMods)
     tasks.named(name).configure { dependsOn installClientMods }
 }
 
+// optional_packs/<id> names; -PoptionalPacks alone = all.
+def optionalPacks() {
+    if (!project.hasProperty('optionalPacks')) return ''
+    String v = project.findProperty('optionalPacks')
+    if (v && v != 'true') return v
+    return (project.file('optional_packs').listFiles()?.findAll { it.isDirectory() }*.name ?: []).sort().join(',')
+}
+
 // Bench packs (tools/internal/bench_pack.py) only under -Pbench: the suite must see the shipped packs alone.
 tasks.named('runGameTestServer').configure {
     doFirst {
         File bench = project.file('run/gametest/combinedassault/packs/bench')
         project.delete(bench)
+        File packs = project.file('run/gametest/combinedassault/packs')
+        project.file('optional_packs').listFiles()?.each { project.delete(new File(packs, it.name)) }
+        optionalPacks().tokenize(',').each { id ->
+            project.copy { from "optional_packs/${id}"; into new File(packs, id) }
+        }
         if (project.hasProperty('bench')) {
-            project.exec { commandLine 'python3', 'tools/internal/bench_pack.py', bench.path }
+            def bench_pack = new ProcessBuilder('python3', 'tools/internal/bench_pack.py', bench.path)
+                    .directory(project.projectDir).inheritIO().start()
+            if (bench_pack.waitFor() != 0) throw new GradleException('bench_pack.py failed')
         }
     }
 }

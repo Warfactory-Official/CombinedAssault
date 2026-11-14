@@ -17,7 +17,7 @@ public class FixedWingVehicleContext extends VehicleContext<FixedWingVehicle> {
         super.tick();
         float full = 100f * Math.max(1f, entity.thrustK);
         controls.update(getPitchInput(), getRollInput(), -getYawInput(), Math.min(getThrottleLevel(), full) / full, 0f,
-                (currentTimeMillis() - lastRenderTime()) / 1000f);
+                frameSeconds());
     }
 
     @Override

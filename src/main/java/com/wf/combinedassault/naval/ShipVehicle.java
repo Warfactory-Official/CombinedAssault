@@ -12,6 +12,7 @@ import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.pojo.AimContext;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -287,6 +288,69 @@ public class ShipVehicle extends AbstractVehicle
             tickSubmarine();
         }
         return Vec3.ZERO;
+    }
+
+    @Override
+    protected boolean predictable() {
+        return true;
+    }
+
+    @Override
+    protected void writePrediction(FriendlyByteBuf buf) {
+        super.writePrediction(buf);
+        buf.writeDouble(model.throttle);
+        buf.writeDouble(model.rudder);
+        buf.writeBoolean(model.rudderHeld);
+        buf.writeDouble(model.yawRate);
+        buf.writeDouble(model.depthSetting);
+        buf.writeDouble(model.surge);
+        buf.writeDouble(model.sway);
+        buf.writeDouble(model.depth);
+        buf.writeBoolean(model.shallow);
+        buf.writeBoolean(model.submerged);
+        buf.writeBoolean(model.turnBlocked);
+        buf.writeDouble(model.writtenVx());
+        buf.writeDouble(model.writtenVz());
+        buf.writeDouble(intendedSpeed);
+        buf.writeDouble(realisedSpeed);
+        buf.writeDouble(lastX);
+        buf.writeDouble(lastZ);
+        buf.writeInt(blockedTicks);
+        buf.writeBoolean(blocked);
+        buf.writeDouble(pinnedThrottle);
+        buf.writeInt(groundedTicks);
+    }
+
+    @Override
+    protected void readPrediction(FriendlyByteBuf buf) {
+        super.readPrediction(buf);
+        model.throttle = buf.readDouble();
+        model.rudder = buf.readDouble();
+        model.rudderHeld = buf.readBoolean();
+        model.yawRate = buf.readDouble();
+        model.depthSetting = buf.readDouble();
+        model.surge = buf.readDouble();
+        model.sway = buf.readDouble();
+        model.depth = buf.readDouble();
+        model.shallow = buf.readBoolean();
+        model.submerged = buf.readBoolean();
+        model.turnBlocked = buf.readBoolean();
+        model.setWritten(buf.readDouble(), buf.readDouble());
+        intendedSpeed = buf.readDouble();
+        realisedSpeed = buf.readDouble();
+        lastX = buf.readDouble();
+        lastZ = buf.readDouble();
+        blockedTicks = buf.readInt();
+        blocked = buf.readBoolean();
+        pinnedThrottle = buf.readDouble();
+        groundedTicks = buf.readInt();
+        entityData.set(THROTTLE, (float) model.throttle);
+        entityData.set(RUDDER, (float) model.rudder);
+        entityData.set(SURGE, blocked ? 0f : (float) model.surge);
+        entityData.set(DEPTH, (float) model.depth);
+        entityData.set(DEPTH_SETTING, (float) model.depthSetting);
+        entityData.set(SHALLOW, model.shallow);
+        entityData.set(AGROUND, groundedTicks >= 20);
     }
 
     /** Throttle and rudder persist after the keys lift; a held order is live input. */

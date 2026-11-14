@@ -35,6 +35,10 @@ public class VehicleWeaponTypes {
         );
 
         register(
+                "spray_pod", json -> GsonUtil.GSON.fromJson(json, VehicleSprayPodWeaponData.class), VehicleSprayPod::new
+        );
+
+        register(
                 "decoy_flare", json -> GsonUtil.GSON.fromJson(json, BaseVehicleWeaponData.class), VehicleDecoyFlare::new
         );
     }

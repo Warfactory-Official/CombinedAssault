@@ -27,12 +27,14 @@ public final class VehicleProducer implements LabProducer {
             .dimStr("vehicle").dimStr("launcher").dimStr("round").dimNum("range_m", "m")
             .dimNum("azimuth_deg", "deg").dimNum("elevation_deg", "deg").dimStr("aim")
             .measureStr("verdict").measureStr("struck_node").measureStr("struck_part").measureStr("face")
-            .measureStr("zone").measure("plate", "").measure("nominal_mm", "mm_rha").measure("los_mm", "mm_rha")
+            .measureStr("zone").measure("plate", "").measureStr("plate_id").measure("nominal_mm", "mm_rha").measure("los_mm", "mm_rha")
             .measure("pen_mm", "mm_rha").measure("ratio", "").measure("incidence_deg", "deg")
             .measure("surface_incidence_deg", "deg").measure("damage_in", "").measure("hull_damage", "")
             .measure("part_damage", "").measureStr("part_damaged").measureStr("stock")
             .measure("hit_x_m", "m").measure("hit_y_m", "m").measure("hit_z_m", "m")
             .measure("aim_offset_m", "m")
+            .measure("walk_layers", "").measure("walk_defeated", "").measure("interior_pen_mm", "mm_rha")
+            .measure("residual_pen_mm", "mm_rha").measure("exits", "")
             .build();
 
     private static final int BATCH = 96;
@@ -220,9 +222,10 @@ public final class VehicleProducer implements LabProducer {
                 }
                 VehicleShots.Result s = VehicleShots.shoot(ctx.level(), rig, ray, arrival.velocity(), arrival.threat(), arrival.damage());
                 rows.add(new Object[]{vehicle, launch.launcher().id(), launch.preset().id().toString(), ranges[r], cell[1], cell[2],
-                        aim.name(), s.verdict(), s.node(), s.struckPart(), s.face(), s.zone(), s.plate() ? 1 : 0,
+                        aim.name(), s.verdict(), s.node(), s.struckPart(), s.face(), s.zone(), s.plate().isEmpty() ? 0 : 1, s.plate(),
                         s.nominal(), s.los(), s.pen(), s.ratio(), s.incidence(), s.surfaceIncidence(), arrival.damage(),
-                        s.hullDamage(), s.partDamage(), s.partDamaged(), s.stock(), s.local().x, s.local().y, s.local().z, ray.offset()});
+                        s.hullDamage(), s.partDamage(), s.partDamaged(), s.stock(), s.local().x, s.local().y, s.local().z, ray.offset(),
+                        s.walkLayers(), s.walkDefeated(), s.interiorPen(), s.residualPen(), s.exits()});
             }
         }
         return rows;

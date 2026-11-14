@@ -17,6 +17,7 @@ import com.wf.combinedassault.render.model.BoneIndexProvider;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import org.mozillaa.javascript.*;
 
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -28,14 +29,26 @@ public class VehicleDisplay<E extends AbstractVehicle, CTX extends VehicleContex
     protected Scriptable scriptScope;
     protected Map<String, Function> scriptFunctions = new HashMap<>();
     protected VehicleDisplay<E, CTX> cabinDisplay;
+    @Nullable
+    private final TrackConfig trackConfig;
 
     public VehicleDisplay(VehicleDisplayPojo pojo) {
         super(pojo);
+        if (pojo.trackConfig != null && (pojo.trackConfig.model == null || pojo.trackConfig.moduleLength <= 0)) {
+            throw new IllegalArgumentException("track_config needs a model and module_length > 0");
+        }
+        this.trackConfig = pojo.trackConfig;
         if (pojo.cabinModel != null) {
             pojo.model = pojo.cabinModel;
             pojo.cabinModel = null;
             cabinDisplay = new VehicleDisplay<>(pojo);
         }
+    }
+
+    /** {@code track} parts' link model; null => tracks not drawn. */
+    @Nullable
+    public TrackConfig getTrackConfig() {
+        return trackConfig;
     }
 
     public void initializeAnimationController(ScriptManager scriptManager, ScriptContextFactory scriptContextFactory) {

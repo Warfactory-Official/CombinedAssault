@@ -1,0 +1,211 @@
+{
+  "type": "combinedassault:tracked_vehicle",
+  "attributes": {
+    "brake_acceleration": 0.025,
+    "forward_acceleration": 0.008,
+    "backward_acceleration": 0.008,
+    "max_speed_forward": 0.667,
+    "max_speed_backward": 0.267,
+    "turn_acceleration": 1,
+    "max_turn": 2,
+    "engine_power": 68.1
+  },
+  "physics_info": {
+    "mass": 4000,
+    "friction": 1611,
+    "suspension_response": 4,
+    "can_destroy_block": false,
+    "center": [
+      0.0,
+      0.135,
+      -0.117
+    ]
+  },
+  "max_health": 500,
+  "armor": {
+    "bottom": 6,
+    "front": 10,
+    "rear": 7,
+    "side": 7,
+    "top": 0
+  },
+  "view_info": {
+    "third_person_distance": 7.5
+  },
+  "energy_info": {
+    "energy_capacity": 110,
+    "energy_consumption_per_tick": 0.004
+  },
+  "storage": {
+    "slots": 10
+  },
+  "parts": [
+    {
+      "id": "suspension_left",
+      "name": "part.flans_ww2.uc2pdr.suspension_left",
+      "type": "combinedassault:track",
+      "is_seat": false,
+      "spring_stiffness": 80000,
+      "damping": 7600,
+      "rest_length": 0.4,
+      "max_compression": 0.4,
+      "max_extension": 0.1,
+      "max_droop": 0.12,
+      "track_width": 0.2
+    },
+    {
+      "id": "suspension_right",
+      "name": "part.flans_ww2.uc2pdr.suspension_right",
+      "type": "combinedassault:track",
+      "is_seat": false,
+      "spring_stiffness": 80000,
+      "damping": 7600,
+      "rest_length": 0.4,
+      "max_compression": 0.4,
+      "max_extension": 0.1,
+      "max_droop": 0.12,
+      "track_width": 0.2
+    },
+    {
+      "id": "driver",
+      "name": "part.combinedassault.driver",
+      "type": "combinedassault:generic",
+      "protect_passenger": false,
+      "crew_roles": [
+        "driver"
+      ]
+    },
+    {
+      "id": "seat_1",
+      "name": "part.flans_ww2.seat_1",
+      "type": "combinedassault:weapon",
+      "protect_passenger": false,
+      "crosshair_style": "cross",
+      "crew_roles": [
+        "gunner"
+      ],
+      "handling": "manual",
+      "max_health": 120,
+      "render_bone": "seat_1_gun",
+      "rot_info": {
+        "x_rot_speed": 4,
+        "y_rot_speed": 4,
+        "need_power": false,
+        "y_rot_min": -10.0,
+        "y_rot_max": 10.0
+      },
+      "hardpoint": {
+        "node": "seat_1_gun_pitch",
+        "accepts": [
+          "pintle"
+        ],
+        "fitted": "flans_ww2:bren"
+      },
+      "operator_on_weapon_unit": false,
+      "pose": "stand"
+    },
+    {
+      "id": "seat_2",
+      "name": "part.flans_ww2.seat_2",
+      "type": "combinedassault:weapon",
+      "protect_passenger": false,
+      "crosshair_style": "cross",
+      "rot_info": {
+        "x_rot_speed": 4,
+        "y_rot_speed": 4,
+        "y_rot_min": -35.0,
+        "y_rot_max": 35.0
+      },
+      "weapons": [
+        "flans_ww2:qf_2pdr"
+      ],
+      "operator_on_weapon_unit": true
+    }
+  ],
+  "model": "flans_ww2:models/vehicle/uc2pdr/uc2pdr.glb",
+  "display": {
+    "tab_index": 900,
+    "icon": "flans_ww2:textures/slot/uc2pdr.png",
+    "engine": {
+      "start": {
+        "event": "combinedassault:lav150_engine_start",
+        "range": 96
+      },
+      "loops": [
+        {
+          "sound": {
+            "event": "combinedassault:truck_engine_idle",
+            "range": 96
+          },
+          "input": "rpm",
+          "volume": [
+            [
+              0.05,
+              0
+            ],
+            [
+              0.3,
+              1
+            ],
+            [
+              0.6,
+              1
+            ],
+            [
+              0.75,
+              0
+            ]
+          ],
+          "pitch": [
+            [
+              0.3,
+              0.85
+            ],
+            [
+              0.6,
+              1
+            ]
+          ]
+        },
+        {
+          "sound": {
+            "event": "combinedassault:track_run",
+            "range": 96
+          },
+          "input": "speed",
+          "volume": [
+            [
+              0.01,
+              0
+            ],
+            [
+              0.1,
+              0.6
+            ],
+            [
+              0.6,
+              1
+            ]
+          ],
+          "pitch": [
+            [
+              0,
+              0.8
+            ],
+            [
+              1,
+              1.1
+            ]
+          ]
+        }
+      ]
+    },
+    "cabin_muffle": 0.8,
+    "controller": "flans_ww2:uc2pdr_controller",
+    "track": {
+      "model": "flans_ww2:models/effect/uc2pdr_track_link.glb",
+      "module_length": 0.15
+    },
+    "description": "British Armored Vehicle"
+  }
+}

@@ -8,4 +8,7 @@ public class VehicleDisplayPojo extends BaseDisplayPojo {
     /** glTF drawn instead of {@code model} from the operator seat. */
     @SerializedName("cabin_model")
     public ResourceLocation cabinModel;
+
+    @SerializedName("track_config")
+    public TrackConfig trackConfig;
 }

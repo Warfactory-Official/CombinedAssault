@@ -18,6 +18,8 @@ public class PartUnitData {
     protected float maxHealth;
     protected DefenseStats defenseStats = new DefenseStats();
     protected String component;
+    @Nullable
+    protected String onSystem;
     protected String renderBone;
     protected boolean detachable;
     protected boolean isSeat;
@@ -40,6 +42,7 @@ public class PartUnitData {
     protected String rideFrame;
     @Nullable
     protected String entryVia;
+    protected List<String> viewHide;
     @Nullable
     protected VehicleCubeGroup rideGroup;
     protected Vec3 pivotOffset = Vec3.ZERO;
@@ -60,6 +63,7 @@ public class PartUnitData {
         this.maxHealth = pojo.maxHealth;
         this.defenseStats = pojo.defenseStats;
         this.component = pojo.component;
+        this.onSystem = pojo.onSystem;
         this.renderBone = pojo.renderBone;
         this.detachable = pojo.detachable;
         this.isSeat = pojo.isSeat;
@@ -81,6 +85,7 @@ public class PartUnitData {
         this.turnOut = pojo.turnOut;
         this.rideFrame = pojo.rideFrame;
         this.entryVia = pojo.entryVia;
+        this.viewHide = List.copyOf(pojo.viewHide);
         this.displayId = pojo.displayId;
         this.displayOffset = pojo.displayOffset;
         this.mounts = pojo.mounts;
@@ -135,6 +140,12 @@ public class PartUnitData {
     /** Which vehicle system this part is, or null to let the part type speak for itself. */
     public String getComponent() {
         return component;
+    }
+
+    /** Hull pool id this part rides ({@code left wing}); pool at 0 => part BROKEN. Null = none. */
+    @Nullable
+    public String getOnSystem() {
+        return onSystem;
     }
 
 
@@ -208,6 +219,10 @@ public class PartUnitData {
     @Nullable
     public String getEntryVia() {
         return entryVia;
+    }
+
+    public List<String> getViewHide() {
+        return viewHide;
     }
 
     @Nullable

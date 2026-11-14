@@ -11,6 +11,8 @@ public class WheeledVehicleData extends BaseVehicleData<WheeledVehicle> {
     public float brakeForce;
     public float forwardForce;
     public float backwardForce;
+    /** W. */
+    public float enginePower;
     public float maxSpeedForward;
     public float maxSpeedBackward;
     public float steerFadeSpeed;
@@ -29,6 +31,7 @@ public class WheeledVehicleData extends BaseVehicleData<WheeledVehicle> {
         this.brakeForce = pojo.attributes.brakeForce;
         this.forwardForce = pojo.attributes.forwardForce;
         this.backwardForce = pojo.attributes.backwardForce;
+        this.enginePower = pojo.attributes.enginePower * 1000;
         this.maxSpeedForward = pojo.attributes.maxSpeedForward;
         this.maxSpeedBackward = pojo.attributes.maxSpeedBackward;
         this.steerFadeSpeed = Float.isNaN(pojo.attributes.steerFadeSpeed) ? maxSpeedForward : pojo.attributes.steerFadeSpeed;
@@ -45,6 +48,7 @@ public class WheeledVehicleData extends BaseVehicleData<WheeledVehicle> {
         vehicle.brakeForce = this.brakeForce;
         vehicle.forwardForce = this.forwardForce;
         vehicle.backwardForce = this.backwardForce;
+        vehicle.enginePower = this.enginePower;
         vehicle.maxSpeedForward = this.maxSpeedForward;
         vehicle.maxSpeedBackward = this.maxSpeedBackward;
         vehicle.steerFadeSpeed = this.steerFadeSpeed;

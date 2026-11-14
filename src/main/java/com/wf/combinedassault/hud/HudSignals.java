@@ -1,5 +1,6 @@
 package com.wf.combinedassault.hud;
 
+import com.wf.combinedassault.radar.client.RadarExpanded;
 import com.wf.combinedassault.aircraft.RotaryWingVehicle;
 import com.wf.combinedassault.naval.ShipVehicle;
 import com.wf.combinedassault.radar.WarningReceiver;
@@ -133,11 +134,16 @@ public final class HudSignals {
         Signals.bool(LOCAL, "third_person", l -> l.viewType == LocalVehiclePlayer.ViewType.THIRD_PERSON);
         Signals.bool(LOCAL, "operator", l -> l.viewType == LocalVehiclePlayer.ViewType.OPERATOR);
         Signals.bool(LOCAL, "scope", LocalVehiclePlayer::sighted);
+        Signals.bool(LOCAL, "radar_full", l -> l.vehicle != null && RadarExpanded.shown(l.vehicle));
         Signals.bool(LOCAL, "turn_out", l -> l.vehicle != null && l.seat != null && l.vehicle.turnPartner(l.seat) != null);
         Signals.bool(LOCAL, "periscope_seat", LocalVehiclePlayer::periscopeSeat);
         Signals.bool(LOCAL, "sight_screen_seat", LocalVehiclePlayer::sightScreenSeat);
         Signals.bool(LOCAL, "driver", l -> l.vehicle != null && l.getPlayer() != null
                 && l.getPlayer().equals(l.vehicle.getDriver()));
+        Signals.bool(LOCAL, "wheel_driver", l -> l.vehicle instanceof WheeledVehicle && l.getPlayer() != null
+                && l.getPlayer().equals(l.vehicle.getDriver()));
+        Signals.num(LOCAL, "wheel", l -> l.wheelShown(partialTick()));
+        Signals.num(LOCAL, "wheel_alpha", l -> Mth.lerp(partialTick(), l.wheelFadeO, l.wheelFade));
         Signals.num(LOCAL, "g", l -> l.currentG);
         Signals.bool(LOCAL, "lost_control", l -> l.lostControl);
         Signals.bool(LOCAL, "overload", l -> l.endureTick > 5 && (l.currentG >= 2 || l.currentG <= -1));
@@ -215,6 +221,7 @@ public final class HudSignals {
         });
         Signals.num(FIXED, "throttle", f -> f.getThrottleLevel());
         Signals.bool(FIXED, "brake", f -> (int) f.getThrottleLevel() == 0 && f.controlUnit.backward && f.onGround());
+        Signals.bool(FIXED, "can_lift_off", f -> f.getDeltaMovement().length() >= f.liftOffSpeed());
         Signals.bool(FIXED, "gear_up", com.wf.combinedassault.aircraft.FixedWingVehicle::isLandingGearUp);
         Signals.bool(FIXED, "airbrake", com.wf.combinedassault.aircraft.FixedWingVehicle::isAirbrakeOn);
         Signals.num(FIXED, "flaps", f -> f.flapUnits.isEmpty() ? Double.NaN : f.flapUnits.get(0).level(partialTick()));

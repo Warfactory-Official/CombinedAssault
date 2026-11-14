@@ -41,8 +41,7 @@ public final class AimPoint {
                 || local.sightUnit() == null) {
             return;
         }
-        Vec3 screen = VectorUtil.worldToScreen(local.viewType == LocalVehiclePlayer.ViewType.SCOPE
-                ? local.scopeAimPos() : local.freeAimPos());
+        Vec3 screen = VectorUtil.worldToScreen(local.viewAimPos());
         if (screen.z >= 0) {
             xO = x;
             yO = y;

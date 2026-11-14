@@ -6,8 +6,10 @@ import com.wf.combinedassault.ballistics.component.ComponentDamage;
 import com.wf.combinedassault.ballistics.component.ComponentState;
 import com.wf.combinedassault.ballistics.message.ServerVehicleWarn;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
+import com.wf.combinedassault.indirect.BallisticSolver;
 import com.wf.combinedassault.indirect.GunLaying;
 import com.wf.combinedassault.indirect.IndirectFire;
+import com.wf.combinedassault.indirect.RoundSpec;
 import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.pack.sync.SyncDataHolder;
 import com.wf.combinedassault.pack.sync.SyncDataSerializers;
@@ -123,6 +125,8 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     public final List<AbstractVehicleWeapon<?>> independentWeapons = new ArrayList<>();
     public final List<AbstractVehicleWeapon<?>> indexedWeapons = new ArrayList<>();
     public final Map<AbstractVehicleWeapon<?>, WeaponBayUnit> weaponBayUnits = new HashMap<>();
+    private final Map<AbstractVehicleWeapon<?>, String> salvoGroups = new HashMap<>();
+    private final Map<AbstractVehicleWeapon<?>, List<AbstractVehicleWeapon<?>>> salvos = new HashMap<>();
     private int currentWeaponIndex = -1;
     public SyncDataHolder<Integer> currentWeaponIndexHolder;
     private int currentSecondaryWeaponIndex = -1;
@@ -134,6 +138,15 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     @OnlyIn(Dist.CLIENT)
     private CueLoop irTrackAlarm;
     private final GunLaying indirectFire = new GunLaying();
+    /** Blocks; 0 = boresight. Root's governs its sub units. */
+    public static final int ZERO_STEP = 100;
+    private static final long RANGE_SHOW_NANOS = 5_000_000_000L;
+    // TODO: zero client-local, unsynced => other clients' sight feeds show the bore line.
+    private int zeroRange;
+    private float zeroElevation;
+    private int zeroSolved = -1;
+    @Nullable
+    private RoundSpec zeroSpec;
     @Nullable
     private final AirDefense airDefense;
     /** Hardpoint-free station data; {@link #data} = its variant for the fitted kit. */
@@ -298,11 +311,32 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         int at = secondary ? currentSecondaryWeaponIndex : currentWeaponIndex;
         for (int step = 1; step < size; step++) {
             int index = Math.floorMod(at + (next ? step : -step), size);
+            AbstractVehicleWeapon<?> candidate = (secondary ? secondaryWeapons : weapons).get(index);
+            if (salvo(candidate).getFirst() != candidate) {
+                continue;
+            }
             if (secondary || !isHardpoint() || kit() != null && kit().equals(weaponKits.get(weapons.get(index)))) {
                 selectWeaponIndex(secondary, index, modding);
                 return;
             }
         }
+    }
+
+    /** One trigger pull with {@code weapon} current: its {@code salvo} group on the same trigger, else itself. */
+    public List<AbstractVehicleWeapon<?>> salvo(AbstractVehicleWeapon<?> weapon) {
+        return salvos.computeIfAbsent(weapon, w -> {
+            String group = salvoGroups.get(w);
+            if (group == null) {
+                return List.of(w);
+            }
+            List<AbstractVehicleWeapon<?>> members = new ArrayList<>();
+            for (AbstractVehicleWeapon<?> other : secondaryWeapons.contains(w) ? secondaryWeapons : weapons) {
+                if (group.equals(salvoGroups.get(other))) {
+                    members.add(other);
+                }
+            }
+            return List.copyOf(members);
+        });
     }
 
     public void selectWeaponIndex(boolean secondary, int index, boolean modding) {
@@ -365,6 +399,9 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
                     if (weaponInfo.fullSalvo) {
                         fullSalvoWeapons.add(weaponAgent);
                     }
+                    if (weaponInfo.salvo != null) {
+                        salvoGroups.put(weaponAgent, weaponInfo.salvo);
+                    }
                     indexedWeapons.add(weaponAgent);
                     if (weaponInfo.weaponBayUnitId != null
                             && partUnitsView.get(weaponInfo.weaponBayUnitId) instanceof WeaponBayUnit weaponBayUnit) {
@@ -402,6 +439,9 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
                     }
                     if (weaponInfo.fullSalvo) {
                         fullSalvoWeapons.add(weapon);
+                    }
+                    if (weaponInfo.salvo != null) {
+                        salvoGroups.put(weapon, weaponInfo.salvo);
                     }
                     indexedWeapons.add(weapon);
                     if (weaponInfo.weaponBayUnitId != null
@@ -757,8 +797,7 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     @Nullable
     private Vec3 sightAimPos() {
         return switch (LocalVehiclePlayer.instance().viewType) {
-            case THIRD_PERSON, OPERATOR -> LocalVehiclePlayer.instance().freeAimPos();
-            case SCOPE -> LocalVehiclePlayer.instance().scopeAimPos();
+            case THIRD_PERSON, OPERATOR, SCOPE -> LocalVehiclePlayer.instance().viewAimPos();
             default -> null;
         };
     }
@@ -897,25 +936,113 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     private void aimAt(Vec3 worldPos) {
         if (rotByAim) {
             Vec2 rot = aimRot(worldPos);
-            rot = new Vec2(rot.x - xBarrelSelfRot, rot.y - yBarrelSelfRot);
+            rot = new Vec2(rot.x - xBarrelSelfRot - zeroElevation, rot.y - yBarrelSelfRot);
             if (xAimRot != rot.x || yAimRot != rot.y) {
                 xAimRot = rot.x;
                 yAimRot = rot.y;
                 updateWorldAimVec();
-                if (vehicle.level().isClientSide()) {
-                    ClientVehicleAction control = new ClientVehicleAction();
-                    control.vehicleEntityId = vehicle.getId();
-                  control.partUnitIndex = index;
-                  control.xAimRot = rot.x;
-                  control.yAimRot = rot.y;
-                  PacketDistributor.sendToServer(control);
-              }
-              xAimRot = rot.x;
-              yAimRot = rot.y;
-              updateWorldAimVec();
+                sendAim();
             }
         }
         subWeaponUnits.forEach(weaponUnit -> weaponUnit.aimAt(worldPos));
+    }
+
+    private void sendAim() {
+        if (vehicle.level().isClientSide()) {
+            ClientVehicleAction control = new ClientVehicleAction();
+            control.vehicleEntityId = vehicle.getId();
+            control.partUnitIndex = index;
+            control.xAimRot = xAimRot;
+            control.yAimRot = yAimRot;
+            PacketDistributor.sendToServer(control);
+        }
+    }
+
+    public int zeroRange() {
+        return getRootParentWeaponUnit().zeroRange;
+    }
+
+    /** Bore above the sight line, deg; client, kept by {@link #tickZero}. Sight = barrel + this (xRot). */
+    public float zeroElevation() {
+        return zeroElevation;
+    }
+
+    /**
+     * Root zero to the next {@link #ZERO_STEP} multiple up / down (a laser zero off the grid snaps back onto it);
+     * false => below boresight, or a round can't reach it in the mount's elevation.
+     */
+    public boolean stepZero(int steps) {
+        int current = getRootParentWeaponUnit().zeroRange;
+        int base = Math.floorDiv(current, ZERO_STEP);
+        int range = (steps > 0 ? base + steps : current % ZERO_STEP == 0 ? base + steps : base + steps + 1) * ZERO_STEP;
+        return setZero(range);
+    }
+
+    /** Root zero := {@code range} m; false => below boresight, or a round can't reach it in the mount's elevation. */
+    public boolean setZero(int range) {
+        WeaponUnit root = getRootParentWeaponUnit();
+        if (range < 0) {
+            return false;
+        }
+        if (range > 0) {
+            List<WeaponUnit> units = new ArrayList<>(root.subWeaponUnits);
+            units.add(root);
+            for (WeaponUnit unit : units) {
+                RoundSpec spec = IndirectFire.specOf(unit);
+                if (spec != null && !(BallisticSolver.zeroElevation(spec, range) <= unit.maxZeroElevation())) {
+                    return false;
+                }
+            }
+        }
+        root.zeroRange = range;
+        return true;
+    }
+
+    @Nullable
+    public WeaponUnitData.Rangefinder rangefinder() {
+        return data.getRangefinder();
+    }
+
+    /** Client: last laser reading, m; 0 = no return. Valid while {@link #rangeReadingLive}. */
+    public float rangeReading;
+    private long rangeReadAt;
+
+    public void setRangeReading(float metres) {
+        rangeReading = metres;
+        rangeReadAt = System.nanoTime();
+    }
+
+    public boolean rangeReadingLive() {
+        return rangeReadAt != 0 && System.nanoTime() - rangeReadAt < RANGE_SHOW_NANOS;
+    }
+
+    /** Highest bore elevation over a level sight line the pitch stops allow. */
+    private float maxZeroElevation() {
+        return -(xRotMin - xSelfRot + xBarrelSelfRot);
+    }
+
+    /** Client, operated unit: re-solve on zero / round / laying change; barrel aim shifted by the change => sight holds its point. */
+    public void tickZero() {
+        RoundSpec spec = IndirectFire.specOf(this);
+        int range = indirectFire.isIndirect() || spec == null ? 0 : zeroRange();
+        if (range == zeroSolved && Objects.equals(spec, zeroSpec)) {
+            return;
+        }
+        zeroSolved = range;
+        zeroSpec = spec;
+        float elevation = 0;
+        if (range > 0) {
+            double solved = BallisticSolver.zeroElevation(spec, range);
+            // round swapped to one that falls short => its furthest throw
+            elevation = (float) Math.min(Double.isNaN(solved) ? BallisticSolver.bestElevation(spec) : solved, maxZeroElevation());
+        }
+        float change = elevation - zeroElevation;
+        zeroElevation = elevation;
+        if (change != 0 && rotByAim) {
+            xAimRot = Mth.clamp(xAimRot - change, xRotMin - xSelfRot, xRotMax - xSelfRot);
+            updateWorldAimVec();
+            sendAim();
+        }
     }
 
     /**
@@ -994,7 +1121,7 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         double z = positions.stream().mapToDouble(pos -> pos.z).average().orElse(0);
         AimContext aimContext = aimContext(getCurrentBolt(), globalTransform);
         Vec3 start = new Vec3(x, y, z);
-        Vec3 end = start.add(VectorUtil.rotToVec(aimContext.direction.x, aimContext.direction.y).normalize().scale(1024));
+        Vec3 end = start.add(VectorUtil.rotToVec(aimContext.direction.x + zeroElevation, aimContext.direction.y).normalize().scale(1024));
         return VectorUtil.hitPosition(vehicle, start, end);
     }
 
@@ -1005,7 +1132,7 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         double z = positions.stream().mapToDouble(pos -> pos.z).average().orElse(0);
         AimContext aimContext = aimContext();
         Vec3 start = new Vec3(x, y, z);
-        Vec3 end = start.add(VectorUtil.rotToVec(aimContext.direction.x, aimContext.direction.y).normalize().scale(1024));
+        Vec3 end = start.add(VectorUtil.rotToVec(aimContext.direction.x + zeroElevation, aimContext.direction.y).normalize().scale(1024));
         return VectorUtil.hitPosition(vehicle, start, end);
     }
 
@@ -1087,6 +1214,12 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     }
 
     @Override
+    @Nullable
+    protected VehicleCubeGroup seatFrame() {
+        return operatorOnWeaponUnit || structureGroup == null ? structureGroup : structureGroup.parent;
+    }
+
+    @Override
     public Vec3 worldSeatPosition() {
         float eyeHeight = getOwner() == null ? 2 : owner.getEyeHeight();
         if (!operatorOnWeaponUnit) {
@@ -1097,12 +1230,18 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
 
     @Override
     public Vec3 worldOwnerViewPosition(float partialTick) {
+        boolean scope = operatorViewOffset != null && !operatorOnWeaponUnit
+                && LocalVehiclePlayer.instance().viewType == LocalVehiclePlayer.ViewType.SCOPE;
+        return ownerViewPosition(scope, owner == null ? 2 : owner.getEyeHeight(), partialTick);
+    }
+
+    /** {@link #worldOwnerViewPosition} without client state: {@code scope} = SCOPE view. */
+    public Vec3 ownerViewPosition(boolean scope, float eyeHeight, float partialTick) {
         if (operatorViewOffset == null) {
-            float eyeHeight = owner == null ? 2 : owner.getEyeHeight();
             return worldPosition(pivotOffset.add(new Vec3(0, eyeHeight, 0)), partialTick);
         }
         Vec3 offsetFromVehicle = pivotOffset.add(operatorViewOffset);
-        if (!operatorOnWeaponUnit && LocalVehiclePlayer.instance().viewType != LocalVehiclePlayer.ViewType.SCOPE) {
+        if (!operatorOnWeaponUnit && !scope) {
             return worldPositionWithBaseRot(offsetFromVehicle, partialTick);
         }
         if (getOpticalSightType() == WeaponUnitData.OpticalSightType.OPERATOR && xTurnGroup != null) {
@@ -1121,6 +1260,22 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     @Nullable
     public Vec3 getOpticalSightOffset() {
         return opticalSightOffset;
+    }
+
+    /** SCOPE camera ({@code LocalVehiclePlayer.cameraPosition}) at full ADS, without client state. */
+    public Vec3 scopeEye(float eyeHeight) {
+        if (adsCapable()) {
+            return worldSightEye(1.0F);
+        }
+        return getOpticalSightType() != WeaponUnitData.OpticalSightType.OPERATOR && opticalSightOffset != null
+                ? worldPosition(pivotOffset.add(opticalSightOffset), 1.0F) : ownerViewPosition(true, eyeHeight, 1.0F);
+    }
+
+    /** SCOPE = ADS: manual + {@code sight} socket + (operator sight or optic with lens). */
+    public boolean adsCapable() {
+        return data.getHandling() == WeaponUnitData.Handling.MANUAL && opticalSightOffset != null
+                && (getOpticalSightType() == WeaponUnitData.OpticalSightType.OPERATOR
+                || optic() != null && lensNode() != null);
     }
 
     /** Sight eye riding the pitch frame (the gun), whatever the sight type. */

@@ -1,0 +1,16 @@
+{
+  "pack": {
+    "pack_format": 34,
+    "description": "[CA] Flan's Modern Weapons Pack"
+  },
+  "combinedassault": {
+    "id": "flans_modern",
+    "requires": [
+      "combinedassault"
+    ],
+    "license": "CC-BY-NC-SA-3.0",
+    "authors": [
+      "Jamio Flan (Flan's Mod)"
+    ]
+  }
+}

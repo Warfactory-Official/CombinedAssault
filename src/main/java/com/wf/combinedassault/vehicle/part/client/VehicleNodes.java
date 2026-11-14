@@ -21,6 +21,12 @@ import com.wf.combinedassault.render.entity.vehicle.VehicleRender;
 import com.wf.combinedassault.render.model.VehicleModelInstance;
 import com.wf.combinedassault.vehicle.VehicleContent;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.control.InputHandler;
+import com.wf.combinedassault.vehicle.interact.Interaction;
+import com.wf.combinedassault.vehicle.interact.InteractionAction;
+import com.wf.combinedassault.vehicle.interact.InteractionActions;
+import com.wf.combinedassault.vehicle.interact.InteractionContext;
+import com.wf.combinedassault.vehicle.lock.VehicleLock;
 import com.wf.combinedassault.vehicle.part.AccessActions;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
@@ -79,12 +85,18 @@ public final class VehicleNodes {
     private static void nodes(List<ProbeNode> out, ProbeContext ctx, Entity entity) {
         AbstractVehicle vehicle = (AbstractVehicle) entity;
         Player player = ctx.player();
-        if (vehicle.isDestroyed() || player.isPassenger()) {
+        if (vehicle.isDestroyed()) {
             return;
         }
         float partialTick = ctx.partialTick();
         // Hit / mount poses are tick poses; shift by the hull's interpolation so nodes ride the drawn model.
         Vec3 drift = vehicle.position(partialTick).subtract(vehicle.position());
+        if (player.isPassenger()) {
+            if (player.getVehicle() == vehicle && InputHandler.freeCamera() && vehicle.hits() != null) {
+                interactions(out, vehicle, player, vehicle.hits(), null, drift, partialTick, true);
+            }
+            return;
+        }
         boolean aimed = ctx.hit() instanceof EntityHitResult hit && hit.getEntity() == vehicle;
         PartUnit<?> looked = aimed ? VectorUtil.pickPartUnit(player, vehicle) : null;
         VehicleHits hits = vehicle.hits();
@@ -95,14 +107,20 @@ public final class VehicleNodes {
             if (part.isDetached()) {
                 continue;
             }
-            if (AccessActions.isDoor(part)) {
-                door(out, vehicle, player, (SwitchableUnit<?>) part, VehicleHits.anchor(hits, part).add(drift), part == looked,
-                        vehicle.towing.towable.stowedBy);
+            if (AccessActions.isDoor(part) && !vehicle.interactionClaims(part.getId())) {
+                Vec3 at = VehicleHits.anchor(hits, part);
+                if (hits == null || hits.probeReaches(player.getEyePosition(partialTick).subtract(drift), at, hits.ofPart(part))) {
+                    door(out, vehicle, player, (SwitchableUnit<?>) part, at.add(drift), part == looked,
+                            vehicle.towing.towable.stowedBy);
+                }
             } else if (tool && part instanceof WeaponUnit unit && unit.isInteractive() && unit.weapons.size() > 1
                     && !unit.isHardpoint()) {
                 out.add(new ProbeNode("weapon:" + part.getIndex(), VehicleHits.anchor(hits, part).add(drift),
                         info -> weapon(info, unit)).colour(WEAPON).claimed(part == looked));
             }
+        }
+        if (hits != null) {
+            interactions(out, vehicle, player, hits, looked, drift, partialTick, false);
         }
         LoadoutInfo loadout = vehicle.loadout();
         PartUnit<?> hardpoint = Loadouts.part(vehicle, loadout);
@@ -156,8 +174,9 @@ public final class VehicleNodes {
         }
         if (hits != null) {
             Vec3 eye = player.getEyePosition(partialTick).subtract(drift);
-            out.subList(from, out.size()).removeIf(node -> !node.key().equals("hull")
-                    && hits.hidden(eye, node.at().subtract(drift)));
+            // door: / interaction: already probeReaches-sighted; hidden() counts a door's own part => hidden from inside.
+            out.subList(from, out.size()).removeIf(node -> !node.key().equals("hull") && !node.key().startsWith("door:")
+                    && !node.key().startsWith("interaction:") && hits.hidden(eye, node.at().subtract(drift)));
         }
     }
 
@@ -186,6 +205,54 @@ public final class VehicleNodes {
             }
         }).colour(jammed ? SystemsHud.colour(ComponentState.BROKEN) : DOOR)
                 .claimed(looked));
+    }
+
+    /**
+     * Def {@code interactions}: a node per posed model node in sight; shown while an eligible action is available.
+     * {@code rider}: only {@link InteractionAction#riders} actions.
+     */
+    private static void interactions(List<ProbeNode> out, AbstractVehicle vehicle, Player player, VehicleHits hits,
+                                     @Nullable PartUnit<?> looked, Vec3 drift, float partialTick, boolean rider) {
+        Vec3 eye = player.getEyePosition(partialTick).subtract(drift);
+        for (int i = 0; i < vehicle.interactions().size(); i++) {
+            Interaction entry = vehicle.interactions().get(i);
+            int index = i;
+            for (int n = 0; n < entry.nodes().size(); n++) {
+                int node = entry.nodes().get(n);
+                PartUnit<?> owner = hits.partUnitOf(node);
+                Vec3 at = hits.origin(node);
+                if (owner != null && owner.isDetached() || !hits.probeReaches(eye, at, VehicleHits.NONE)) {
+                    continue;
+                }
+                InteractionContext ctx = new InteractionContext(player, vehicle, entry, at, PartNames::name);
+                boolean any = false;
+                for (InteractionAction action : entry.actions()) {
+                    any |= (!rider || action.riders()) && action.available(ctx);
+                }
+                if (any) {
+                    out.add(new ProbeNode("interaction:" + i + ":" + n, at.add(drift), info -> fill(info, entry, index, ctx,
+                            rider)).colour(DOOR)
+                            .claimed(owner != null && owner == looked));
+                }
+            }
+        }
+    }
+
+    private static void fill(ProbeInfo info, Interaction entry, int index, InteractionContext ctx, boolean rider) {
+        String spelled = entry.id().replace('_', ' ');
+        spelled = spelled.substring(0, 1).toUpperCase(java.util.Locale.ROOT) + spelled.substring(1);
+        info.title(entry.name() != null ? Component.translatableWithFallback(entry.name(), spelled)
+                : Component.literal(spelled));
+        for (int a = 0; a < entry.actions().size(); a++) {
+            if (rider && !entry.actions().get(a).riders()) {
+                continue;
+            }
+            int action = a;
+            entry.actions().get(a).offer(ctx, (arg, label, refusal) -> {
+                ProbeAction row = ProbeAction.of(InteractionActions.INTERACT, InteractionActions.arg(index, action, arg), label);
+                info.action(refusal != null ? row.unavailable(refusal) : row);
+            });
+        }
     }
 
     /** Holder stations, weapon {@code round_bones} stations ({@link StationActions}). */
@@ -344,6 +411,7 @@ public final class VehicleNodes {
             if (vehicle.hasBatterySlot()) {
                 battery(info, ctx.player(), vehicle);
             }
+            lock(info, ctx.player(), vehicle);
             spray(info, ctx, vehicle);
             SystemsProbe.grid(info, cells);
             AirDefenseProbe.append(info, ctx, vehicle);
@@ -351,6 +419,21 @@ public final class VehicleNodes {
                 SystemsProbe.repair(info, ctx, cell);
             }
         }).colour(HULL).radius(0.5));
+    }
+
+    private static void lock(ProbeInfo info, Player player, AbstractVehicle vehicle) {
+        VehicleLock mode = VehicleLock.of(vehicle);
+        info.entry(Component.translatable(PROBE + "lock"), Component.translatable(PROBE + "lock." + mode.name().toLowerCase(java.util.Locale.ROOT)));
+        boolean foreign = mode != VehicleLock.OPEN && !VehicleLock.owner(vehicle).filter(player.getUUID()::equals).isPresent()
+                && !player.hasPermissions(2);
+        for (VehicleLock target : VehicleLock.values()) {
+            if (target == mode) {
+                continue;
+            }
+            ProbeAction row = ProbeAction.of(AccessActions.LOCK, target.ordinal(),
+                    Component.translatable(KEY + "lock." + target.name().toLowerCase(java.util.Locale.ROOT)));
+            info.action(foreign ? row.unavailable(Component.translatable("lock.combinedassault.owned")) : row);
+        }
     }
 
     /** One node per worn armour face, at the face centre of the main box. */

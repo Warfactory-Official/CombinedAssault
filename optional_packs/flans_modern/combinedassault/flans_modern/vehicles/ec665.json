@@ -1,0 +1,173 @@
+{
+  "type": "combinedassault:rotary_wing_vehicle",
+  "attributes": {
+    "main_rotor_force": 100700.0,
+    "ceiling": 256,
+    "x_rot_speed_acceleration": 1.5,
+    "x_rot_speed_max": 4.0,
+    "y_rot_speed_acceleration": 1.5,
+    "y_rot_speed_max": 4.0,
+    "z_rot_speed_acceleration": 1.5,
+    "z_rot_speed_max": 4.0,
+    "max_air_speed": 4.03
+  },
+  "physics_info": {
+    "mass": 5300,
+    "friction": 10600
+  },
+  "landing_gear_part_id": "landing_gear",
+  "max_health": 700,
+  "view_info": {
+    "third_person_distance": 15.0,
+    "third_person_distance_zoomed": 4
+  },
+  "energy_info": {
+    "energy_capacity": 1060,
+    "energy_consumption_per_tick": 0.006625
+  },
+  "defense_stats": {
+    "damage_threshold": 10,
+    "impact_multiplier": 3
+  },
+  "parts": [
+    {
+      "id": "pilot",
+      "name": "part.flans_modern.ec665.pilot",
+      "type": "combinedassault:weapon",
+      "crew_roles": [
+        "driver",
+        "gunner"
+      ],
+      "operator_on_weapon_unit": false,
+      "crosshair_style": "cross",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "weapons": [
+        {
+          "id": "combinedassault:giat_30",
+          "part_unit_id": "gun_l"
+        },
+        {
+          "id": "combinedassault:agm_114",
+          "part_unit_id": "missile_r",
+          "secondary": true
+        }
+      ]
+    },
+    {
+      "id": "landing_gear",
+      "name": "part.flans_modern.ec665.landing_gear",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0.5
+    },
+    {
+      "id": "landing_gear_l",
+      "name": "part.flans_modern.ec665.landing_gear_l",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0,
+      "on_system": "left wing"
+    },
+    {
+      "id": "landing_gear_r",
+      "name": "part.flans_modern.ec665.landing_gear_r",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0,
+      "on_system": "right wing"
+    },
+    {
+      "id": "gun_l",
+      "name": "part.flans_modern.ec665.gun_l",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "left wing"
+    },
+    {
+      "id": "missile_r",
+      "name": "part.flans_modern.ec665.missile_r",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "right wing",
+      "ammo_capacity": 8,
+      "parent_weapon_unit_aim": true
+    },
+    {
+      "id": "seat_1",
+      "name": "part.flans_modern.ec665.seat_1",
+      "type": "combinedassault:weapon",
+      "protect_passenger": false,
+      "crosshair_style": "cross",
+      "operator_on_weapon_unit": true,
+      "rot_info": {
+        "x_rot_speed": 4,
+        "y_rot_speed": 4,
+        "y_rot_min": -10.0,
+        "y_rot_max": 10.0,
+        "y_rot": 0.0
+      },
+      "weapons": [
+        "combinedassault:fim_92"
+      ]
+    }
+  ],
+  "model": "flans_modern:models/vehicle/ec665/ec665.glb",
+  "display": {
+    "icon": "flans_modern:textures/slot/ec665.png",
+    "tab_index": 910,
+    "controller": "flans_modern:ec665_controller",
+    "engine": {
+      "start": {
+        "event": "combinedassault:z10_engine_start",
+        "range": 360
+      },
+      "stop": {
+        "event": "combinedassault:z10_engine_stop",
+        "range": 360
+      },
+      "loops": [
+        {
+          "sound": {
+            "event": "combinedassault:z10_engine_run",
+            "range": 600
+          },
+          "input": "power",
+          "volume": [
+            [
+              0.2,
+              0
+            ],
+            [
+              0.5,
+              1
+            ]
+          ],
+          "pitch": [
+            [
+              0.5,
+              0.8
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "cabin_muffle": 0.5
+  }
+}

@@ -1,0 +1,276 @@
+{
+  "type": "combinedassault:wheeled_vehicle",
+  "attributes": {
+    "brake_force": 5785,
+    "forward_force": 6363.5,
+    "backward_force": 3239.6,
+    "max_speed_forward": 1.458,
+    "max_speed_backward": 0.2,
+    "steer_fade_speed": 0.6,
+    "turn_step": 0.25,
+    "max_turn": 2.5,
+    "engine_power": 50.1
+  },
+  "physics_info": {
+    "mass": 1100
+  },
+  "max_health": 250,
+  "view_info": {
+    "third_person_distance": 5.0
+  },
+  "energy_info": {
+    "energy_capacity": 57,
+    "energy_consumption_per_tick": 0.004
+  },
+  "storage": {
+    "slots": 36
+  },
+  "parts": [
+    {
+      "id": "wheel_fl",
+      "name": "part.flans_ww2.jeep.wheel_fl",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 28346,
+      "damping": 1718,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "wheel_fr",
+      "name": "part.flans_ww2.jeep.wheel_fr",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 28346,
+      "damping": 1718,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "wheel_rl",
+      "name": "part.flans_ww2.jeep.wheel_rl",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 28346,
+      "damping": 1718,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "wheel_rr",
+      "name": "part.flans_ww2.jeep.wheel_rr",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 28346,
+      "damping": 1718,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "driver",
+      "name": "part.combinedassault.driver",
+      "type": "combinedassault:generic",
+      "protect_passenger": false,
+      "crew_roles": [
+        "driver"
+      ]
+    },
+    {
+      "id": "seat_1",
+      "name": "part.flans_ww2.seat_1",
+      "type": "combinedassault:weapon",
+      "protect_passenger": false,
+      "crosshair_style": "cross",
+      "crew_roles": [
+        "gunner"
+      ],
+      "handling": "manual",
+      "max_health": 120,
+      "render_bone": "seat_1_gun",
+      "rot_info": {
+        "x_rot_speed": 4,
+        "y_rot_speed": 4,
+        "need_power": false
+      },
+      "hardpoint": {
+        "node": "seat_1_gun_pitch",
+        "accepts": [
+          "pintle"
+        ],
+        "fitted": "flans_ww2:gun_7_62mm"
+      },
+      "operator_on_weapon_unit": false,
+      "pose": "stand"
+    },
+    {
+      "id": "seat_2",
+      "name": "part.flans_ww2.seat_2",
+      "type": "combinedassault:weapon",
+      "protect_passenger": false,
+      "crosshair_style": "cross",
+      "crew_roles": [
+        "gunner"
+      ],
+      "handling": "manual",
+      "max_health": 120,
+      "render_bone": "seat_2_gun",
+      "rot_info": {
+        "x_rot_speed": 4,
+        "y_rot_speed": 4,
+        "need_power": false,
+        "y_rot_min": -60.0,
+        "y_rot_max": 60.0
+      },
+      "hardpoint": {
+        "node": "seat_2_gun_pitch",
+        "accepts": [
+          "pintle"
+        ],
+        "fitted": "flans_ww2:m1919a4"
+      },
+      "operator_on_weapon_unit": false,
+      "pose": "stand"
+    }
+  ],
+  "model": "flans_ww2:models/vehicle/jeep/jeep.glb",
+  "display": {
+    "tab_index": 900,
+    "icon": "flans_ww2:textures/slot/jeep.png",
+    "engine": {
+      "start": {
+        "event": "combinedassault:lav150_engine_start",
+        "range": 96
+      },
+      "loops": [
+        {
+          "sound": {
+            "event": "combinedassault:humvee_engine_idle",
+            "range": 96
+          },
+          "input": "rpm",
+          "volume": [
+            [
+              0.05,
+              0.0
+            ],
+            [
+              0.1,
+              0.318
+            ],
+            [
+              0.15,
+              0.45
+            ],
+            [
+              0.25,
+              0.45
+            ],
+            [
+              0.3,
+              0.318
+            ],
+            [
+              0.35,
+              0.0
+            ]
+          ],
+          "pitch": [
+            [
+              0.103,
+              0.5
+            ],
+            [
+              0.412,
+              2.0
+            ]
+          ]
+        },
+        {
+          "sound": {
+            "event": "combinedassault:humvee_engine_mid",
+            "range": 128
+          },
+          "input": "rpm",
+          "volume": [
+            [
+              0.25,
+              0.0
+            ],
+            [
+              0.3,
+              0.53
+            ],
+            [
+              0.35,
+              0.75
+            ],
+            [
+              0.55,
+              0.75
+            ],
+            [
+              0.615,
+              0.53
+            ],
+            [
+              0.68,
+              0.0
+            ]
+          ],
+          "pitch": [
+            [
+              0.206,
+              0.5
+            ],
+            [
+              0.824,
+              2.0
+            ]
+          ]
+        },
+        {
+          "sound": {
+            "event": "combinedassault:humvee_engine_high",
+            "range": 160
+          },
+          "input": "rpm",
+          "volume": [
+            [
+              0.55,
+              0.0
+            ],
+            [
+              0.615,
+              0.707
+            ],
+            [
+              0.68,
+              1.0
+            ]
+          ],
+          "pitch": [
+            [
+              0.382,
+              0.5
+            ],
+            [
+              1.529,
+              2.0
+            ]
+          ]
+        }
+      ]
+    },
+    "cabin_muffle": 0.4,
+    "controller": "flans_ww2:jeep_controller",
+    "description": "American Jeep"
+  }
+}

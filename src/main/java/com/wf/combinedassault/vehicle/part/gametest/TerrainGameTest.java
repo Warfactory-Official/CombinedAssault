@@ -4,7 +4,9 @@ import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.entity.GroundVehicle;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
@@ -31,7 +33,12 @@ public class TerrainGameTest {
 
     // TODO m1129 (SSF 1.1 half-track / 1.2 CoM = 0.92) rolls on WEAVE/LOCK and rough lanes, airborne off bumps;
     // pre-audit physics identical. Back in once its data or the bump response is fixed.
-    private static final String[] VEHICLES = {"humvee", "centauro", "m983", "m1a2", "t90"};
+    private static final String[] BUILTIN_VEHICLES = {"humvee", "centauro", "m983", "m1a2", "t90", "m113"};
+    /** `-PoptionalPacks` namespaces + `-PoptionalOnly` paths (same properties as OptionalPackGameTest) => those instead. */
+    private static final List<String> PACKS = split(System.getProperty("combinedassault.optionalPacks", ""));
+    private static final String[] VEHICLES = PACKS.isEmpty() || System.getProperty("combinedassault.optionalPacks.only", "").isEmpty()
+            ? BUILTIN_VEHICLES
+            : split(System.getProperty("combinedassault.optionalPacks.only")).toArray(String[]::new);
     private static final String TEMPLATE = CombinedAssault.MOD_ID + ":empty";
     private static final int LANE_X = 6000;
     private static final int LANE_PITCH = 90;
@@ -64,6 +71,23 @@ public class TerrainGameTest {
 
     /** Kerb: 1 block up along a zigzag edge 30 degrees off square (tow ring's sector seams), at this z on the centreline. */
     private static final int KERB_AT = 60;
+
+    private static List<String> split(String csv) {
+        return csv.isEmpty() ? List.of() : List.of(csv.split(","));
+    }
+
+    private static ResourceLocation resolve(String name) {
+        if (VEHICLES == BUILTIN_VEHICLES) {
+            return CombinedAssault.modLocation(name);
+        }
+        for (String ns : PACKS) {
+            ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ns, name);
+            if (CommonAssetsManager.vehicleDataManager().getVehicleData(id).isPresent()) {
+                return id;
+            }
+        }
+        return CombinedAssault.modLocation(name);
+    }
 
     enum Course { ROUGH, WEAVE, LOCK, SLALOM, HANDBRAKE, HILL, WASHBOARD, KERB }
 
@@ -120,9 +144,19 @@ public class TerrainGameTest {
 
     static void run(GameTestHelper helper, String name, Course course, int lane) {
         ServerLevel level = helper.getLevel();
-        Optional<BaseVehicleData> data = CommonAssetsManager.vehicleDataManager().getVehicleData(CombinedAssault.modLocation(name));
+        ResourceLocation id = resolve(name);
+        Optional<BaseVehicleData> data = CommonAssetsManager.vehicleDataManager().getVehicleData(id);
         if (data.isEmpty()) {
             helper.fail(name + " is not in the roster");
+            return;
+        }
+        // Generator runs before pack data loads => aircraft / ships / emplacements in -PoptionalOnly skipped here.
+        AbstractVehicle probe = data.get().construct(level, Vec3.ZERO, 0, 0);
+        boolean ground = probe instanceof GroundVehicle;
+        probe.discard();
+        if (!ground) {
+            CombinedAssault.LOGGER.info("[terrain] {} skipped: {} is not a ground vehicle", name, probe.getClass().getSimpleName());
+            helper.succeed();
             return;
         }
         // World-fixed lanes: arenas sit at different origins => arena-relative lanes overlapped. Ground level
@@ -133,7 +167,7 @@ public class TerrainGameTest {
         int spawnZ = 20;
         AbstractVehicle vehicle = data.get().construct(level,
                 new Vec3(start.getX() + 0.5, start.getY() + 1.6 + height(course, 0, spawnZ), start.getZ() + spawnZ + 0.5), 0, 0);
-        vehicle.setDisplayId(CombinedAssault.modLocation(name));
+        vehicle.setDisplayId(id);
         level.addFreshEntity(vehicle);
         ArmorStand driver = new ArmorStand(level, vehicle.getX(), vehicle.getY(), vehicle.getZ());
         driver.setNoGravity(true);

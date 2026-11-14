@@ -1,0 +1,382 @@
+{
+  "t72b3": {
+    "engine_kw": 618,
+    "fuel": 1200
+  },
+  "ah_64d": {
+    "fuel": 1421,
+    "speed_kmh": 293
+  },
+  "f_16c": {},
+  "9k22_tunguska": {
+    "engine_kw": 522,
+    "fuel": 830
+  },
+  "9p149_shturm": {
+    "engine_kw": 175,
+    "fuel": 550
+  },
+  "begleitpanzer": {
+    "engine_kw": 619,
+    "fuel": 985
+  },
+  "bmd_1": {
+    "engine_kw": 177,
+    "fuel": 280
+  },
+  "bmp2": {
+    "engine_kw": 223,
+    "fuel": 460
+  },
+  "bmp2m": {
+    "engine_kw": 223,
+    "fuel": 460
+  },
+  "bmp3m_elite": {
+    "engine_kw": 368,
+    "fuel": 650
+  },
+  "bmp_1am": {
+    "engine_kw": 221,
+    "fuel": 462
+  },
+  "bmpt": {
+    "engine_kw": 618,
+    "fuel": 1100
+  },
+  "btr_zd": {
+    "engine_kw": 177,
+    "fuel": 400
+  },
+  "challenger_2": {
+    "engine_kw": 895,
+    "fuel": 1592
+  },
+  "cheonma_2": {
+    "engine_kw": 560,
+    "fuel": 1000
+  },
+  "cv9040_no_net": {
+    "engine_kw": 392,
+    "fuel": 530
+  },
+  "gepard": {
+    "engine_kw": 619,
+    "fuel": 985
+  },
+  "k2a1_black_panther": {
+    "engine_kw": 1103,
+    "fuel": 1100
+  },
+  "leclerc_s1": {
+    "engine_kw": 1103,
+    "fuel": 1700
+  },
+  "leo2a6": {
+    "engine_kw": 1103,
+    "fuel": 1200
+  },
+  "leopard_1a1a1": {
+    "engine_kw": 619,
+    "fuel": 985
+  },
+  "leopard_2a4": {
+    "engine_kw": 1103,
+    "fuel": 1200
+  },
+  "m109a7_paladin": {
+    "engine_kw": 441,
+    "fuel": 511
+  },
+  "m1_abrams_elite": {
+    "engine_kw": 1119,
+    "fuel": 1909
+  },
+  "m1a1_abrams": {
+    "engine_kw": 1119,
+    "fuel": 1909
+  },
+  "m1a2_abrams_sep_v2": {
+    "engine_kw": 1119,
+    "fuel": 1909
+  },
+  "m2_bradley": {
+    "engine_kw": 372,
+    "fuel": 662
+  },
+  "m48a3_elite": {
+    "engine_kw": 560,
+    "fuel": 1268
+  },
+  "m551a1": {
+    "engine_kw": 224,
+    "fuel": 300
+  },
+  "m60a1": {
+    "engine_kw": 560,
+    "fuel": 1457
+  },
+  "marder_1a1": {
+    "engine_kw": 441,
+    "fuel": 652
+  },
+  "marder_1a2": {
+    "engine_kw": 441,
+    "fuel": 652
+  },
+  "marder_1a5": {
+    "engine_kw": 441,
+    "fuel": 652
+  },
+  "pt76b": {
+    "engine_kw": 179,
+    "fuel": 250
+  },
+  "pzh_2000": {
+    "engine_kw": 735,
+    "fuel": 1500
+  },
+  "qn_506model": {
+    "engine_kw": 330,
+    "fuel": 600
+  },
+  "strv_103": {
+    "engine_kw": 451,
+    "fuel": 960
+  },
+  "t14_armata": {
+    "engine_kw": 1103,
+    "fuel": 1500
+  },
+  "t55a_2_0": {
+    "engine_kw": 427,
+    "fuel": 960
+  },
+  "t64a": {
+    "engine_kw": 515,
+    "fuel": 1100
+  },
+  "t64b_obr1976": {
+    "engine_kw": 515,
+    "fuel": 1100
+  },
+  "t72a": {
+    "engine_kw": 573,
+    "fuel": 1200
+  },
+  "t72b": {
+    "engine_kw": 618,
+    "fuel": 1200
+  },
+  "t72b3_ubh_cope": {
+    "engine_kw": 736,
+    "fuel": 1200
+  },
+  "t80b_obr1976": {
+    "engine_kw": 735,
+    "fuel": 1100
+  },
+  "t80bvm_obr2022": {
+    "engine_kw": 920,
+    "fuel": 1100
+  },
+  "t80u_obr1985": {
+    "engine_kw": 920,
+    "fuel": 1100
+  },
+  "t90a": {
+    "engine_kw": 736,
+    "fuel": 1200
+  },
+  "t90m": {
+    "engine_kw": 736,
+    "fuel": 1200
+  },
+  "t_62a": {
+    "engine_kw": 427,
+    "fuel": 675
+  },
+  "type_90": {
+    "engine_kw": 1103,
+    "fuel": 1200
+  },
+  "vt_4a1": {
+    "engine_kw": 882,
+    "fuel": 1200
+  },
+  "zsu23_4": {
+    "engine_kw": 209,
+    "fuel": 515
+  },
+  "ztz99a": {
+    "engine_kw": 1103,
+    "fuel": 1200
+  },
+  "ah_1f": {
+    "fuel": 970,
+    "speed_kmh": 277
+  },
+  "ch_46e": {
+    "fuel": 1800,
+    "speed_kmh": 265
+  },
+  "eurocopter_tiger": {
+    "fuel": 1300,
+    "speed_kmh": 315
+  },
+  "mi_24a": {
+    "fuel": 1500,
+    "speed_kmh": 310
+  },
+  "mi_24d": {
+    "fuel": 1500,
+    "speed_kmh": 335
+  },
+  "mi_26": {
+    "fuel": 12000,
+    "speed_kmh": 295
+  },
+  "btr80a": {
+    "engine_kw": 191,
+    "fuel": 300
+  },
+  "ka50": {
+    "mass": 7700,
+    "fuel": 1487,
+    "speed_kmh": 310
+  },
+  "kord_tripod": {
+    "mass": 41
+  },
+  "essex": {
+    "speed_kmh": 61,
+    "fuel": 6330000
+  },
+  "kiev": {
+    "speed_kmh": 59,
+    "fuel": 7000000
+  },
+  "9p148": {
+    "engine_kw": 104,
+    "fuel": 290
+  },
+  "btr_60pb": {
+    "engine_kw": 134,
+    "fuel": 290,
+    "mass": 10300
+  },
+  "btr_90": {
+    "engine_kw": 380,
+    "fuel": 500
+  },
+  "gaz_3937_vodnik_aa": {
+    "engine_kw": 130,
+    "fuel": 130
+  },
+  "lav25": {
+    "engine_kw": 205,
+    "fuel": 300,
+    "mass": 12800
+  },
+  "lav_ad": {
+    "engine_kw": 205,
+    "fuel": 300,
+    "mass": 14000
+  },
+  "m1128": {
+    "engine_kw": 261,
+    "fuel": 200,
+    "mass": 18800
+  },
+  "toyota_jihad_bmp1": {
+    "engine_kw": 96,
+    "fuel": 80
+  },
+  "toyota_jihad_dshk": {
+    "engine_kw": 96,
+    "fuel": 80
+  },
+  "toyota_jihad_s5": {
+    "engine_kw": 96,
+    "fuel": 80
+  },
+  "toyota_jihad_spg9": {
+    "engine_kw": 96,
+    "fuel": 80
+  },
+  "uaz_469_spg9": {
+    "engine_kw": 55,
+    "fuel": 78,
+    "mass": 1800
+  },
+  "vbci": {
+    "engine_kw": 410,
+    "fuel": 500,
+    "mass": 28000
+  },
+  "zbd_09": {
+    "engine_kw": 328,
+    "fuel": 400
+  },
+  "zsl_92": {
+    "engine_kw": 239,
+    "fuel": 400
+  },
+  "ztl_09": {
+    "engine_kw": 328,
+    "fuel": 400
+  },
+  "ah1w_super_cobra": {
+    "mass": 4953,
+    "fuel": 1150,
+    "speed_kmh": 282
+  },
+  "ah_1g_cobra": {
+    "mass": 2754,
+    "fuel": 1014,
+    "speed_kmh": 277
+  },
+  "ah_6j": {
+    "mass": 722,
+    "fuel": 235,
+    "speed_kmh": 282
+  },
+  "mi24_hind_a": {
+    "mass": 8700,
+    "fuel": 2130,
+    "speed_kmh": 320
+  },
+  "mi24v": {
+    "mass": 8500,
+    "fuel": 2130,
+    "speed_kmh": 335
+  },
+  "mi28n": {
+    "mass": 8095,
+    "fuel": 1900,
+    "speed_kmh": 324
+  },
+  "uh1d_huey": {
+    "mass": 2363,
+    "fuel": 840,
+    "speed_kmh": 204
+  },
+  "ags_30": {
+    "mass": 16
+  },
+  "browning_tripod": {
+    "mass": 58
+  },
+  "milan_tripod": {
+    "mass": 28
+  },
+  "spg9_tripod": {
+    "mass": 64
+  },
+  "tow_tripod": {
+    "mass": 93
+  },
+  "zu23_2": {
+    "mass": 950
+  }
+}

@@ -7,8 +7,8 @@
       {"type": "combinedassault:lock_markers"}
     ]}},
     {"type": "combinedassault:hud/weapon_card"},
-    {"type": "place", "x": "ui.width / 2 + 128", "y": "ui.height - 80", "child": {"type": "combinedassault:radar_scopes"}},
-    {"type": "when", "if": "vehicle.rwr",
+    {"type": "when", "if": "!local.radar_full", "then": {"type": "place", "x": "ui.width / 2 + 128", "y": "ui.height - 80", "child": {"type": "combinedassault:radar_scopes"}}},
+    {"type": "when", "if": "vehicle.rwr && !local.radar_full",
       "then": {"type": "place", "x": "ui.width - 40", "y": "ui.height - 180", "child": {"type": "combinedassault:rwr"}}}
   ]}
 }

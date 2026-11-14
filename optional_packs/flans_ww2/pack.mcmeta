@@ -1,0 +1,16 @@
+{
+  "pack": {
+    "pack_format": 34,
+    "description": "[CA] Flan's WW2 Pack"
+  },
+  "combinedassault": {
+    "id": "flans_ww2",
+    "requires": [
+      "combinedassault"
+    ],
+    "license": "CC-BY-NC-SA-3.0",
+    "authors": [
+      "Jamio Flan (Flan's Mod)"
+    ]
+  }
+}

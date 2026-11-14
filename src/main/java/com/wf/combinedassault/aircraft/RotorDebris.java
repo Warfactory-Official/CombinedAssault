@@ -14,7 +14,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 /**
- * A shed rotor: one glTF node of its vehicle's model, drawn at bind pose. Entity at {@link #pivot()};
+ * A shed rotor or wing ({@link WingLoss}): one glTF node subtree of its vehicle's model, drawn at bind pose. Entity at {@link #pivot()};
  * {@link #rotation()} = model -> world about it. Never saved.
  */
 public class RotorDebris extends Entity {
@@ -39,7 +39,7 @@ public class RotorDebris extends Entity {
 
     /** World angular velocity, rad/tick. Server only. */
     private final Vector3f spin = new Vector3f();
-    /** Disc axis, model frame. Server only. */
+    /** Disc axis (wing: up), model frame; eased to world vertical on the ground. Server only. */
     private final Vector3f discAxis = new Vector3f(0, 1, 0);
     private int grounded;
 

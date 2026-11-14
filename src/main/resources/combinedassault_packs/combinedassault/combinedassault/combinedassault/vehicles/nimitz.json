@@ -42,8 +42,7 @@
         "side": 60,
         "rear": 60,
         "top": 25,
-        "bottom": 30,
-        "ricochet_angle": 70
+        "bottom": 30
     },
     "storage": {
         "slots": 216

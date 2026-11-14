@@ -59,7 +59,7 @@ public class VehicleStageGameTest {
 
     @GameTest(template = TEMPLATE)
     public static void grazingAngleRicochets(GameTestHelper helper) {
-        ScenarioStage.Result r = run(helper, 300, spec("vehicle", "combinedassault:humvee", "face", "side", "angle", "80"));
+        ScenarioStage.Result r = run(helper, 300, spec("vehicle", "combinedassault:m113", "face", "side", "angle", "80"));
         helper.assertTrue(r.verdict().equals("RICOCHET") && r.speedOut() == 0, "80 deg should ricochet: " + r);
         helper.succeed();
     }

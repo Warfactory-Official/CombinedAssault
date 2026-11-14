@@ -1,5 +1,6 @@
 package com.wf.combinedassault.vehicle.entity;
 
+import com.wf.combinedassault.dynamics.PhysicsHelper;
 import com.wf.combinedassault.vehicle.VehicleConfig;
 import com.wf.combinedassault.vehicle.drive.Transmission;
 import com.wf.combinedassault.vehicle.control.ControlUnit;
@@ -46,9 +47,24 @@ public abstract class GroundVehicle extends AbstractVehicle {
     protected float pushCap;
     protected boolean braking;
     protected boolean engineBraking;
+    /** Tyre / track on firm ground. */
+    private static final float ROLLING_RESISTANCE = 0.015f;
+    /** Engine power at the wheels, W; 0 => drive force-limited only. */
+    public float enginePower;
 
     protected GroundVehicle(EntityType<? extends AbstractVehicle> type, Level level) {
         super(type, level);
+    }
+
+    /** Rolling resistance m g Crr: flat 2000 N was 30 % of a Kettenkrad's thrust, 4 % of an M3's; capped a 39 kW humvee at 70 km/h. */
+    @Override
+    protected float defaultFriction(float mass) {
+        return mass * PhysicsHelper.GRAVITY * ROLLING_RESISTANCE;
+    }
+
+    /** Drive force (N) at {@code speed} (b/t, signless): {@code min(force, P / v)}. P / v > force at a standstill. */
+    protected double powerLimited(double force, double speed) {
+        return enginePower > 0 ? Math.min(force, enginePower / Math.max(Math.abs(speed) * PhysicsHelper.TICKS_PER_SECOND, 1.0e-3)) : force;
     }
 
     @Override
@@ -147,6 +163,9 @@ public abstract class GroundVehicle extends AbstractVehicle {
 
     /** Signed forward speed, blocks/tick. */
     public abstract float getForwardSpeed();
+
+    /** Track belt speed past the hull, blocks/s, of a track {@code lateral} blocks left (+) of the centreline. */
+    public abstract double trackSpeed(double lateral);
 
     /**
      * Driver client, manual box: selection one position up (+1) or down (-1), sent as {@link ControlUnit#gearRequest}

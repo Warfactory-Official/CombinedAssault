@@ -1,0 +1,22 @@
+{
+  "type": "combinedassault:cannon",
+  "name": "Type 97 7.7 mm",
+  "shoot_interval": 120,
+  "max_capacity": 30,
+  "reload": {
+    "time": 60,
+    "ammo": "wflib:cartridge_7_7x58"
+  },
+  "casing_delay": 0.03,
+  "sounds": {
+    "fire": {
+      "event": "combinedassault:gun_7.62mm_shot",
+      "range": 300,
+      "pitch_random": 0.1
+    },
+    "reload": {
+      "event": "combinedassault:gun_reload",
+      "range": 24
+    }
+  }
+}

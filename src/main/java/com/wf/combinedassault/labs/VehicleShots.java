@@ -24,11 +24,13 @@ public final class VehicleShots {
     public record Ray(Vec3 start, Vec3 dir, Vec3 end, @Nullable VehicleHits.Hit hit, double offset) {
     }
 
-    public record Result(String verdict, String node, String struckPart, String face, String zone, boolean plate,
+    public record Result(String verdict, String node, String struckPart, String face, String zone, String plate,
                   double nominal, double los, double pen, double ratio, double incidence, double surfaceIncidence,
-                  double hullDamage, double partDamage, String partDamaged, String stock, Vec3 local) {
+                  double hullDamage, double partDamage, String partDamaged, String stock, Vec3 local,
+                  int walkLayers, int walkDefeated, double interiorPen, double residualPen, int exits) {
 
-        static final Result MISS = new Result("MISS", "", "", "", "", false, 0, 0, 0, 0, 0, 0, 0, 0, "", "", Vec3.ZERO);
+        static final Result MISS = new Result("MISS", "", "", "", "", "", 0, 0, 0, 0, 0, 0, 0, 0, "", "", Vec3.ZERO,
+                0, 0, 0, 0, 0);
     }
 
     private VehicleShots() {
@@ -77,7 +79,7 @@ public final class VehicleShots {
         StrikeSource source = new StrikeSource(level, threat, ray.start(), ray.dir().scale(arrival.length()));
         PartUnit<?> part = VectorUtil.hitPartUnit(vehicle, ray.start(), hitPos.add(ray.dir().scale(0.1)), false);
         String node = rig.hits.model().nodes().get(ray.hit().node()).mesh().name();
-        HullResult r = Ballistics.resolve(vehicle, source, damage, hitPos, 1.0f);
+        HullResult r = Ballistics.resolve(vehicle, source, damage, hitPos, null);
         Vec3 local = rig.local(hitPos);
         if (r == null) {
             return stock(vehicle, source, part, node, damage, hitPos, local);
@@ -87,10 +89,11 @@ public final class VehicleShots {
         String partDamaged = r.partDamage() > 0 && part != null && !part.isDetached() ? part.getId() : "";
         return new Result(r.outcome().name(), node, part == null ? "" : part.getId(),
                 plate == null ? "" : plate.face().name().toLowerCase(java.util.Locale.ROOT),
-                plate == null || plate.zone() == null ? "" : plate.zone(), plate != null && plate.plate(),
+                plate == null || plate.zone() == null ? "" : plate.zone(), plate == null || plate.plateId() == null ? "" : plate.plateId(),
                 r.nominalThickness(), r.effectiveThickness(), r.penetration(), r.ratio(),
                 plate == null ? 0 : plate.incidence(), plate == null ? 0 : plate.surfaceIncidence(),
-                r.hullDamage(), r.partDamage(), partDamaged, "", local);
+                r.hullDamage(), r.partDamage(), partDamaged, "", local,
+                r.walk().layers(), r.walk().defeated(), r.interiorPen(), r.residualPen(), r.exits() ? 1 : 0);
     }
 
     private static Result stock(AbstractVehicle vehicle, StrikeSource source, @Nullable PartUnit<?> part, String node,
@@ -119,8 +122,8 @@ public final class VehicleShots {
             stock = "coreline";
         }
         String verdict = vehicle.armorProfile == null || !vehicle.armorProfile.isDefined() ? "UNARMOURED" : "NO_MODEL";
-        return new Result(verdict, node, part == null ? "" : part.getId(), "", "", false, 0, 0,
-                source.threat().penetrationMm(), 0, 0, 0, hull, partDamage, partDamaged, stock, local);
+        return new Result(verdict, node, part == null ? "" : part.getId(), "", "", "", 0, 0,
+                source.threat().penetrationMm(), 0, 0, 0, hull, partDamage, partDamaged, stock, local, 0, 0, 0, 0, 0);
     }
 
     static boolean through(String verdict) {

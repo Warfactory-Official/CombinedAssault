@@ -11,8 +11,15 @@ import java.util.List;
  * from that side's own pack copy: the client traces what it draws, the server stays authoritative for damage.
  *
  * @param source model the geometry came from, for messages
+ * @param plates plate ids bound by {@code armor:<id>} materials; {@link TriangleBvh#plate} indexes this + 1
  */
-public record HitMesh(String source, List<Node> nodes) {
+public record HitMesh(String source, List<Node> nodes, List<String> plates) {
+
+    /** Id for a {@link TriangleBvh#plate} value, null = unbound. */
+    @Nullable
+    public String plateId(int index) {
+        return index == 0 ? null : plates.get(index - 1);
+    }
 
     /**
      * @param parent    index, or -1
@@ -23,13 +30,14 @@ public record HitMesh(String source, List<Node> nodes) {
      * @param unit      {@code combinedassault.unit}: own pool within the system kind, or empty (inherit)
      * @param spin      {@code combinedassault.spin}: {@code cw} / {@code ccw} seen from above, or empty (inherit)
      * @param health    pool override, 0 = share of the vehicle's
+     * @param rha       {@code combinedassault.rha}: mm RHA of penetration a module consumes; NaN = {@code ComponentKind#moduleRha}
      * @param origin    rest pose, model frame; geometry is in this node's frame
      * @param mesh      triangles, null for a node with none
      * @param disc      swept volume of a spinning node (rotor), replacing its triangles
      * @param kit       grafted from a kit-scoped part mount: live only while that kit is fitted
      */
     public record Node(String name, int parent, boolean module, int frame, String component, String side,
-                       String unit, String spin, float health, Quaternionf rotation, Vector3f origin,
+                       String unit, String spin, float health, float rha, Quaternionf rotation, Vector3f origin,
                        @Nullable TriangleBvh mesh, @Nullable Disc disc, @Nullable String kit) {
 
         /** 6 floats, node frame; inverted when empty. */

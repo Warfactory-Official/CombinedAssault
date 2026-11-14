@@ -36,6 +36,9 @@ public class VehicleKeys {
     public static final KeyMapping SHIFT_DOWN = key("shift_down", Domain.GROUND, GLFW.GLFW_KEY_LEFT_BRACKET);
     public static final KeyMapping TOGGLE_HOVER_MODE = key("toggle_hover_mode", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z);
     public static final KeyMapping TOGGLE_RADAR = key("toggle_radar", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_3);
+    public static final KeyMapping RADAR_SCOPE = key("radar_scope", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_SEMICOLON);
+    public static final KeyMapping RADAR_RANGE_UP = key("radar_range_up", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_EQUAL);
+    public static final KeyMapping RADAR_RANGE_DOWN = key("radar_range_down", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_MINUS);
     public static final KeyMapping CYCLE_SIGHT_MODE = key("cycle_sight_mode", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_4);
 
     public static final KeyMapping MAIN_WEAPON_SHOOT = key("main_weapon_shoot", InputConstants.Type.MOUSE, GLFW.GLFW_MOUSE_BUTTON_LEFT);
@@ -64,15 +67,18 @@ public class VehicleKeys {
     /** Next page of the vehicle screen looked at. */
     public static final KeyMapping CYCLE_DISPLAY = key("cycle_display", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_COMMA);
 
+    /** {@code OPEN -> PLAYER -> FACTION}. */
+    public static final KeyMapping CYCLE_LOCK = key("cycle_lock", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_APOSTROPHE);
+
     public static final KeyMapping TOGGLE_COLLISION_DEBUG = key("toggle_collision_debug", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K);
 
     private static final KeyMapping[] ALL_KEYS = {
             FORWARD, BACKWARD, LEFT, RIGHT, UP, DOWN, LEFT_YAW, RIGHT_YAW, FUNCTIONAL_UP, FUNCTIONAL_DOWN, FUNCTIONAL_LEFT, FUNCTIONAL_RIGHT,
-            TOGGLE_ENGINE, TOGGLE_LANDING_GEAR, TOGGLE_AIRBRAKE, TOGGLE_CARGO_DOOR, FLAPS_DOWN, FLAPS_UP, SHIFT_UP, SHIFT_DOWN, TOGGLE_HOVER_MODE, TOGGLE_RADAR, CYCLE_SIGHT_MODE,
+            TOGGLE_ENGINE, TOGGLE_LANDING_GEAR, TOGGLE_AIRBRAKE, TOGGLE_CARGO_DOOR, FLAPS_DOWN, FLAPS_UP, SHIFT_UP, SHIFT_DOWN, TOGGLE_HOVER_MODE, TOGGLE_RADAR, RADAR_SCOPE, RADAR_RANGE_UP, RADAR_RANGE_DOWN, CYCLE_SIGHT_MODE,
             MAIN_WEAPON_SHOOT, SECONDARY_WEAPON_SHOOT, SECONDARY_WEAPON_SWITCH, SWITCH_AMMO,
             MAGNIFICATION_CHANGE, FIRE_CONTROL_LOCK, PRESET_COORDINATE_INPUT, DECOY_FLARE_LAUNCH, SMOKE_GRENADE_LAUNCH, TOGGLE_SEEKER, TOGGLE_WEAPON_BAY,
             SWITCH_VIEW, SWITCH_SCOPE, FREE_CAMERA, OPEN_INVENTORY, LEAVE_VEHICLE, INSPECT_VEHICLE, OPEN_PARACHUTE,
-            CHANGE_SEAT, TURN_OUT, CYCLE_DISPLAY, TOGGLE_AEROBATIC_SMOKE,
+            CHANGE_SEAT, TURN_OUT, CYCLE_DISPLAY, CYCLE_LOCK, TOGGLE_AEROBATIC_SMOKE,
             TOGGLE_COLLISION_DEBUG
     };
 

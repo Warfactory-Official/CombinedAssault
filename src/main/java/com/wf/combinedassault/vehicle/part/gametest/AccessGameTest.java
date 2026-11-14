@@ -4,10 +4,14 @@ import org.joml.Quaternionf;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
 import com.mojang.authlib.GameProfile;
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.hit.VehicleHits;
 import com.wf.combinedassault.dynamics.part.PartClipTracks;
 import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.interact.Interaction;
+import com.wf.combinedassault.vehicle.interact.InteractionActions;
+import com.wf.combinedassault.vehicle.interact.InteractionContext;
 import com.wf.combinedassault.vehicle.part.AccessActions;
 import com.wf.combinedassault.vehicle.part.DoorUnit;
 import com.wf.combinedassault.vehicle.part.PartUnit;
@@ -17,8 +21,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayer;
@@ -26,6 +32,8 @@ import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
@@ -51,6 +59,379 @@ public class AccessGameTest {
             return;
         }
         helper.succeed();
+    }
+
+    /**
+     * Def interactions: node rides its leaf through the clip; server action refused through the hull, done from behind;
+     * eye within 1 m reaches past another part; claimed parts lose their generated door node.
+     */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    public static void m113InteractionsFollowClipsAndNeedSight(GameTestHelper helper) {
+        AbstractVehicle apc = spawn(helper, "m113");
+        if (apc == null) {
+            return;
+        }
+        helper.startSequence().thenIdle(3).thenExecute(() -> {
+            VehicleHits hits = apc.hits();
+            int panelAt = interaction(apc, "front_panel");
+            int doorAt = interaction(apc, "rear_door");
+            int panelNode = apc.interactions().get(panelAt).nodes().get(0);
+            int doorNode = apc.interactions().get(doorAt).nodes().get(0);
+            Vec3 inner = hits.origin(apc.interactions().get(doorAt).nodes().get(1));
+            Vec3 shut = hits.origin(panelNode);
+            Vec3 rear = hits.origin(doorNode);
+            Vec3 forward = shut.subtract(rear).multiply(1, 0, 1).normalize();
+            // Panel shut: open, the decor engine bay (no hit surface) lets sight through the glacis hole.
+            SwitchableUnit<?> door = (SwitchableUnit<?>) apc.getPartUnit("rear_door").orElseThrow();
+            FakePlayer player = player(helper);
+            stand(player, rear.add(forward.scale(6)));
+            boolean through = InteractionActions.perform(player, apc, InteractionActions.arg(doorAt, 0, 0)) || door.isOn();
+            stand(player, rear.subtract(forward.scale(2)));
+            boolean innerHidden = !hits.probeReaches(player.getEyePosition(), inner, VehicleHits.NONE);
+            boolean behind = InteractionActions.perform(player, apc, InteractionActions.arg(doorAt, 0, 0)) && door.isOn();
+            apc.getPartUnit("front_panel").map(p -> (SwitchableUnit<?>) p).orElseThrow().setOn(true);
+            settle(apc);
+            Vec3 open = hits.origin(panelNode);
+            boolean followed = open.y < shut.y - 1.2 && open.subtract(shut).dot(forward) > 0.6;
+            Vec3 close = closeBlocked(hits, rear, VehicleHits.NONE);
+            boolean claimed = apc.interactionClaims("rear_door") && apc.interactionClaims("front_panel");
+            apc.discard();
+            if (!followed || through || !behind || !innerHidden || close == null || !claimed) {
+                helper.fail("panel node " + shut + " -> " + open + " followed " + followed + "; rear door toggled through hull "
+                        + through + ", from behind " + behind + "; inner handle hidden from behind " + innerHidden
+                        + "; blocked eye within 1 m " + close + "; claimed " + claimed);
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /** Humvee door handle: rides the door, toggled from outside, not through the cab. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    public static void humveeInteractionsFollowClipsAndNeedSight(GameTestHelper helper) {
+        AbstractVehicle humvee = spawn(helper, "humvee");
+        if (humvee == null) {
+            return;
+        }
+        helper.startSequence().thenIdle(3).thenExecute(() -> {
+            VehicleHits hits = humvee.hits();
+            int leftAt = interaction(humvee, "door_fl");
+            int leftNode = humvee.interactions().get(leftAt).nodes().get(0);
+            Vec3 shut = hits.origin(leftNode);
+            Vec3 side = shut.subtract(hits.origin(humvee.interactions().get(interaction(humvee, "door_fr")).nodes().get(0)))
+                    .multiply(1, 0, 1).normalize();
+            SwitchableUnit<?> left = (SwitchableUnit<?>) humvee.getPartUnit("door_fl").orElseThrow();
+            FakePlayer player = player(helper);
+            stand(player, shut.subtract(side.scale(4)));
+            boolean through = InteractionActions.perform(player, humvee, InteractionActions.arg(leftAt, 0, 0)) || left.isOn();
+            stand(player, shut.add(side.scale(1.5)));
+            boolean outside = InteractionActions.perform(player, humvee, InteractionActions.arg(leftAt, 0, 0)) && left.isOn();
+            settle(humvee);
+            Vec3 open = hits.origin(leftNode);
+            humvee.discard();
+            if (!outside || through || open.distanceTo(shut) < 0.4) {
+                helper.fail("door_fl toggled outside " + outside + ", through cab " + through + ", handle moved "
+                        + open.distanceTo(shut));
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /**
+     * Rear entrance behind the door: shut => hidden from behind and offers nothing; door or ramp open => boards; the
+     * rider then closes the door from the seat (toggle is a rider action, board is not).
+     */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    public static void m113EntranceNeedsItsOpening(GameTestHelper helper) {
+        AbstractVehicle apc = spawn(helper, "m113");
+        if (apc == null) {
+            return;
+        }
+        helper.startSequence().thenIdle(3).thenExecute(() -> {
+            FakePlayer player = player(helper);
+            String log = entrance(helper, apc, player, "rear_entrance", "rear_door", "rear_door", "ramp");
+            apc.ejectPassengers();
+            apc.discard();
+            if (log != null) {
+                helper.fail(log);
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /** Every troop seat: shut rear door's inner handle seen, outer not; closes the open rear door, raises the lowered ramp. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    public static void m113TroopsCloseTheRearBehindThem(GameTestHelper helper) {
+        AbstractVehicle apc = spawn(helper, "m113");
+        if (apc == null) {
+            return;
+        }
+        helper.startSequence().thenIdle(3).thenExecute(() -> {
+            FakePlayer rider = new FakePlayer(helper.getLevel(), new GameProfile(UUID.randomUUID(), "access_troop")) {
+                @Override
+                public Entity getVehicle() {
+                    return apc;
+                }
+            };
+            VehicleHits hits = apc.hits();
+            StringBuilder log = new StringBuilder();
+            for (String leaf : List.of("rear_door", "ramp")) {
+                int at = interaction(apc, leaf);
+                SwitchableUnit<?> part = (SwitchableUnit<?>) apc.getPartUnit(leaf).orElseThrow();
+                List<Integer> nodes = apc.interactions().get(at).nodes();
+                for (AbstractVehicle.Seat seat : apc.seats) {
+                    if (!seat.partUnit.getId().startsWith("troop_")) {
+                        continue;
+                    }
+                    Vec3 eye = seat.partUnit.worldPositionWithSelfRot(seat.partUnit.getSeatOffset(), 1);
+                    stand(rider, eye);
+                    if (leaf.equals("rear_door") && (hits.probeReaches(eye, hits.origin(nodes.get(0)), VehicleHits.NONE)
+                            || !hits.probeReaches(eye, hits.origin(nodes.get(1)), VehicleHits.NONE))) {
+                        log.append(' ').append(seat.partUnit.getId()).append(" shut: outer seen or inner hidden");
+                    }
+                    part.setOn(true);
+                    settle(apc);
+                    if (!InteractionActions.perform(rider, apc, InteractionActions.arg(at, 0, 0)) || part.isOn()) {
+                        log.append(' ').append(seat.partUnit.getId()).append(" -> ").append(leaf);
+                        for (int node : nodes) {
+                            Vec3 to = hits.origin(node);
+                            VehicleHits.Hit block = hits.trace(eye, to, i -> hits.live(i)
+                                    && !hits.model().nodes().get(i).mesh().module());
+                            log.append(String.format(" [%.2f m by %s]", eye.distanceTo(to), block == null ? "-"
+                                    : hits.model().nodes().get(block.node()).mesh().name()
+                                    + String.format("@%.2f", (1 - block.fraction()) * eye.distanceTo(to))));
+                        }
+                    }
+                    part.setOn(false);
+                    settle(apc);
+                }
+            }
+            apc.discard();
+            if (!log.isEmpty()) {
+                helper.fail(log.toString().trim());
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /**
+     * M1A2 CWS + loader MG traverse about their own mounts: muzzle keeps its distance from a pivot within 0.6 m of the
+     * gun, operator seat (base frame) does not move; CWS seat inside under the cupola, commander_out in it.
+     */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    public static void m1a2StationsTraverseOnTheirOwnMounts(GameTestHelper helper) {
+        AbstractVehicle tank = spawn(helper, "m1a2");
+        if (tank == null) {
+            return;
+        }
+        helper.startSequence().thenIdle(3).thenExecute(() -> {
+            StringBuilder log = new StringBuilder();
+            for (String id : List.of("anti_aircraft_machine_gun", "loader_machine_gun")) {
+                com.wf.combinedassault.weapon.part.WeaponUnit unit =
+                        (com.wf.combinedassault.weapon.part.WeaponUnit) tank.getPartUnit(id).orElseThrow();
+                Vec3 pivot = unit.worldPivotPosition();
+                Vec3 seat = unit.worldSeatPosition();
+                Vec3 muzzle = unit.aimContext().from;
+                unit.setYRot(90);
+                unit.updateRot();
+                Vec3 turnedSeat = unit.worldSeatPosition();
+                Vec3 turned = unit.aimContext().from;
+                double arm = muzzle.subtract(pivot).horizontalDistance();
+                double turnedArm = turned.subtract(unit.worldPivotPosition()).horizontalDistance();
+                if (turnedSeat.distanceTo(seat) > 1e-3 || Math.abs(arm - turnedArm) > 1e-3 || arm > 1.6
+                        || turned.distanceTo(muzzle) < 0.1) {
+                    log.append(String.format(" %s: seat moved %.3f, muzzle arm %.3f -> %.3f, muzzle moved %.3f;", id,
+                            turnedSeat.distanceTo(seat), arm, turnedArm, turned.distanceTo(muzzle)));
+                }
+            }
+            PartUnit<?> cws = tank.getPartUnit("anti_aircraft_machine_gun").orElseThrow();
+            PartUnit<?> out = tank.getPartUnit("commander_out").orElseThrow();
+            PartUnit<?> hatch = tank.getPartUnit("commander_hatch").orElseThrow();
+            Vec3 cupola = hatch.worldPivotPosition();
+            Vec3 inside = cws.worldPositionWithBaseRot(cws.getSeatOffset(), 1);
+            Vec3 outside = out.worldPositionWithSelfRot(out.getSeatOffset(), 1);
+            if (inside.y > cupola.y - 0.2 || outside.y < cupola.y + 0.3
+                    || inside.multiply(1, 0, 1).distanceTo(cupola.multiply(1, 0, 1)) > 0.3) {
+                log.append(" cupola ").append(cupola).append(", CWS eye ").append(inside).append(", commander_out eye ")
+                        .append(outside);
+            }
+            tank.discard();
+            if (!log.isEmpty()) {
+                helper.fail(log.toString().trim());
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /** Each Humvee door closed from the seat behind it. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    public static void humveeRidersCloseTheirDoors(GameTestHelper helper) {
+        AbstractVehicle humvee = spawn(helper, "humvee");
+        if (humvee == null) {
+            return;
+        }
+        helper.startSequence().thenIdle(3).thenExecute(() -> {
+            FakePlayer rider = new FakePlayer(helper.getLevel(), new GameProfile(UUID.randomUUID(), "access_crew")) {
+                @Override
+                public Entity getVehicle() {
+                    return humvee;
+                }
+            };
+            StringBuilder log = new StringBuilder();
+            for (String[] pair : new String[][]{{"door_fl", "driver"}, {"door_fr", "passenger"}, {"door_rl", "rear_left"},
+                    {"door_rr", "rear_right"}}) {
+                SwitchableUnit<?> door = (SwitchableUnit<?>) humvee.getPartUnit(pair[0]).orElseThrow();
+                PartUnit<?> seat = humvee.getPartUnit(pair[1]).orElseThrow();
+                door.setOn(true);
+                settle(humvee);
+                stand(rider, seat.worldPositionWithSelfRot(seat.getSeatOffset(), 1));
+                if (!InteractionActions.perform(rider, humvee, InteractionActions.arg(interaction(humvee, pair[0]), 0, 0))
+                        || door.isOn()) {
+                    log.append(' ').append(pair[1]).append(" -> ").append(pair[0]);
+                }
+                door.setOn(false);
+                settle(humvee);
+            }
+            humvee.discard();
+            if (!log.isEmpty()) {
+                helper.fail("not closed:" + log);
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /** Humvee front left seat entrance behind door_fl; rider closes the door after boarding. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    public static void humveeEntranceNeedsItsDoor(GameTestHelper helper) {
+        AbstractVehicle humvee = spawn(helper, "humvee");
+        if (humvee == null) {
+            return;
+        }
+        helper.startSequence().thenIdle(3).thenExecute(() -> {
+            FakePlayer player = player(helper);
+            String log = entrance(helper, humvee, player, "front_left_seat", "door_fl", "door_fl", null);
+            humvee.ejectPassengers();
+            humvee.discard();
+            if (log != null) {
+                helper.fail(log);
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /**
+     * Player 2 m out from {@code entranceId}'s node, away from its handle. Null = passed. {@code alternate}: other
+     * opening that also admits (opened with the door shut), or null. FakePlayer fails the mount gate: the offered seat
+     * is boarded by an armor stand through {@code board}; the rider is a FakePlayer reporting the vehicle, eye at the seat.
+     */
+    @Nullable
+    private static String entrance(GameTestHelper helper, AbstractVehicle vehicle, FakePlayer player, String entranceId, String doorId,
+                                   String handleId, @Nullable String alternate) {
+        VehicleHits hits = vehicle.hits();
+        int entranceAt = interaction(vehicle, entranceId);
+        int handleAt = interaction(vehicle, handleId);
+        Interaction entrance = vehicle.interactions().get(entranceAt);
+        SwitchableUnit<?> door = (SwitchableUnit<?>) vehicle.getPartUnit(doorId).orElseThrow();
+        Vec3 at = hits.origin(entrance.nodes().get(0));
+        Vec3 handle = hits.origin(vehicle.interactions().get(handleAt).nodes().get(0));
+        Vec3 out = handle.subtract(at).multiply(1, 0, 1).normalize();
+        stand(player, at.add(out.scale(2)));
+        InteractionContext ctx = new InteractionContext(player, vehicle, entrance, at, p -> Component.literal(p.getId()));
+        boolean shutSeen = hits.probeReaches(player.getEyePosition(), at, VehicleHits.NONE);
+        boolean shutOffered = entrance.actions().get(0).available(ctx);
+        String alt = "";
+        if (alternate != null) {
+            SwitchableUnit<?> other = (SwitchableUnit<?>) vehicle.getPartUnit(alternate).orElseThrow();
+            other.setOn(true);
+            settle(vehicle);
+            boolean altSeen = hits.probeReaches(player.getEyePosition(), at, VehicleHits.NONE);
+            boolean altOffered = entrance.actions().get(0).available(ctx);
+            other.setOn(false);
+            settle(vehicle);
+            if (!altSeen || !altOffered) {
+                alt = "; " + alternate + " open: seen " + altSeen + " offered " + altOffered;
+            }
+        }
+        door.setOn(true);
+        settle(vehicle);
+        boolean openSeen = hits.probeReaches(player.getEyePosition(), at, VehicleHits.NONE);
+        boolean openOffered = entrance.actions().get(0).available(ctx);
+        List<Integer> seats = new ArrayList<>();
+        entrance.actions().get(0).offer(ctx, (arg, label, refusal) -> seats.add(arg));
+        ArmorStand stand = stand(helper, player.position());
+        boolean boarded = !seats.isEmpty() && vehicle.board(stand, seats.get(0)) && stand.getVehicle() == vehicle;
+        stand.discard();
+        FakePlayer rider = new FakePlayer(helper.getLevel(), new GameProfile(UUID.randomUUID(), "access_rider")) {
+            @Override
+            public Entity getVehicle() {
+                return vehicle;
+            }
+        };
+        // Rider in the offered seat nearest the handle: closes the door behind them.
+        Vec3 eye = null;
+        for (int index : seats) {
+            AbstractVehicle.Seat seat = vehicle.seats.get(index);
+            Vec3 seatEye = seat.partUnit.worldPositionWithSelfRot(seat.partUnit.getSeatOffset(), 1);
+            eye = eye == null || seatEye.distanceTo(handle) < eye.distanceTo(handle) ? seatEye : eye;
+        }
+        stand(rider, eye == null ? at : eye);
+        boolean riderBoardRefused = !seats.isEmpty()
+                && !InteractionActions.perform(rider, vehicle, InteractionActions.arg(entranceAt, 0, seats.get(seats.size() - 1)));
+        boolean closed = boarded && InteractionActions.perform(rider, vehicle, InteractionActions.arg(handleAt, 0, 0))
+                && !door.isOn();
+        if (shutSeen || shutOffered || !alt.isEmpty() || !openSeen || !openOffered || !boarded || !riderBoardRefused
+                || !closed) {
+            return vehicle.getVehicleId() + " " + entranceId + ": shut seen " + shutSeen + " offered " + shutOffered + alt
+                    + "; open seen " + openSeen + " offered " + openOffered + "; boarded " + boarded
+                    + "; rider board refused " + riderBoardRefused + "; rider closed " + closed;
+        }
+        return null;
+    }
+
+    private static int interaction(AbstractVehicle vehicle, String id) {
+        for (int i = 0; i < vehicle.interactions().size(); i++) {
+            if (vehicle.interactions().get(i).id().equals(id)) {
+                return i;
+            }
+        }
+        throw new IllegalStateException(vehicle.getVehicleId() + " has no interaction " + id);
+    }
+
+    /** Eye at {@code eye}. */
+    private static void stand(FakePlayer player, Vec3 eye) {
+        player.setPos(eye.x, eye.y - player.getEyeHeight(), eye.z);
+    }
+
+    private static void settle(AbstractVehicle vehicle) {
+        for (int i = 0; i < 120; i++) {
+            vehicle.clipTracks().tick();
+        }
+        vehicle.hits().refreshClips();
+    }
+
+    /** Eye 0.9 m from {@code at} with another surface in the way, reached; null if none found or refused. */
+    @Nullable
+    private static Vec3 closeBlocked(VehicleHits hits, Vec3 at, java.util.function.IntPredicate own) {
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                for (int z = -1; z <= 1; z++) {
+                    if (x == 0 && y == 0 && z == 0) {
+                        continue;
+                    }
+                    Vec3 eye = at.add(new Vec3(x, y, z).normalize().scale(0.9));
+                    if (!hits.probeReaches(eye, at, own, 0)) {
+                        return hits.probeReaches(eye, at, own) ? eye : null;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
@@ -278,8 +659,9 @@ public class AccessGameTest {
             return;
         }
         int roof = roofSeat(humvee);
-        // Unticked track reads its target: settle it closed first.
-        humvee.clipTracks().tick();
+        // Rear door: the entry the roof seat is boarded through. Settles the hatch track closed too.
+        humvee.getPartUnit("door_rl").map(p -> (SwitchableUnit<?>) p).orElseThrow().setOn(true);
+        settle(humvee);
         SwitchableUnit<?> hatch = (SwitchableUnit<?>) humvee.getPartUnit("top_hatch").orElseThrow();
         Vec3 at = humvee.position();
         ArmorStand rider = new ArmorStand(helper.getLevel(), at.x, at.y, at.z);
@@ -322,6 +704,8 @@ public class AccessGameTest {
         helper.startSequence()
                 .thenIdle(3)
                 .thenExecute(() -> {
+                    humvee.getPartUnit("door_rl").map(p -> (SwitchableUnit<?>) p).orElseThrow().setOn(true);
+                    settle(humvee);
                     boolean boarded = humvee.board(rider, rear);
                     boolean movedAtOnce = humvee.changeSeat(rider, roof);
                     state[0] = "boarded " + boarded + ", moved at once " + movedAtOnce + ", hatch on " + hatch.isOn()
@@ -440,6 +824,11 @@ public class AccessGameTest {
     @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void merkavaCrewBoardsThroughItsHatches(GameTestHelper helper) {
         crewThroughHatches(helper, "merkava");
+    }
+
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
+    public static void m113CrewBoardsThroughItsHatches(GameTestHelper helper) {
+        crewThroughHatches(helper, "m113");
     }
 
     /**
@@ -567,6 +956,8 @@ public class AccessGameTest {
         ArmorStand second = new ArmorStand(helper.getLevel(), at.x, at.y, at.z);
         helper.getLevel().addFreshEntity(first);
         helper.getLevel().addFreshEntity(second);
+        humvee.getPartUnit("door_rr").map(p -> (SwitchableUnit<?>) p).orElseThrow().setOn(true);
+        settle(humvee);
         boolean boarded = humvee.board(first, rear);
         boolean taken = humvee.board(second, rear);
         PartUnit<?> seat = humvee.getOwnOperatorUnit(first);

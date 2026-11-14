@@ -99,7 +99,7 @@ public final class VehicleStage implements ScenarioStage {
             Vec3 arrival = ray.dir().scale(perTick);
             Threat threat = Rounds.threat(in.round(), arrival);
             if (threat.penetrationMm() <= 0) {
-                return result(0, 0, "STOP", id, face, part, angle, "NONE", 0, 0, 0, 0, 0, 0, 0, 0, profile.ricochetAngle, "", false);
+                return result(0, 0, "STOP", id, face, part, angle, "NONE", 0, 0, 0, 0, 0, 0, 0, 0, "", "");
             }
             VehicleShots.Result s = VehicleShots.shoot(ctx.level(), rig, ray, arrival, threat, 1.0f);
             if (s.verdict().equals("MISS") || s.verdict().equals("NO_MODEL") || s.verdict().equals("UNARMOURED")) {
@@ -114,7 +114,7 @@ public final class VehicleStage implements ScenarioStage {
             String verdict = through ? "PERFORATE" : s.verdict().equals("RICOCHET") ? "RICOCHET" : "STOP";
             return result(through ? in.speedMs() * Math.sqrt(payload) : 0, through ? 1 : 0, verdict, id, face, part, angle,
                     s.verdict(), s.nominal(), s.los(), s.pen(), s.ratio(), s.incidence(), s.surfaceIncidence(), payload,
-                    s.verdict().equals("RICOCHET") ? 1 : 0, profile.ricochetAngle, s.zone(), s.plate());
+                    s.verdict().equals("RICOCHET") ? 1 : 0, s.zone(), s.plate());
         } finally {
             rig.vehicle.discard();
         }
@@ -123,7 +123,7 @@ public final class VehicleStage implements ScenarioStage {
     private static Result result(double speedOut, double pPass, String verdict, ResourceLocation id,
                                  HullFace face, String part, double angle, String outcome, double nominal, double los,
                                  double pen, double ratio, double incidence, double surfaceIncidence, double payload,
-                                 double ricochet, double ricochetAngle, String zone, boolean plate) {
+                                 double ricochet, String zone, String plate) {
         Map<String, Object> detail = new TreeMap<>();
         detail.put("outcome", outcome);
         detail.put("ke_mm", nominal);
@@ -134,9 +134,9 @@ public final class VehicleStage implements ScenarioStage {
         detail.put("surface_incidence_deg", surfaceIncidence);
         detail.put("payload_fraction", payload);
         detail.put("ricochet", ricochet);
-        detail.put("ricochet_angle_deg", ricochetAngle);
         detail.put("zone", zone);
-        detail.put("plate", plate ? 1 : 0);
+        detail.put("plate", plate.isEmpty() ? 0 : 1);
+        detail.put("plate_id", plate);
         String label = String.format(Locale.ROOT, "%s %s%s %.0f mm @ %.0f deg", id, name(face), part.isEmpty() ? "" : " " + part,
                 nominal, angle);
         return new Result(speedOut, pPass, verdict, label, detail);

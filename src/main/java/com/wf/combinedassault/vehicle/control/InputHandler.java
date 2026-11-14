@@ -257,6 +257,7 @@ public class InputHandler {
             uavFreeLook = false;
         }
         freeCamera = FREE_CAMERA.isDown() || uavFreeLook;
+        instance.tickWheel(LEFT.isDown(), RIGHT.isDown());
         if (player.getVehicle() instanceof AbstractVehicle vehicle) {
             // Before vanilla's keybind pass: F5 = SWITCH_VIEW on vehicles.
             while (mc.options.keyTogglePerspective.consumeClick()) {
@@ -293,11 +294,16 @@ public class InputHandler {
             if (!CHANGE_SEAT.isDown()) {
                 waitSwitchSeatTime = System.currentTimeMillis();
             }
+            com.wf.combinedassault.radar.client.RadarExpanded.tick(vehicle);
             while (CYCLE_DISPLAY.consumeClick()) {
                 var screens = com.wf.combinedassault.vehicle.screen.VehicleScreens.of(vehicle);
                 if (screens != null) {
                     screens.cycleAimed();
                 }
+            }
+            while (CYCLE_LOCK.consumeClick()) {
+                net.neoforged.neoforge.network.PacketDistributor.sendToServer(
+                        new com.wf.combinedassault.vehicle.lock.VehicleLockMessage(vehicle.getId()));
             }
             while (TURN_OUT.consumeClick()) {
                 AbstractVehicle.Seat partner = instance.seat == null ? null : vehicle.turnPartner(instance.seat);
@@ -328,6 +334,10 @@ public class InputHandler {
                 controlUnit.functionalRight = FUNCTIONAL_RIGHT.isDown();
                 if (vehicle instanceof GroundVehicle ground) {
                     controlUnit.gearRequest = ground.selectedGear;
+                }
+                if (instance.wheelDriver()) {
+                    controlUnit.wheelSteer = true;
+                    controlUnit.wheel = instance.wheel;
                 }
                 instance.tickCockpitPilot();
                 if (instance.cockpitPilot()) {
@@ -431,7 +441,7 @@ public class InputHandler {
                         weapon.doClientShoot();
                     }
                 } else {
-                    weaponUnit.getCurrentWeapon().ifPresent(AbstractVehicleWeapon::doClientShoot);
+                    weaponUnit.getCurrentWeapon().ifPresent(w -> weaponUnit.salvo(w).forEach(AbstractVehicleWeapon::doClientShoot));
                 }
             } else {
                 LocalVehiclePlayer.instance().sendMessage("tips.spotter");
@@ -439,7 +449,7 @@ public class InputHandler {
         }
         if (SECONDARY_WEAPON_SHOOT.isDown()) {
             if (vehicle.getOwnOperatorUnit(player) instanceof WeaponUnit weaponUnit) {
-                weaponUnit.getCurrentSecondaryWeapon().ifPresent(AbstractVehicleWeapon::doClientShoot);
+                weaponUnit.getCurrentSecondaryWeapon().ifPresent(w -> weaponUnit.salvo(w).forEach(AbstractVehicleWeapon::doClientShoot));
             } else {
                 LocalVehiclePlayer.instance().sendMessage("tips.spotter");
             }
@@ -471,6 +481,8 @@ public class InputHandler {
         control.functionalDown = controlUnit.functionalDown;
         control.functionalLeft = controlUnit.functionalLeft;
         control.gearRequest = controlUnit.gearRequest;
+        control.wheelSteer = controlUnit.wheelSteer;
+        control.wheel = controlUnit.wheel;
         control.functionalRight = controlUnit.functionalRight;
         control.xRot = controlUnit.xRot;
         control.xRotKeep = controlUnit.xRotKeep;

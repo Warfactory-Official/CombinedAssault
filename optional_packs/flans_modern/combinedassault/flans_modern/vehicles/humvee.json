@@ -1,0 +1,267 @@
+{
+  "type": "combinedassault:wheeled_vehicle",
+  "attributes": {
+    "brake_force": 12975,
+    "forward_force": 14272.5,
+    "backward_force": 7265.999999999999,
+    "max_speed_forward": 1.569,
+    "max_speed_backward": 0.2,
+    "steer_fade_speed": 0.6,
+    "turn_step": 0.25,
+    "max_turn": 2.5,
+    "engine_power": 78.4
+  },
+  "physics_info": {
+    "mass": 2500
+  },
+  "max_health": 300,
+  "view_info": {
+    "third_person_distance": 5.0
+  },
+  "energy_info": {
+    "energy_capacity": 95,
+    "energy_consumption_per_tick": 0.004
+  },
+  "storage": {
+    "slots": 36
+  },
+  "parts": [
+    {
+      "id": "wheel_fl",
+      "name": "part.flans_modern.humvee.wheel_fl",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 63578,
+      "damping": 3853,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "wheel_fr",
+      "name": "part.flans_modern.humvee.wheel_fr",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 63578,
+      "damping": 3853,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "wheel_rl",
+      "name": "part.flans_modern.humvee.wheel_rl",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 63578,
+      "damping": 3853,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "wheel_rr",
+      "name": "part.flans_modern.humvee.wheel_rr",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 63578,
+      "damping": 3853,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "driver",
+      "name": "part.combinedassault.driver",
+      "type": "combinedassault:generic",
+      "protect_passenger": false,
+      "crew_roles": [
+        "driver"
+      ]
+    },
+    {
+      "id": "seat_1",
+      "name": "part.flans_modern.seat_1",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_2",
+      "name": "part.flans_modern.seat_2",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_3",
+      "name": "part.flans_modern.seat_3",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_4",
+      "name": "part.flans_modern.seat_4",
+      "type": "combinedassault:weapon",
+      "protect_passenger": false,
+      "crosshair_style": "cross",
+      "crew_roles": [
+        "gunner"
+      ],
+      "handling": "manual",
+      "max_health": 120,
+      "render_bone": "seat_4_gun",
+      "rot_info": {
+        "x_rot_speed": 4,
+        "y_rot_speed": 4,
+        "need_power": false,
+        "y_rot_min": -35.0,
+        "y_rot_max": 35.0
+      },
+      "hardpoint": {
+        "node": "seat_4_gun_pitch",
+        "accepts": [
+          "pintle"
+        ],
+        "fitted": "combinedassault:m2"
+      },
+      "operator_on_weapon_unit": false,
+      "pose": "stand"
+    }
+  ],
+  "model": "flans_modern:models/vehicle/humvee/humvee.glb",
+  "display": {
+    "tab_index": 900,
+    "icon": "flans_modern:textures/slot/humvee.png",
+    "engine": {
+      "start": {
+        "event": "combinedassault:lav150_engine_start",
+        "range": 96
+      },
+      "loops": [
+        {
+          "sound": {
+            "event": "combinedassault:humvee_engine_idle",
+            "range": 96
+          },
+          "input": "rpm",
+          "volume": [
+            [
+              0.05,
+              0.0
+            ],
+            [
+              0.1,
+              0.318
+            ],
+            [
+              0.15,
+              0.45
+            ],
+            [
+              0.25,
+              0.45
+            ],
+            [
+              0.3,
+              0.318
+            ],
+            [
+              0.35,
+              0.0
+            ]
+          ],
+          "pitch": [
+            [
+              0.103,
+              0.5
+            ],
+            [
+              0.412,
+              2.0
+            ]
+          ]
+        },
+        {
+          "sound": {
+            "event": "combinedassault:humvee_engine_mid",
+            "range": 128
+          },
+          "input": "rpm",
+          "volume": [
+            [
+              0.25,
+              0.0
+            ],
+            [
+              0.3,
+              0.53
+            ],
+            [
+              0.35,
+              0.75
+            ],
+            [
+              0.55,
+              0.75
+            ],
+            [
+              0.615,
+              0.53
+            ],
+            [
+              0.68,
+              0.0
+            ]
+          ],
+          "pitch": [
+            [
+              0.206,
+              0.5
+            ],
+            [
+              0.824,
+              2.0
+            ]
+          ]
+        },
+        {
+          "sound": {
+            "event": "combinedassault:humvee_engine_high",
+            "range": 160
+          },
+          "input": "rpm",
+          "volume": [
+            [
+              0.55,
+              0.0
+            ],
+            [
+              0.615,
+              0.707
+            ],
+            [
+              0.68,
+              1.0
+            ]
+          ],
+          "pitch": [
+            [
+              0.382,
+              0.5
+            ],
+            [
+              1.529,
+              2.0
+            ]
+          ]
+        }
+      ]
+    },
+    "cabin_muffle": 0.4,
+    "controller": "flans_modern:humvee_controller",
+    "description": "US Marines Jeep"
+  }
+}

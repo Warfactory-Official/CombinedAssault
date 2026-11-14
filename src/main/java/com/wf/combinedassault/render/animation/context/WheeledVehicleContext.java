@@ -9,6 +9,8 @@ public class WheeledVehicleContext extends VehicleContext<WheeledVehicle> {
     private float wheelRotation = 0f;
     private float steeringAngle = 0f;
     private final DriverControls controls = new DriverControls();
+    /** Half-track belts. */
+    private final TrackWheels trackWheels = new TrackWheels();
 
     public WheeledVehicleContext(WheeledVehicle vehicle) {
         super(vehicle);
@@ -25,14 +27,15 @@ public class WheeledVehicleContext extends VehicleContext<WheeledVehicle> {
     @Override
     public void tick() {
         super.tick();
-        float deltaTime = (this.currentTimeMillis() - this.lastRenderTime()) / 1000f;
+        float deltaTime = this.frameSeconds();
         this.advanceWheelRotation();
         this.updateSteeringAngle();
+        trackWheels.advance(entity, deltaTime);
         controls.update(entity, deltaTime);
     }
 
     private void advanceWheelRotation() {
-        float deltaTime = (this.currentTimeMillis() - this.lastRenderTime()) / 1000f;
+        float deltaTime = this.frameSeconds();
         float forwardSpeed = this.getForwardSpeed();
 
         float distance = forwardSpeed * deltaTime * 20;
@@ -67,6 +70,7 @@ public class WheeledVehicleContext extends VehicleContext<WheeledVehicle> {
         return switch (source) {
             case "wheel_rotation" -> getWheelDegrees(paramValue);
             case "steering_angle" -> getSteeringAngle();
+            case "left_wheel_rotation", "right_wheel_rotation" -> trackWheels.binding(source, paramValue);
             default -> {
                 float control = controls.value(source);
                 yield Float.isNaN(control) ? super.getBindingValue(source, param) : control;

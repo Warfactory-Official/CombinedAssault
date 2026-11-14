@@ -2,6 +2,7 @@ package com.wf.combinedassault.ballistics;
 
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.ballistics.addon.AddonStrike;
+import com.wf.combinedassault.ballistics.addon.IntegralEra;
 import com.wf.combinedassault.ballistics.addon.AddonStrikes;
 import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.ballistics.component.HullComponents;
@@ -21,6 +22,7 @@ import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.util.VectorUtil;
 import com.wf.wflib.armor.api.hull.HullResult;
 import com.wf.wflib.armor.api.hull.HullWear;
+import com.wf.wflib.armor.api.hull.WalkResult;
 import com.wf.wflib.audio.api.AudioCategory;
 import com.wf.wflib.damage.api.StrikeContext;
 import com.wf.wflib.damage.api.WFDamageTypes;
@@ -37,6 +39,9 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DamageSystem {
 
@@ -56,12 +61,17 @@ public class DamageSystem {
                 }
             }
         }
-        double scale = 1;
         boolean explosion = damageSource.getMsgId().equals("combinedassault.explosion");
+        VehicleBlastResolver.Damage blast = explosion ? VehicleBlastResolver.pending(vehicle) : null;
+        if (blast != null) {
+            hurtBlast(vehicle, damageSource, blast);
+            return;
+        }
+        double scale = 1;
         PartUnit<?> hitPartUnit = null;
         Vec3 hitPos = null;
         float caliber = 5.8f;
-        float penetrationScale = 1.0f;
+        AddonStrike.Lead lead = null;
         StrikeContext round = StrikeContext.of(damageSource);
         if (round != null) {
             Vec3 position = round.position();
@@ -70,7 +80,7 @@ public class DamageSystem {
             Vec3 closestHitPos;
             if (strike != null) {
                 closestHitPos = strike.hull();
-                penetrationScale = strike.penetrationScale();
+                lead = strike.lead();
                 amount *= strike.damageScale();
             } else {
                 closestHitPos = VectorUtil.closestHullHit(vehicle, position, position.add(round.velocity()));
@@ -100,12 +110,21 @@ public class DamageSystem {
         if (amount < 0.1) {
             amount = 0;
         }
+        // Shaped charge / EFP round: the warhead's jet resolves the armour from the detonation point; the hit itself is contact only.
+        boolean jetOwned = round != null && round.threat().kind().ownsJet() && round.threat().penetrationMm() <= 0;
+        if (jetOwned) {
+            AddonStrikes.contact(vehicle, amount);
+            amount = 0;
+        }
         float incoming = amount;
         // Thermite / laser burn through: no threshold, no armour answer; hull + struck system take it whole.
         // Laser armour + mass already priced by wflib LaserDamage.
         boolean thermal = damageSource.is(VehicleDamageTypes.THERMITE) || laser;
         // null: no armour model answer (no armour, no penetration round, not a shot) => stock threshold/core-line path below.
-        HullResult ballistic = Ballistics.resolve(vehicle, damageSource, amount, hitPos, penetrationScale);
+        HullResult ballistic = Ballistics.resolve(vehicle, damageSource, amount, hitPos, lead);
+        if (ballistic != null && hitPos != null) {
+            IntegralEra.commit(vehicle, ballistic.walk(), hitPos);
+        }
         if (ballistic == null && hitPartUnit != null && hitPartUnit.isDefensive() && !hitPartUnit.isDetached()) {
             float partUnitDamage = amount;
             if (partUnitDamage < 0.1) {
@@ -121,7 +140,8 @@ public class DamageSystem {
                 hitPartUnit.hurt(damageSource, ballistic.partDamage());
             }
             amount = ballistic.hullDamage();
-        } else if (amount < vehicle.defenseStats.damageThreshold && !thermal) {
+        } else if (amount < vehicle.defenseStats.damageThreshold && !thermal && !jetOwned
+                && !(explosion && vehicle.armorProfile != null && vehicle.armorProfile.isDefined())) {
             amount = 0.1f;
         } else {
             if (hitPos == null) {
@@ -150,8 +170,9 @@ public class DamageSystem {
         }
         // Core-line falloff applies to hull only; struck system takes the hit whole.
         float systemAmount = amount;
-        if (ballistic != null && round != null && hitPos != null
-                && Spall.onPenetration(vehicle, round, ballistic, hitPos, incoming, systemAmount)) {
+        boolean fragments = ballistic != null && round != null && hitPos != null
+                && Spall.onPenetration(vehicle, round, ballistic, incoming, systemAmount);
+        if (fragments) {
             systemAmount *= Spall.DIRECT_SHARE;
         }
         amount *= (float) scale;
@@ -203,8 +224,44 @@ public class DamageSystem {
             vehicle.playSound(vehicle.getHurtSound(damageSource), 2, 1);
         }
         // Hull-geometry systems (track/engine deck/fuel cell) add a failure mode; do not reduce hull damage.
-        hurtHullSystem(vehicle, hitPos, damageSource, systemAmount);
+        hurtHullSystem(vehicle, hitPos, damageSource, systemAmount, ballistic);
         CombinedAssault.LOGGER.debug("{} damaged by {} with amount: {}", vehicle, damageSource, amount);
+        float hull = vehicle.getHealth() - amount;
+        vehicle.setHealth(Math.max(0, hull));
+        if (hull < 0 && !vehicle.isDestroyed()) {
+            VehicleSystems.overflow(vehicle, -hull);
+        }
+    }
+
+    /**
+     * Resolved blast ({@link VehicleBlastResolver}): hull + part damage as priced per ray, internal systems already
+     * hurt by the resolver. Unarmoured hulls keep the legacy threshold.
+     */
+    private static void hurtBlast(AbstractVehicle vehicle, DamageSource damageSource, VehicleBlastResolver.Damage blast) {
+        float amount = blast.hull;
+        if (amount < 0.1) {
+            amount = 0;
+        } else if (!blast.armoured && amount < vehicle.defenseStats.damageThreshold) {
+            amount = 0.1f;
+        }
+        for (var part : blast.parts.entrySet()) {
+            if (!part.getKey().isDetached() && part.getValue() > 0) {
+                part.getKey().hurt(damageSource, part.getValue());
+            }
+        }
+        if (blast.at != null && blast.incoming > 0) {
+            wearArmor(vehicle, blast.at, blast.normal, blast.incoming, HullWear.Kind.BLAST);
+        }
+        if (blast.at != null) {
+            float damageScale = amount / vehicle.getMaxHealth();
+            if (damageScale >= 0.5) {
+                VehicleSounds.at(vehicle, blast.at, VehicleSounds.HIT_BIG, AudioCategory.WEAPONS);
+            } else if (damageScale >= 0.25) {
+                VehicleSounds.at(vehicle, blast.at, VehicleSounds.HIT_MED, AudioCategory.WEAPONS);
+            } else if (damageScale > 0) {
+                VehicleSounds.at(vehicle, blast.at, VehicleSounds.HIT_SMALL, AudioCategory.WEAPONS);
+            }
+        }
         float hull = vehicle.getHealth() - amount;
         vehicle.setHealth(Math.max(0, hull));
         if (hull < 0 && !vehicle.isDestroyed()) {
@@ -241,9 +298,12 @@ public class DamageSystem {
                 ballistic == null ? 0 : ballistic.nominalThickness()));
     }
 
-    /** Piece found by the armour model's own trace (shot's line); blast (no line) traces hit->core instead. */
+    /**
+     * Piece found by the armour model's own trace (shot's line); blast (no line) traces hit->core instead. Resolved
+     * shot ({@code ballistic}): {@link #hurtResolved}.
+     */
     private static void hurtHullSystem(AbstractVehicle vehicle, @Nullable Vec3 hitPos,
-                                       DamageSource damageSource, float amount) {
+                                       DamageSource damageSource, float amount, @Nullable HullResult ballistic) {
         HullComponents systems = vehicle.hullComponents();
         if (systems.isEmpty() || hitPos == null || amount <= 0) {
             return;
@@ -251,6 +311,10 @@ public class DamageSystem {
         Vec3 from;
         Vec3 to;
         StrikeContext round = StrikeContext.of(damageSource);
+        if (ballistic != null && round != null && round.velocity().lengthSqr() > 1.0e-6) {
+            hurtResolved(vehicle, systems, round.position(), round.velocity().normalize(), ballistic, hitPos, amount);
+            return;
+        }
         if (round != null && round.velocity().lengthSqr() > 1.0e-6) {
             Vec3 direction = round.velocity().normalize();
             from = hitPos.subtract(direction.scale(0.1));
@@ -272,7 +336,62 @@ public class DamageSystem {
             hurtHitSystem(vehicle, hits, systems, hitPos, from, to, amount);
             return;
         }
-        hurtImplicit(vehicle, systems, hitPos, amount);
+        hurtImplicit(vehicle, systems, hitPos, amount, true);
+    }
+
+    private static final ThreadLocal<List<VehicleHits.Hit>> MODULES = ThreadLocal.withInitial(ArrayList::new);
+
+    /**
+     * Resolved shot: the struck drawn node's own system (track, wheel, rotor, barrel) takes the hull damage; only
+     * {@link HullResult#through} reaches modules, in line order: each takes {@code amount x budget left / interiorPen}
+     * and spends its {@code rha}; the round ends where the budget does. No module reached => implicit pools: running
+     * gear always, engine only when through.
+     */
+    static void hurtResolved(AbstractVehicle vehicle, HullComponents systems, Vec3 start, Vec3 dir,
+                             HullResult ballistic, Vec3 hitPos, float amount) {
+        Vec3 from = hitPos.subtract(dir.scale(0.1));
+        VehicleHits hits = vehicle.hits();
+        boolean through = ballistic.through();
+        if (hits == null) {
+            hurtImplicit(vehicle, systems, hitPos, amount, through);
+            return;
+        }
+        if (through && hurtModules(vehicle, hits, systems, start, ballistic, from, dir, amount)) {
+            return;
+        }
+        VehicleHits.Hit surface = hits.surface(from, hitPos.add(dir.scale(0.1)));
+        if (surface != null) {
+            HitModel.Node node = hits.model().nodes().get(surface.node());
+            if (node.part() != null) {
+                return;
+            }
+            if (node.kind() != null && systems.hurt(node.systemId(), amount)) {
+                return;
+            }
+        }
+        hurtImplicit(vehicle, systems, hitPos, amount, through);
+    }
+
+    private static boolean hurtModules(AbstractVehicle vehicle, VehicleHits hits, HullComponents systems,
+                                       Vec3 start, HullResult ballistic, Vec3 from, Vec3 dir, float amount) {
+        List<VehicleHits.Hit> found = MODULES.get();
+        found.clear();
+        hits.modules(from, from.add(dir.scale(Math.max(1.0, vehicle.getStructureLength()))), found);
+        WalkResult walk = ballistic.walk();
+        float interior = ballistic.interiorPen();
+        float spent = 0;
+        boolean reached = false;
+        for (VehicleHits.Hit module : found) {
+            float left = walk.residualAt((float) start.distanceTo(module.point()), ballistic.penetration()) - spent;
+            if (left <= 0) {
+                break;
+            }
+            HitModel.Node node = hits.model().nodes().get(module.node());
+            reached |= systems.hurt(node.systemId(), amount * Math.min(1.0f, left / interior));
+            spent += hits.moduleRha(module.node());
+        }
+        found.clear();
+        return reached;
     }
 
     /**
@@ -300,15 +419,20 @@ public class DamageSystem {
                 return;
             }
         }
-        hurtImplicit(vehicle, systems, hitPos, amount);
+        hurtImplicit(vehicle, systems, hitPos, amount, true);
     }
 
     /** Low third of the main box = running gear on this side, and rest of the hull = {@link #ENGINE_SHARE} to the engine. */
     private static final double RUNNING_GEAR_BAND = 1.0 / 3.0;
     private static final float ENGINE_SHARE = 0.25f;
 
-    /** Default pools (no geometry, {@link HullComponents#isImplicit}): routed by where on the main box the hit is. */
-    private static void hurtImplicit(AbstractVehicle vehicle, HullComponents systems, Vec3 hitPos, float amount) {
+    /**
+     * Default pools (no geometry, {@link HullComponents#isImplicit}): routed by where on the main box the hit is.
+     *
+     * @param internal the shot got behind the armour: the engine pool is reachable
+     */
+    private static void hurtImplicit(AbstractVehicle vehicle, HullComponents systems, Vec3 hitPos, float amount,
+                                     boolean internal) {
         if (vehicle.getMainCubeOBB() == null) {
             return;
         }
@@ -326,7 +450,7 @@ public class DamageSystem {
                 continue;
             }
             ComponentKind kind = systems.kind(i);
-            if (kind == ComponentKind.ENGINE && !low) {
+            if (kind == ComponentKind.ENGINE && !low && internal) {
                 systems.setHealth(i, systems.health(i) - amount * ENGINE_SHARE);
             } else if (low && kind == ComponentKind.WHEEL) {
                 systems.setHealth(i, systems.health(i) - amount);

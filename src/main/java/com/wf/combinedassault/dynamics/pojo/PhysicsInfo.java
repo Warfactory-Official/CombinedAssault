@@ -11,8 +11,9 @@ public class PhysicsInfo {
     @SerializedName("density")
     public float density = 8;
 
+    /** N; NaN => {@code AbstractVehicle#defaultFriction}. */
     @SerializedName("friction")
-    public float friction = 2000f;
+    public float friction = Float.NaN;
 
     @SerializedName("liquid_damping")
     public float liquidDamping = 0.1f;

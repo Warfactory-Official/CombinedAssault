@@ -11,6 +11,7 @@ import com.wf.wflib.geom.api.flight.Airframe;
 import com.wf.wflib.geom.api.flight.FlightAttitude;
 import com.wf.wflib.geom.api.flight.Multirotor;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
@@ -234,6 +235,20 @@ public final class MultirotorFlight {
         double sin = Math.sin(tilt);
         double k = sin < 1.0E-9 ? 1.0 : tilt / sin;
         return new FlightAttitude(axis.x * k, axis.z * k, throttle);
+    }
+
+    public void writePrediction(FriendlyByteBuf buf) {
+        buf.writeDouble(this.attitude.tiltX());
+        buf.writeDouble(this.attitude.tiltZ());
+        buf.writeDouble(this.attitude.throttle());
+        buf.writeFloat(this.spin.x);
+        buf.writeFloat(this.spin.y);
+        buf.writeFloat(this.spin.z);
+    }
+
+    public void readPrediction(FriendlyByteBuf buf) {
+        this.attitude = new FlightAttitude(buf.readDouble(), buf.readDouble(), buf.readDouble());
+        this.spin.set(buf.readFloat(), buf.readFloat(), buf.readFloat());
     }
 
     public void save(CompoundTag tag) {

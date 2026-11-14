@@ -1,0 +1,7 @@
+{
+  "model": "combinedassault:models/weapon/spray_pod/spray_pod.glb",
+  "weapons": ["combinedassault:spray_pod"],
+  "fits": ["door"],
+  "install_ticks": 120,
+  "station": {"optical_sight_type": "operator", "zoom_max": 1}
+}

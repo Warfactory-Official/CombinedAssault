@@ -314,6 +314,7 @@ def run():
     player_reference()
     passenger_cameras()
     merge_coplanar()
+    make_hull()
     part_model()
 
     print("SUMMARY %d failure(s)" % len(FAILURES))
@@ -595,6 +596,27 @@ def merge_coplanar():
     points, faces = T.faces_of(cube)
     check("merge restores 6 quads", len(faces) == 6 and T.coplanar_neighbours(points, faces) is None, str(len(faces)))
     check("merged collider still valid", not T.check_collider(cube), str(T.check_collider(cube)))
+
+
+def make_hull():
+    fresh_scene()
+    small = box("bevelled", (0, 0, 0), (0.2, 0.2, 0.2))
+    bpy.ops.object.modifier_add(type="BEVEL")
+    small.modifiers[-1].width = 0.005
+    small.modifiers[-1].segments = 3
+    bpy.ops.mesh.primitive_grid_add(x_subdivisions=40, y_subdivisions=40, size=4, location=(5, 0, 0))
+    curved = bpy.context.active_object
+    for v in curved.data.vertices:
+        v.co.z = 0.002 * math.cos(v.co.x) * math.cos(v.co.y)
+    bpy.ops.object.modifier_add(type="SOLIDIFY")
+    curved.modifiers[-1].thickness = 0.3
+    for source in (small, curved):
+        select(source)
+        bpy.ops.combinedassault.make_hull()
+        hull = bpy.context.active_object
+        problems = T.check_collider(hull)
+        check("hull of %s valid for ConvexHull.of" % source.name,
+              hull.combinedassault.role == "COLLIDER" and not problems, str(problems[:2]))
 
 
 def part_model():

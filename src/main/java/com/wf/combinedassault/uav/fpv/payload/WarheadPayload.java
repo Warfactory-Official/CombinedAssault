@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.wf.combinedassault.vehicle.VehicleDamageTypes;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.drone.api.StrappedExplosive;
+import com.wf.wflib.explosion.api.BlastTarget;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -75,7 +76,8 @@ public class WarheadPayload extends StrappedPayload {
         }
         // Drone already discarded: not the direct entity, not caught in its own blast.
         Entity struck = hardpoint.takeStruckTarget();
-        if (struck != null && this.hitDamage > 0) {
+        // A vehicle resolves the charge itself, at contact (BlastTarget): no flat hit on top.
+        if (struck != null && this.hitDamage > 0 && !(struck instanceof BlastTarget)) {
             struck.hurt(VehicleDamageTypes.Sources.explosion(level.registryAccess(), null, operator, at), this.hitDamage);
             // Same-tick blast; vanilla invulnerability frames would otherwise swallow it.
             struck.invulnerableTime = 0;

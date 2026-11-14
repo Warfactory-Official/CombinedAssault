@@ -139,7 +139,7 @@ public final class ReconBridge {
      * gating on proximity would break orbital relays (no ground presence by design). Range still bites via
      * empty pictures / loss of ground-station contact, not here.
      */
-    private static long netFor(ServerLevel level, AbstractVehicle vehicle, RadarUnit unit) {
+    static long netFor(ServerLevel level, AbstractVehicle vehicle, RadarUnit unit) {
         long owner = ReconOwners.netOf(vehicle);
         if (owner != ReconNet.UNAFFILIATED) {
             return owner;

@@ -112,6 +112,12 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
         this.rideGroup = vehicleCubeGroupCopy.get(data.getRawRideGroup());
     }
 
+    /** {@code ride_frame} seat's frame group, else null. */
+    @Nullable
+    public VehicleCubeGroup rideGroup() {
+        return rideGroup;
+    }
+
     /** Hull, or for a {@code ride_frame} seat its frame: rider position and look follow it. */
     public Quaternionf rideRotation(float partialTick) {
         Quaternionf rot = vehicle.rotYXZ(partialTick);
@@ -481,7 +487,22 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
     }
 
     public float getSeatRot() {
-        return vehicle.getYRot() + seatRot;
+        return vehicle.getYRot() + seatRot + frameYaw(seatFrame());
+    }
+
+    /** Frame the seat position rides ({@link #worldSeatPosition}); null => hull. */
+    @Nullable
+    protected VehicleCubeGroup seatFrame() {
+        return structureGroup != null ? structureGroup : rideGroup;
+    }
+
+    /** {@code group}'s yaw off the hull, deg (vehicle yaw sense). */
+    protected float frameYaw(@Nullable VehicleCubeGroup group) {
+        Quaternionf rot = new Quaternionf();
+        for (VehicleCubeGroup at = group; at != null; at = at.parent) {
+            rot.premul(getViewGroupRotation(at, 1.0F));
+        }
+        return (float) -Math.toDegrees(rot.getEulerAnglesYXZ(new Vector3f()).y);
     }
 
     public void applySeatRot(LivingEntity passenger) {

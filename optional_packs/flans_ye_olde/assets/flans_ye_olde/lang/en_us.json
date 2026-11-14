@@ -1,0 +1,11 @@
+{
+  "entity.flans_ye_olde.biplane": "Biplane",
+  "entity.flans_ye_olde.twoseatbiplane": "Two Seat Biplane",
+  "flans_ye_olde.biplane": "Biplane",
+  "flans_ye_olde.twoseatbiplane": "Two Seat Biplane",
+  "part.flans_ye_olde.biplane.landing_gear": "Landing gear",
+  "part.flans_ye_olde.biplane.pilot": "Pilot",
+  "part.flans_ye_olde.twoseatbiplane.landing_gear": "Landing gear",
+  "part.flans_ye_olde.twoseatbiplane.pilot": "Pilot",
+  "part.flans_ye_olde.twoseatbiplane.seat_1": "Seat 2"
+}

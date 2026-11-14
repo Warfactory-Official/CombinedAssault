@@ -58,6 +58,8 @@ public class WeaponUnitData extends RotatableUnitData {
     private Handling handling = Handling.REMOTE;
     @Nullable
     private OpticSpec optic;
+    @Nullable
+    private Rangefinder rangefinder;
     private List<WeaponInfo> weapons;
     @org.jetbrains.annotations.Nullable
     private com.wf.combinedassault.indirect.IndirectFireSpec indirectFire;
@@ -100,6 +102,18 @@ public class WeaponUnitData extends RotatableUnitData {
             throw new IllegalArgumentException("weapon part " + pojo.id + ": optic.zoom empty");
         }
         this.optic = pojo.optic;
+        if (pojo.rangefinder != null) {
+            boolean zero = switch (pojo.rangefinder.mode) {
+                case "zero" -> true;
+                case "info" -> false;
+                default -> throw new IllegalArgumentException("weapon part " + pojo.id + ": rangefinder.mode '"
+                        + pojo.rangefinder.mode + "' not info|zero");
+            };
+            if (!(pojo.rangefinder.maxRange > 0)) {
+                throw new IllegalArgumentException("weapon part " + pojo.id + ": rangefinder.max_range <= 0");
+            }
+            this.rangefinder = new Rangefinder(zero, pojo.rangefinder.maxRange);
+        }
         this.weapons = pojo.weapons;
         this.hardpoint = pojo.hardpoint == null ? null : HardwareKits.Hardpoint.parse(pojo.hardpoint);
         this.indirectFire = pojo.indirectFire == null ? null
@@ -281,6 +295,15 @@ public class WeaponUnitData extends RotatableUnitData {
 
     public Handling getHandling() {
         return handling;
+    }
+
+    @Nullable
+    public Rangefinder getRangefinder() {
+        return rangefinder;
+    }
+
+    /** {@code zero}: a reading also becomes the gun's zero; m. */
+    public record Rangefinder(boolean zero, float maxRange) {
     }
 
     @Nullable

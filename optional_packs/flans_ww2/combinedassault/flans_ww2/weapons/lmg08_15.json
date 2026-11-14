@@ -1,0 +1,23 @@
+{
+  "type": "combinedassault:cannon",
+  "name": "LMG 08/15",
+  "shoot_interval": 110,
+  "max_capacity": 250,
+  "reload": {
+    "time": 100,
+    "ammo": "wflib:cartridge_7_92x57"
+  },
+  "inaccuracy": 0.15,
+  "casing_delay": 0.03,
+  "sounds": {
+    "fire": {
+      "event": "combinedassault:gun_7.62mm_shot",
+      "range": 300,
+      "pitch_random": 0.1
+    },
+    "reload": {
+      "event": "combinedassault:gun_reload",
+      "range": 24
+    }
+  }
+}

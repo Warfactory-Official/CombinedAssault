@@ -2,6 +2,7 @@ package com.wf.combinedassault.labs;
 
 import com.wf.combinedassault.ballistics.DamageSystem;
 import com.wf.combinedassault.ballistics.ThermalAttacks;
+import com.wf.combinedassault.ballistics.VehicleBlastResolver;
 import com.wf.combinedassault.ballistics.component.VehicleMobility;
 import com.wf.combinedassault.vehicle.VehicleDamageTypes;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
@@ -9,6 +10,7 @@ import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.damage.api.DamageClass;
 import com.wf.wflib.damage.api.WFDamageSources;
 import com.wf.wflib.damage.api.event.ThermalAttackEvent;
+import com.wf.wflib.explosion.api.BlastPayload;
 import com.wf.wflib.labs.api.LabContext;
 import com.wf.wflib.labs.api.LabProducer;
 import com.wf.wflib.labs.api.LabSink;
@@ -23,7 +25,8 @@ import java.util.Map;
 
 /**
  * Non-ballistic threats CA applies to a vehicle, each through its real entry point on a live (never ticked) vehicle:
- * blast {@code DamageSystem.hurt} explosion source, thermite {@code ThermalAttacks.onThermal}, collision
+ * blast {@code DamageSystem.hurt} explosion source (flat), {@code he_*} / {@code mine_belly} warhead payloads through
+ * {@code VehicleBlastResolver} (TNT-eq kg as intensity, charge 3 m / 8 m outboard or under the belly), thermite {@code ThermalAttacks.onThermal}, collision
  * {@code DamageSystem.impactHurt}, fall {@code DamageSystem.landingHurt}, laser {@code DamageSystem.hurt} laser source.
  * Rows with {@code modelled} 0 name threats CA has no code for. Applications repeat to {@value #CAP}.
  */
@@ -49,8 +52,7 @@ public final class VehicleHazardsProducer implements LabProducer {
     private static final Object[][] NOT_MODELLED = {
             {"fire_over_time", "no burning state on a vehicle; fire only reaches crew (thermite, breech)"},
             {"emp", "no electronics system or EMP handler on vehicles"},
-            {"water", "no drowning or flooding damage; only wading flag"},
-            {"mine", "no mine handler; mines are wflib explosions, see blast"}};
+            {"water", "no drowning or flooding damage; only wading flag"}};
 
     @Override
     public String domain() {
@@ -80,6 +82,9 @@ public final class VehicleHazardsProducer implements LabProducer {
         return List.of(
                 new Threat("blast", new double[]{5, 20, 50, 100, 200, 500}, true, (v, at, i) ->
                         DamageSystem.hurt(VehicleDamageTypes.Sources.explosion(v.level().registryAccess(), null, null, at), (float) i, v)),
+                new Threat("he_3m", HE_KG, true, (v, at, i) -> he(v, at, i, 3.0)),
+                new Threat("he_8m", HE_KG, true, (v, at, i) -> he(v, at, i, 8.0)),
+                new Threat("mine_belly", new double[]{2, 5, 10}, false, (v, at, i) -> belly(v, i)),
                 new Threat("thermite", new double[]{10, 50, 200}, true, (v, at, i) ->
                         ThermalAttacks.onThermal(new ThermalAttackEvent(v, at, (float) i, true, 0, null, v))),
                 new Threat("laser", new double[]{10, 50, 200}, true, (v, at, i) -> {
@@ -88,6 +93,26 @@ public final class VehicleHazardsProducer implements LabProducer {
                 }),
                 new Threat("collision", new double[]{2, 5, 10, 20}, false, (v, at, i) -> DamageSystem.impactHurt(i / 20.0, at, v)),
                 new Threat("fall", new double[]{10, 15, 20, 30}, false, (v, at, i) -> DamageSystem.landingHurt(v, i / 20.0)));
+    }
+
+    /** TNT-eq kg: 1 = grenade, 10.8 = 155 mm shell filler. */
+    private static final double[] HE_KG = {1, 5, 10.8, 25, 50};
+
+    /** Charge {@code distance} m outboard of the hull point {@code at}, through the vanilla route: payload synthesised from kg. */
+    private static void he(AbstractVehicle v, Vec3 at, double kg, double distance) {
+        Vec3 out = at.subtract(v.getBoundingBox().getCenter()).multiply(1, 0, 1).normalize();
+        detonate(v, at.add(out.scale(distance)), (float) kg);
+    }
+
+    private static void belly(AbstractVehicle v, double kg) {
+        var box = v.getMainCubeOBB().obb();
+        detonate(v, new Vec3(box.centerX(), Math.max(box.centerY() - box.extents().y - 0.3, v.getY() + 0.05), box.centerZ()), (float) kg);
+    }
+
+    private static void detonate(AbstractVehicle v, Vec3 centre, float kg) {
+        float size = VehicleBlastResolver.sizeForKg(kg);
+        VehicleBlastResolver.resolve(v, new net.minecraft.world.level.Explosion(v.level(), null, centre.x, centre.y, centre.z,
+                size, false, net.minecraft.world.level.Explosion.BlockInteraction.KEEP), null, BlastPayload.blast(kg), centre);
     }
 
     @Override

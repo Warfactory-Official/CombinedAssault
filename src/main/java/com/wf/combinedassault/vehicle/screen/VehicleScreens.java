@@ -7,6 +7,7 @@ import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.gemrender.direct.TextureSlots;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
+import com.wf.wflib.ui.api.WorldScreens;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -73,7 +74,17 @@ public final class VehicleScreens {
 
         @Override
         public boolean emissive(String slot) {
-            return slot.startsWith(ScreenInfo.SLOT_PREFIX);
+            return slot.startsWith(ScreenInfo.SLOT_PREFIX) && !emissionMask(slot);
+        }
+
+        @Override
+        public boolean emissionMask(String slot) {
+            for (int i = 0; i < count; i++) {
+                if (slots[i].equals(slot)) {
+                    return infos[i].kind != ScreenInfo.Kind.SIGHT && WorldScreens.masked(views[i]);
+                }
+            }
+            return false;
         }
 
         void show(int i, int p) {

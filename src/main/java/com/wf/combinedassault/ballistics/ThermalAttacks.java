@@ -2,10 +2,12 @@ package com.wf.combinedassault.ballistics;
 
 import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
+import com.wf.combinedassault.ballistics.spall.Spall;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 import com.wf.combinedassault.vehicle.VehicleDamageTypes;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.damage.api.event.ThermalAttackEvent;
+import com.wf.wflib.explosion.api.BlastPayload;
 import com.wf.wflib.geom.api.OBB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -21,6 +23,9 @@ public final class ThermalAttacks {
     /** Heat => vehicle damage. */
     static final float HEAT_DAMAGE = 1.0f;
     static final float TRACK_SHARE = 1.5f;
+    /** A burning charge's thermal component: reaches seats with an open hatch within this, m, at this share of the heat. */
+    static final BlastPayload.Thermal CREW_PAYLOAD = new BlastPayload.Thermal(1.5f);
+    static final float CREW_HEAT_SHARE = 0.1f;
     /** Running gear: lowest third of the main box. */
     static final double RUNNING_GEAR_BAND = 1.0 / 3.0;
 
@@ -37,6 +42,7 @@ public final class ThermalAttacks {
         float damage = event.heat() * HEAT_DAMAGE;
         vehicle.hurt(VehicleDamageTypes.Sources.thermite(vehicle.level().registryAccess(), event.charge(),
                 event.attacker(), at), damage);
+        Spall.exposeCrew(vehicle, event.at(), CREW_PAYLOAD.radius(), event.heat() * CREW_HEAT_SHARE, event.attacker());
         VehicleSystems.Side side = underTrack(vehicle, event.at());
         if (side != null) {
             for (VehicleSystems.Cell cell : VehicleSystems.cells(vehicle)) {

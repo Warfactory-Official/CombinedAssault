@@ -24,3 +24,4 @@ wflib JSON layouts (wflib guide Part XXVI §96): `assets/combinedassault/wf_ui/`
   - hit marker in `wflib:hud` (below chat), was in the crosshair layer.
   - board title `INDIRECT` dropped (overlapped state badge); compass narrower, RWR + pitch ladder moved (above).
   - weapons with no `reload` block (kilo torpedo tubes, MIM-104) draw no reload ring; the old aim overlay threw NPE => client crash.
+- Wheel arrow (`vehicle.json`, `local.wheel*`): wheeled driver, fades with actual `turnAngle` (not the wanted lock). Mouse steering = OPERATOR view, seat without weapon, outside free look (`LocalVehiclePlayer.wheelDriver`); third person stays A/D. A/D released => recentre; mouse-set lock holds.

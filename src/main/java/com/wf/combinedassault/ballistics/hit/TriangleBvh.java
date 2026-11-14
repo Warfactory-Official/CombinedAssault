@@ -2,7 +2,7 @@ package com.wf.combinedassault.ballistics.hit;
 
 /**
  * Median-split BVH over one node's triangles, node frame; nearest ray hit (Moller-Trumbore, two-sided): exact point,
- * face normal, per-triangle armour for the plate model and surface material for effects.
+ * face normal, per-triangle plate index and surface material for effects.
  */
 public final class TriangleBvh {
 
@@ -10,8 +10,8 @@ public final class TriangleBvh {
 
     /** 9 floats per triangle, in BVH order. */
     private final float[] tris;
-    /** mm RHA per triangle ({@code armor_<mm>} material), 0 = none; BVH order. */
-    private final float[] armor;
+    /** {@link HitMesh#plates} index + 1 per triangle ({@code armor:<id>} material), 0 = unbound; BVH order. */
+    private final short[] plate;
     /** {@link SurfaceMaterial} ordinal per triangle; BVH order. */
     private final byte[] material;
     /** Per BVH node: 6 bounds. */
@@ -21,7 +21,7 @@ public final class TriangleBvh {
     private final int[] count;
     private int nodes;
 
-    public TriangleBvh(float[] triangles, float[] armour, byte[] materials) {
+    public TriangleBvh(float[] triangles, short[] plates, byte[] materials) {
         int n = triangles.length / 9;
         int[] order = new int[n];
         float[] centre = new float[n * 3];
@@ -37,17 +37,17 @@ public final class TriangleBvh {
         count = new int[capacity];
         build(triangles, centre, order, 0, n);
         tris = new float[n * 9];
-        armor = new float[n];
+        plate = new short[n];
         material = new byte[n];
         for (int i = 0; i < n; i++) {
             System.arraycopy(triangles, order[i] * 9, tris, i * 9, 9);
-            armor[i] = armour[order[i]];
+            plate[i] = plates[order[i]];
             material[i] = materials[order[i]];
         }
     }
 
     public int triangleCount() {
-        return armor.length;
+        return plate.length;
     }
 
     private int build(float[] triangles, float[] centre, int[] order, int from, int to) {
@@ -108,13 +108,20 @@ public final class TriangleBvh {
         }
     }
 
+    /** Traversal stack depth {@link #trace} and {@link #traceAll} need. */
+    public static final int STACK = 64;
+
     /**
      * Nearest hit along {@code o + t d}, {@code 0 <= t < limit}; writes {@code t} to {@code out[0]} and returns the
      * triangle, or -1.
      */
     public int trace(float ox, float oy, float oz, float dx, float dy, float dz, float limit, float[] out) {
+        return trace(ox, oy, oz, dx, dy, dz, limit, out, new int[STACK]);
+    }
+
+    /** {@link #trace} on the caller's {@code stack} ({@link #STACK} ints). */
+    public int trace(float ox, float oy, float oz, float dx, float dy, float dz, float limit, float[] out, int[] stack) {
         float ix = 1 / dx, iy = 1 / dy, iz = 1 / dz;
-        int[] stack = new int[64];
         int top = 0;
         stack[top++] = 0;
         float best = limit;
@@ -141,6 +148,54 @@ public final class TriangleBvh {
         }
         out[0] = best;
         return hit;
+    }
+
+    /**
+     * Every hit along {@code o + t d}, {@code 0 <= t < limit}, ascending in {@code t} into {@code ts} / {@code tris};
+     * the {@code ts.length} nearest when more. No allocation: scratch is the caller's.
+     *
+     * @param stack {@link #STACK} ints
+     * @return hits written
+     */
+    public int traceAll(float ox, float oy, float oz, float dx, float dy, float dz, float limit, int[] stack,
+                        float[] ts, int[] tris) {
+        float ix = 1 / dx, iy = 1 / dy, iz = 1 / dz;
+        int top = 0;
+        stack[top++] = 0;
+        int n = 0;
+        int cap = ts.length;
+        float reach = limit;
+        while (top > 0) {
+            int node = stack[--top];
+            if (!slab(node * 6, ox, oy, oz, ix, iy, iz, reach)) {
+                continue;
+            }
+            int c = child[node];
+            if (c < 0) {
+                int first = -c - 1;
+                for (int t = first; t < first + count[node]; t++) {
+                    float d = intersect(t * 9, ox, oy, oz, dx, dy, dz);
+                    if (d < 0 || d >= reach) {
+                        continue;
+                    }
+                    int at = n < cap ? n++ : cap - 1;
+                    while (at > 0 && ts[at - 1] > d) {
+                        ts[at] = ts[at - 1];
+                        tris[at] = tris[at - 1];
+                        at--;
+                    }
+                    ts[at] = d;
+                    tris[at] = t;
+                    if (n == cap) {
+                        reach = ts[cap - 1];
+                    }
+                }
+            } else if (top + 2 <= stack.length) {
+                stack[top++] = c;
+                stack[top++] = node + 1;
+            }
+        }
+        return n;
     }
 
     private boolean slab(int b, float ox, float oy, float oz, float ix, float iy, float iz, float limit) {
@@ -197,17 +252,9 @@ public final class TriangleBvh {
         return tris;
     }
 
-    public boolean hasArmor() {
-        for (float mm : armor) {
-            if (mm > 0) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public float armor(int t) {
-        return armor[t];
+    /** {@link HitMesh#plates} index + 1, 0 = unbound. */
+    public short plate(int t) {
+        return plate[t];
     }
 
     public SurfaceMaterial material(int t) {

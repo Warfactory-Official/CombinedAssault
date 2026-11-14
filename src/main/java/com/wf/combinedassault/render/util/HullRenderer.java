@@ -23,6 +23,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -87,6 +88,16 @@ public final class HullRenderer {
         return new float[]{(rgb >> 16 & 255) / 255F, (rgb >> 8 & 255) / 255F, (rgb & 255) / 255F};
     }
 
+    private static final Map<String, float[]> PLATE_COLOURS = new HashMap<>();
+
+    /** Stable per id: golden-angle hue steps off the id's hash; unbound faces keep the LOS ramp. */
+    public static float[] plateColour(String plate) {
+        return PLATE_COLOURS.computeIfAbsent(plate, id -> {
+            int rgb = Mth.hsvToRgb(((id.hashCode() * 0.61803398875F) % 1 + 1) % 1, 0.75F, 1);
+            return new float[]{(rgb >> 16 & 255) / 255F, (rgb >> 8 & 255) / 255F, (rgb & 255) / 255F};
+        });
+    }
+
     /**
      * Hit geometry at its current pose: surface triangles faint (part / system colour), {@code hit_*} modules solid,
      * rotor discs as rings. {@code poseStack} at the entity.
@@ -116,7 +127,9 @@ public final class HullRenderer {
                 float[] t = mesh.triangles();
                 for (int k = 0; k < t.length; k += 9) {
                     if (armored && !node.mesh().module()) {
-                        colour = armorColour(armor(vehicle, profile, i, mesh, k / 9, pose, eye));
+                        String plate = hits.model().mesh().plateId(mesh.plate(k / 9));
+                        colour = plate != null ? plateColour(plate)
+                                : armorColour(armor(vehicle, profile, i, mesh, k / 9, pose, eye));
                         alpha = ARMOR_ALPHA;
                     }
                     line(last, buffer, t, k / 3, k / 3 + 1, colour[0], colour[1], colour[2], alpha);
@@ -162,7 +175,7 @@ public final class HullRenderer {
         mesh.normal(t, n);
         Vector3f normal = pose.transformDirection(new Vector3f(n[0], n[1], n[2])).normalize();
         Vec3 world = vehicle.position().add(point.x, point.y, point.z);
-        HullResolver.Plate plate = HullResolver.plate(vehicle, profile, node, world, normal, mesh.armor(t),
+        HullResolver.Plate plate = HullResolver.plate(vehicle, profile, node, world, normal, null,
                 world.subtract(eye).normalize(), false);
         return plate == null ? 0 : plate.effective();
     }

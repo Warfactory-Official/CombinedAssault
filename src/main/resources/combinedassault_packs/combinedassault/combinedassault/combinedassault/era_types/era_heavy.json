@@ -1,0 +1,13 @@
+{
+  "heat_cut": 0.75,
+  "kinetic_cut": 0.35,
+  "kinetic_initiation_mm": 35,
+  "he_initiation_mm": 40,
+  "fragment_initiation_j": 9000,
+  "thickness": 0.16,
+  "back_plate_mm": 40,
+  "sympathetic": 0.10,
+  "blast_kg": 0.25,
+  "fragments": {"count": 8, "mass_g": 5, "speed": 900},
+  "flyer": {"count": 1, "mass_g": 400, "speed": 1100}
+}

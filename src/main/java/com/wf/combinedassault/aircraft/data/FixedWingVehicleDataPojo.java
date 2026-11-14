@@ -51,6 +51,10 @@ public class FixedWingVehicleDataPojo extends BaseVehicleDataPojo {
         @SerializedName("lift_to_drag_k")
         public float liftToDragK = 6;
 
+        /** Degrees, + = nose up: attitude the gear stance eases to on the ground (taildragger 3-point). */
+        @SerializedName("ground_pitch")
+        public float groundPitch = 0;
+
         @SerializedName("angle_of_attack_min")
         public float angleOfAttackMin = -10f;
 

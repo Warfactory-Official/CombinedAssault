@@ -42,8 +42,6 @@ import java.util.Map;
 public final class SightScreens {
     /** Picture width, px; height from the screen's aspect. */
     private static final int WIDTH = 512;
-    /** Unzoomed sight field, deg (vertical). */
-    private static final double BASE_FOV = 70;
     /** Unused this long => buffers freed. */
     private static final long STALE_NANOS = 2_000_000_000L;
     private static final Map<VehicleScreens.State, Feed[]> FEEDS = new IdentityHashMap<>();
@@ -163,11 +161,12 @@ public final class SightScreens {
         WeaponUnit unit = computer.unit();
         float pt = e.getPartialTick().getGameTimeDeltaPartialTick(false);
         Vec3 eye = unit.worldOpticalSightPosition(pt);
-        Vec2 rot = unit.worldRot(unit.getViewXRot(pt), unit.getViewYRot(pt));
+        Vec2 rot = unit.worldRot(unit.getViewXRot(pt) + unit.zeroElevation(), unit.getViewYRot(pt));
         double yaw = Math.toRadians(rot.y), pitch = Math.toRadians(rot.x);
         double objective = state.infos[i].objective;
         eye = eye.add(-Math.sin(yaw) * Math.cos(pitch) * objective, -Math.sin(pitch) * objective, Math.cos(yaw) * Math.cos(pitch) * objective);
-        float fov = (float) MathUtil.magnificationToFov(unit.getZoom(), BASE_FOV);
+        // Unzoomed field = the FOV option, as SCOPE's (LocalVehiclePlayerEvent) => screen matches the full-screen view.
+        float fov = (float) MathUtil.magnificationToFov(unit.getZoom(), mc.options.fov().get());
         LocalVehiclePlayer local = LocalVehiclePlayer.instance();
         CameraMode mode = local.sightUnit() == unit && unit.fitted(local.sightMode) ? local.sightMode : CameraMode.OPTICAL;
         RenderTarget main = mc.getMainRenderTarget();

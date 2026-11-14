@@ -1,0 +1,128 @@
+{
+  "name": "tigerii_controller",
+  "parameters": {},
+  "graph": {
+    "type": "merge",
+    "inputs": [
+      {
+        "type": "bone_binding",
+        "special_bindings": [
+          {
+            "bones": [
+              "wheel_left_17",
+              "wheel_left_18",
+              "wheel_left_19",
+              "wheel_left_20",
+              "wheel_left_21",
+              "wheel_left_22",
+              "wheel_left_23",
+              "wheel_left_24",
+              "wheel_left_25",
+              "wheel_left_26",
+              "wheel_left_27",
+              "wheel_left_28",
+              "wheel_left_29",
+              "wheel_left_30",
+              "wheel_left_31",
+              "wheel_left_32",
+              "wheel_left_33",
+              "wheel_left_34"
+            ],
+            "source": "left_wheel_rotation",
+            "axis": "x",
+            "param": 0.12
+          },
+          {
+            "bones": [
+              "wheel_left_16",
+              "wheel_left_35"
+            ],
+            "source": "left_wheel_rotation",
+            "axis": "x",
+            "param": 0.36
+          },
+          {
+            "bones": [
+              "wheel_left_0",
+              "wheel_left_1",
+              "wheel_left_2",
+              "wheel_left_3",
+              "wheel_left_4",
+              "wheel_left_5",
+              "wheel_left_6",
+              "wheel_left_7",
+              "wheel_left_8",
+              "wheel_left_9",
+              "wheel_left_10",
+              "wheel_left_11",
+              "wheel_left_12",
+              "wheel_left_13",
+              "wheel_left_14",
+              "wheel_left_15"
+            ],
+            "source": "left_wheel_rotation",
+            "axis": "x",
+            "param": 0.39
+          },
+          {
+            "bones": [
+              "wheel_right_17",
+              "wheel_right_18",
+              "wheel_right_19",
+              "wheel_right_20",
+              "wheel_right_21",
+              "wheel_right_22",
+              "wheel_right_23",
+              "wheel_right_24",
+              "wheel_right_25",
+              "wheel_right_26",
+              "wheel_right_27",
+              "wheel_right_28",
+              "wheel_right_29",
+              "wheel_right_30",
+              "wheel_right_31",
+              "wheel_right_32",
+              "wheel_right_33",
+              "wheel_right_34"
+            ],
+            "source": "right_wheel_rotation",
+            "axis": "x",
+            "param": 0.12
+          },
+          {
+            "bones": [
+              "wheel_right_16",
+              "wheel_right_35"
+            ],
+            "source": "right_wheel_rotation",
+            "axis": "x",
+            "param": 0.36
+          },
+          {
+            "bones": [
+              "wheel_right_0",
+              "wheel_right_1",
+              "wheel_right_2",
+              "wheel_right_3",
+              "wheel_right_4",
+              "wheel_right_5",
+              "wheel_right_6",
+              "wheel_right_7",
+              "wheel_right_8",
+              "wheel_right_9",
+              "wheel_right_10",
+              "wheel_right_11",
+              "wheel_right_12",
+              "wheel_right_13",
+              "wheel_right_14",
+              "wheel_right_15"
+            ],
+            "source": "right_wheel_rotation",
+            "axis": "x",
+            "param": 0.39
+          }
+        ]
+      }
+    ]
+  }
+}

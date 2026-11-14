@@ -1,0 +1,261 @@
+{
+  "type": "combinedassault:wheeled_vehicle",
+  "attributes": {
+    "brake_force": 40210,
+    "forward_force": 44231.0,
+    "backward_force": 22517.6,
+    "max_speed_forward": 1.236,
+    "max_speed_backward": 0.2,
+    "steer_fade_speed": 0.6,
+    "turn_step": 0.25,
+    "max_turn": 2.5,
+    "engine_power": 84.5
+  },
+  "physics_info": {
+    "mass": 7830
+  },
+  "max_health": 550,
+  "armor": {
+    "bottom": 6,
+    "front": 19,
+    "parts": {
+      "turret": {
+        "bottom": 6,
+        "front": 19,
+        "rear": 19,
+        "side": 19,
+        "top": 6
+      }
+    },
+    "rear": 10,
+    "side": 10,
+    "top": 6
+  },
+  "view_info": {
+    "third_person_distance": 7.5
+  },
+  "energy_info": {
+    "energy_capacity": 212,
+    "energy_consumption_per_tick": 0.004
+  },
+  "storage": {
+    "slots": 10
+  },
+  "parts": [
+    {
+      "id": "turret",
+      "name": "part.combinedassault.turret",
+      "type": "combinedassault:weapon",
+      "crew_roles": [
+        "driver",
+        "gunner"
+      ],
+      "max_health": 600,
+      "render_bone": "turret",
+      "rot_info": {
+        "x_rot_speed": 1.5,
+        "y_rot_speed": 2
+      },
+      "optical_sight_type": "optical_scope",
+      "zoom_max": 4,
+      "weapons": [
+        "flans_ww2:m6_37mm",
+        {
+          "id": "flans_ww2:m1919a4",
+          "part_unit_id": "mg_0",
+          "secondary": true
+        }
+      ],
+      "protect_passenger": true
+    },
+    {
+      "id": "wheel_fl",
+      "name": "part.flans_ww2.greyhound.wheel_fl",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 131353,
+      "damping": 7961,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "wheel_fr",
+      "name": "part.flans_ww2.greyhound.wheel_fr",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 131353,
+      "damping": 7961,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "wheel_rl",
+      "name": "part.flans_ww2.greyhound.wheel_rl",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 131353,
+      "damping": 7961,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "wheel_rl_1",
+      "name": "part.flans_ww2.greyhound.wheel_rl_1",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 131353,
+      "damping": 7961,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "wheel_rr",
+      "name": "part.flans_ww2.greyhound.wheel_rr",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 131353,
+      "damping": 7961,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "wheel_rr_1",
+      "name": "part.flans_ww2.greyhound.wheel_rr_1",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 131353,
+      "damping": 7961,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "mg_0",
+      "name": "part.flans_ww2.greyhound.mg_0",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "rot_info": {
+        "x_rot_speed": 3,
+        "y_rot_speed": 3
+      }
+    },
+    {
+      "id": "seat_1",
+      "name": "part.flans_ww2.seat_1",
+      "type": "combinedassault:weapon",
+      "protect_passenger": false,
+      "crosshair_style": "cross",
+      "crew_roles": [
+        "gunner"
+      ],
+      "handling": "manual",
+      "max_health": 120,
+      "render_bone": "seat_1_gun",
+      "rot_info": {
+        "x_rot_speed": 4,
+        "y_rot_speed": 4,
+        "need_power": false,
+        "y_rot_min": -30.0,
+        "y_rot_max": 30.0
+      },
+      "hardpoint": {
+        "node": "seat_1_gun_pitch",
+        "accepts": [
+          "pintle"
+        ],
+        "fitted": "flans_ww2:m1919a4"
+      },
+      "operator_on_weapon_unit": false,
+      "pose": "stand"
+    }
+  ],
+  "model": "flans_ww2:models/vehicle/greyhound/greyhound.glb",
+  "display": {
+    "tab_index": 900,
+    "icon": "flans_ww2:textures/slot/greyhound.png",
+    "engine": {
+      "start": {
+        "event": "combinedassault:lav150_engine_start",
+        "range": 96
+      },
+      "loops": [
+        {
+          "sound": {
+            "event": "combinedassault:truck_engine_idle",
+            "range": 96
+          },
+          "input": "rpm",
+          "volume": [
+            [
+              0.05,
+              0
+            ],
+            [
+              0.3,
+              1
+            ],
+            [
+              0.6,
+              1
+            ],
+            [
+              0.75,
+              0
+            ]
+          ],
+          "pitch": [
+            [
+              0.3,
+              0.85
+            ],
+            [
+              0.6,
+              1
+            ]
+          ]
+        },
+        {
+          "sound": {
+            "event": "combinedassault:truck_engine_run",
+            "range": 160
+          },
+          "input": "rpm",
+          "volume": [
+            [
+              0.6,
+              0
+            ],
+            [
+              0.7,
+              1
+            ]
+          ],
+          "pitch": [
+            [
+              0.6,
+              0.8
+            ],
+            [
+              1,
+              1.1
+            ]
+          ]
+        }
+      ]
+    },
+    "cabin_muffle": 0.6,
+    "controller": "flans_ww2:greyhound_controller",
+    "description": "American Armored Car"
+  }
+}

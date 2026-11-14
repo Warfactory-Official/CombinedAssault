@@ -26,6 +26,10 @@ public class WeaponInfo {
     @SerializedName("full_salvo")
     public boolean fullSalvo;
 
+    /** Entries sharing a group fire together on their trigger; selection lists the group once. */
+    @Nullable
+    public String salvo;
+
     @SerializedName("save_id")
     public String saveId;
 

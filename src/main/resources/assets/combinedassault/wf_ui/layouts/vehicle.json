@@ -1,4 +1,5 @@
 {
+  "use": ["combinedassault:hud"],
   "root": {"type": "stack", "children": [
     {"type": "combinedassault:hud/crew"},
     {"type": "when", "if": "vehicle.radio", "then": {"type": "combinedassault:hud/radio"}},
@@ -6,6 +7,10 @@
     {"type": "when", "if": "!vehicle.none", "then": {"type": "combinedassault:hud/systems"}},
     {"type": "combinedassault:hud/alerts"},
     {"type": "when", "if": "station.present", "then": {"type": "combinedassault:hud/station"}},
+    {"type": "when", "if": "local.radar_full", "then": {"type": "stack", "children": [
+      {"type": "place", "x": "ui.width - 140", "y": "ui.height / 2", "child": {"type": "combinedassault:radar_full"}},
+      {"type": "place", "x": "ui.width - 140", "y": "ui.height / 2", "child": {"type": "combinedassault:vehicle_schematic", "length": 22, "hull_up": true}}
+    ]}},
     {"type": "place", "x": "ui.width - 4", "y": "ui.height - 9 - (station.present && station.weapon_count > 0 ? 44 : 0)",
       "pivot": "bottom_right", "child": {"type": "column", "gap": 2, "align": "end", "children": [
         {"type": "combinedassault:hud/key_hints_weapons"},
@@ -14,6 +19,12 @@
     {"type": "when", "if": "payload.loaded", "then": {"type": "combinedassault:hud/payload"}},
     {"type": "place", "x": "ui.width - floor(ui.width / 8)", "y": "ui.height / 2 + floor(ui.height / 5)",
       "child": {"type": "combinedassault:hit_panel"}},
+    {"type": "when", "if": "local.wheel_driver && local.wheel_alpha > 0", "then": {"type": "stack", "children": [
+      {"type": "place", "x": "floor(ui.width / 2)", "y": "floor(ui.height * 0.75) + 9", "pivot": "top",
+        "child": {"type": "rect", "w": 1, "h": 5, "color": "alpha($white, local.wheel_alpha * 0.35)"}},
+      {"type": "place", "x": "floor(ui.width / 2 + local.wheel * clamp(ui.width / 8, 40, 90))", "y": "floor(ui.height * 0.75)", "pivot": "top",
+        "child": {"type": "poly", "points": [-5, 0, 5, 0, 0, 7], "color": "alpha($white, local.wheel_alpha * 0.5)"}}
+    ]}},
     {"type": "combinedassault:hud/key_hints"},
     {"type": "combinedassault:debug_dump"}
   ]}

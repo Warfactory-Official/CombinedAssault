@@ -1,0 +1,14 @@
+{
+  "model": "combinedassault:models/weapon/pkm/pkm.glb",
+  "weapons": [
+    "flans_ww2:mg34"
+  ],
+  "fits": [
+    "pintle"
+  ],
+  "install_ticks": 80,
+  "station": {
+    "optical_sight_type": "operator",
+    "zoom_max": 2
+  }
+}

@@ -4,6 +4,7 @@ import com.wf.combinedassault.ballistics.hit.HitModel;
 import com.wf.combinedassault.ballistics.hit.VehicleHits;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.entity.NoneVehicle;
+import com.wf.combinedassault.dynamics.part.TrackUnit;
 import com.wf.combinedassault.vehicle.entity.TrackedVehicle;
 import com.wf.combinedassault.vehicle.entity.WheeledVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
@@ -70,7 +71,8 @@ public final class HullComponents {
         if (!(vehicle instanceof NoneVehicle) && !declares(vehicle, kinds, ComponentKind.ENGINE)) {
             implied("engine", ComponentKind.ENGINE, vehicleHealth, ids, kinds, units, pools);
         }
-        if (vehicle instanceof TrackedVehicle && !declares(vehicle, kinds, ComponentKind.TRACK)) {
+        if ((vehicle instanceof TrackedVehicle || vehicle.getPartUnits().stream().anyMatch(p -> p instanceof TrackUnit))
+                && !declares(vehicle, kinds, ComponentKind.TRACK)) {
             implied("left track", ComponentKind.TRACK, vehicleHealth, ids, kinds, units, pools);
             implied("right track", ComponentKind.TRACK, vehicleHealth, ids, kinds, units, pools);
         }

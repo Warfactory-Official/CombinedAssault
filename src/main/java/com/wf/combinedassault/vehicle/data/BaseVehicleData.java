@@ -65,6 +65,7 @@ public class BaseVehicleData<T extends AbstractVehicle> {
     protected List<AddonMount> addonMounts = List.of();
     protected boolean uav;
     protected boolean pickup;
+    protected Integer breachSeconds;
     @Nullable
     protected AutonomyInfo autonomy;
     protected List<LoadoutInfo> loadouts = List.of();
@@ -72,6 +73,9 @@ public class BaseVehicleData<T extends AbstractVehicle> {
     protected boolean withWarningReceiver;
     protected boolean protectPassenger;
     protected List<String> entry;
+    protected List<com.wf.combinedassault.vehicle.interact.Interaction> interactions = List.of();
+    /** Part ids whose generated door node an interaction replaces. */
+    protected Set<String> interactionClaims = Set.of();
     protected boolean experimental;
     protected Vec3 centerOffset;
     /** Set by the data manager around {@link VehicleDataType#parse}: data types build inside Gson parsing. */
@@ -153,6 +157,10 @@ public class BaseVehicleData<T extends AbstractVehicle> {
         this.armor = pojo.armor;
         this.uav = pojo.uav;
         this.pickup = pojo.pickup;
+        if (pojo.breachSeconds != null && pojo.breachSeconds < 1) {
+            throw new IllegalArgumentException("breach_seconds must be >= 1");
+        }
+        this.breachSeconds = pojo.breachSeconds;
         this.autonomy = pojo.uav ? pojo.autonomy : null;
         this.loadouts = pojo.loadouts == null ? List.of() : List.copyOf(pojo.loadouts);
         this.canWade = pojo.canWade;
@@ -181,6 +189,30 @@ public class BaseVehicleData<T extends AbstractVehicle> {
                 }
                 partData.initRide(frameGroups.get(frame));
             }
+        }
+        if (!pojo.interactions.isEmpty()) {
+            if (model.hits() == null) {
+                throw new IllegalArgumentException("interactions need hit geometry (hitbox false)");
+            }
+            Set<String> partIds = new HashSet<>();
+            for (var entry : this.parts) {
+                partIds.add(entry.data().getId());
+            }
+            this.interactions = com.wf.combinedassault.vehicle.interact.InteractionTypes.parse(pojo.interactions,
+                    model.mounts(), new com.wf.combinedassault.vehicle.interact.InteractionTypes.Def() {
+                        @Override
+                        public Set<String> partIds() {
+                            return partIds;
+                        }
+
+                        @Override
+                        public List<String> entries() {
+                            return entry;
+                        }
+                    });
+            Set<String> claims = new HashSet<>();
+            this.interactions.forEach(i -> i.actions().forEach(a -> claims.addAll(a.claims())));
+            this.interactionClaims = Set.copyOf(claims);
         }
         if (cargo != CargoInfo.NONE) {
             if (!cargo.enabled()) {
@@ -325,6 +357,11 @@ public class BaseVehicleData<T extends AbstractVehicle> {
     public void bindHitModel() {
         this.clipRig = model.clips();
         HitMesh hitMesh = model.hits();
+        try {
+            PlateBinding.bind(hitMesh, armor);
+        } catch (IllegalStateException e) {
+            throw new IllegalStateException(vehicleId + ": " + e.getMessage(), e);
+        }
         if (hitMesh == null) {
             return;
         }
@@ -338,11 +375,6 @@ public class BaseVehicleData<T extends AbstractVehicle> {
         }
         this.hitModel = HitModel.bind(String.valueOf(vehicleId), hitMesh, frameGroups, frameParts, frameParent,
                 this instanceof TrackedVehicleData);
-        if ((armor == null || !armor.isDefined()) && hitMesh.nodes().stream()
-                .anyMatch(n -> n.mesh() != null && n.mesh().hasArmor())) {
-            CombinedAssault.LOGGER.warn("{}: {} has armor_<mm> materials but the vehicle has no armor block, so nothing "
-                    + "reads them", vehicleId, hitMesh.source());
-        }
         if (armor != null) {
             for (String part : armor.parts.keySet()) {
                 if (!present.contains(part)) {
@@ -551,6 +583,19 @@ public class BaseVehicleData<T extends AbstractVehicle> {
 
     public List<String> getEntry() {
         return entry;
+    }
+
+    public List<com.wf.combinedassault.vehicle.interact.Interaction> getInteractions() {
+        return interactions;
+    }
+
+    public Set<String> getInteractionClaims() {
+        return interactionClaims;
+    }
+
+    /** @return def {@code breach_seconds}, or null => server config. */
+    public Integer breachSeconds() {
+        return breachSeconds;
     }
 
     public boolean canPickUp() {

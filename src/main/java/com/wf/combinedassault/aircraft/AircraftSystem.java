@@ -9,6 +9,7 @@ import com.wf.combinedassault.aircraft.data.RotaryWingVehicleData;
 import com.wf.combinedassault.aircraft.data.RotaryWingVehicleDataPojo;
 import com.wf.combinedassault.aircraft.gametest.AircraftPartsGameTest;
 import com.wf.combinedassault.aircraft.gametest.FlapsGameTest;
+import com.wf.combinedassault.aircraft.gametest.WingLossGameTest;
 import com.wf.combinedassault.aircraft.part.AircraftPartTypes;
 import com.wf.combinedassault.pack.BuiltinPartUnits;
 import com.wf.combinedassault.pack.VehicleDataTypes;
@@ -31,7 +32,7 @@ public final class AircraftSystem implements CombinedAssaultSystem {
 
     @Override
     public void register(IEventBus modBus, ModContainer container) {
-        GameTestSetup.testsNeeding(modBus, java.util.Set.of("uav"), FlapsGameTest.class);
+        GameTestSetup.testsNeeding(modBus, java.util.Set.of("uav"), FlapsGameTest.class, WingLossGameTest.class);
         GameTestSetup.tests(modBus, AircraftPartsGameTest.class);
         BuiltinPartUnits.add(AircraftPartTypes.THRUST);
         BuiltinPartUnits.add(AircraftPartTypes.VARIABLE_SWEEP);

@@ -63,7 +63,7 @@ public final class AddonMesh {
     private void era(AddonMount mount, AddonMountState state) {
         float hw = mount.halfWidth;
         float hh = mount.halfHeight;
-        float thickness = state.fit.era.thickness();
+        float thickness = state.fit.era().thickness();
         box(-hw, -hh, 0, hw, hh, TRAY_DEPTH, TRAY);
         float cw = mount.info.width / mount.columns;
         float ch = mount.info.height / mount.rows;

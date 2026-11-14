@@ -3,23 +3,11 @@ package com.wf.combinedassault.ballistics;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.geom.api.OBB;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
-/**
- * Nearest hull point to a blast, and the hull-area fraction around it the blast has a line to.
- * Vanilla's entity-position + bbox-grid raycast fails on a hull: a carrier-side torpedo reads 30
- * blocks off and the bbox grid runs to ~20M rays.
- */
+/** Nearest hull point to a blast: a carrier-side torpedo reads 30 blocks off the entity position. */
 public final class VehicleBlast {
-
-    private static final float[][] SPREAD = {
-            {0, 0, 0}, {1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1},
-            {0.7f, 0.7f, 0}, {-0.7f, -0.7f, 0}};
-    private static final float SPREAD_BLOCKS = 1.5f;
 
     private VehicleBlast() {
     }
@@ -39,21 +27,6 @@ public final class VehicleBlast {
         local.z = clamp(local.z, -extents.z, extents.z);
         Vector3f world = obb.localToWorld(local, axes, new Vector3f());
         return new Vec3(world.x, world.y, world.z);
-    }
-
-    /** Fraction of hull-area sample points around target visible from blast, through blocks. Fluids don't block. */
-    public static double seenFraction(Level level, AbstractVehicle vehicle, Vec3 blast, Vec3 target) {
-        int seen = 0;
-        for (float[] offset : SPREAD) {
-            Vec3 point = nearestHullPoint(vehicle, target.add(offset[0] * SPREAD_BLOCKS,
-                    offset[1] * SPREAD_BLOCKS, offset[2] * SPREAD_BLOCKS));
-            HitResult hit = level.clip(new ClipContext(blast, point, ClipContext.Block.COLLIDER,
-                    ClipContext.Fluid.NONE, vehicle));
-            if (hit.getType() == HitResult.Type.MISS) {
-                seen++;
-            }
-        }
-        return seen / (double) SPREAD.length;
     }
 
     private static float clamp(float v, float lo, float hi) {

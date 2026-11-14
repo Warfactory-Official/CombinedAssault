@@ -1,0 +1,70 @@
+{
+    "name": "m113_controller",
+    "parameters": {},
+    "graph": {
+        "type": "merge",
+        "inputs": [
+            {
+                "type": "bone_binding",
+                "special_bindings": [
+                    {
+                        "bones": [
+                            "wheel_left_idler"
+                        ],
+                        "source": "left_wheel_rotation",
+                        "axis": "x",
+                        "param": 0.345
+                    },
+                    {
+                        "bones": [
+                            "wheel_left_road0",
+                            "wheel_left_road1",
+                            "wheel_left_road2",
+                            "wheel_left_road3",
+                            "wheel_left_road4"
+                        ],
+                        "source": "left_wheel_rotation",
+                        "axis": "x",
+                        "param": 0.4
+                    },
+                    {
+                        "bones": [
+                            "wheel_left_sprocket"
+                        ],
+                        "source": "left_wheel_rotation",
+                        "axis": "x",
+                        "param": 0.408
+                    },
+                    {
+                        "bones": [
+                            "wheel_right_idler"
+                        ],
+                        "source": "right_wheel_rotation",
+                        "axis": "x",
+                        "param": 0.345
+                    },
+                    {
+                        "bones": [
+                            "wheel_right_road0",
+                            "wheel_right_road1",
+                            "wheel_right_road2",
+                            "wheel_right_road3",
+                            "wheel_right_road4"
+                        ],
+                        "source": "right_wheel_rotation",
+                        "axis": "x",
+                        "param": 0.4
+                    },
+                    {
+                        "bones": [
+                            "wheel_right_sprocket"
+                        ],
+                        "source": "right_wheel_rotation",
+                        "axis": "x",
+                        "param": 0.408
+                    }
+                ]
+            }
+        ]
+    }
+}

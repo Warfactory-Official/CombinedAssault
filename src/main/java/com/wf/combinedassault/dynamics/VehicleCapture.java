@@ -1,5 +1,6 @@
 package com.wf.combinedassault.dynamics;
 
+import com.wf.combinedassault.ballistics.component.ComponentDamage;
 import com.wf.combinedassault.dynamics.part.LandingGearUnit;
 import com.wf.combinedassault.dynamics.part.SuspensionUnit;
 import com.wf.combinedassault.tow.*;
@@ -10,6 +11,7 @@ import com.wf.wflib.physics.api.*;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix3f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -22,7 +24,7 @@ public final class VehicleCapture {
 
     /** Speculative reach beyond the tick's own motion, blocks. */
     private static final float MARGIN = 0.1f;
-    /** Pitch/roll spin kept per tick on the belly, < half the wheels down, up.y above {@link BodyState#BELLY_SPIN_UP}. */
+    /** Pitch/roll spin kept per tick on the belly, sprung. */
     private static final float BELLY_SPIN_RETENTION = 0.6f;
     /** Strut -y: full spring at cos 45, none at cos 60 (SuspensionUnit probes to there). */
     private static final double STRUT_FADE_START = 0.7071, STRUT_FADE_END = 0.5;
@@ -30,6 +32,10 @@ public final class VehicleCapture {
     private static final double MAX_GATHER = 1024;
     /** > one tick of travel plus steering swing of the hull centre. */
     private static final double TELEPORT_JUMP = 16;
+    /** Solver error allowed by {@link #holdPassive}, of the step's energy. */
+    private static final float PASSIVE_SLACK = 0.01f;
+    /** Horizontal b/t below which climbing is free (1:1 stairs). */
+    private static final float CRAWL = 0.15f;
 
     private VehicleCapture() {
     }
@@ -90,11 +96,16 @@ public final class VehicleCapture {
         engine.buoyancy(s.velocity, s.acceleration);
         if (s.sprung) {
             s.spin.y = engine.decayYawSpin(s.spin.y, v.onGround());
-            if (wheelsWereDown && v.isDestroyed()) {
+            // Wreck: locked gear drags; upright belly frictionless in the step (> 45 deg: Coulomb there). Gear-only
+            // drag: high-centred wreck slid on.
+            if (v.isDestroyed() && (wheelsWereDown || v.onGround() && s.hullRotation.transform(new Vector3f(0, 1, 0)).y
+                    > BodyState.BELLY_SPIN_UP)) {
                 PhysicsEngine.skid(s.velocity, BodyState.FRICTION);
             } else if (wheelsWereDown) {
                 engine.rollingResistance(s.velocity);
             }
+        } else if (s.gear && v.isDestroyed() && v.onGround()) {
+            PhysicsEngine.skid(s.velocity, BodyState.FRICTION);
         } else if ((v.towedOnWheels() || s.gear) && v.onGround()) {
             engine.rollingResistance(s.velocity);
         }
@@ -165,7 +176,7 @@ public final class VehicleCapture {
     private static void captureFeet(AbstractVehicle v, BodyState s) {
         s.footCount = 0;
         for (PartUnit<?> unit : v.getPartUnits()) {
-            if (unit instanceof LandingGearUnit gear && !gear.isDetached()) {
+            if (unit instanceof LandingGearUnit gear && !gear.isDetached() && !ComponentDamage.severed(gear)) {
                 if (s.feet.length < (s.footCount + gear.footCount()) * 3) {
                     s.feet = Arrays.copyOf(s.feet, (s.footCount + gear.footCount()) * 3);
                 }
@@ -263,7 +274,9 @@ public final class VehicleCapture {
 
     /** Island task: suspension rows, one slot per unit contact. */
     public static void springs(AbstractVehicle v, SpringRows rows, CellTops surface) {
-        v.physicsEngine.simulateSuspensions(v.physicsRig, surface);
+        PhysicsEngine engine = v.physicsEngine;
+        engine.simulateSuspensions(v.physicsRig, surface);
+        engine.clearSpringSlots();
         List<SuspensionUnit<?>> units = v.getSuspensionUnits();
         for (int u = 0, size = units.size(); u < size; u++) {
             SuspensionUnit<?> unit = units.get(u);
@@ -271,6 +284,7 @@ public final class VehicleCapture {
             if (!unit.isGrounded()) {
                 for (int row = 0; row < count; row++) {
                     rows.skip();
+                    engine.springSlot(0, 0, 0);
                 }
                 continue;
             }
@@ -281,11 +295,56 @@ public final class VehicleCapture {
             float stiffness = (float) (PhysicsHelper.forcePerTick(unit.getData().getSpringStiffness()) * weight);
             float damping = (float) (PhysicsHelper.dampingPerTick(unit.getData().getDamping()) * weight);
             for (int row = 0; row < count; row++) {
+                float max = weight < unit.contactWeight() ? Float.MAX_VALUE : (float) unit.contactMax(row);
                 rows.add(unit.contactOnDeck(row), unit.contactX(row), unit.contactY(row), unit.contactZ(row), ratio,
-                        (float) unit.contactCompression(row), (float) unit.contactMin(row),
-                        weight < unit.contactWeight() ? Float.MAX_VALUE : (float) unit.contactMax(row), stiffness, damping);
+                        (float) unit.contactCompression(row), (float) unit.contactMin(row), max, stiffness, damping);
+                engine.springSlot(stiffness, (float) unit.contactCompression(row), max);
             }
         }
+    }
+
+    /**
+     * World contacts + springs passive: kinetic + spring energy + climb after the solve <= at its start in free flight
+     * (drive, gravity, buoyancy). Lift rows push +y measured along the facet normal => ramp lifts without slowing
+     * (greyhound 0.535 b/t into a washboard ridge left at 0.69, flew 6 blocks, rolled). Climb (m g dy, spring energy
+     * since the last solve's end: wheel probes lift onto rising ground for free) paid from the same budget; below
+     * {@link #CRAWL} free (1:1 stairs). Excess off v and spin alike: on a lift ramp = the frictionless ramp's exit.
+     * TODO wflib: lift impulse along n, then drop the lift part.
+     */
+    private static void holdPassive(AbstractVehicle v, BodyState s, StepResult r) {
+        if (r.failed || s.coupling != null || s.carried || !r.touched.isEmpty() || v.carrierLink().active()
+                || s.inverseMass <= 0) {
+            return;
+        }
+        PhysicsEngine engine = v.physicsEngine;
+        float mass = 1 / s.inverseMass;
+        Matrix3f inertia = new Matrix3f(s.inverseInertia);
+        boolean spins = inertia.determinant() > 1.0e-20f;
+        if (spins) {
+            inertia.invert();
+        }
+        Vector3f free = new Vector3f(s.velocity).add(s.acceleration);
+        long tick = v.level().getGameTime();
+        float springEnd = s.sprung ? engine.springEnergy(r.springCompression, r.springRows) : 0;
+        boolean climbs = free.x * free.x + free.z * free.z > CRAWL * CRAWL;
+        float springStart = !s.sprung ? 0 : climbs && engine.lastSpringTick == tick - 1 ? engine.lastSpringEnergy
+                : engine.springEnergyAtStart();
+        engine.lastSpringEnergy = springEnd;
+        engine.lastSpringTick = tick;
+        float before = 0.5f * mass * free.lengthSquared() + (spins ? rotational(inertia, s.spin) : 0) + springStart;
+        float kinetic = 0.5f * mass * r.velocity.lengthSquared() + (spins ? rotational(inertia, r.spin) : 0);
+        float after = kinetic + springEnd + (climbs ? -mass * s.acceleration.y * r.dp.y : 0);
+        float excess = after - before - PASSIVE_SLACK * Math.max(before, mass * PhysicsEngine.G * PhysicsEngine.G);
+        if (!(excess > 0) || !(kinetic > 0)) {
+            return;
+        }
+        float scale = (float) Math.sqrt(Math.max(0, kinetic - excess) / kinetic);
+        r.velocity.mul(scale);
+        r.spin.mul(scale);
+    }
+
+    private static float rotational(Matrix3f inertia, Vector3f spin) {
+        return 0.5f * spin.dot(inertia.transform(new Vector3f(spin)));
     }
 
     /** Island task: belly spin rule, impact, engine bookkeeping. */
@@ -293,19 +352,14 @@ public final class VehicleCapture {
         PhysicsEngine engine = v.physicsEngine;
         PhysicsRig rig = v.physicsRig;
         r.grounded |= engine.wheelsGrounded();
-        if (s.sprung && r.belly && s.hullRotation.transform(new Vector3f(0, 1, 0)).y > BodyState.BELLY_SPIN_UP) {
-            List<SuspensionUnit<?>> units = v.getSuspensionUnits();
-            int down = 0;
-            for (int u = 0, size = units.size(); u < size; u++) {
-                down += units.get(u).isGrounded() ? 1 : 0;
-            }
-            // Frictionless belly rows kept every kick on a box edge: RoughBench flips 7/96 -> 0/96 (pre-rewrite);
-            // landing straddling a terrace edge rolled an M983 over at 7 deg/t. Coulomb belly FORBIDDEN (tripped
-            // flat turns). Yaw kept.
-            if (down * 2 < units.size()) {
-                r.spin.x *= BELLY_SPIN_RETENTION;
-                r.spin.z *= BELLY_SPIN_RETENTION;
-            }
+        holdPassive(v, s, r);
+        // Hull on the world while sprung: wheels past their travel on 1-block steps (ROUGH: belly carries 15-60 %
+        // of the load). Frictionless lift rows at the hull edge kicked roll every bump; gated on < half the wheels
+        // down and up.y > cos 45 the rule missed both (m3 WEAVE: 3 wheels down, 0.09 rad/t roll, then airborne).
+        // Coulomb belly FORBIDDEN (tripped flat turns). Yaw kept.
+        if (s.sprung && r.belly) {
+            r.spin.x *= BELLY_SPIN_RETENTION;
+            r.spin.z *= BELLY_SPIN_RETENTION;
         }
         rig.impactVelocityDiff = 0;
         if (r.impactWeight > 0 && r.velocityDiff * PhysicsHelper.TICKS_PER_SECOND > v.impactSpeedThreshold()) {

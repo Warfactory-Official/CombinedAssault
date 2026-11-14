@@ -35,6 +35,11 @@ public class VehiclePart extends AbstractVehicle {
     private List<String> excludedBoneNames = List.of();
     private Vec3 bottomOffset = Vec3.ZERO;
     private boolean initialObbsUpdated;
+    /**
+     * Hull it was flung from, entity id; -1 once their boxes part. Spawned at its pivot inside that hull: the overlap
+     * paid as hull contact shoved the wreck 0.2 b/t sideways, 0.12 up (humvee slid 10 blocks, not 3.7).
+     */
+    private volatile int flungFrom = -1;
 
     public VehiclePart(EntityType<? extends AbstractVehicle> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
@@ -159,8 +164,22 @@ public class VehiclePart extends AbstractVehicle {
     @Override
     public void shoot(int partUnitIndex, int weaponIndex, List<AimContext> aimContexts, @Nullable LivingEntity operator) {}
 
+    /** Tick thread, before it is added. */
+    public void flungFrom(AbstractVehicle hull) {
+        flungFrom = hull.getId();
+    }
+
+    /** No hull contact with {@code hull} yet: still leaving it. */
+    public boolean leaving(AbstractVehicle hull) {
+        return flungFrom == hull.getId();
+    }
+
     @Override
     public void tick() {
+        if (flungFrom >= 0 && !(level().getEntity(flungFrom) instanceof AbstractVehicle hull
+                && hull.getBoundingBox().intersects(getBoundingBox()))) {
+            flungFrom = -1;
+        }
         if (partUnit != null || createPartUnitCopy(false)) {
             if (!initialObbsUpdated) {
                 updateOBBs();

@@ -1,0 +1,251 @@
+{
+  "weapons": [
+    {
+      "match": "BK-?27",
+      "id": "combinedassault:bk_27"
+    },
+    {
+      "match": "Oerlikon KD[AE]|\\b35[ _]?mm",
+      "id": "combinedassault:2a42"
+    },
+    {
+      "match": "ZU-?23|4x 23 ?mm",
+      "id": "combinedassault:type_23_3"
+    },
+    {
+      "match": "40 mm Akan m/70|\\b40[ _]?mm",
+      "id": "combinedassault:2a42"
+    },
+    {
+      "match": "NEXTER 30 ?M ?791|30 ?M ?791",
+      "id": "combinedassault:giat_30"
+    },
+    {
+      "match": "13[.,]2 ?mm",
+      "id": "combinedassault:gun_12.7mm"
+    },
+    {
+      "match": "\\b20 mm Akan",
+      "id": "combinedassault:auto_cannon"
+    },
+    {
+      "match": "Stinger|FIM-?92",
+      "id": "combinedassault:fim_92"
+    },
+    {
+      "match": "HJ-?73",
+      "id": "combinedassault:shturm"
+    },
+    {
+      "match": "M242|M811|ZPT-?90",
+      "id": "combinedassault:2a42"
+    },
+    {
+      "match": "5[._,]8[ _]?mm|QJT|QJY",
+      "id": "combinedassault:gun_7.62mm"
+    },
+    {
+      "match": "Vikhr|9K127",
+      "id": "combinedassault:vikhr"
+    },
+    {
+      "match": "\\bS-?8|80[ _]?mm[ _]rocket|\\bB-?13|S-?13\\b|S-?5\\b",
+      "id": "combinedassault:rocket"
+    },
+    {
+      "match": "\\bAGS?-?30\\b|AG-30",
+      "id": "combinedassault:mk19"
+    },
+    {
+      "match": "\\bTOW\\b|BGM-?71|MILAN",
+      "id": "combinedassault:tow"
+    },
+    {
+      "match": "9M311|\\bSAM\\b",
+      "id": "combinedassault:fim_92"
+    },
+    {
+      "match": "QN201",
+      "id": "combinedassault:vikhr"
+    },
+    {
+      "match": "ATGM|Malyutka|Konkurs|Kornet|Ataka|Bulsae|QN502",
+      "id": "combinedassault:shturm"
+    },
+    {
+      "match": "\\b125[ _]?mm|2A46",
+      "id": "combinedassault:cannon_125mm"
+    },
+    {
+      "match": "\\b120[ _]?mm|Rh-?120|M256|L/55|L/44",
+      "id": "combinedassault:cannon_120mm"
+    },
+    {
+      "match": "\\b105[ _]?mm|L7A|M68",
+      "id": "combinedassault:cannon_105mm"
+    },
+    {
+      "match": "NSVT|NSV\\b|DShK|Kord",
+      "id": "combinedassault:kord"
+    },
+    {
+      "match": "14[._,]5|KPVT",
+      "id": "combinedassault:gun_14.5mm"
+    },
+    {
+      "match": "12[._,]7|\\.50|M2HB|Browning M2",
+      "id": "combinedassault:gun_12.7mm"
+    },
+    {
+      "match": "7[._,]62|PKT|M240|MG3|coax",
+      "id": "combinedassault:gun_7.62mm"
+    },
+    {
+      "match": "M61|Vulcan",
+      "id": "combinedassault:m61a1"
+    },
+    {
+      "match": "GSh-?30-?1",
+      "id": "combinedassault:gsh_30_1"
+    },
+    {
+      "match": "GSh-?23",
+      "id": "combinedassault:gsh_23"
+    },
+    {
+      "match": "GAU-?8",
+      "id": "combinedassault:gau_8"
+    },
+    {
+      "match": "GAU-?12|M242",
+      "id": "combinedassault:gau_12u"
+    },
+    {
+      "match": "2A42|2A72",
+      "id": "combinedassault:2a42"
+    },
+    {
+      "match": "M230",
+      "id": "combinedassault:auto_cannon"
+    },
+    {
+      "match": "\\b57[ _]?mm|Bofors L/70",
+      "id": "combinedassault:2a42"
+    },
+    {
+      "match": "\\b40[ _]?mm|Akan",
+      "id": "combinedassault:giat_30"
+    },
+    {
+      "match": "\\b35[ _]?mm|KDA",
+      "id": "combinedassault:gsh_30_1"
+    },
+    {
+      "match": "GAU-?4\\b",
+      "id": "combinedassault:m61a1"
+    },
+    {
+      "match": "GSh-?30-?2",
+      "id": "combinedassault:gsh_30_1"
+    },
+    {
+      "match": "N-?37",
+      "id": "combinedassault:2a42"
+    },
+    {
+      "match": "DEFA|MK ?103|NR-?30",
+      "id": "combinedassault:giat_30"
+    },
+    {
+      "match": "7[.]92 ?mm|7[.]7 ?mm|\\.303",
+      "id": "combinedassault:gun_7.62mm"
+    },
+    {
+      "match": "\\b30[ _]?mm|2A38|ZPZ02",
+      "id": "combinedassault:2a42"
+    },
+    {
+      "match": "\\b73[ _]?mm|2A28|SPG-?9",
+      "id": "combinedassault:spg9"
+    },
+    {
+      "match": "\\b100[ _]?mm|2A70|D-10T",
+      "id": "combinedassault:cannon_105mm"
+    },
+    {
+      "match": "\\b115[ _]?mm|U-5TS",
+      "id": "combinedassault:cannon_125mm"
+    },
+    {
+      "match": "\\b90[ _]?mm|M41\\b|76[._ ]2|D-56",
+      "id": "combinedassault:cannon_105mm"
+    },
+    {
+      "match": "\\b152[ _]?mm|M81\\b",
+      "id": "combinedassault:cannon_125mm"
+    },
+    {
+      "match": "\\b155[ _]?mm|M284|L52",
+      "id": "combinedassault:m777"
+    },
+    {
+      "match": "\\b20[ _]?mm|Rh-?202",
+      "id": "combinedassault:auto_cannon"
+    },
+    {
+      "match": "\\b23[ _]?mm|ZU-?23",
+      "id": "combinedassault:gsh_23"
+    },
+    {
+      "match": "\\bK6\\b|QJC-?88",
+      "id": "combinedassault:gun_12.7mm"
+    },
+    {
+      "match": "Type ?86",
+      "id": "combinedassault:gun_7.62mm"
+    }
+  ],
+  "stores": [
+    {
+      "match": "\\b(bomb|gbu|jdam|blu|mk[ _-]?8\\d|fab[ _-]?\\d|rbk|cbu|kab)",
+      "size": null
+    },
+    {
+      "match": "\\b(tank|pod|rocket|s8|s-8|hydra|lau|ub-?32|b-?8)",
+      "size": null
+    },
+    {
+      "match": "agm-?158|agm-?84|agm-?86|kh-?59|kh-?55|kh-?31|aim-?54",
+      "size": "LARGE"
+    },
+    {
+      "match": "LASER_GUIDED|ATGM|agm-?114|hellfire|vikhr|ataka|\\bhot|\\btow|spike|brimstone|9m17|falanga",
+      "size": "SMALL"
+    },
+    {
+      "match": "AIR_TO_AIR|aim-?\\d|\\br-?\\d\\d|mica|magic|asraam|iris|python",
+      "size": "MEDIUM"
+    },
+    {
+      "match": "CRUISE",
+      "size": "LARGE"
+    },
+    {
+      "match": "ANTI_RADIATION",
+      "size": "MEDIUM"
+    },
+    {
+      "match": "agm-?65|maverick|kh-?25|kh-?29|agm-?88|harm|agm-?12|agm-?45|kd-?88|kh-?38",
+      "size": "MEDIUM"
+    },
+    {
+      "match": "PARS ?3",
+      "size": "SMALL"
+    }
+  ],
+  "store_length": {
+    "SMALL": 1.6,
+    "MEDIUM": 3.0,
+    "LARGE": 4.5
+  }
+}

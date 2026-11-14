@@ -4,6 +4,7 @@
         "brake_acceleration": 0.025,
         "forward_acceleration": 0.01,
         "backward_acceleration": 0.01,
+        "engine_power": 883,
         "max_speed_forward": 0.5,
         "max_speed_backward": 0.2,
         "turn_acceleration": 1,
@@ -68,6 +69,7 @@
     "parts": [
         {
             "id": "turret",
+            "rangefinder": {"mode": "zero", "max_range": 4000},
             "crew_roles": [
                 "gunner"
             ],

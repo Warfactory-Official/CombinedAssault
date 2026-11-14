@@ -170,6 +170,88 @@ public class SeatPoseGameTest {
         }).thenSucceed();
     }
 
+    /** M113 hull belly / roof top / driver hatch lid underside, vehicle frame (staged model). */
+    private static final double M113_BELLY = 0.5075;
+    private static final double M113_ROOF = 2.1505;
+    private static final double M113_DRIVER_LID = 2.2505;
+
+    /**
+     * M113 cabin seats (every seat but the turned-out ones): rig OBB corners inside the hull shell (belly .. roof top;
+     * driver: hatch lid), head centre within 0.2 m of the seat eye; bench troops face the aisle.
+     */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    public static void m113CabinSeatsFitUnderTheRoof(GameTestHelper helper) {
+        ResourceLocation id = CombinedAssault.modLocation("m113");
+        BlockPos at = helper.absolutePos(new BlockPos(1, 2, 1));
+        AbstractVehicle apc = CommonAssetsManager.vehicleDataManager().getVehicleData(id).orElseThrow()
+                .construct(helper.getLevel(), new Vec3(at.getX() + 0.5, at.getY(), at.getZ() + 0.5), 0, 0);
+        apc.setDisplayId(id);
+        helper.getLevel().addFreshEntity(apc);
+        Player rider = new Player(helper.getLevel(), at, 0, new GameProfile(UUID.randomUUID(), "troop")) {
+            @Override
+            public boolean isSpectator() {
+                return false;
+            }
+
+            @Override
+            public boolean isCreative() {
+                return false;
+            }
+        };
+        helper.startSequence().thenIdle(3).thenExecute(() -> {
+            StringBuilder log = new StringBuilder();
+            boolean ok = true;
+            try {
+                SwitchableUnit<?> door = (SwitchableUnit<?>) apc.getPartUnit("rear_door").orElseThrow();
+                door.setOn(true);
+                for (int t = 0; t < 40; t++) {
+                    apc.clipTracks().tick();
+                }
+                for (AbstractVehicle.Seat seat : apc.seats) {
+                    String part = seat.partUnit.getId();
+                    if (seat.partUnit.hatch() != null || part.equals("mg")) {
+                        continue;
+                    }
+                    rider.moveTo(door.worldPosition(door.getPivotOffset()).subtract(0, 1.5, 0));
+                    if (!apc.board(rider, seat.seatIndex)) {
+                        log.append(part).append(": not boarded; ");
+                        ok = false;
+                        continue;
+                    }
+                    apc.positionRider(rider);
+                    seat.partUnit.applySeatRot(rider);
+                    HumanoidRig.LocalRig rig = HumanoidRig.computeServer(rider);
+                    Vec3 eye = seat.partUnit.getSeatOffset();
+                    double top = -9, bottom = 9;
+                    for (HumanoidRig.LocalRig.Slot slot : HumanoidRig.LocalRig.SLOTS) {
+                        Obb o = slot.get(rig);
+                        for (int k = 0; k < 8; k++) {
+                            Vec3 c = o.center().add(o.axisX().scale((k & 1) == 0 ? -o.half().x : o.half().x))
+                                    .add(o.axisY().scale((k & 2) == 0 ? -o.half().y : o.half().y))
+                                    .add(o.axisZ().scale((k & 4) == 0 ? -o.half().z : o.half().z));
+                            double y = local(apc, rider, c).y;
+                            top = Math.max(top, y);
+                            bottom = Math.min(bottom, y);
+                        }
+                    }
+                    Vec3 head = local(apc, rider, rig.head.center());
+                    double rot = Math.toRadians(seat.partUnit.getSeatRot() - apc.getYRot());
+                    boolean aisle = !part.startsWith("troop_") || -Math.sin(rot) * eye.x < 0;
+                    double roof = part.equals("driver") ? M113_DRIVER_LID : M113_ROOF;
+                    boolean fits = top < roof - 0.01 && bottom > M113_BELLY && head.distanceTo(eye) < 0.2 && aisle;
+                    log.append(String.format("%s%s top %.3f bottom %.3f head-eye %.3f rot %.0f; ", fits ? "" : "FAIL ",
+                            part, top, bottom, head.distanceTo(eye), Math.toDegrees(rot)));
+                    ok &= fits;
+                    rider.stopRiding();
+                }
+            } finally {
+                apc.discard();
+            }
+            CombinedAssault.LOGGER.info("m113 cabin: {}", log);
+            helper.assertTrue(ok, log.toString());
+        }).thenSucceed();
+    }
+
     /** Rig-local point (x right, y up, z front, feet origin, body yaw) -> vehicle frame. */
     private static Vec3 local(AbstractVehicle vehicle, Player rider, Vec3 p) {
         double yaw = Math.toRadians(rider.yBodyRot);

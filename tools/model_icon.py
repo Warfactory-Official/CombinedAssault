@@ -9,6 +9,7 @@ an icon that comes out mirrored or nose-down is the staging being wrong, and thi
 place to find that out.
 
   python3 tools/model_icon.py m983 mim104
+  python3 tools/model_icon.py --pack optional_packs/flans_ww2 flans_ww2:sherman
 """
 import base64
 import glob
@@ -221,6 +222,12 @@ def raster(tri, uv, shade, sheet, colour, alpha, depth):
 
 
 if __name__ == "__main__":
+    args = sys.argv[1:]
+    if args[:1] == ["--pack"]:
+        PACK = os.path.abspath(args[1])
+        args = args[2:]
     os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-    for name in sys.argv[1:] or ["m983", "mim104"]:
+    for name in args or ["m983", "mim104"]:
+        if ":" in name:
+            NS, name = name.split(":", 1)
         render(name)

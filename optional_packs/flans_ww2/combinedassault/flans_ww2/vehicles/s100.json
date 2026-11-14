@@ -1,0 +1,99 @@
+{
+  "type": "combinedassault:ship",
+  "attributes": {
+    "waterline": 0.0,
+    "draft": 1.581,
+    "max_speed_forward": 1.111,
+    "max_speed_backward": 0.333,
+    "acceleration_time": 8,
+    "throttle_rate": 0.5,
+    "rudder_rate": 1.5,
+    "turn_rate": 18,
+    "turn_lag": 1.0,
+    "low_speed_turn": 0.1,
+    "drift": 0.3,
+    "heel": -0.5,
+    "trim": 3.0,
+    "heave_period": 3.0,
+    "righting_rate": 10.0,
+    "min_keel_clearance": 0.5,
+    "shallow_drag": 2.0
+  },
+  "physics_info": {
+    "mass": 100000,
+    "can_tumble": false
+  },
+  "max_health": 1000,
+  "view_info": {
+    "third_person_distance": 25.0
+  },
+  "energy_info": {
+    "energy_capacity": 600,
+    "energy_consumption_per_tick": 0.004
+  },
+  "storage": {
+    "slots": 10
+  },
+  "parts": [
+    {
+      "id": "driver",
+      "name": "part.combinedassault.driver",
+      "type": "combinedassault:generic",
+      "protect_passenger": false,
+      "crew_roles": [
+        "driver"
+      ]
+    },
+    {
+      "id": "seat_1",
+      "name": "part.flans_ww2.seat_1",
+      "type": "combinedassault:weapon",
+      "protect_passenger": false,
+      "crosshair_style": "cross",
+      "rot_info": {
+        "x_rot_speed": 4,
+        "y_rot_speed": 4
+      },
+      "weapons": [
+        "flans_ww2:flak38_20mm"
+      ],
+      "operator_on_weapon_unit": true
+    },
+    {
+      "id": "seat_2",
+      "name": "part.flans_ww2.seat_2",
+      "type": "combinedassault:weapon",
+      "protect_passenger": false,
+      "crosshair_style": "cross",
+      "rot_info": {
+        "x_rot_speed": 4,
+        "y_rot_speed": 4
+      },
+      "weapons": [
+        "flans_ww2:flak_m42_37mm"
+      ],
+      "operator_on_weapon_unit": true
+    },
+    {
+      "id": "seat_3",
+      "name": "part.flans_ww2.seat_3",
+      "type": "combinedassault:weapon",
+      "protect_passenger": false,
+      "crosshair_style": "cross",
+      "rot_info": {
+        "x_rot_speed": 4,
+        "y_rot_speed": 4
+      },
+      "weapons": [
+        "flans_ww2:flak38_20mm"
+      ],
+      "operator_on_weapon_unit": true
+    }
+  ],
+  "model": "flans_ww2:models/vehicle/s100/s100.glb",
+  "display": {
+    "tab_index": 900,
+    "icon": "flans_ww2:textures/slot/s100.png",
+    "description": "German Torpedo PT Boat"
+  }
+}

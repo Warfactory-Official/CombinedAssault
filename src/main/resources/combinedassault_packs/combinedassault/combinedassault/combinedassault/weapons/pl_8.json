@@ -14,5 +14,12 @@
     "x_rot_max": 90,
     "x_rot_min": -90,
     "y_rot_max": 90,
-    "y_rot_min": -90
+    "y_rot_min": -90,
+    "sounds": {
+        "fire": {
+            "event": "combinedassault:missile_launch",
+            "range": 400,
+            "pitch_random": 0.1
+        }
+    }
 }

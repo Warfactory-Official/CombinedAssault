@@ -10,6 +10,7 @@ import org.joml.Vector3f;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,8 +27,20 @@ public final class GltfReader {
     public static final String INTERFACE = "combinedassaultInterface";
     public static final String META = "combinedassault";
 
-    /** @param materials glTF material names by index ({@link Node#materials} indexes this) */
-    public record Model(List<Node> nodes, List<String> materials, List<Clip> clips) {
+    /** = GemRender {@code GltfImporter.HIDDEN_PREFIXES} / {@code HIDDEN} (client class: unreachable here). */
+    private static final List<String> UNDRAWN_PREFIXES = List.of("hit_", "socket_");
+    private static final String UNDRAWN = "gemrenderHidden";
+
+    /**
+     * @param materials glTF material names by index ({@link Node#materials} indexes this)
+     * @param looks     per material, parallel to {@code materials}
+     * @param undrawn   nodes GemRender skips, by {@link #nodes} index
+     */
+    public record Model(List<Node> nodes, List<String> materials, List<Clip> clips, List<Look> looks, BitSet undrawn) {
+    }
+
+    /** @param blend alphaMode BLEND (see-through) */
+    public record Look(boolean blend, boolean doubleSided) {
     }
 
     /** @param duration last key time, seconds */
@@ -136,16 +149,20 @@ public final class GltfReader {
         Map<Integer, Mesh> meshes = new HashMap<>();
         int[] outIndex = new int[nodes.size()];
         java.util.Arrays.fill(outIndex, -1);
+        BitSet undrawn = new BitSet();
         for (JsonElement root : roots) {
-            visit(glb, nodes, root.getAsInt(), -1, new Matrix4f(), out, meshes, outIndex);
+            visit(glb, nodes, root.getAsInt(), -1, new Matrix4f(), out, meshes, outIndex, undrawn);
         }
         List<String> materials = new ArrayList<>();
+        List<Look> looks = new ArrayList<>();
         JsonArray materialArray = array(gltf, "materials");
         for (int i = 0; i < materialArray.size(); i++) {
             JsonObject material = materialArray.get(i).getAsJsonObject();
             materials.add(material.has("name") ? material.get("name").getAsString() : "");
+            looks.add(new Look(material.has("alphaMode") && material.get("alphaMode").getAsString().equals("BLEND"),
+                    material.has("doubleSided") && material.get("doubleSided").getAsBoolean()));
         }
-        return new Model(List.copyOf(out), List.copyOf(materials), clips(glb, outIndex));
+        return new Model(List.copyOf(out), List.copyOf(materials), clips(glb, outIndex), List.copyOf(looks), undrawn);
     }
 
     /** Channels on nodes outside the scene dropped; weights (morph) ignored. */
@@ -192,8 +209,8 @@ public final class GltfReader {
 
     /** {@code meshes}: decoded once per mesh index; nodes sharing a mesh share its arrays. */
     private static void visit(Glb glb, JsonArray nodes, int index, int parent,
-                              Matrix4f parentWorld, List<Node> out, Map<Integer, Mesh> meshes, int[] outIndex)
-            throws IOException {
+                              Matrix4f parentWorld, List<Node> out, Map<Integer, Mesh> meshes, int[] outIndex,
+                              BitSet undrawn) throws IOException {
         JsonObject node = nodes.get(index).getAsJsonObject();
         Matrix4f local = Glb.local(node);
         Matrix4f world = new Matrix4f(parentWorld).mul(local);
@@ -207,8 +224,13 @@ public final class GltfReader {
         String role = extras != null && extras.has(ROLE) ? extras.get(ROLE).getAsString() : "";
         String iface = extras != null && extras.has(INTERFACE) ? extras.get(INTERFACE).getAsString() : "";
         out.add(new Node(name, parent, world, local, mesh.triangles, mesh.materials, mesh.primitives, role, iface, meta));
+        String lower = name.toLowerCase(java.util.Locale.ROOT);
+        if (parent >= 0 && undrawn.get(parent) || UNDRAWN_PREFIXES.stream().anyMatch(lower::startsWith)
+                || extras != null && extras.has(UNDRAWN) && extras.get(UNDRAWN).getAsBoolean()) {
+            undrawn.set(self);
+        }
         for (JsonElement child : array(node, "children")) {
-            visit(glb, nodes, child.getAsInt(), self, world, out, meshes, outIndex);
+            visit(glb, nodes, child.getAsInt(), self, world, out, meshes, outIndex, undrawn);
         }
     }
 

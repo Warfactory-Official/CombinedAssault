@@ -8,10 +8,15 @@ import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.armor.api.hull.HullProfile;
+import com.wf.wflib.armor.api.hull.EraType;
+import com.wf.wflib.armor.api.hull.EraTypes;
 import com.wf.wflib.damage.api.Threat;
 import com.wf.wflib.damage.api.ThreatKind;
 import com.wf.wflib.damage.api.event.ProjectileStrikeEvent;
+import com.wf.wflib.explosion.api.BlastPayload;
+import com.wf.wflib.explosion.api.EntityProcessorCross;
 import com.wf.wflib.explosion.api.ExplosionAEF;
+import com.wf.wflib.explosion.api.PlayerProcessorStandard;
 import com.wf.wflib.geom.api.OBB;
 import com.wf.wflib.testkit.api.ForcedChunks;
 import net.minecraft.core.BlockPos;
@@ -67,26 +72,29 @@ public class AddonArmorGameTest {
     @GameTest(template = TEMPLATE)
     public static void eraCutsJetsByObliquityAndBarelyTouchesRods(GameTestHelper helper) {
         float cos60 = 0.5f;
-        expectEra(helper, "light vs HEAT at 60", EraSpec.LIGHT, HEAT_125, cos60, 0.5f, true, 1 - 0.65f);
-        expectEra(helper, "light vs HEAT head-on", EraSpec.LIGHT, HEAT_125, 1.0f, 0.5f, true, 1 - 0.65f * 0.3f);
-        expectEra(helper, "light vs HEAT on a brick edge", EraSpec.LIGHT, HEAT_125, cos60, 0.05f, true, 1 - 0.65f * 0.5f);
-        expectEra(helper, "light vs rod", EraSpec.LIGHT, ROD, cos60, 0.5f, true, 0.95f);
-        expectEra(helper, "heavy vs rod", EraSpec.HEAVY, ROD, cos60, 0.5f, true, 0.65f);
-        expectEra(helper, "light vs 30 mm", EraSpec.LIGHT, CANNON_30, cos60, 0.5f, true, 0.95f);
-        expectEra(helper, "heavy vs 30 mm", EraSpec.HEAVY, CANNON_30, cos60, 0.5f, false, 1.0f);
-        expectEra(helper, "light vs tandem", EraSpec.LIGHT, TANDEM, cos60, 0.5f, true, 1.0f);
-        expectEra(helper, "light vs 12.7 mm", EraSpec.LIGHT, BULLET, cos60, 0.5f, false, 1.0f);
-        expectEra(helper, "light vs 76 mm HE", EraSpec.LIGHT, new Threat(ThreatKind.HE, 76, 0), cos60, 0.5f, true, 1.0f);
-        expectEra(helper, "light vs 40 mm HE", EraSpec.LIGHT, new Threat(ThreatKind.HE, 40, 0), cos60, 0.5f, false, 1.0f);
+        expectEra(helper, "light vs HEAT at 60", AddonFit.ERA_LIGHT.era(), HEAT_125, cos60, 0.5f, true, 1 - 0.65f);
+        expectEra(helper, "light vs HEAT head-on", AddonFit.ERA_LIGHT.era(), HEAT_125, 1.0f, 0.5f, true, 1 - 0.65f * 0.3f);
+        expectEra(helper, "light vs HEAT on a brick edge", AddonFit.ERA_LIGHT.era(), HEAT_125, cos60, 0.05f, true, 1 - 0.65f * 0.5f);
+        expectEra(helper, "light vs rod", AddonFit.ERA_LIGHT.era(), ROD, cos60, 0.5f, true, 0.95f);
+        expectEra(helper, "heavy vs rod", AddonFit.ERA_HEAVY.era(), ROD, cos60, 0.5f, true, 0.65f);
+        expectEra(helper, "light vs 30 mm", AddonFit.ERA_LIGHT.era(), CANNON_30, cos60, 0.5f, true, 0.95f);
+        expectEra(helper, "heavy vs 30 mm", AddonFit.ERA_HEAVY.era(), CANNON_30, cos60, 0.5f, false, 1.0f);
+        expectEra(helper, "light vs tandem", AddonFit.ERA_LIGHT.era(), TANDEM, cos60, 0.5f, true, 1.0f);
+        expectEra(helper, "light vs 12.7 mm", AddonFit.ERA_LIGHT.era(), BULLET, cos60, 0.5f, false, 1.0f);
+        expectEra(helper, "light vs 76 mm HE", AddonFit.ERA_LIGHT.era(), new Threat(ThreatKind.HE, 76, 0), cos60, 0.5f, true, 1.0f);
+        expectEra(helper, "light vs 30 mm HE", AddonFit.ERA_LIGHT.era(), new Threat(ThreatKind.HE, 30, 0), cos60, 0.5f, true, 1.0f);
+        expectEra(helper, "light vs 20 mm HE", AddonFit.ERA_LIGHT.era(), new Threat(ThreatKind.HE, 20, 0), cos60, 0.5f, false, 1.0f);
+        expectEra(helper, "heavy vs 30 mm HE", AddonFit.ERA_HEAVY.era(), new Threat(ThreatKind.HE, 30, 0), cos60, 0.5f, false, 1.0f);
+        expectEra(helper, "Relikt vs tandem", EraTypes.get("combinedassault:relikt"), TANDEM, cos60, 0.5f, true, 1 - 0.45f);
         helper.succeed();
     }
 
-    private static void expectEra(GameTestHelper helper, String what, EraSpec spec, Threat threat, float cos,
+    private static void expectEra(GameTestHelper helper, String what, EraType spec, Threat threat, float cos,
                                   float edge, boolean initiated, float scale) {
-        AddonPhysics.EraOutcome outcome = AddonPhysics.era(spec, threat, cos, edge);
-        if (outcome.initiated() != initiated || Math.abs(outcome.penetrationScale() - scale) > 1.0e-4f) {
+        EraType.Strike outcome = spec.strike(threat, cos, edge);
+        if (outcome.initiated() != initiated || Math.abs(outcome.keep() - scale) > 1.0e-4f) {
             helper.fail(String.format(Locale.ROOT, "%s: initiated %s scale %.4f, want %s %.4f", what,
-                    outcome.initiated(), outcome.penetrationScale(), initiated, scale));
+                    outcome.initiated(), outcome.keep(), initiated, scale));
         }
     }
 
@@ -154,35 +162,173 @@ public class AddonArmorGameTest {
 
     @GameTest(template = TEMPLATE, timeoutTicks = 200)
     public static void aJetSpendsTheBrickItHitsAndTheNextOneGoesThrough(GameTestHelper helper) {
+        EraType light = AddonFit.ERA_LIGHT.era();
         onLane(helper, 0, M1A2, vehicle -> {
+            // Sympathetic neighbours are random: this test counts exact bricks.
+            EraTypes.register(withSympathetic(light, 0.0f));
+            try {
+                fillAll(vehicle, AddonFit.ERA_LIGHT);
+                int skirt = mount(helper, vehicle, "port_skirt_1");
+                AddonMount m = vehicle.addonArmor().mounts().get(skirt);
+                AddonMountState state = vehicle.addonArmor().state(skirt);
+                AddonStrike.Result first = shotAtCell(vehicle, skirt, 5, 30, HEAT_125);
+                float want = 1 - 0.65f * Math.max(0.3f, Mth.sin((float) Math.toRadians(30)) / SIN_60);
+                if (first.verdict() != AddonStrike.Verdict.BURST || first.hull() == null
+                        || Math.abs(first.lead().scale(ThreatKind.HEAT) - want) > 0.01f) {
+                    helper.fail("HEAT onto a live brick: " + first + ", want BURST reaching the hull at " + want);
+                    return;
+                }
+                if (state.isLive(5) || state.liveCells() != m.cells() - 1) {
+                    helper.fail("the brick that fired is still live; " + state.liveCells() + " of " + m.cells());
+                    return;
+                }
+                AddonStrike.Result second = shotAtCell(vehicle, skirt, 5, 30, HEAT_125);
+                if (second.verdict() != AddonStrike.Verdict.THROUGH || second.lead().scale(ThreatKind.HEAT) != 1.0f) {
+                    helper.fail("HEAT through the spent brick's hole: " + second + ", want THROUGH at full penetration");
+                    return;
+                }
+                AddonStrike.Result tandem = shotAtCell(vehicle, skirt, 4, 30, TANDEM);
+                if (tandem.verdict() != AddonStrike.Verdict.BURST || tandem.lead().scale(ThreatKind.TANDEM_HEAT) != 1.0f || state.isLive(4)) {
+                    helper.fail("tandem: " + tandem + ", live " + state.isLive(4) + "; precursor should spend it untouched");
+                    return;
+                }
+                AddonStrike.Result bullet = shotAtCell(vehicle, skirt, 3, 30, BULLET);
+                if (bullet.verdict() != AddonStrike.Verdict.STOPPED || !state.isLive(3)) {
+                    helper.fail("12.7 mm on a brick: " + bullet + ", live " + state.isLive(3));
+                    return;
+                }
+                helper.succeed();
+            } finally {
+                EraTypes.register(light);
+            }
+        });
+    }
+
+    /** Light ERA at 25 mm HE initiation: a 30 mm HEI shell strips a brick, the heavy type (40 mm) shrugs it off. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    public static void aThirtyMillimetreHeShellStripsLightEraButNotHeavy(GameTestHelper helper) {
+        onLane(helper, 9, M1A2, vehicle -> {
+            Threat he30 = new Threat(ThreatKind.HE, 30, 0);
             fillAll(vehicle, AddonFit.ERA_LIGHT);
             int skirt = mount(helper, vehicle, "port_skirt_1");
-            AddonMount m = vehicle.addonArmor().mounts().get(skirt);
             AddonMountState state = vehicle.addonArmor().state(skirt);
-            AddonStrike.Result first = shotAtCell(vehicle, skirt, 5, 30, HEAT_125);
-            float want = 1 - 0.65f * Math.max(0.3f, Mth.sin((float) Math.toRadians(30)) / SIN_60);
-            if (first.verdict() != AddonStrike.Verdict.BURST || first.hull() == null
-                    || Math.abs(first.penetrationScale() - want) > 0.01f) {
-                helper.fail("HEAT onto a live brick: " + first + ", want BURST reaching the hull at " + want);
+            AddonStrike.Result light = shotAtCell(vehicle, skirt, 5, 30, he30);
+            if (light.verdict() != AddonStrike.Verdict.BURST || state.isLive(5)) {
+                helper.fail("30 mm HE on light ERA: " + light.verdict() + ", brick live " + state.isLive(5));
                 return;
             }
-            if (state.isLive(5) || state.liveCells() != m.cells() - 1) {
-                helper.fail("the brick that fired is still live; " + state.liveCells() + " of " + m.cells());
+            fillAll(vehicle, AddonFit.ERA_HEAVY);
+            AddonStrike.Result heavy = shotAtCell(vehicle, skirt, 5, 30, he30);
+            if (!state.isLive(5)) {
+                helper.fail("30 mm HE set off a heavy brick: " + heavy.verdict());
                 return;
             }
-            AddonStrike.Result second = shotAtCell(vehicle, skirt, 5, 30, HEAT_125);
-            if (second.verdict() != AddonStrike.Verdict.THROUGH || second.penetrationScale() != 1.0f) {
-                helper.fail("HEAT through the spent brick's hole: " + second + ", want THROUGH at full penetration");
-                return;
+            helper.succeed();
+        });
+    }
+
+    /** One hop of sympathetic detonation: chance 1 takes every neighbour with it, chance 0 none. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    public static void aDetonatingBrickTakesItsNeighboursOnlyAsTheTypeSays(GameTestHelper helper) {
+        onLane(helper, 10, M1A2, vehicle -> {
+            EraType light = AddonFit.ERA_LIGHT.era();
+            try {
+                int skirt = mount(helper, vehicle, "port_skirt_1");
+                AddonMountState state = vehicle.addonArmor().state(skirt);
+                int cells = vehicle.addonArmor().mounts().get(skirt).cells();
+                EraTypes.register(withSympathetic(light, 0.0f));
+                fillAll(vehicle, AddonFit.ERA_LIGHT);
+                shotAtCell(vehicle, skirt, 5, 30, HEAT_125);
+                if (state.liveCells() != cells - 1) {
+                    helper.fail("sympathetic 0: " + (cells - state.liveCells()) + " bricks went, want 1");
+                    return;
+                }
+                EraTypes.register(withSympathetic(light, 1.0f));
+                fillAll(vehicle, AddonFit.ERA_LIGHT);
+                shotAtCell(vehicle, skirt, 5, 30, HEAT_125);
+                int gone = cells - state.liveCells();
+                AddonMount mount = vehicle.addonArmor().mounts().get(skirt);
+                int column = 5 % mount.columns;
+                int row = 5 / mount.columns;
+                int around = 0;
+                for (int dr = -1; dr <= 1; dr++) {
+                    for (int dc = -1; dc <= 1; dc++) {
+                        if ((dc != 0 || dr != 0) && column + dc >= 0 && column + dc < mount.columns
+                                && row + dr >= 0 && row + dr < mount.rows) {
+                            around++;
+                        }
+                    }
+                }
+                if (gone != 1 + around) {
+                    helper.fail("sympathetic 1: " + gone + " bricks went, want " + (1 + around));
+                    return;
+                }
+                helper.succeed();
+            } finally {
+                EraTypes.register(light);
             }
-            AddonStrike.Result tandem = shotAtCell(vehicle, skirt, 4, 30, TANDEM);
-            if (tandem.verdict() != AddonStrike.Verdict.BURST || tandem.penetrationScale() != 1.0f || state.isLive(4)) {
-                helper.fail("tandem: " + tandem + ", live " + state.isLive(4) + "; precursor should spend it untouched");
-                return;
+        });
+    }
+
+    /** Fragments of energy past the type's threshold set off the bricks they land on; soft ones and bare blast do not. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    public static void aFragmentBlastSetsOffTheBricksItLandsOnAndASoftOneDoesNot(GameTestHelper helper) {
+        onLane(helper, 12, M1A2, vehicle -> {
+            EraType light = AddonFit.ERA_LIGHT.era();
+            try {
+                EraTypes.register(withSympathetic(light, 0.0f));
+                fillAll(vehicle, AddonFit.ERA_LIGHT);
+                int skirt = mount(helper, vehicle, "port_skirt_1");
+                AddonMountState state = vehicle.addonArmor().state(skirt);
+                int cells = vehicle.addonArmor().mounts().get(skirt).cells();
+                Vec3 at = vehicle.addonArmor().pose(vehicle, skirt).toWorld(0, 0, 1.0f);
+                blast(vehicle, at, BlastPayload.ofSize(3.0f));
+                blast(vehicle, at, BlastPayload.ofSize(3.0f).withFragments(400, 3.0f, 900.0f));
+                if (state.liveCells() != cells) {
+                    helper.fail((cells - state.liveCells()) + " bricks went to a bare blast / 2.4 kJ fragments");
+                    return;
+                }
+                blast(vehicle, at, BlastPayload.ofSize(3.0f).withFragments(400, 12.0f, 1500.0f));
+                if (state.liveCells() >= cells) {
+                    helper.fail("400 x 12 g fragments at 1500 m/s a metre off the skirt left all " + cells + " bricks live");
+                    return;
+                }
+                helper.succeed();
+            } finally {
+                EraTypes.register(light);
             }
-            AddonStrike.Result bullet = shotAtCell(vehicle, skirt, 3, 30, BULLET);
-            if (bullet.verdict() != AddonStrike.Verdict.STOPPED || !state.isLive(3)) {
-                helper.fail("12.7 mm on a brick: " + bullet + ", live " + state.isLive(3));
+        });
+    }
+
+    private static void blast(AbstractVehicle vehicle, Vec3 at, BlastPayload payload) {
+        new ExplosionAEF(vehicle.level(), at.x, at.y, at.z, 3.0f).payload(payload)
+                .setEntityProcessor(new EntityProcessorCross()).setPlayerProcessor(new PlayerProcessorStandard()).explode();
+    }
+
+    private static EraType withSympathetic(EraType t, float chance) {
+        return new EraType(t.id(), t.heatCut(), t.kineticCut(), t.tandemCut(), t.kineticInitiationMm(),
+                t.heInitiationMm(), t.fragmentInitiationJ(), t.thickness(), t.backPlateMm(), chance, t.blastKg(),
+                t.fragments(), t.flyer());
+    }
+
+    /** A brick going off throws its blast at what stands beside it. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 200)
+    public static void aDetonatingBrickHurtsAnAnimalBesideIt(GameTestHelper helper) {
+        onLane(helper, 11, M1A2, vehicle -> {
+            fillAll(vehicle, AddonFit.ERA_HEAVY);
+            int skirt = mount(helper, vehicle, "port_skirt_1");
+            AddonArmorLayer.Pose pose = vehicle.addonArmor().pose(vehicle, skirt);
+            Vec3 beside = pose.toWorld((float) vehicle.addonArmor().mounts().get(skirt).cellCentre(5).x,
+                    (float) vehicle.addonArmor().mounts().get(skirt).cellCentre(5).y, 0.7f);
+            net.minecraft.world.entity.animal.Cow cow = net.minecraft.world.entity.EntityType.COW.create(vehicle.level());
+            cow.moveTo(beside.x, beside.y - 0.5, beside.z);
+            vehicle.level().addFreshEntity(cow);
+            float before = cow.getHealth();
+            shotAtCell(vehicle, skirt, 5, 30, HEAT_125);
+            float after = cow.getHealth();
+            cow.discard();
+            if (!(after < before)) {
+                helper.fail("a brick went off 0.7 m from a cow and it took nothing: " + before + " -> " + after);
                 return;
             }
             helper.succeed();
@@ -196,7 +342,7 @@ public class AddonArmorGameTest {
         AddonMount m = layer.mounts().get(mount);
         AddonArmorLayer.Pose pose = layer.pose(vehicle, mount);
         Vec3 local = m.cellCentre(cell);
-        Vec3 aim = pose.toWorld((float) local.x, (float) local.y, layer.state(mount).fit.era.thickness());
+        Vec3 aim = pose.toWorld((float) local.x, (float) local.y, layer.state(mount).fit.era().thickness());
         Vector3f out = new Quaternionf(pose.rotation()).transform(new Quaternionf()
                 .rotationY((float) Math.toRadians(obliquity)).transform(new Vector3f(0, 0, 1)));
         Vec3 direction = new Vec3(out.x, out.y, out.z);
@@ -465,7 +611,7 @@ public class AddonArmorGameTest {
     }
 
     /**
-     * Hull armour 50 mm every face, ricochet past 70 deg incidence, vs 12.7 mm (20 mm pen) posted as a WFLib strike
+     * Hull armour 50 mm every face (plates as shipped), ricochet past 70 deg incidence, vs 12.7 mm (20 mm pen) posted as a WFLib strike
      * onto a side face: 85 deg => RICOCHET leaving the face, nothing put for {@code hurt}; head-on, or a striker that
      * cannot ricochet => none.
      */
@@ -473,6 +619,7 @@ public class AddonArmorGameTest {
     public static void hullGlancesKineticRoundsPastTheRicochetAngle(GameTestHelper helper) {
         onLane(helper, 8, M1A2, vehicle -> {
             HullProfile profile = new HullProfile();
+            profile.plates = vehicle.armorProfile.plates;
             profile.front = profile.side = profile.rear = profile.top = profile.bottom = 50;
             vehicle.armorProfile = profile;
             Vec3 centre = vehicle.getBoundingBox().getCenter();

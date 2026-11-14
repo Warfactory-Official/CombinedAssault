@@ -1,0 +1,41 @@
+{
+  "name": "bmwr75_controller",
+  "parameters": {},
+  "graph": {
+    "type": "merge",
+    "inputs": [
+      {
+        "type": "bone_binding",
+        "special_bindings": [
+          {
+            "bones": [
+              "wheel_rl_1",
+              "wheel_rr_1"
+            ],
+            "source": "wheel_rotation",
+            "axis": "x",
+            "param": 0.066
+          },
+          {
+            "bones": [
+              "wheel_rm",
+              "wheel_rm_1"
+            ],
+            "source": "wheel_rotation",
+            "axis": "x",
+            "param": 0.328
+          },
+          {
+            "bones": [
+              "wheel_rl",
+              "wheel_rr"
+            ],
+            "source": "wheel_rotation",
+            "axis": "x",
+            "param": 0.349
+          }
+        ]
+      }
+    ]
+  }
+}

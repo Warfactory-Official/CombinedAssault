@@ -1,0 +1,228 @@
+{
+  "type": "combinedassault:tracked_vehicle",
+  "attributes": {
+    "brake_acceleration": 0.025,
+    "forward_acceleration": 0.008,
+    "backward_acceleration": 0.008,
+    "max_speed_forward": 0.528,
+    "max_speed_backward": 0.211,
+    "turn_acceleration": 1,
+    "max_turn": 2,
+    "engine_power": 520.1
+  },
+  "physics_info": {
+    "mass": 54000,
+    "friction": 21380,
+    "suspension_response": 4,
+    "can_destroy_block": true,
+    "center": [
+      0.0,
+      0.314,
+      -0.036
+    ]
+  },
+  "max_health": 2000,
+  "armor": {
+    "bottom": 26,
+    "front": 100,
+    "parts": {
+      "turret": {
+        "bottom": 25,
+        "front": 100,
+        "rear": 80,
+        "side": 80,
+        "top": 25
+      }
+    },
+    "rear": 80,
+    "side": 80,
+    "top": 25
+  },
+  "view_info": {
+    "third_person_distance": 7.5
+  },
+  "energy_info": {
+    "energy_capacity": 540,
+    "energy_consumption_per_tick": 0.004
+  },
+  "storage": {
+    "slots": 20
+  },
+  "parts": [
+    {
+      "id": "turret",
+      "name": "part.combinedassault.turret",
+      "type": "combinedassault:weapon",
+      "crew_roles": [
+        "driver",
+        "gunner"
+      ],
+      "max_health": 600,
+      "render_bone": "turret",
+      "rot_info": {
+        "x_rot_speed": 1.5,
+        "y_rot_speed": 2
+      },
+      "optical_sight_type": "optical_scope",
+      "zoom_max": 4,
+      "weapons": [
+        "flans_ww2:kwk36_88mm",
+        {
+          "id": "flans_ww2:mg34",
+          "part_unit_id": "mg_0",
+          "secondary": true
+        }
+      ],
+      "protect_passenger": true
+    },
+    {
+      "id": "suspension_left",
+      "name": "part.flans_ww2.tiger.suspension_left",
+      "type": "combinedassault:track",
+      "is_seat": false,
+      "spring_stiffness": 1080000,
+      "damping": 102600,
+      "rest_length": 0.4,
+      "max_compression": 0.4,
+      "max_extension": 0.1,
+      "max_droop": 0.12,
+      "track_width": 0.6995256802665872
+    },
+    {
+      "id": "suspension_right",
+      "name": "part.flans_ww2.tiger.suspension_right",
+      "type": "combinedassault:track",
+      "is_seat": false,
+      "spring_stiffness": 1080000,
+      "damping": 102600,
+      "rest_length": 0.4,
+      "max_compression": 0.4,
+      "max_extension": 0.1,
+      "max_droop": 0.12,
+      "track_width": 0.6995256802665872
+    },
+    {
+      "id": "mg_0",
+      "name": "part.flans_ww2.tiger.mg_0",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "rot_info": {
+        "x_rot_speed": 3,
+        "y_rot_speed": 3
+      }
+    }
+  ],
+  "model": "flans_ww2:models/vehicle/tiger/tiger.glb",
+  "display": {
+    "tab_index": 900,
+    "icon": "flans_ww2:textures/slot/tiger.png",
+    "engine": {
+      "start": {
+        "event": "combinedassault:ztz99a_engine_start",
+        "range": 144
+      },
+      "loops": [
+        {
+          "sound": {
+            "event": "combinedassault:ztz99a_engine_idle",
+            "range": 144
+          },
+          "input": "rpm",
+          "volume": [
+            [
+              0.05,
+              0
+            ],
+            [
+              0.3,
+              1
+            ],
+            [
+              0.6,
+              1
+            ],
+            [
+              0.75,
+              0
+            ]
+          ],
+          "pitch": [
+            [
+              0.3,
+              0.85
+            ],
+            [
+              0.6,
+              1
+            ]
+          ]
+        },
+        {
+          "sound": {
+            "event": "combinedassault:ztz99a_engine_run",
+            "range": 240
+          },
+          "input": "rpm",
+          "volume": [
+            [
+              0.6,
+              0
+            ],
+            [
+              0.7,
+              1
+            ]
+          ],
+          "pitch": [
+            [
+              0.6,
+              0.8
+            ],
+            [
+              1,
+              1.1
+            ]
+          ]
+        },
+        {
+          "sound": {
+            "event": "combinedassault:track_run",
+            "range": 144
+          },
+          "input": "speed",
+          "volume": [
+            [
+              0.01,
+              0
+            ],
+            [
+              0.1,
+              0.6
+            ],
+            [
+              0.6,
+              1
+            ]
+          ],
+          "pitch": [
+            [
+              0,
+              0.8
+            ],
+            [
+              1,
+              1.1
+            ]
+          ]
+        }
+      ]
+    },
+    "cabin_muffle": 0.85,
+    "controller": "flans_ww2:tiger_controller",
+    "track": {
+      "model": "flans_ww2:models/effect/tiger_track_link.glb",
+      "module_length": 0.15
+    },
+    "description": "German Heavy Tank"
+  }
+}

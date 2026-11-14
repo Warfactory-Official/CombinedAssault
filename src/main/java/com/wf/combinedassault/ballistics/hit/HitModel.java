@@ -152,7 +152,7 @@ public final class HitModel {
         return new HitModel(mesh, List.copyOf(groups), List.copyOf(nodes));
     }
 
-    /** Pool id: tracks and wheels by side, as the implicit defaults name them; else the code, spaced; + unit. */
+    /** Pool id: tracks, wheels and wings by side, as the implicit defaults name them; else the code, spaced; + unit. */
     public static String systemId(ComponentKind kind, VehicleSystems.Side side, String unit) {
         String base = systemId(kind, side);
         return unit.isEmpty() ? base : base + " " + unit;
@@ -167,6 +167,7 @@ public final class HitModel {
         return switch (kind) {
             case TRACK -> prefix + "track";
             case WHEEL -> prefix + "wheels";
+            case WING -> prefix + "wing";
             default -> kind.code.replace('_', ' ');
         };
     }

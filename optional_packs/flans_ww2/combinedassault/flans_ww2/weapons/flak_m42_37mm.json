@@ -1,0 +1,24 @@
+{
+  "type": "combinedassault:cannon",
+  "name": "3.7 cm Flak M42",
+  "recoil": 0.5,
+  "inaccuracy": 0.1,
+  "shoot_interval": 375,
+  "max_capacity": 8,
+  "reload": {
+    "time": 60,
+    "ammo": "wflib:cartridge_37x263b"
+  },
+  "casing_delay": 0.03,
+  "sounds": {
+    "fire": {
+      "event": "combinedassault:auto_cannon_shot",
+      "range": 600,
+      "pitch_random": 0.1
+    },
+    "reload": {
+      "event": "combinedassault:gun_reload",
+      "range": 24
+    }
+  }
+}

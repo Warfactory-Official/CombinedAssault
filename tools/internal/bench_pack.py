@@ -79,8 +79,9 @@ def vehicle(length, sprung, name):
             parts.append({"id": wheel, "name": wheel, "type": "combinedassault:suspension", "is_seat": False,
                           "spring_stiffness": round(k), "damping": round(c),
                           "rest_length": 0.3, "max_compression": 0.3, "max_extension": 0.2})
-    parts.append({"id": "seat0", "name": "seat0", "type": "combinedassault:generic", "is_seat": True,
-                  "seat_offset": [0, height, 0]})
+    model.node(0, {"name": "socket_seat_seat0", "translation": [0, height, 0],
+                   "extras": {"combinedassaultRole": "seat", "gemrenderHidden": True, "combinedassaultInterface": "seat0"}})
+    parts.append({"id": "seat0", "name": "seat0", "type": "combinedassault:generic", "is_seat": True})
     force = mass * 4
     data = {"type": "combinedassault:wheeled_vehicle",
             "attributes": {"brake_force": force, "forward_force": force, "backward_force": force / 2,

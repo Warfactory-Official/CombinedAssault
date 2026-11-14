@@ -20,6 +20,7 @@ surface; axis = thinnest local extent.
     --hit-cylinder a,b hit surfaces only (no CoACD); regenerating replaces the named nodes' generated ones
     --sides 12         prism sides
     --material rubber  hit_surface material name (token: armor_<mm>, rubber, glass, soft; pack doc §6.6)
+    --pack DIR         pack root (default: built-in pack)
 
 Primitives with a `decor` material token are left out. Generated colliders carry extras.genHulls {node}; regenerating
 replaces those of the selected nodes; hand-made colliders (no genHulls) or genHulls.locked are kept. Each collider sits
@@ -220,6 +221,7 @@ def cylinder(gltf, nodes, name, sides, material=None):
 
 
 def main():
+    cwd = os.getcwd()
     os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
     ap = argparse.ArgumentParser()
     ap.add_argument("vehicle")
@@ -236,7 +238,11 @@ def main():
     ap.add_argument("--hit-cylinder")
     ap.add_argument("--sides", type=int, default=12)
     ap.add_argument("--material")
+    ap.add_argument("--pack", help="pack root (default: built-in pack)")
     args = ap.parse_args()
+    if args.pack:
+        global PACK
+        PACK = os.path.abspath(os.path.join(cwd, args.pack))
 
     ns, vid = args.vehicle.split(":", 1) if ":" in args.vehicle else ("combinedassault", args.vehicle)
     vehicle = read_json(os.path.join(PACK, "combinedassault", ns, "vehicles", vid + ".json"))

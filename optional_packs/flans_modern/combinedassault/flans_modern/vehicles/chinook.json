@@ -1,0 +1,287 @@
+{
+  "type": "combinedassault:rotary_wing_vehicle",
+  "attributes": {
+    "main_rotor_force": 330000.0,
+    "ceiling": 256,
+    "x_rot_speed_acceleration": 1.5,
+    "x_rot_speed_max": 4.0,
+    "y_rot_speed_acceleration": 1.5,
+    "y_rot_speed_max": 4.0,
+    "z_rot_speed_acceleration": 1.5,
+    "z_rot_speed_max": 4.0,
+    "max_air_speed": 4.38
+  },
+  "physics_info": {
+    "mass": 15000,
+    "friction": 30000
+  },
+  "max_health": 900,
+  "view_info": {
+    "third_person_distance": 25.0,
+    "third_person_distance_zoomed": 4
+  },
+  "energy_info": {
+    "energy_capacity": 3000,
+    "energy_consumption_per_tick": 0.01875
+  },
+  "defense_stats": {
+    "damage_threshold": 10,
+    "impact_multiplier": 3
+  },
+  "parts": [
+    {
+      "id": "pilot",
+      "name": "part.flans_modern.chinook.pilot",
+      "type": "combinedassault:generic",
+      "crew_roles": [
+        "driver"
+      ]
+    },
+    {
+      "id": "seat_1",
+      "name": "part.flans_modern.chinook.seat_1",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_2",
+      "name": "part.flans_modern.chinook.seat_2",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_3",
+      "name": "part.flans_modern.chinook.seat_3",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_4",
+      "name": "part.flans_modern.chinook.seat_4",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_5",
+      "name": "part.flans_modern.chinook.seat_5",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_6",
+      "name": "part.flans_modern.chinook.seat_6",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_7",
+      "name": "part.flans_modern.chinook.seat_7",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_8",
+      "name": "part.flans_modern.chinook.seat_8",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_9",
+      "name": "part.flans_modern.chinook.seat_9",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_10",
+      "name": "part.flans_modern.chinook.seat_10",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_11",
+      "name": "part.flans_modern.chinook.seat_11",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_12",
+      "name": "part.flans_modern.chinook.seat_12",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_13",
+      "name": "part.flans_modern.chinook.seat_13",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_14",
+      "name": "part.flans_modern.chinook.seat_14",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_15",
+      "name": "part.flans_modern.chinook.seat_15",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_16",
+      "name": "part.flans_modern.chinook.seat_16",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_17",
+      "name": "part.flans_modern.chinook.seat_17",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_18",
+      "name": "part.flans_modern.chinook.seat_18",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_19",
+      "name": "part.flans_modern.chinook.seat_19",
+      "type": "combinedassault:weapon",
+      "protect_passenger": false,
+      "crew_roles": [
+        "gunner"
+      ],
+      "render_bone": "seat_19_gun",
+      "handling": "manual",
+      "operator_on_weapon_unit": false,
+      "rot_info": {
+        "x_rot_speed": 5,
+        "y_rot_speed": 5,
+        "y_rot_min": 40,
+        "y_rot_max": 140,
+        "y_rot": 90.0,
+        "need_power": false
+      },
+      "optical_sight_type": "operator",
+      "zoom_max": 2,
+      "crosshair_style": "cross",
+      "hardpoint": {
+        "node": "seat_19_gun_pitch",
+        "accepts": [
+          "door",
+          "pintle"
+        ],
+        "fitted": "combinedassault:m134"
+      }
+    },
+    {
+      "id": "seat_20",
+      "name": "part.flans_modern.chinook.seat_20",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_21",
+      "name": "part.flans_modern.chinook.seat_21",
+      "type": "combinedassault:weapon",
+      "protect_passenger": false,
+      "crew_roles": [
+        "gunner"
+      ],
+      "render_bone": "seat_21_gun",
+      "handling": "manual",
+      "operator_on_weapon_unit": false,
+      "rot_info": {
+        "x_rot_speed": 5,
+        "y_rot_speed": 5,
+        "y_rot_min": -140,
+        "y_rot_max": -40,
+        "y_rot": -90.0,
+        "need_power": false
+      },
+      "optical_sight_type": "operator",
+      "zoom_max": 2,
+      "crosshair_style": "cross",
+      "hardpoint": {
+        "node": "seat_21_gun_pitch",
+        "accepts": [
+          "door",
+          "pintle"
+        ],
+        "fitted": "combinedassault:m134"
+      }
+    },
+    {
+      "id": "seat_22",
+      "name": "part.flans_modern.chinook.seat_22",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_23",
+      "name": "part.flans_modern.chinook.seat_23",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_24",
+      "name": "part.flans_modern.chinook.seat_24",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_25",
+      "name": "part.flans_modern.chinook.seat_25",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    }
+  ],
+  "model": "flans_modern:models/vehicle/chinook/chinook.glb",
+  "display": {
+    "icon": "flans_modern:textures/slot/chinook.png",
+    "tab_index": 910,
+    "controller": "flans_modern:chinook_controller",
+    "engine": {
+      "start": {
+        "event": "combinedassault:z10_engine_start",
+        "range": 360
+      },
+      "stop": {
+        "event": "combinedassault:z10_engine_stop",
+        "range": 360
+      },
+      "loops": [
+        {
+          "sound": {
+            "event": "combinedassault:z10_engine_run",
+            "range": 600
+          },
+          "input": "power",
+          "volume": [
+            [
+              0.2,
+              0
+            ],
+            [
+              0.5,
+              1
+            ]
+          ],
+          "pitch": [
+            [
+              0.5,
+              0.8
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "cabin_muffle": 0.5
+  }
+}

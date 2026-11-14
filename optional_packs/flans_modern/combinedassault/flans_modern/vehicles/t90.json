@@ -1,0 +1,255 @@
+{
+  "type": "combinedassault:tracked_vehicle",
+  "attributes": {
+    "brake_acceleration": 0.025,
+    "forward_acceleration": 0.008,
+    "backward_acceleration": 0.008,
+    "max_speed_forward": 0.833,
+    "max_speed_backward": 0.333,
+    "turn_acceleration": 1,
+    "max_turn": 2,
+    "engine_power": 888.8
+  },
+  "physics_info": {
+    "mass": 48000,
+    "friction": 19286,
+    "suspension_response": 4,
+    "can_destroy_block": true,
+    "center": [
+      0.0,
+      0.147,
+      0.652
+    ]
+  },
+  "max_health": 2500,
+  "armor": {
+    "bottom": 25,
+    "front": 600,
+    "parts": {
+      "turret": {
+        "bottom": 50,
+        "front": 900,
+        "rear": 70,
+        "side": 350,
+        "top": 50
+      }
+    },
+    "rear": 50,
+    "side": 80,
+    "top": 45
+  },
+  "view_info": {
+    "third_person_distance": 7.5
+  },
+  "energy_info": {
+    "energy_capacity": 1200,
+    "energy_consumption_per_tick": 0.004
+  },
+  "storage": {
+    "slots": 9
+  },
+  "parts": [
+    {
+      "id": "turret",
+      "name": "part.combinedassault.turret",
+      "type": "combinedassault:weapon",
+      "crew_roles": [
+        "driver",
+        "gunner"
+      ],
+      "max_health": 600,
+      "render_bone": "turret",
+      "rot_info": {
+        "x_rot_speed": 1.5,
+        "y_rot_speed": 2
+      },
+      "optical_sight_type": "optical_scope",
+      "zoom_max": 4,
+      "weapons": [
+        "combinedassault:cannon_125mm",
+        {
+          "id": "combinedassault:ma_pkm",
+          "part_unit_id": "mg_0",
+          "secondary": true
+        }
+      ],
+      "protect_passenger": true
+    },
+    {
+      "id": "suspension_left",
+      "name": "part.flans_modern.t90.suspension_left",
+      "type": "combinedassault:track",
+      "is_seat": false,
+      "spring_stiffness": 960000,
+      "damping": 91200,
+      "rest_length": 0.4,
+      "max_compression": 0.4,
+      "max_extension": 0.1,
+      "max_droop": 0.12,
+      "track_width": 0.5389999999999999
+    },
+    {
+      "id": "suspension_right",
+      "name": "part.flans_modern.t90.suspension_right",
+      "type": "combinedassault:track",
+      "is_seat": false,
+      "spring_stiffness": 960000,
+      "damping": 91200,
+      "rest_length": 0.4,
+      "max_compression": 0.4,
+      "max_extension": 0.1,
+      "max_droop": 0.12,
+      "track_width": 0.5389999999999999
+    },
+    {
+      "id": "mg_0",
+      "name": "part.flans_modern.t90.mg_0",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "rot_info": {
+        "x_rot_speed": 3,
+        "y_rot_speed": 3
+      }
+    },
+    {
+      "id": "seat_1",
+      "name": "part.flans_modern.seat_1",
+      "type": "combinedassault:weapon",
+      "protect_passenger": false,
+      "crosshair_style": "cross",
+      "crew_roles": [
+        "gunner"
+      ],
+      "handling": "manual",
+      "max_health": 120,
+      "render_bone": "seat_1_gun",
+      "rot_info": {
+        "x_rot_speed": 4,
+        "y_rot_speed": 4,
+        "need_power": false
+      },
+      "hardpoint": {
+        "node": "seat_1_gun_pitch",
+        "accepts": [
+          "pintle"
+        ],
+        "fitted": "flans_modern:ma_pkm"
+      },
+      "operator_on_weapon_unit": false,
+      "pose": "stand"
+    }
+  ],
+  "model": "flans_modern:models/vehicle/t90/t90.glb",
+  "display": {
+    "tab_index": 900,
+    "icon": "flans_modern:textures/slot/t90.png",
+    "engine": {
+      "start": {
+        "event": "combinedassault:ztz99a_engine_start",
+        "range": 144
+      },
+      "loops": [
+        {
+          "sound": {
+            "event": "combinedassault:ztz99a_engine_idle",
+            "range": 144
+          },
+          "input": "rpm",
+          "volume": [
+            [
+              0.05,
+              0
+            ],
+            [
+              0.3,
+              1
+            ],
+            [
+              0.6,
+              1
+            ],
+            [
+              0.75,
+              0
+            ]
+          ],
+          "pitch": [
+            [
+              0.3,
+              0.85
+            ],
+            [
+              0.6,
+              1
+            ]
+          ]
+        },
+        {
+          "sound": {
+            "event": "combinedassault:ztz99a_engine_run",
+            "range": 240
+          },
+          "input": "rpm",
+          "volume": [
+            [
+              0.6,
+              0
+            ],
+            [
+              0.7,
+              1
+            ]
+          ],
+          "pitch": [
+            [
+              0.6,
+              0.8
+            ],
+            [
+              1,
+              1.1
+            ]
+          ]
+        },
+        {
+          "sound": {
+            "event": "combinedassault:track_run",
+            "range": 144
+          },
+          "input": "speed",
+          "volume": [
+            [
+              0.01,
+              0
+            ],
+            [
+              0.1,
+              0.6
+            ],
+            [
+              0.6,
+              1
+            ]
+          ],
+          "pitch": [
+            [
+              0,
+              0.8
+            ],
+            [
+              1,
+              1.1
+            ]
+          ]
+        }
+      ]
+    },
+    "cabin_muffle": 0.85,
+    "controller": "flans_modern:t90_controller",
+    "track": {
+      "model": "flans_modern:models/effect/t90_track_link.glb",
+      "module_length": 0.15
+    },
+    "description": "Russian Main Battle Tank"
+  }
+}

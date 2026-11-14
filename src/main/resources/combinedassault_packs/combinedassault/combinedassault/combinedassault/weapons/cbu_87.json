@@ -10,5 +10,12 @@
             "combinedassault:bomb_cbu_87",
             "#wflib:bomb/medium"
         ]
+    },
+    "sounds": {
+        "fire": {
+            "event": "combinedassault:bomb_drop",
+            "range": 48,
+            "pitch_random": 0.1
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.wf.combinedassault.hud;
 
+import com.wf.combinedassault.ballistics.hit.PlateBinding;
 import com.wf.combinedassault.ballistics.hit.VehicleHits;
 import com.wf.combinedassault.render.util.HullRenderer;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
@@ -7,6 +8,7 @@ import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.util.VectorUtil;
 import com.wf.wflib.armor.api.hull.HullProfile;
 import com.wf.wflib.armor.api.hull.HullResolver;
+import com.wf.wflib.armor.api.hull.PlateSpec;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -50,7 +52,7 @@ public final class ArmorDebugText {
             return;
         }
         if (mc.getEntityRenderDispatcher().shouldRenderHitBoxes()) {
-            lines.add(String.format(Locale.ROOT, "Mesh: KE LOS from here, blue %.0f -> red %.0f mm (log), grey 0",
+            lines.add(String.format(Locale.ROOT, "Mesh: plates by id colour; unbound KE LOS from here, blue %.0f -> red %.0f mm (log), grey 0",
                     HullRenderer.RAMP_LO, HullRenderer.RAMP_HI));
         }
         // Past the outer surface: hitObbPosition can stop short of the mesh.
@@ -58,10 +60,10 @@ public final class ArmorDebugText {
         VehicleHits hits = vehicle.hits();
         VehicleHits.Hit hit = hits == null ? null : hits.surface(start, end);
         HullResolver.Plate ke = hit != null
-                ? HullResolver.plate(vehicle, profile, hit.node(), hit.point(), hit.normal(), hit.armor(), dir, false)
+                ? HullResolver.plate(vehicle, profile, hit.node(), hit.point(), hit.normal(), hit.plate(), dir, false)
                 : HullResolver.plate(vehicle, profile, start, end, dir, false);
         HullResolver.Plate ce = hit != null
-                ? HullResolver.plate(vehicle, profile, hit.node(), hit.point(), hit.normal(), hit.armor(), dir, true)
+                ? HullResolver.plate(vehicle, profile, hit.node(), hit.point(), hit.normal(), hit.plate(), dir, true)
                 : HullResolver.plate(vehicle, profile, start, end, dir, true);
         if (hit != null) {
             Vector3f at = hits.restPoint(hit.node(), hit.point());
@@ -74,10 +76,13 @@ public final class ArmorDebugText {
         }
         lines.add(String.format(Locale.ROOT, "%s%s%s: KE %.0f / CE %.0f mm %s, wear x%.2f", ke.face(),
                 ke.part() == null ? "" : " " + ke.part(), ke.zone() == null ? "" : " zone " + ke.zone(),
-                ke.nominal(), ce.nominal(), ke.plate() ? "plate" : "RHAe", ke.wear()));
-        lines.add(String.format(Locale.ROOT, "LOS KE %.0f / CE %.0f mm @ %.1f deg, surface %.1f deg%s",
-                ke.effective(), ce.effective(), ke.incidence(), ke.surfaceIncidence(),
-                ke.surfaceIncidence() > profile.ricochetAngle
-                        ? String.format(Locale.ROOT, " > ricochet %.0f", profile.ricochetAngle) : ""));
+                ke.nominal(), ce.nominal(), ke.plateId() != null ? "plate" : "RHAe", ke.wear()));
+        if (ke.plateId() != null) {
+            PlateSpec spec = profile.plates.get(ke.plateId());
+            lines.add(String.format(Locale.ROOT, "Plate %s: %s; declared %.1f deg, mesh %.1f deg", ke.plateId(),
+                    PlateBinding.describe(spec), ke.incidence(), ke.meshIncidence()));
+        }
+        lines.add(String.format(Locale.ROOT, "LOS KE %.0f / CE %.0f mm @ %.1f deg, surface %.1f deg",
+                ke.effective(), ce.effective(), ke.incidence(), ke.surfaceIncidence()));
     }
 }

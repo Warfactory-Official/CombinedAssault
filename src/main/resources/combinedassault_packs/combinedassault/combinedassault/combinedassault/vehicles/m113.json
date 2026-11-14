@@ -1,0 +1,438 @@
+{
+    "type": "combinedassault:tracked_vehicle",
+    "attributes": {
+        "brake_acceleration": 0.03,
+        "forward_acceleration": 0.01,
+        "backward_acceleration": 0.01,
+        "engine_power": 205,
+        "max_speed_forward": 0.5,
+        "max_speed_backward": 0.2,
+        "turn_acceleration": 1.2,
+        "max_turn": 2.5
+    },
+    "physics_info": {
+        "mass": 12300,
+        "friction": 24600,
+        "suspension_response": 4,
+        "can_destroy_block": false
+    },
+    "max_health": 600,
+    "armor": {
+        "front": 20,
+        "side": 14,
+        "rear": 12,
+        "top": 8,
+        "bottom": 8,
+        "parts": {
+            "mg": {
+                "front": 10,
+                "side": 10,
+                "rear": 4,
+                "top": 4,
+                "bottom": 4
+            }
+        },
+        "plates": {
+            "glacis": {"facing": "front", "slope": 45, "layers": [{"mm": 38, "mat": "aluminium"}]},
+            "nose": {"facing": "front", "layers": [{"mm": 38, "mat": "aluminium"}]},
+            "side": {"facing": "side", "layers": [{"mm": 38, "mat": "aluminium"}]},
+            "rear": {"facing": "rear", "layers": [{"mm": 38, "mat": "aluminium"}]},
+            "roof": {"facing": "top", "layers": [{"mm": 25, "mat": "aluminium"}]},
+            "belly": {"facing": "bottom", "layers": [{"mm": 25, "mat": "aluminium"}]}
+        }
+    },
+    "view_info": {
+        "third_person_distance": 7
+    },
+    "energy_info": {
+        "energy_capacity": 300,
+        "energy_consumption_per_tick": 0.0008
+    },
+    "storage": {
+        "slots": 27,
+        "max_payload": 1500
+    },
+    "entry": [
+        "rear_door",
+        "ramp",
+        "driver_hatch",
+        "cupola_hatch"
+    ],
+    "interactions": {
+        "rear_door": {
+            "node": [
+                "handle_rear_door",
+                "handle_rear_door_in"
+            ],
+            "actions": [
+                {
+                    "type": "combinedassault:toggle",
+                    "part": "rear_door"
+                }
+            ]
+        },
+        "ramp": {
+            "node": [
+                "handle_ramp",
+                "handle_ramp_in"
+            ],
+            "actions": [
+                {
+                    "type": "combinedassault:toggle",
+                    "part": "ramp"
+                }
+            ]
+        },
+        "driver_hatch": {
+            "node": [
+                "handle_driver_hatch",
+                "handle_driver_hatch_in"
+            ],
+            "actions": [
+                {
+                    "type": "combinedassault:toggle",
+                    "part": "driver_hatch"
+                }
+            ]
+        },
+        "cargo_hatch": {
+            "node": [
+                "handle_cargo_hatch",
+                "handle_cargo_hatch_in"
+            ],
+            "actions": [
+                {
+                    "type": "combinedassault:toggle",
+                    "part": "cargo_hatch"
+                }
+            ]
+        },
+        "cupola_hatch": {
+            "node": [
+                "handle_cupola_hatch",
+                "handle_cupola_hatch_in"
+            ],
+            "actions": [
+                {
+                    "type": "combinedassault:toggle",
+                    "part": "cupola_hatch"
+                }
+            ]
+        },
+        "front_panel": {
+            "node": "handle_front_panel",
+            "actions": [
+                {
+                    "type": "combinedassault:toggle",
+                    "part": "front_panel"
+                }
+            ]
+        },
+        "rear_entrance": {
+            "node": "enter_rear",
+            "actions": [
+                {
+                    "type": "combinedassault:board",
+                    "via": [
+                        "rear_door",
+                        "ramp"
+                    ]
+                }
+            ]
+        },
+        "driver_entrance": {
+            "node": "enter_driver",
+            "actions": [
+                {
+                    "type": "combinedassault:board",
+                    "via": "driver_hatch"
+                }
+            ]
+        },
+        "cupola_entrance": {
+            "node": "enter_cupola",
+            "actions": [
+                {
+                    "type": "combinedassault:board",
+                    "via": "cupola_hatch"
+                }
+            ]
+        }
+    },
+    "parts": [
+        {
+            "id": "driver",
+            "name": "driver",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "crew_roles": [
+                "driver"
+            ],
+            "turn_out": "driver_out"
+        },
+        {
+            "id": "driver_out",
+            "name": "part.combinedassault.m113.driver_out",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "crew_roles": [
+                "driver"
+            ],
+            "hatch": "driver_hatch",
+            "protect_passenger": false
+        },
+        {
+            "id": "commander",
+            "name": "commander",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "crew_roles": [
+                "commander"
+            ],
+            "turn_out": "mg"
+        },
+        {
+            "id": "mg",
+            "name": "part.combinedassault.m113.mg",
+            "type": "combinedassault:weapon",
+            "crew_roles": [
+                "commander",
+                "gunner"
+            ],
+            "handling": "manual",
+            "max_health": 150,
+            "render_bone": "mg",
+            "operator_on_weapon_unit": false,
+            "rot_info": {
+                "x_rot_speed": 4,
+                "y_rot_speed": 4,
+                "need_power": false
+            },
+            "hardpoint": {
+                "node": "mg_pitch",
+                "accepts": [
+                    "pintle"
+                ],
+                "fitted": "combinedassault:m2"
+            },
+            "pose": "stand",
+            "protect_passenger": false,
+            "hatch": "cupola_hatch"
+        },
+        {
+            "id": "troop_l1",
+            "name": "part.combinedassault.m113.troop_l1",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "troop_l2",
+            "name": "part.combinedassault.m113.troop_l2",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "troop_l3",
+            "name": "part.combinedassault.m113.troop_l3",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "troop_l4",
+            "name": "part.combinedassault.m113.troop_l4",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "troop_r1",
+            "name": "part.combinedassault.m113.troop_r1",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "troop_r2",
+            "name": "part.combinedassault.m113.troop_r2",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "troop_r3",
+            "name": "part.combinedassault.m113.troop_r3",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "troop_r4",
+            "name": "part.combinedassault.m113.troop_r4",
+            "type": "combinedassault:generic",
+            "is_seat": true
+        },
+        {
+            "id": "rear_door",
+            "name": "rear_door",
+            "type": "combinedassault:door",
+            "is_seat": false
+        },
+        {
+            "id": "ramp",
+            "name": "ramp",
+            "type": "combinedassault:switchable",
+            "is_seat": false
+        },
+        {
+            "id": "driver_hatch",
+            "name": "driver_hatch",
+            "type": "combinedassault:switchable",
+            "is_seat": false
+        },
+        {
+            "id": "cargo_hatch",
+            "name": "cargo_hatch",
+            "type": "combinedassault:switchable",
+            "is_seat": false
+        },
+        {
+            "id": "cupola_hatch",
+            "name": "cupola_hatch",
+            "type": "combinedassault:switchable",
+            "is_seat": false
+        },
+        {
+            "id": "front_panel",
+            "name": "front_panel",
+            "type": "combinedassault:switchable",
+            "is_seat": false
+        },
+        {
+            "id": "suspension_left",
+            "name": "suspension_left",
+            "type": "combinedassault:track",
+            "is_seat": false,
+            "spring_stiffness": 246000,
+            "damping": 23000,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.05,
+            "max_droop": 0.1,
+            "track_width": 0.48
+        },
+        {
+            "id": "suspension_right",
+            "name": "suspension_right",
+            "type": "combinedassault:track",
+            "is_seat": false,
+            "spring_stiffness": 246000,
+            "damping": 23000,
+            "rest_length": 0.3,
+            "max_compression": 0.3,
+            "max_extension": 0.05,
+            "max_droop": 0.1,
+            "track_width": 0.48
+        }
+    ],
+    "model": "combinedassault:models/ground/m113/m113.glb",
+    "display": {
+        "icon": "combinedassault:textures/slot/m113.png",
+        "controller": "combinedassault:m113_controller",
+        "engine": {
+            "start": {
+                "event": "combinedassault:lav150_engine_start",
+                "range": 96
+            },
+            "loops": [
+                {
+                    "sound": {
+                        "event": "combinedassault:truck_engine_idle",
+                        "range": 96
+                    },
+                    "input": "rpm",
+                    "volume": [
+                        [
+                            0.05,
+                            0
+                        ],
+                        [
+                            0.3,
+                            1
+                        ],
+                        [
+                            0.6,
+                            1
+                        ],
+                        [
+                            0.75,
+                            0
+                        ]
+                    ],
+                    "pitch": [
+                        [
+                            0.3,
+                            0.85
+                        ],
+                        [
+                            0.6,
+                            1
+                        ]
+                    ]
+                },
+                {
+                    "sound": {
+                        "event": "combinedassault:track_run",
+                        "range": 96
+                    },
+                    "input": "speed",
+                    "volume": [
+                        [
+                            0.01,
+                            0
+                        ],
+                        [
+                            0.1,
+                            0.6
+                        ],
+                        [
+                            0.6,
+                            1
+                        ]
+                    ],
+                    "pitch": [
+                        [
+                            0,
+                            0.8
+                        ],
+                        [
+                            1,
+                            1.1
+                        ]
+                    ]
+                }
+            ]
+        },
+        "cabin_muffle": 0.8,
+        "tab_index": 106,
+        "track": {
+            "model": "combinedassault:models/effect/m113_track_link.glb",
+            "module_length": 0.1457
+        },
+        "variants": {
+            "m113_black": {
+                "paint": "combinedassault:black"
+            },
+            "m113_olive_drab": {
+                "paint": "combinedassault:olive_drab"
+            },
+            "m113_sand": {
+                "paint": "combinedassault:sand"
+            },
+            "m113_urban": {
+                "paint": "combinedassault:urban"
+            },
+            "m113_winter": {
+                "paint": "combinedassault:winter"
+            },
+            "m113_woodland": {
+                "paint": "combinedassault:woodland"
+            }
+        }
+    }
+}

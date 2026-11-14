@@ -1,0 +1,253 @@
+{
+  "type": "combinedassault:rotary_wing_vehicle",
+  "attributes": {
+    "main_rotor_force": 218500.0,
+    "ceiling": 256,
+    "x_rot_speed_acceleration": 1.5,
+    "x_rot_speed_max": 4.0,
+    "y_rot_speed_acceleration": 1.5,
+    "y_rot_speed_max": 4.0,
+    "z_rot_speed_acceleration": 1.5,
+    "z_rot_speed_max": 4.0,
+    "max_air_speed": 4.65
+  },
+  "physics_info": {
+    "mass": 11500,
+    "friction": 23000
+  },
+  "landing_gear_part_id": "landing_gear",
+  "max_health": 800,
+  "view_info": {
+    "third_person_distance": 20.0,
+    "third_person_distance_zoomed": 4
+  },
+  "energy_info": {
+    "energy_capacity": 2300,
+    "energy_consumption_per_tick": 0.014375
+  },
+  "defense_stats": {
+    "damage_threshold": 10,
+    "impact_multiplier": 3
+  },
+  "parts": [
+    {
+      "id": "pilot",
+      "name": "part.flans_modern.hind.pilot",
+      "type": "combinedassault:weapon",
+      "crew_roles": [
+        "driver",
+        "gunner"
+      ],
+      "operator_on_weapon_unit": false,
+      "crosshair_style": "cross",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "weapons": [
+        {
+          "id": "combinedassault:rocket",
+          "part_unit_id": "rocket_l",
+          "salvo": "rocket"
+        },
+        {
+          "id": "combinedassault:rocket",
+          "part_unit_id": "rocket_r",
+          "salvo": "rocket"
+        },
+        {
+          "id": "combinedassault:shturm",
+          "part_unit_id": "missile_l",
+          "secondary": true,
+          "salvo": "missile"
+        },
+        {
+          "id": "combinedassault:shturm",
+          "part_unit_id": "missile_r",
+          "secondary": true,
+          "salvo": "missile"
+        }
+      ]
+    },
+    {
+      "id": "landing_gear",
+      "name": "part.flans_modern.hind.landing_gear",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0.5
+    },
+    {
+      "id": "landing_gear_l",
+      "name": "part.flans_modern.hind.landing_gear_l",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0,
+      "on_system": "left wing"
+    },
+    {
+      "id": "landing_gear_r",
+      "name": "part.flans_modern.hind.landing_gear_r",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0,
+      "on_system": "right wing"
+    },
+    {
+      "id": "rocket_l",
+      "name": "part.flans_modern.hind.rocket_l",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "left wing",
+      "ammo_capacity": 16,
+      "parent_weapon_unit_aim": true
+    },
+    {
+      "id": "rocket_r",
+      "name": "part.flans_modern.hind.rocket_r",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "right wing",
+      "ammo_capacity": 16,
+      "parent_weapon_unit_aim": true
+    },
+    {
+      "id": "missile_l",
+      "name": "part.flans_modern.hind.missile_l",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "left wing",
+      "ammo_capacity": 2,
+      "parent_weapon_unit_aim": true
+    },
+    {
+      "id": "missile_r",
+      "name": "part.flans_modern.hind.missile_r",
+      "type": "combinedassault:weapon",
+      "is_seat": false,
+      "crosshair_style": "circle",
+      "rot_info": {
+        "x_rot_speed": 0,
+        "y_rot_speed": 0
+      },
+      "on_system": "right wing",
+      "ammo_capacity": 2,
+      "parent_weapon_unit_aim": true
+    },
+    {
+      "id": "seat_1",
+      "name": "part.flans_modern.hind.seat_1",
+      "type": "combinedassault:weapon",
+      "protect_passenger": false,
+      "crew_roles": [
+        "gunner"
+      ],
+      "render_bone": "seat_1_gun",
+      "handling": "manual",
+      "operator_on_weapon_unit": false,
+      "rot_info": {
+        "x_rot_speed": 5,
+        "y_rot_speed": 5,
+        "y_rot_min": -90.0,
+        "y_rot_max": 90.0,
+        "y_rot": 0.0,
+        "need_power": false
+      },
+      "optical_sight_type": "operator",
+      "zoom_max": 2,
+      "crosshair_style": "cross",
+      "hardpoint": {
+        "node": "seat_1_gun_pitch",
+        "accepts": [
+          "door",
+          "pintle"
+        ],
+        "fitted": "combinedassault:kord"
+      }
+    },
+    {
+      "id": "seat_2",
+      "name": "part.flans_modern.hind.seat_2",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_3",
+      "name": "part.flans_modern.hind.seat_3",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_4",
+      "name": "part.flans_modern.hind.seat_4",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_5",
+      "name": "part.flans_modern.hind.seat_5",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    }
+  ],
+  "model": "flans_modern:models/vehicle/hind/hind.glb",
+  "display": {
+    "icon": "flans_modern:textures/slot/hind.png",
+    "tab_index": 910,
+    "controller": "flans_modern:hind_controller",
+    "engine": {
+      "start": {
+        "event": "combinedassault:z10_engine_start",
+        "range": 360
+      },
+      "stop": {
+        "event": "combinedassault:z10_engine_stop",
+        "range": 360
+      },
+      "loops": [
+        {
+          "sound": {
+            "event": "combinedassault:z10_engine_run",
+            "range": 600
+          },
+          "input": "power",
+          "volume": [
+            [
+              0.2,
+              0
+            ],
+            [
+              0.5,
+              1
+            ]
+          ],
+          "pitch": [
+            [
+              0.5,
+              0.8
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "cabin_muffle": 0.5
+  }
+}

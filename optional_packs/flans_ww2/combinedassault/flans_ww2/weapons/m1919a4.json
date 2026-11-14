@@ -1,0 +1,22 @@
+{
+  "type": "combinedassault:cannon",
+  "name": "M1919A4",
+  "shoot_interval": 120,
+  "max_capacity": 250,
+  "reload": {
+    "time": 100,
+    "ammo": "wflib:cartridge_7_62x63"
+  },
+  "casing_delay": 0.03,
+  "sounds": {
+    "fire": {
+      "event": "combinedassault:gun_7.62mm_shot",
+      "range": 300,
+      "pitch_random": 0.1
+    },
+    "reload": {
+      "event": "combinedassault:gun_reload",
+      "range": 24
+    }
+  }
+}

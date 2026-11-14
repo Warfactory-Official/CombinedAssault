@@ -45,7 +45,7 @@
                 "bones": ["steering_wheel"],
                 "source": "steering_angle",
                 "axis": "y",
-                "multiplier": -6.0
+                "multiplier": 6.0
             },
             {
                 "bones": ["pedal_throttle"],

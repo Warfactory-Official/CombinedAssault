@@ -13,6 +13,7 @@ Every field the mod reads from a pack: unit, default. Defaults from the deserial
 <pack>/combinedassault/<ns>/vehicles/<path>.json      vehicle def (§3)
 <pack>/combinedassault/<ns>/weapons/<path>.json       weapon def (§5)
 <pack>/combinedassault/<ns>/hardware/<path>.json      hardware kit (§21)
+<pack>/combinedassault/<ns>/era_types/<path>.json     ERA brick type (§16.3)
 <pack>/combinedassault/<ns>/decorations/<path>.json   {model, icon} (§6.8)
 <pack>/assets/<ns>/models/**.glb|.gltf(+.bin)          vehicle glTF: drawn, rigged, collided, hit (§6); shipped .glb
 <pack>/assets/<ns>/textures/**.png                    model images, slot icons, paint masks, damage tiles
@@ -73,7 +74,7 @@ Every field the mod reads from a pack: unit, default. Defaults from the deserial
 | `type` | model |
 | --- | --- |
 | `combinedassault:generic` | no drivetrain; parts and weapons only |
-| `combinedassault:wheeled_vehicle` | force-driven ground vehicle |
+| `combinedassault:wheeled_vehicle` | force-driven ground vehicle; with `track` parts = half-track ([§3.10](#310-attributes-per-type)) |
 | `combinedassault:tracked_vehicle` | acceleration-driven ground vehicle, with track geometry |
 | `combinedassault:rotary_wing_vehicle` | helicopter / multirotor |
 | `combinedassault:fixed_wing_vehicle` | aeroplane, with an aerodynamic model |
@@ -93,11 +94,13 @@ Every field the mod reads from a pack: unit, default. Defaults from the deserial
 | `uav` | bool | `false` | operated remotely (wflib PDA, UAVs app); the operator's body stays behind, standing; no storage over the link |
 | `autonomy` | object | absent | `uav` only; wflib autopilot body — [§19](#19-autonomy) |
 | `pickup` | bool | `false` | probe hull `Pick up` -> spawn item with save data (`VehicleState`; autonomy dropped, engine off); crewed / operated / carried / wrecked => refused |
+| `breach_seconds` | int >= 1 | server `breachSeconds` (30) | seconds a `#combinedassault:breach_tools` item held on the locked vehicle removes the lock |
 | `loadouts` | array | `[]` | payload configurations (modding tool) — [§20](#20-loadouts) |
 | `can_wade` | bool | `false` | |
 | `with_warning_receiver` | bool | `false` | carries an RWR |
 | `protect_passenger` | bool | `true` | |
 | `entry` | string[] | `[]` | switchable part ids = only ways aboard: seat boardable iff an entry leading to it is on + clip run out and rider eye <= 3 m from its frame. Entry = some seat's `hatch` => leads to those seats + their `turn_out` partners + seats naming it `entry_via`; else every seat. Non-empty => seat probe nodes dropped; entry door node: Enter row per free seat it leads to. Unknown / non-switchable id => load error |
+| `interactions` | object | `{}` | id -> `{node, name?, actions}`: `node` = glTF node name or list (each exactly one): a probe node each, posed (clips, part motion: parent under the leaf to follow it); server takes the first in sight + reach. Sight as door nodes, nothing excluded => node seen only from its side of its own leaf. `name` lang key, else id spelled out. [Interactions](#interactions) |
 | `experimental` | bool | `false` | |
 | `view_info` | object | — | [§3.3](#33-view_info) |
 | `energy_info` | object | — | fuel or electricity — [§3.4](#34-energy_info), [§10](#10-fuel-and-electricity) |
@@ -152,7 +155,7 @@ SI: mass kg, force N. Per tick `Δv = F / (mass × 400)`.
 | --- | --- | --- | --- |
 | `mass` | float | `1000` | the **curb weight**, kg. Total mass is this plus fuel plus cargo — see [§7](#7-mass-and-cargo-weight) |
 | `density` | float | `8` | drives buoyancy against the displaced fluid |
-| `friction` | float | `2000` | N of contact friction |
+| `friction` | float | ground: `0.015 m g`; else `2000` | N of rolling resistance (constant force) |
 | `suspension_response` | float | `2` | drive/brake pitch and roll gain on `suspension` parts; clamped at 6° pitch, 8° roll of static spring deflection. Tumbling on: tyre load transfer (`m·a·h`, `a` ≤ 0.8 g) wins when larger => hard cornering can roll a tall hull |
 | `liquid_damping` | float | `0.1` | |
 | `center` | Vec3 | `center_of_mass` socket, else volume centroid of the solid colliders (rest pose) | centre of mass, blocks, vehicle frame. Aircraft: ahead of the main-gear box's front face, else a nose-up touch rests on the tail for good (pitch eases level only under `atan(0.5/depth)`). Inertia: uniform density over the solid colliders ([§6.5](#65-colliders)) about this point |
@@ -167,7 +170,7 @@ Also valid on an individual part, where it overrides the vehicle's.
 
 | field | type | default |
 | --- | --- | --- |
-| `damage_threshold` | float | `50` |
+| `damage_threshold` | float | `50` | not read by blasts on a vehicle with an `armor` block; flat unresolved damage below it is a bounce |
 | `impact_multiplier` | float | `0.1` |
 | `impact_speed_threshold` | float | `10`; aircraft `5` |
 | `damage_transfer_coefficient` | float | `1` |
@@ -180,10 +183,10 @@ Impact: `dv` = contact-cancelled velocity (m/s). `dv > impact_speed_threshold` =
 mm RHAe vs kinetic rounds, slope included. **Every hull face zero => not armoured**: stock damage model.
 - Hull face = main collider face the shot line entered through; struck point outside that box + 0.25 m => dominant vehicle axis of the reversed shot. LOS `value x wear / cos(shot, face axis)`.
 - Part listed in `parts`: its faces, face = dominant axis of the reversed shot in the part's rest frame (turns with the turret).
-- Precedence: `armor_<mm>` material > first matching zone > part faces > hull faces.
-- Real plate (`armor_<mm>`, `plate` zone): LOS `mm x wear / cos(shot, mesh normal)`.
-- Mesh normal: ricochet always. Gap: surface past `ricochet_angle` (M1A2 upper glacis ~79 deg) bounces anything not overmatching the LOS.
-- F3: plate under the crosshair (face, part, zone, KE/CE, model coords at rest); F3+B: hit mesh coloured by KE LOS from the camera.
+- Precedence: bound plate > first matching zone > part faces > hull faces. Zone / part / hull values = coarse tier (bulk packs).
+- Bound plate: LOS `nominal x wear / cos(shot, declared normal)`; ricochet incidence = same angle. `curved` => mesh normal.
+- Ricochet owned by the round (`Threat.ricochetDeg`: AP 70, APDS 75, APFSDS 82; HESH 85): surface incidence > round angle skates unless `caliber >= nominal x overmatchTD`. KINETIC / SMALL_ARMS skate => fly on deflected (WFLib guide §29e; readout RICOCHET); others do no damage.
+- F3: plate under the crosshair (face, part, zone, KE/CE, model coords at rest; bound plate: id, normal + layers, declared vs mesh incidence); F3+B: bound faces coloured by plate id, unbound by KE LOS from the camera (blue 5 mm -> red 1000 mm, grey 0). Probe (`/combinedassault ballistics probe`) prints the same plate line.
 
 | field | type | default |
 | --- | --- | --- |
@@ -191,10 +194,57 @@ mm RHAe vs kinetic rounds, slope included. **Every hull face zero => not armoure
 | `ce` | faces | none | vs HEAT / tandem; face 0 => KE value |
 | `parts` | map part id -> faces (+ `ce`) | `{}` | part id must exist |
 | `zones` | list | `[]` | first match wins |
-| `ricochet_angle` | float | `70` | degrees from the normal past which a shot skates off, unless overmatched; WFLib KINETIC / SMALL_ARMS rounds then fly on deflected (WFLib guide §29e; shooter's readout RICOCHET), others do no damage |
+| `plates` | map plate id -> plate | `{}` | bound by mesh materials `armor:<id>`; see below |
 | `wear_floor` | float | `0.6` | fraction of the plate a fully worn region keeps |
 
-Zone: `name`, `min` / `max` (glTF model coords, part at rest), `ke` (> 0), `ce` (0 => `ke`), `part` (listed in `parts`; absent => hull), `face` (absent => any), `plate` (false). Measure with F3 `Model x y z`.
+Zone: `name`, `min` / `max` (glTF model coords, part at rest), `ke` (> 0), `ce` (0 => `ke`), `part` (listed in `parts`; absent => hull), `face` (absent => any). Measure with F3 `Model x y z`.
+
+**Plates** (`armor.plates`, id `[A-Za-z0-9_]+`): declared normal + layers; the mesh says which faces, the def says thickness and angle.
+
+```json
+"plates": {
+  "ufp":          {"slope": 82, "facing": "front", "layers": [{"mm": 50, "mat": "rha"}]},
+  "turret_cheek": {"slope": 35, "facing": "front", "los": {"ke": 940, "ce": 1400}},
+  "mantlet":      {"curved": true, "layers": [{"mm": 300, "mat": "cast"}]}
+}
+```
+
+| key | meaning |
+| --- | --- |
+| `facing` | `front` / `side` / `rear` / `top` / `bottom` or azimuth deg (0 = front, 90 = -x); frame = owning part at rest; `side` mirrors by sign of the struck point's rest x |
+| `slope` | deg from vertical, default 0 with `facing`; ignored for top / bottom; without `facing` => load error |
+| `curved` | normal = mesh normal; excludes `facing` / `slope` / `los` |
+| `layers` | outermost first: solid `{mm, mat}` (real thickness along the normal) or air `{gap}` (m); a gap sits between solids (first / last / doubled / mixed with `mm` => load error). Walked as one budget (wflib `PlateWalk`). First layer may be an integral ERA array `{era, cells}` ([§16.4](#164-integral-arrays)), with `los` or solids behind it |
+| `los` | published line-of-sight RHAe `ke` (+ `ce`, 0 => `ke`) at the declared slope => normal thickness `los x cos(slope)`; needs `facing`, excludes solid `layers` (an `era` layer is fine) |
+
+- `los` converts with `cos(slope)` only; azimuth-angled plate => `los` = published x `cos(az)` so a straight-on shot reads the published figure (M1A2 cheek az 35: 940 / 1400 -> 770 / 1150; T-90 az 50: 850 / 1350 -> 545 / 865).
+- Downward normals (lower front plates) not expressible by `facing` + `slope` => `curved` + `layers`.
+- `mat` (`PlateMaterials`): `rha` 1.0, `hha`, `cast`, `aluminium`, `nera`, `spall_liner`; KE / CE multiply `mm`.
+- Walk: solid costs `mm x ke|ce x wear / cos^slopeExp` (round-owned exponent; shaped charges read `ce`); defeated iff budget > cost. Gap: shaped charge x `1 / (1 + 0.6 gap)`, tandem exempt; small arms x yaw loss once a solid was defeated; other kinds none. Overmatch reads the outer layer. Later mesh crossings count only when plate-bound; two faces of one plate within 0.1 m = one sheet. Profile without `plates` = entry crossing only.
+- Result: verdict + hull damage ramp from the entry plate alone; crew and modules only when `interiorPen > 0` (PARTIAL = ramp, nothing behind); `residualPen` after every plate = the exit. Outcomes (entity-less wflib rounds, KINETIC / SMALL_ARMS only; HEAT, HE, missiles, rockets, TACZ rounds => PROCEED): `exits` => THROUGH at `speed x (residual / pen)^(1 / penExponent)`, else STOP. `post_pen` round (`fillerKg > 0`): entry plate defeated => THROUGH, goes off 0.3 m behind it (<= half the gap to the next crossing; speed floor 0.1 x), else STOP = lost.
+- Spall (`Spall`): penetrator line (entry plate inner face -> where the round dies / leaves) hits occupants for `damage x residual / pen`; fan per defeated inward crossing (<= 4): energy `damage x ramp x residual / pen x layer spall`, cone 30 deg (jet 8), <= 12 fragments, occupants + modules. Stopped / PARTIAL / ricochet => none.
+- No `facing`, not `curved` => normal fitted at load from the area-weighted normal of the bound faces (model frame, parts at rest) into `facing` + `slope`. Faces disagreeing (|sum| / area < 0.5) or pointing down => load error: declare `facing` or `curved`.
+- Load cross-check (`PlateBinding`): every `armor:<id>` in the mesh needs an entry, every entry needs bound faces, else the load fails naming the id; `armor.plates` without a hit mesh fails.
+- Bake report: `python3 tools/def_sockets.py plates <vehicle>` (mesh vs declared normal > 10 deg => exit 1). Assign faces: `asset-tools.md`.
+
+**Warhead payloads** (wflib `BlastPayload` on the AEF; `AbstractVehicle` is a `BlastTarget`; vanilla explosions: `blast` synthesised from the radius). `VehicleBlastResolver`, one ray pass per blast per vehicle (`BlastRays`: 1024 rays, shared with the ERA / slat panels; <= 64 hull-bound samples):
+
+| component | answer |
+| --- | --- |
+| `blast` | per sample ray: `hePen(kg, d) = 60 cbrt(kg) / (1 + (d / 0.6 cbrt(kg))^2)` mm RHAe vs the struck plate (`HE`, no ricochet, no slope); damage `((s^2 + s) / 2 x 7 R + 1)`, `s = (1 - d / R) x panel power`, R = 2 x size, weighted by `(1 - d / R)^2`; block cover by clip. Through => modules + occupants like a round; else the struck node's own system. Hull wears at the strongest ray (`BLAST`) |
+| `fragments` | the same sample rays as `KINETIC`: pen `2.9 cbrt(g) (v / 1000)^1.43`, `v = v0 exp(-d / 80)`; damage `0.5 m v^2` kJ; each sample stands for `count x hullRays / (1024 x samples)` fragments |
+| `jet` / `efp` | one walk from the detonation point along `jetAxis` (the cone gate of the AEF decides if it reaches); panels as the round's strike left them (`AddonStrikes.jet`), else `AddonStrike.resolve` from the charge; no strike pass => standoff `1 / (1 + 0.6 d)`; shaped charges do not skate; hull damage = what the round's own hit would have done (`AddonStrikes.contact`), else `2 x pen`; readout = `HitVehicleEvent` verdict |
+| `hesh` | contact: `HESH` threat of `1.3 x calibre` walks the plate; `transmit` (> 0 for solid `hesh` layers, 0 behind a gap or in composite) and `interiorPen > 0` => one spall fan behind the inner face, no penetration; hull x transmit x 0.5 |
+| `thermal` | seats with an open hatch (`hatchOpen`) within the radius burn and take heat |
+
+- The round's own hit stops resolving armour on a vehicle: a shaped-charge / EFP round with a jet payload strikes with penetration 0 (wflib `Rounds.strike`) and `DamageSystem` takes it as contact only; the warhead's jet owns the verdict. Missiles gain the same armour interaction.
+- Centre deeper than 0.5 m inside the main box, or `post_pen` burst behind the entry plate (`VehicleBlastResolver.interior`, size from `fillerKg`): no plate, hull x 0.5, modules by 32 rays, occupants by distance, all direct.
+- Open hatch: blast also reaches the seat (line of sight along the mesh, 0.5 x blast damage); closed hatch shields. Thermite: seats within 1.5 m, 0.1 x heat.
+- Wreck blast: charge of `2 x radius` size + fireball; vehicles in reach resolve it like any payload.
+- Unarmoured vehicles: weighted blast damage through the old path (`damage_threshold`, core-line falloff).
+- Estimates: HE pen constants, fragment pen / decay, jet damage per mm, interior shares.
+
+Shipped plate sets (`humvee`, `m113`, `m1a2`, `t90`; others = coarse tier): Humvee rha 12 grille / windshield, 4 hood, 6 roof, 8 floor / rear, 10 side. M113 aluminium 38 glacis / nose / side / rear, 25 roof / belly (x 0.35 = coarse values). M1A2 / T-90 hull + turret `los` = the coarse figures at the mesh slope (T-90 `ufp`, `turret_front`, cheeks: minus the Kontakt-5 share, [§16.4](#164-integral-arrays)); hull glacis slope 75 / UFP 68 from the mesh (real ~82 / 68). Estimates: Humvee hood 4 mm, M1A2 `hull_nose` 300 / 450, T-90 `lfp` 115 mm (= 230 LOS at its 60 deg mesh slope; CE falls 280 -> 230), barrel 60 mm curved, M113 25 mm roof / belly. Superseded zones deleted: M1A2 `skirt_front`, `barrel`, `bustle_side`; T-90 `lower_front_plate`, `skirt_front`, `barrel`, `turret_rear_side`. Kept (no plate covers them): ring, mantlet, sight block.
 
 Shipped values: open-source estimates (fprado armorsite M1A2 SEP KE 940 / CE 1320-1620 turret, hull 560-650 / 510-1050; Wikipedia T-90 / T-90A with Kontakt-5 800-910 / 1150-1450; Stryker 14.5 mm front, 7.62 mm all round; Centauro 25 mm front, 14.5 mm all round; M1151 armour kit vs 7.62 mm). Merkava 4 and T-84 Oplot: extrapolated, no consistent public figures.
 
@@ -287,7 +337,13 @@ carrier's.
 | `turn_acceleration`, `max_turn` | float | — |
 | `track_size` | float | `0.3` |
 
+Both ground types: `engine_power` (float, kW, default 0 = none). Drive force = `min(force, P / v)`, both directions (tracked: acceleration x pack mass x load); full force below `P / force`. Rated against pack `physics_info.mass`: pack mass below real => scale power by the same ratio (power-to-weight decides climb speed `P / (m g sin a)` and acceleration).
+
 Both ground types also take a top-level `landing_gear_part_id` where applicable.
+
+**Half-track** = `wheeled_vehicle` + `combinedassault:track` rear units + steered `suspension` front wheels; `display.track` as tracked.
+
+- Track part `max_health` > 0 + `detachable: false`: destroyed => rows lift (side drags), mobility 0. `detachable: true` => pops off as debris.
 
 **`transmission`** (both ground types, in `attributes`; absent => direct drive)
 
@@ -378,7 +434,7 @@ that type adds — there is no nested `data` object.
 | `combinedassault:generic` | a plain part; seats are generic parts with `is_seat` |
 | `combinedassault:switchable` | a part with an on/off state; probe node like `door` |
 | `combinedassault:rotatable` | a part that turns; adds `rot_info` |
-| `combinedassault:door` | adds `door_for_seat_id`; probe node (look + use / G, on foot); part click never toggles; destroyed = jammed. Node name: `name` if a lang key, else `part.combinedassault.<id>`, else id spelled out |
+| `combinedassault:door` | adds `door_for_seat_id`; probe node (look + use / G, on foot) at its drawn bounds centre; shown + toggled (server too) only with no drawn surface of another part > 0.05 m short of it on eye -> node, or eye within 1 m (`VehicleHits.probeReaches`); named by an `interactions` `toggle` => that node instead; part click never toggles; destroyed = jammed. Node name: `name` if a lang key, else `part.combinedassault.<id>`, else id spelled out |
 | `combinedassault:landing_gear` | adds `drag_k` |
 | `combinedassault:airbrake` | adds `drag_k` |
 | `combinedassault:flaps` | notched deflection = part xRot; §4.6 |
@@ -404,6 +460,7 @@ that type adds — there is no nested `data` object.
 | `max_health` | float | `-1` | `-1` means it cannot be destroyed separately |
 | `defense_stats` | object | inherits | as [§3.6](#36-defense_stats) |
 | `component` | string | inferred from `id`/type | a system kind ([§6.6](#66-hit-geometry) table); `generic`/`crew` = not a system |
+| `on_system` | string | none | hull pool id this part rides (`left wing`); pool 0 => part BROKEN (no fire, effectiveness 0); `landing_gear` => feet dropped (gear key moves every `landing_gear` part; several need a hull body). Unknown id => error on use |
 | `render_bone` | string | `suspension`: its `part` frame node; else none | glTF node that is this part: hidden when detached (drawn by the part entity instead); suspension travel moves it |
 | `detachable` | bool | `true` | may be blown off as its own entity; `suspension` at 0 health on a live vehicle pops off, repair refits |
 | `is_seat` | bool | `true` | **defaults to true** — a part that is not a seat must say so |
@@ -416,6 +473,7 @@ that type adds — there is no nested `data` object.
 | `turn_out` | string | none | seat: its turned-out seat (a seat with `hatch`); `turn_out` key (`.`) moves between them; turning in closes the hatch unless another occupied seat has it. Unknown / hatchless id => load error |
 | `ride_frame` | string | node-only | part-less seat: its `seat` socket rides another part's frame (turret) => seat, view, periscope, look clamp and operator yaw follow that frame. Derived from the socket |
 | `entry_via` | string | none | seat: `entry` part that also leads to it without gating it (gunner boards through the commander hatch). Unknown / non-switchable id => load error |
+| `view_hide` | string[] | `[]` | seat: base-model nodes (subtree) hidden while its rider is in first person. Each drawn subtree wholly within 1.5 m of one of the seat's `seat` / `view` / `sight` sockets, else load error. Last rung after an eye move (`/combinedassault camaudit`, `SightlineGameTest`) |
 | `crew_roles` | enum[] | derived | `driver`, `gunner`, `commander`, `loader`; gate stations under server config `crew.required`; driver seat always. Absent => seat 0 `driver` (+ `gunner` if a weapon station), other weapon seat `gunner`, else `commander`. Driver = first occupied `driver` seat (`crew.required` off: none occupied => seat 0 drives too); boarding takes an empty `driver` seat first; free seat probe node boards that seat |
 | `display_id` | id | — | |
 | `display_offset` | Vec3 | — | |
@@ -463,6 +521,7 @@ that type adds — there is no nested `data` object.
 | `crosshair_style` | enum | `circle` | `none`, `circle`, `square`, `cross`, `big_cross` |
 | `handling` | enum | `remote` | `manual`: operator's own recoil, aim kicked by round momentum (`backblast` => x0.1), recovers; `remote`: visual jolt only. Local operator, client only. `manual` + `sight` socket + (`operator` sight or `optic`) => SCOPE = ADS: eye operator view -> `sight` (rides the pitch frame) over 0.25 s, world FOV / `zoom` x `max(1, fov / 70)`; `magnification_change` (RMB) tap toggles, hold = x1.4 zoom (MineAssault controls) |
 | `optic` | object | absent | ADS picture-in-picture on the `sight_lens` mesh (WFLib `PipLens`): `zoom` float[] non-empty (magnification levels, vs the surrounding view), `reticle` RL png (absent: duplex), `reticle_size` MOA (`<= 0`: lens fill), `reticle_zoom` (second focal plane), `mask` RL png, `eye_relief` m (absent: `sight` -> lens; field stop = lens radius / it), `objective` m (picture pass origin ahead of the eye; clears the kit's own mesh, Flywheel-drawn => not hideable) |
+| `rangefinder` | object | absent | `{mode, max_range}`. `mode` `zero` (default): tap `rangefinder` key (`/`) => reading along the sight, whole m, shown 5 s (`LRF`); DIRECT => zero := reading (refused past round / elevation limit). `info`: reading only (commander cupolas). `max_range` m (`4000`); no hit / beyond => `----`. PgUp/PgDn from an off-grid zero snap to the next 100 m step |
 
 ### 4.5 The `weapons` list
 
@@ -477,6 +536,7 @@ Entry: string (one weapon id) or object. Array form REMOVED: ammo kinds = one we
   | `weapon_bay_unit_id` | string | a bay that must open first |
   | `secondary` | bool | fired by the secondary trigger |
   | `full_salvo` | bool | |
+  | `salvo` | string | group; same-trigger entries sharing it fire together, selected as one (first member) |
   | `save_id` | string | defaults to `part_unit_id`; keeps ammo state stable across pack edits |
   | `round_bones` | string[] | model bones showing loaded rounds, firing order; bone i shown while `i >= bones - remaining`. Loaded round with a WFLib airframe, not `reload.ammo`'s default => that airframe at the bone (origin = round centre, +Z = nose), baked mesh hidden; else baked mesh. Name not a model node => load error. Jets: `store_<part>_<i>` nodes (`tools/split_stores.py`) |
 
@@ -633,7 +693,7 @@ Vehicle def `display` block; client only.
 | field | notes |
 | --- | --- |
 | `icon` | slot texture; `tools/model_icon.py <rig>` renders it from the model |
-| `controller` | `assets/<ns>/animation_controllers/<id>.json`; graph nodes `merge`, `blend`, `layered_blend`, `additive`, `script`, `bone_binding`. Ground `special_bindings` sources: `throttle_pedal`, `brake_pedal`, `handbrake` (0..1, eased 0.12 s), `gear_lever_x` / `gear_lever_z` (degrees, transmission `lever`; H gate: crosses at N's x). Aircraft sources (eased 0.15 s): `stick_pitch` (+ fwd), `stick_roll` (+ right), `pedals` (+ right pedal fwd; rotary: yaw rate / `yRotSpeedMax`), -1..1; `throttle_lever` (fixed wing, 0..1 over 0..100·thrustK), `collective` (rotary, 0..1). Angle = source·multiplier + `offset`, then `min`/`max`. Missing bones skipped |
+| `controller` | `assets/<ns>/animation_controllers/<id>.json`; graph nodes `merge`, `blend`, `layered_blend`, `additive`, `script`, `bone_binding`. Ground `special_bindings` sources: `left_wheel_rotation` / `right_wheel_rotation` (param = radius; belt travel of the first left / right `track` loop; tracked + half-track), `throttle_pedal`, `brake_pedal`, `handbrake` (0..1, eased 0.12 s), `gear_lever_x` / `gear_lever_z` (degrees, transmission `lever`; H gate: crosses at N's x). Aircraft sources (eased 0.15 s): `stick_pitch` (+ fwd), `stick_roll` (+ right), `pedals` (+ right pedal fwd; rotary: yaw rate / `yRotSpeedMax`), -1..1; `throttle_lever` (fixed wing, 0..1 over 0..100·thrustK), `collective` (rotary, 0..1). Angle = source·multiplier + `offset`, then `min`/`max`. Missing bones skipped |
 | `engine` | engine audio ([§6.10](#610-audio)) |
 | `cabin_muffle` | 0..1, default `0`: outside sound low-passed for a first-person rider of a protected seat; own door open x0.25, others x(1 - 0.5 open fraction) |
 | `tab_index` | creative tab order |
@@ -728,11 +788,11 @@ Where shots land, what they damage, plate thickness; from the vehicle glTF at lo
 
 | glTF | meaning |
 | --- | --- |
-| drawn node | hit surface: exact triangles (BVH), true face normal => ricochet, `armor_<mm>` incidence |
+| drawn node | hit surface: exact triangles (BVH), true face normal => ricochet, plate id per triangle |
 | node with rotor-kind `system` (self or ancestor) | surface = disc: spin axis = thinnest axis, radius = furthest vertex, height from blade span (> 50% radius), min 0.3 |
 | role `hit` | module: never drawn, not surface; pool = `system` + `side` |
-| role `hit_surface` (or collider `hit: true`) | surface override: replaces the parent node's drawn subtree (`hit` modules inside kept); own materials (`armor_<mm>`), inherits `system`/`side`. Nested override inside a replaced subtree => load error |
-| material `armor_<mm>` (`armour` too) | that face's real plate, mm RHA; else the vehicle's aspect value. Needs an `armor` block ([§3.7](#37-armor)) |
+| role `hit_surface` (or collider `hit: true`) | surface override: replaces the parent node's drawn subtree (`hit` modules inside kept); own materials (`armor:<id>`), inherits `system`/`side`. Nested override inside a replaced subtree => load error |
+| material `armor:<id>` (name ends with it, `_ . space` before: `paint_armor:ufp`; Blender `.001` suffix ignored) | that face belongs to plate `<id>` of `armor.plates` ([§3.7](#37-armor)); else the vehicle's aspect value. `armor_<mm>` is no longer read |
 | material token `decor` (`paint_decor`, `decor.cloth`; `_ . space` delimited) | drawn only: not hit surface, not in generated colliders |
 | material token `rubber` / `glass` / `soft` (`fabric`, `cloth`, `canvas`) | hit effect material ([Hit effects](#hit-effects)); untagged = steel |
 
@@ -745,6 +805,7 @@ Node frame => its part: a node under a part's `part`/`pitch` frame is that part'
 | `unit` | pool split by name (`FL`); inherited; HUD `ROTR FL` |
 | `spin` | `cw` / `ccw`, rotor `unit` only; required there |
 | `health` | pool size; `0` = 30% of `max_health`; larger of shared nodes wins |
+| `rha` | `hit` module only: mm RHA a penetrator crossing it consumes; default by `system`: `engine` 40, `ammo` 6, `fuel` 3, `optics` 1, else 0 (estimates) |
 | `swept` | force / forbid the rotor disc |
 | `skip` | node has no hit geometry |
 | `road_wheel` | untagged mesh only: road wheel of the track path with nearest mean x; no `track` socket => load fails |
@@ -757,13 +818,14 @@ Node frame => its part: a node under a part's `part`/`pitch` frame is that part'
 | `track` / `wheel` | L-TR / R-TR, WHL | 10 / 6 | mobility; side by `side` |
 | `tail_rotor` | TAIL | 10 | yaw authority; `1 - effectiveness` of torque (8°/tick x power x collective) yaws nose right airborne; BROKEN => stops spinning |
 | `rotor` | ROTR | 12 | thrust, translational lift, attitude authority; BROKEN => no lift, stops spinning |
-| `wing` | WING | 12 | wing, tail, control surface |
+| `wing` | WING | 12 | wing, tail, control surface; pool per `side` (`left wing` / `right wing`). Sided pool 0 => its drawn nodes shed as debris (topmost per pool, subtree with it), that side 0 lift, roll toward it 7°/tick per b/t; live wing cutting a block collision box at >= 0.4 b/t => pool 0. Unsided pool: lift only on airframes with no sided ones |
 | `engine` | ENG | 12 | BROKEN => engine will not run |
 | `fuel` / `ammo` / `optics` | FUEL / AMMO / OPT | 8 / 8 / 6 | |
 
 `tools/gen_hulls.py <vehicle> --hit-cylinder a,b [--sides 12] [--material rubber]`: circumscribed prism `hit_surface` per node (tyres: tread detail = noise; figures: memory `ywzj-vehicle-hit-geometry`).
 
-Damage routing (projectile line, or blast: burst -> hull core): first `hit` module along the line => its pool; else the struck surface node's system; else defaults. Struck system takes the hit unscaled; the hull takes it with core-line falloff. Scripts read `context.getRotorLift()` / `getRotorAntiTorque()`.
+Damage routing, resolved shot (armour model answered): struck drawn node's system (track, wheel, rotor, barrel) takes the hull damage; `interiorPen > 0` => every `hit` module on the line in order takes `damage x budget left / interiorPen` (budget = `PlateWalk` residual at its distance minus earlier modules' `rha`), the round ends where the budget does; no module reached => default pools (running gear always, engine only through). Hull takes the damage whole (no core-line falloff).
+Resolved blast ray / jet: as a resolved shot per sample (`VehicleBlastResolver`). Unresolved shot or unarmoured-vehicle blast (burst -> hull core): first `hit` module along the line => its pool; else the struck surface node's system; else defaults. Struck system takes the hit unscaled; the hull takes it with core-line falloff. Scripts read `context.getRotorLift()` / `getRotorAntiTorque()`.
 
 #### Hit effects
 
@@ -793,7 +855,7 @@ Damaged systems (every 3 ticks, 160 blocks), at a live hit node of that system (
 #### Systems and repair
 
 - Cell = every part, hit-model pool and default pool of one kind (+ side). State = worst member.
-- Defaults, only when nothing of that kind is declared: `engine` (every type but `generic`), `left track` + `right track` (tracked), `wheels` (wheeled). No geometry: hit in the main collider's low third => running gear on that side; above => 25% to the engine.
+- Defaults, only when nothing of that kind is declared: `engine` (every type but `generic`), `left track` + `right track` (tracked, or any `track` part), `wheels` (wheeled). No geometry: hit in the main collider's low third => running gear on that side; above => 25% to the engine.
 - Hull damage past 0 overflows evenly onto every member still above 0.
 - **Destroyed iff every cell is BROKEN** (< 15%). Hull at 0 alone != dead.
 - `track`, `wheel`, `engine` feed mobility; a broken `turret`/`barrel` part stops traversing/firing.
@@ -803,6 +865,23 @@ Damaged systems (every 3 ticks, 160 blocks), at a live hit node of that system (
 - Damage tiles: `<image>_damaged.png` / `<image>_wrecked.png` beside a model image => its nodes wear them at DAMAGED / BROKEN, per system. `tools/damage_textures.py` derives both from the base colour.
 - AO: material `occlusionTexture` (first UV map, `<image>_ao.png`) multiplied into the base colour at load => under paint and damage tiles too. Texels shared by several faces carry one shade.
 - `/combinedassault ballistics components` lists colliders, hit nodes, pools and cells; `ballistics system <HUD label> <ratio>` sets one.
+
+### Interactions
+
+Def `interactions` actions: `{"type": <id>, ...params}`; unknown type / key => load error. Rows in action order.
+
+| type | params | rows | apply (server, after sight) |
+| --- | --- | --- | --- |
+| `combinedassault:toggle` | `part` (door-like) | Open / Close (Stow / Deploy for `stowed_by`), refusals as door nodes | `AccessActions.toggle`; replaces the part's generated door node |
+| `combinedassault:board` | `via` (entry id or ids, optional), `seats` (seat part ids, optional) | Enter per free seat (in `seats`) with open hatch that an open `via` in reach leads to; no `via`: every seat `mayBoard` | `board` |
+| `combinedassault:storage` | — | Open storage (container only) | storage screen |
+| `combinedassault:refuel` | — | Fuel cap node: row per vehicle within 12 m whose spray-pod tank holds a fuel this one burns; "Stop" while running | 40 t connect, then 25 mB/t via `VehicleResupply.pullFuel`; hull centres need block LOS (offer + every tick); ends: full / source empty / LOS lost / source or player (10 m) leaves. Source fuel tank never drawn. No shipped def uses it (needs a `fuel_cap` glTF node) |
+
+- New type: `InteractionTypes.register(id, (params, def) -> InteractionAction)` before vehicle data loads. `offer(ctx, rows)` client, `apply(ctx, arg)` server (re-validate); `available(ctx)` false on every action => node hidden; `riders()` (toggle: true) => offered to this vehicle's riders while free look (`free_camera`) is held; `claims()` = parts whose door node it replaces.
+- Layout: `toggle` = outer handle on the leaf + inner handle (`handle_<part>_in`) where riders close it; `board` node on the body just behind the opening (leaf in the line of sight while shut).
+- Inner handle the open leaf hides from a seat (edge-on behind its jamb, below a sill) => parent it to the frame (M113: rear door pull on the ramp, ramp control on the body).
+- Wire arg: interaction << 24 | action << 16 | row arg (16 bit); <= 127 interactions, <= 255 actions each.
+- Gap: sight traces the hit mesh => `decor` faces (interiors, M113 engine bay) never block.
 
 ### 6.7 Sockets
 
@@ -1367,8 +1446,8 @@ Slat bars: `floor(h / 0.09)`, 15 mm across, 50 mm deep.
 
 | item | fits | cost | removal |
 | --- | --- | --- | --- |
-| `era_brick` | `era`, light | 1 / cell | live bricks back, spent = scrap |
-| `heavy_era_brick` | `era`, heavy | 1 / cell | same |
+| `era_brick` | `era`, light (`combinedassault:era_light`) | 1 / cell | live bricks back, spent = scrap |
+| `heavy_era_brick` | `era`, heavy (`combinedassault:era_heavy`) | 1 / cell | same |
 | `slat_panel` | `slat` | `ceil(w*h)` | `floor(cost * condition)` |
 
 Right-click a point with a kit: empty => fit; same ERA type, spent cells => refill. Mount nodes (kit or `#hull_tool`
@@ -1380,14 +1459,16 @@ carried): fit / refill / remove / weld. Weld = carried `#hull_tool`; bent bar fr
 | threat | light ERA | heavy ERA | slat |
 | --- | --- | --- | --- |
 | `heat` | jet `-65%`, fires | `-75%`, fires | nose on bar => fires 0.3–0.6 off hull, jet `/(1+0.6*gap)`; body wedged (60–110 mm) => `80%` dud, else jet `x0.5` |
-| `tandem_heat` | precursor spends brick, jet untouched | same | wedged => `10%` dud, else jet `x0.9` |
+| `tandem_heat` | precursor spends brick, jet untouched (`tandem_cut` 0) | same | wedged => `10%` dud, else jet `x0.9` |
 | `kinetic` | `-5%`, fires ≥ 20 mm | `-35%`, fires ≥ 35 mm | bar struck or body wedged => bar broken, `-15 mm` |
 | `small_arms` | stopped, brick survives | same | bar struck => stopped; gap => through |
-| `he` | fires ≥ 76 mm; blast unchanged | same | bar or wedge => bursts on cage |
+| `he` | fires ≥ 25 mm; blast unchanged | fires ≥ 40 mm | bar or wedge => bursts on cage |
 
+- Every panel = a leading layer of the plate walk: `AddonStrike.Lead` (cuts + standoff gap, path order) feeds `HullResolver.resolve(.., lead)` before the entry plate => same budget as plates; `Result.penetrationScale` deleted. Cut `keep` = `PlateWalk.cut`; slat standoff = `PlateWalk.gap`. `Result.damageScale` (`Lead.scale(kind)`) = same cut on direct-hit damage for rounds without penetration.
 - ERA cut x `clamp(sin(obliquity)/sin 60°, 0.3, 1)`; within 12% of a brick edge x0.5. Spent cell = hole.
-- Brick detonation: 1.2-block blast, no blocks, hurts nearby infantry. No sympathetic detonation.
-- Blast: 1024 rays over reach `2*size`, fixed energy each => fluence `~size/d^2`. First surface consumes: hull,
+- Brick detonation: `blast_kg` + `fragments` of its type as a `BlastPayload` (wflib `ExplosionAEF`, 1.2-block entity reach, no blocks) => vehicles resolve it as a `BlastTarget`, infantry take the blast. Brick on a hull plate thinner than `back_plate_mm` (KE RHAe): `flyer` replaces `fragments`. `sympathetic` chance per neighbouring cell (8-neighbourhood), one hop, no chain.
+- Fragments initiate mounted bricks: `BlastRays` counts the fragments of the blast's payload landing on each live brick; one fragment with energy `>= fragment_initiation_j` sets it off. Brick fragments stay under every shipped threshold: no chain. Integral arrays are not set off by fragments or blast.
+- Blast: `BlastRays` pass (also the plates' sample rays, 3.7 Warhead payloads): 1024 rays over reach `2*size`, fixed energy each => fluence `~size/d^2`. First surface consumes: hull,
   live brick (ERA ignores blast, shields). Bar takes cover `c = (15 mm + 50 mm*tan) / pitch` of a ray, passes
   `1-c`; bend `= sum c * 2*size*(4pi/1024)*(1-d/reach)^2 / (pitch*width)`, < 0.05 ignored. Hull blast damage x
   surviving ray share.
@@ -1399,10 +1480,43 @@ carried): fit / refill / remove / weld. Weld = carried `#hull_tool`; bent bar fr
 - A burst on a panel moves the warhead's blast there (`ProjectileStrikeEvent.detonation`).
 - TACZ rounds (taczwf + WFLib): hit test via `PreciseHitbox` (hull + panels, not the AABB); threat and
   warhead per ammo id, taczwf `taczwf/ordnance`. RPG-7 = 85 mm `heat`.
-- Gap: WFLib missiles hurt hulls by blast only, so ERA on them spends a brick and nothing else.
-- `/combinedassault ballistics addon fill <era_light|era_heavy|slat> | clear | stats | shoot <mount> <round> [obliquity]`:
-  nearest vehicle with `addon_armor` within 32 blocks.
+- WFLib missiles: the warhead's jet resolves the hull (3.7 Warhead payloads) after the brick it burst on.
+- `/combinedassault ballistics addon fill <era_light|era_heavy|slat|arrays> | clear | stats | shoot <mount> <round> [obliquity]`:
+  nearest vehicle with `addon_armor` (or an integral array) within 32 blocks; `arrays` refills every integral array.
 - Shipped: `m1a2` (ERA skirts, slat rear/rear sides/turret bustle), socket frames unbaked.
+
+### 16.3 `era_types`
+
+`combinedassault/<ns>/era_types/<path>.json`, id `<ns>:<path>`; parsed before vehicles, replaced on `/reload`; bad value => load error naming the type. Items `era_brick` / `heavy_era_brick` need `combinedassault:era_light` / `era_heavy`; other types serve integral arrays and any pack-registered fit.
+
+| field | default | notes |
+| --- | ---: | --- |
+| `heat_cut` / `kinetic_cut` / `tandem_cut` | 0 | fraction of penetration removed at >= 60 deg obliquity (0..1) |
+| `kinetic_initiation_mm` | 20 | smallest `kinetic` / `efp` calibre that fires it; `small_arms` never |
+| `he_initiation_mm` | 76 | same for `he` / `hesh` |
+| `fragment_initiation_j` | 4000 | one fragment's energy |
+| `thickness` | 0.10 | blocks, along the panel normal |
+| `back_plate_mm` | 0 | hull plate under it thinner than this (KE RHAe) takes the `flyer` |
+| `sympathetic` | 0 | chance per neighbour (0..1) |
+| `blast_kg` | 0.1 | brick blast, TNT-equivalent (> 0) |
+| `fragments` / `flyer` | none | `{count, mass_g, speed}` |
+
+Shipped: `era_light` (Kontakt-1 class), `era_heavy`, `kontakt_5` (heat 0.5, kinetic 0.3), `relikt` (`tandem_cut` 0.45, unused by shipped vehicles). Estimates: `fragment_initiation_j`, `sympathetic`, `blast_kg`, brick fragments, flyer plates, `back_plate_mm`, `era_light` HE 25 mm, `kontakt_5` figures.
+
+### 16.4 Integral arrays
+
+Factory-fitted bricks of an `armor.plates` plate: first layer `{"era": "<ns>:<type>", "cells": n}` (1..64), beside `los` or solid layers; the bricks are not RHAe (`nominal` excludes them: the Kontakt share lives in the layer, not the face figure).
+
+```json
+"ufp": {"facing": "front", "slope": 68, "los": {"ke": 490, "ce": 550}, "layers": [{"era": "combinedassault:kontakt_5", "cells": 28}]}
+```
+
+- Cell under a strike = `EraGrid` tiling of the plate plane (0.40 x 0.25 m cells, `ceil(sqrt n)` columns, wrapping, in the part's rest frame); neighbours = 8-neighbourhood.
+- Walk: entering crossing only; live brick the threat sets off (`EraType.strike`) => `PlateWalk.era` cuts the budget and lists `WalkResult.eraHits`. `resolve` reads state through `HullBody.eraLive` and never spends: `IntegralEra.commit` spends once the shot is final (`DamageSystem` after the round's resolve, the warhead's jet in `VehicleBlastResolver`). Strike-event resolve + `DamageSystem` resolve see the same bricks.
+- Direct hit by `he` / `hesh` (no penetration to walk): `IntegralEra.strike` spends the brick under it when the calibre reaches `he_initiation_mm`.
+- State: `AddonArmorLayer` (plate id -> spent bit mask), NBT `AddonArmor.Arrays`, rides `ServerAddonArmorSync`. `/combinedassault ballistics addon stats` lists arrays; `fill arrays` refills.
+- Shipped: T-90 `ufp` (28 cells), `turret_front` (4), `turret_cheek_a` (5), `turret_cheek_b` (2), `kontakt_5`. Face figure = the old published one / keep at the reference incidence (`ufp`: 68 deg full effect; others straight-on, minimum effect). T-84: no plates (no bound hit mesh), Kontakt share stays in its face figures.
+- Gaps: two rounds in one tick (TACZ split hurt) resolve the second against the spent brick; fragments and blast do not set arrays off.
 
 ## 17. Cargo holds and parachutes
 
@@ -1536,10 +1650,10 @@ Gun = kit def; vehicle part = typed `hardpoint`. Fitted / taken off in the field
 | `door` | switchable part id: fit refused until on + clip run out; closing it refused while a kit is on (probe, key, pilot-boarding auto-close skips it); kit `fitted` at spawn => on. Unknown / non-switchable => load error |
 
 - Kit `model` not in a CA pack => read from any other wflib pack host (MineAssault's).
-- Station keys: `pose`, `dismount_offset`, `protect_passenger`, `passenger_can_use_item`, `crew_roles`, `rot_info`, `bolts`, `ejects`, `ammo_capacity`, `firing_mode`, `operator_on_weapon_unit`, `fire_control_sensor_type`, `optical_sight_type`, `with_*`, `loading`, `zoom_min`, `zoom_max`, `crosshair_style`, `handling`, `optic`. Other key => load error.
+- Station keys: `pose`, `dismount_offset`, `protect_passenger`, `passenger_can_use_item`, `crew_roles`, `rot_info`, `bolts`, `ejects`, `ammo_capacity`, `firing_mode`, `operator_on_weapon_unit`, `fire_control_sensor_type`, `optical_sight_type`, `with_*`, `loading`, `zoom_min`, `zoom_max`, `crosshair_style`, `handling`, `optic`, `rangefinder`. Other key => load error.
 - Merge: part (glTF sockets applied) < kit `station` < hardpoint override; objects (`rot_info`) merge by key, else replace.
 - No kit => no gun: `currentWeaponId` null, kit mounts hidden and unhit, never fires. Seat switch cycles within the fitted kit; modding tool swaps refused.
 - Item `combinedassault:hardware`, component `combinedassault:hardware_kit` = kit id; name lang `hardware.<ns>.<path>`; drawn from the kit model. Recipes: result `{"id": "combinedassault:hardware", "components": {"combinedassault:hardware_kit": "<kit>"}}`.
 - Probe node `hardpoint:<part index>`: empty => one timed `hardpoint_fit` row per kit (arg = part << 8 | kit index), item consumed; fitted => timed `hardpoint_take_off`, item back. Refused: wreck, part detached, kit already on, eye > 4 blocks from pivot, pivot > 1.5 m behind hull surface from the eye, a seat of the part occupied, item missing (creative exempt).
 - NBT `Kit` (id, "" = empty) per hardpoint part.
-- Shipped kits: `m2`, `kord` (`pintle`, `tripod`, `door`), `mk19` (`pintle`, `tripod`), `spg9` (`tripod`), `m134`, `pkm` (`door`), `ma_pkm` (`door`; MineAssault `ma_lmgs:pkm` item + model, replaces `pkm`). Hardpoints: `humvee` roof (`pintle`, empty), `riverine` bows / stern (`pintle`, M2 / M2 / Mk 19), `spg9` weapon tripod (`tripod`, empty, `kneel`); `door`, `door` key: `mh60l` door guns (M134, `gun_window_*`), `w3` door gun (PKM, `cabin_door_r`), `ch47` door guns (M134, `gun_window_*`) + ramp gun (M2, `cargo_doors`).
+- Shipped kits: `m2`, `kord` (`pintle`, `tripod`, `door`), `mk19` (`pintle`, `tripod`), `spg9` (`tripod`), `m134`, `pkm` (`door`), `ma_pkm` (`door`; MineAssault `ma_lmgs:pkm` item + model, replaces `pkm`), `spray_pod` (`door`; weapon type `combinedassault:spray_pod`: `max_capacity` = tank mB, `mb_per_shot`, `radius`; no reload; filled through the vehicle `FluidHandler.ENTITY` tank 1+; fuel-spec fluids go to the fuel tank only; model procedural `tools/internal/stage_spray_pod.py`). Hardpoints: `humvee` roof (`pintle`, empty), `riverine` bows / stern (`pintle`, M2 / M2 / Mk 19), `spg9` weapon tripod (`tripod`, empty, `kneel`); `door`, `door` key: `mh60l` door guns (M134, `gun_window_*`), `w3` door gun (PKM, `cabin_door_r`), `ch47` door guns (M134, `gun_window_*`) + ramp gun (M2, `cargo_doors`).

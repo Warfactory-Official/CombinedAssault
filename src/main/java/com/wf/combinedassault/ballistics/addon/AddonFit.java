@@ -1,6 +1,8 @@
 package com.wf.combinedassault.ballistics.addon;
 
 import com.wf.combinedassault.ballistics.BallisticsContent;
+import com.wf.wflib.armor.api.hull.EraType;
+import com.wf.wflib.armor.api.hull.EraTypes;
 import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,8 +11,8 @@ import java.util.Locale;
 /** What is installed on a mount point. Ordinal is the save/sync id. */
 public enum AddonFit {
     NONE(null, null, 0),
-    ERA_LIGHT(AddonKind.ERA, EraSpec.LIGHT, 5.6f),
-    ERA_HEAVY(AddonKind.ERA, EraSpec.HEAVY, 13.0f),
+    ERA_LIGHT(AddonKind.ERA, EraTypePacks.LIGHT, 5.6f),
+    ERA_HEAVY(AddonKind.ERA, EraTypePacks.HEAVY, 13.0f),
     SLAT(AddonKind.SLAT, null, 25.0f);
 
     private static final AddonFit[] VALUES = values();
@@ -18,14 +20,22 @@ public enum AddonFit {
     @Nullable
     public final AddonKind kind;
     @Nullable
-    public final EraSpec era;
+    private final String eraId;
     /** kg per installed item: ERA brick, slat panel (1 m²). */
     public final float kilograms;
 
-    AddonFit(@Nullable AddonKind kind, @Nullable EraSpec era, float kilograms) {
+    AddonFit(@Nullable AddonKind kind, @Nullable String eraId, float kilograms) {
         this.kind = kind;
-        this.era = era;
+        this.eraId = eraId;
         this.kilograms = kilograms;
+    }
+
+    /** Brick type of an ERA fit, from the pack registry. */
+    public EraType era() {
+        if (eraId == null) {
+            throw new IllegalStateException(this + " is not an ERA fit");
+        }
+        return EraTypes.get(eraId);
     }
 
     public static AddonFit byId(int id) {

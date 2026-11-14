@@ -40,6 +40,9 @@ public class LandingGearUnit extends SwitchableUnit<LandingGearUnitData> {
         VehicleCubeOBB mainCubeOBB = vehicle.getMainCubeOBB();
         // Hull body: its shape is the fuselage, already clear of the legs; rebuild would move the bound off the shape.
         if (!mainCubeOBB.hasHull()) {
+            if (partUnitsView.values().stream().filter(LandingGearUnit.class::isInstance).count() > 1) {
+                throw new IllegalStateException("several landing_gear parts need a hull body (each would trim the main box)");
+            }
             mainCubeOBB.height -= maxHeight;
             mainCubeOBB.y += maxHeight;
             mainCubeOBB.rebuild();
@@ -49,6 +52,15 @@ public class LandingGearUnit extends SwitchableUnit<LandingGearUnitData> {
             Vector3f obbLocalPos = new Vector3f((float) offset.x, gearDownPointY(partCubeOBB), (float) offset.z);
             gearCubes.add(new GearCube(partCubeOBB, obbLocalPos));
         });
+    }
+
+    /** Gear key: every landing_gear part follows ({@code landing_gear_part_id} is only the state/drag reference). */
+    public static void setAll(AbstractVehicle vehicle, boolean on) {
+        for (PartUnit<?> unit : vehicle.getPartUnits()) {
+            if (unit instanceof LandingGearUnit gear) {
+                gear.setOn(on);
+            }
+        }
     }
 
     public int footCount() {

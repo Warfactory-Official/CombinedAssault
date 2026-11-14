@@ -1,0 +1,192 @@
+{
+  "type": "combinedassault:wheeled_vehicle",
+  "attributes": {
+    "brake_force": 6210,
+    "forward_force": 6831.0,
+    "backward_force": 3477.6,
+    "max_speed_forward": 0.972,
+    "max_speed_backward": 0.2,
+    "steer_fade_speed": 0.6,
+    "turn_step": 0.25,
+    "max_turn": 2.5,
+    "engine_power": 25.2
+  },
+  "physics_info": {
+    "mass": 1200
+  },
+  "max_health": 250,
+  "view_info": {
+    "third_person_distance": 5.0
+  },
+  "energy_info": {
+    "energy_capacity": 42,
+    "energy_consumption_per_tick": 0.004
+  },
+  "storage": {
+    "slots": 36
+  },
+  "parts": [
+    {
+      "id": "wheel_f",
+      "name": "part.flans_ww2.sdkfz2.wheel_f",
+      "type": "combinedassault:suspension",
+      "max_health": 40,
+      "is_seat": false,
+      "spring_stiffness": 40572,
+      "damping": 2459,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2
+    },
+    {
+      "id": "suspension_left",
+      "name": "part.flans_ww2.sdkfz2.suspension_left",
+      "type": "combinedassault:track",
+      "is_seat": false,
+      "max_health": 120,
+      "detachable": false,
+      "spring_stiffness": 40572,
+      "damping": 2459,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2,
+      "max_droop": 0.12,
+      "track_width": 0.2
+    },
+    {
+      "id": "suspension_right",
+      "name": "part.flans_ww2.sdkfz2.suspension_right",
+      "type": "combinedassault:track",
+      "is_seat": false,
+      "max_health": 120,
+      "detachable": false,
+      "spring_stiffness": 40572,
+      "damping": 2459,
+      "rest_length": 0.25,
+      "max_compression": 0.25,
+      "max_extension": 0.2,
+      "max_droop": 0.12,
+      "track_width": 0.2
+    },
+    {
+      "id": "driver",
+      "name": "part.combinedassault.driver",
+      "type": "combinedassault:generic",
+      "protect_passenger": false,
+      "crew_roles": [
+        "driver"
+      ]
+    },
+    {
+      "id": "seat_1",
+      "name": "part.flans_ww2.seat_1",
+      "type": "combinedassault:weapon",
+      "protect_passenger": false,
+      "crosshair_style": "cross",
+      "crew_roles": [
+        "gunner"
+      ],
+      "handling": "manual",
+      "max_health": 120,
+      "render_bone": "seat_1_gun",
+      "rot_info": {
+        "x_rot_speed": 4,
+        "y_rot_speed": 4,
+        "need_power": false,
+        "y_rot_min": 140.0,
+        "y_rot_max": 220.0
+      },
+      "hardpoint": {
+        "node": "seat_1_gun_pitch",
+        "accepts": [
+          "pintle"
+        ],
+        "fitted": "flans_ww2:mg34"
+      },
+      "operator_on_weapon_unit": false,
+      "pose": "stand"
+    }
+  ],
+  "model": "flans_ww2:models/vehicle/sdkfz2/sdkfz2.glb",
+  "display": {
+    "tab_index": 900,
+    "icon": "flans_ww2:textures/slot/sdkfz2.png",
+    "engine": {
+      "start": {
+        "event": "combinedassault:motorcycle_engine_start",
+        "range": 96
+      },
+      "loops": [
+        {
+          "sound": {
+            "event": "combinedassault:motorcycle_engine_idle",
+            "range": 96
+          },
+          "input": "rpm",
+          "volume": [
+            [
+              0.05,
+              0
+            ],
+            [
+              0.3,
+              1
+            ],
+            [
+              0.6,
+              1
+            ],
+            [
+              0.75,
+              0
+            ]
+          ],
+          "pitch": [
+            [
+              0.3,
+              0.85
+            ],
+            [
+              0.6,
+              1
+            ]
+          ]
+        },
+        {
+          "sound": {
+            "event": "combinedassault:motorcycle_engine_run",
+            "range": 160
+          },
+          "input": "rpm",
+          "volume": [
+            [
+              0.6,
+              0
+            ],
+            [
+              0.7,
+              1
+            ]
+          ],
+          "pitch": [
+            [
+              0.6,
+              0.8
+            ],
+            [
+              1,
+              1.1
+            ]
+          ]
+        }
+      ]
+    },
+    "cabin_muffle": 0.0,
+    "controller": "flans_ww2:sdkfz2_controller",
+    "track": {
+      "model": "flans_ww2:models/effect/sdkfz2_track_link.glb",
+      "module_length": 0.15
+    },
+    "description": "German light half-track gun tractor"
+  }
+}

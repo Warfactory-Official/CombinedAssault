@@ -1,0 +1,16 @@
+{
+  "pack": {
+    "pack_format": 34,
+    "description": "[CA] Flan's Ye Olde Pack"
+  },
+  "combinedassault": {
+    "id": "flans_ye_olde",
+    "requires": [
+      "combinedassault"
+    ],
+    "license": "CC-BY-NC-SA-3.0",
+    "authors": [
+      "Jamio Flan (Flan's Mod)"
+    ]
+  }
+}

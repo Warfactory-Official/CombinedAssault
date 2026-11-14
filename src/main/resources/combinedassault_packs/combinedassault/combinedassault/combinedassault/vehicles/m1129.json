@@ -4,6 +4,7 @@
         "brake_force": 10000,
         "forward_force": 11000,
         "backward_force": 6000,
+        "engine_power": 29,
         "max_speed_forward": 0.6,
         "max_speed_backward": 0.2,
         "turn_step": 0.2,

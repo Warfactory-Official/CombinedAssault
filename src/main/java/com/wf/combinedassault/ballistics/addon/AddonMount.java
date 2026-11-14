@@ -153,7 +153,7 @@ public final class AddonMount {
 
     /** Sphere about the panel centre holding its box for any fit. */
     public double boundingRadius() {
-        float depth = Math.max(EraSpec.HEAVY.thickness(), SLAT_DEPTH);
+        float depth = Math.max(AddonFit.ERA_HEAVY.era().thickness(), Math.max(AddonFit.ERA_LIGHT.era().thickness(), SLAT_DEPTH));
         return Math.sqrt(halfWidth * halfWidth + halfHeight * halfHeight + depth * depth);
     }
 
@@ -163,6 +163,6 @@ public final class AddonMount {
     }
 
     public float zMax(AddonFit fit) {
-        return fit.kind == AddonKind.ERA ? fit.era.thickness() : SLAT_DEPTH / 2;
+        return fit.kind == AddonKind.ERA ? fit.era().thickness() : SLAT_DEPTH / 2;
     }
 }

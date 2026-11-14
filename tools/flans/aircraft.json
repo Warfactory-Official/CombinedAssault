@@ -1,0 +1,496 @@
+{
+ "Spitfire": {
+  "stations": [
+   {
+    "id": "gun",
+    "weapon": "flans_ww2:browning_303",
+    "points": "ShootPointPrimary"
+   },
+   {
+    "id": "bomb",
+    "weapon": "combinedassault:aerial_bomb",
+    "points": "ShootPointSecondary",
+    "secondary": true,
+    "ammo": 4,
+    "follow": true
+   }
+  ]
+ },
+ "BF109": {
+  "stations": [
+   {
+    "id": "gun",
+    "weapon": "flans_ww2:mg17",
+    "points": "ShootPointPrimary",
+    "slice": [
+     0,
+     2
+    ]
+   },
+   {
+    "id": "cannon",
+    "weapon": "flans_ww2:mg151_20",
+    "points": "ShootPointPrimary",
+    "slice": [
+     2,
+     3
+    ]
+   }
+  ]
+ },
+ "Camel": {
+  "stations": [
+   {
+    "id": "gun",
+    "weapon": "flans_ww2:vickers_303",
+    "points": "ShootPointPrimary"
+   }
+  ]
+ },
+ "Fokker": {
+  "stations": [
+   {
+    "id": "gun",
+    "weapon": "flans_ww2:lmg08_15",
+    "points": "ShootPointPrimary"
+   }
+  ]
+ },
+ "Mustang": {
+  "stations": [
+   {
+    "id": "gun",
+    "weapon": "combinedassault:gun_12.7mm",
+    "points": "ShootPointPrimary"
+   },
+   {
+    "id": "bomb",
+    "weapon": "combinedassault:aerial_bomb",
+    "points": "ShootPointSecondary",
+    "secondary": true,
+    "ammo": 2,
+    "follow": true
+   }
+  ]
+ },
+ "yak9": {
+  "stations": [
+   {
+    "id": "gun",
+    "weapon": "flans_ww2:shvak_20mm",
+    "points": "ShootPointPrimary"
+   },
+   {
+    "id": "bomb",
+    "weapon": "combinedassault:aerial_bomb",
+    "points": "ShootPointSecondary",
+    "secondary": true,
+    "ammo": 3,
+    "follow": true
+   }
+  ]
+ },
+ "zero": {
+  "stations": [
+   {
+    "id": "gun",
+    "weapon": "flans_ww2:type99_20mm",
+    "points": "ShootPointPrimary"
+   },
+   {
+    "id": "bomb",
+    "weapon": "combinedassault:aerial_bomb",
+    "points": "ShootPointSecondary",
+    "secondary": true,
+    "ammo": 3,
+    "follow": true
+   }
+  ]
+ },
+ "Lancaster": {
+  "stations": [
+   {
+    "id": "bomb",
+    "weapon": "combinedassault:aerial_bomb",
+    "points": "ShootPointSecondary",
+    "secondary": true,
+    "ammo": 16,
+    "follow": true
+   }
+  ]
+ },
+ "Biplane": {
+  "length": 6.0
+ },
+ "TwoSeatBiplane": {
+  "length": 6.5
+ },
+ "A10": {
+  "stations": [
+   {
+    "id": "gun",
+    "weapon": "combinedassault:gau_8",
+    "points": "ShootPointPrimary"
+   },
+   {
+    "id": "rocket",
+    "weapon": "combinedassault:hydra_70",
+    "points": "ShootPointSecondary",
+    "secondary": true,
+    "follow": true,
+    "ammo": 38
+   },
+   {
+    "id": "missile",
+    "weapon": "combinedassault:agm_65",
+    "points": "ShootPointSecondary",
+    "secondary": true,
+    "follow": true,
+    "ammo": 6
+   },
+   {
+    "id": "bomb",
+    "weapon": "combinedassault:mk_82",
+    "points": "ShootPointSecondary",
+    "secondary": true,
+    "follow": true,
+    "ammo": 4
+   }
+  ]
+ },
+ "ApacheAH64": {
+  "stations": [
+   {
+    "id": "rocket",
+    "weapon": "combinedassault:hydra_70",
+    "points": "ShootPointPrimary",
+    "follow": true,
+    "ammo": 38
+   },
+   {
+    "id": "missile",
+    "weapon": "combinedassault:agm_114",
+    "points": "ShootPointSecondary",
+    "secondary": true,
+    "follow": true,
+    "ammo": 8
+   }
+  ],
+  "split": [
+   {
+    "kind": "main",
+    "group": "bodyModel",
+    "range": [
+     139,
+     156
+    ],
+    "hub": [
+     0,
+     77,
+     0
+    ]
+   },
+   {
+    "kind": "tail",
+    "group": "bodyModel",
+    "range": [
+     158,
+     165
+    ],
+    "hub": [
+     195.5,
+     89,
+     24
+    ]
+   }
+  ]
+ },
+ "B52": {
+  "stations": [
+   {
+    "id": "bomb",
+    "weapon": "combinedassault:mk_82",
+    "points": "ShootPointSecondary",
+    "secondary": true,
+    "follow": true,
+    "ammo": 51,
+    "slice": [
+     0,
+     10
+    ]
+   }
+  ],
+  "lift": 19.0
+ },
+ "BlackHawk": {
+  "main_hubs": [
+   [
+    0,
+    62,
+    0
+   ]
+  ],
+  "tail_hubs": [
+   [
+    205,
+    66,
+    -6
+   ]
+  ],
+  "seat_guns": {
+   "6": {
+    "weapon": "combinedassault:m134",
+    "yaw": [
+     40,
+     140
+    ],
+    "pitch": [
+     -60,
+     20
+    ]
+   },
+   "9": {
+    "weapon": "combinedassault:m134",
+    "yaw": [
+     -140,
+     -40
+    ],
+    "pitch": [
+     -60,
+     20
+    ]
+   }
+  }
+ },
+ "chinook": {
+  "split": [
+   {
+    "kind": "main",
+    "group": "bodyModel",
+    "range": [
+     311,
+     335
+    ],
+    "hub": [
+     -155,
+     73,
+     0
+    ],
+    "unit": "F",
+    "spin": "ccw"
+   },
+   {
+    "kind": "main",
+    "group": "bodyModel",
+    "range": [
+     336,
+     360
+    ],
+    "hub": [
+     70,
+     98,
+     0
+    ],
+    "unit": "R",
+    "spin": "cw"
+   }
+  ],
+  "lift": 22.0,
+  "seat_guns": {
+   "19": {
+    "weapon": "combinedassault:m134",
+    "yaw": [
+     40,
+     140
+    ],
+    "pitch": [
+     -60,
+     20
+    ]
+   },
+   "21": {
+    "weapon": "combinedassault:m134",
+    "yaw": [
+     -140,
+     -40
+    ],
+    "pitch": [
+     -60,
+     20
+    ]
+   }
+  }
+ },
+ "cobra": {
+  "stations": [
+   {
+    "id": "rocket",
+    "weapon": "combinedassault:hydra_70",
+    "points": "ShootPointPrimary",
+    "follow": true,
+    "ammo": 38
+   }
+  ],
+  "main_hubs": [
+   [
+    0,
+    28,
+    0
+   ]
+  ],
+  "tail_hubs": [
+   [
+    112,
+    24,
+    1
+   ]
+  ]
+ },
+ "f22": {
+  "stations": [
+   {
+    "id": "gun",
+    "weapon": "combinedassault:m61a1",
+    "points": "ShootPointPrimary"
+   },
+   {
+    "id": "missile",
+    "weapon": "combinedassault:aim_120",
+    "points": "ShootPointSecondary",
+    "secondary": true,
+    "follow": true,
+    "ammo": 6
+   },
+   {
+    "id": "ir_missile",
+    "weapon": "combinedassault:aim_9",
+    "points": "ShootPointSecondary",
+    "secondary": true,
+    "follow": true,
+    "ammo": 2
+   }
+  ]
+ },
+ "hind": {
+  "stations": [
+   {
+    "id": "rocket",
+    "weapon": "combinedassault:rocket",
+    "points": "ShootPointPrimary",
+    "follow": true,
+    "ammo": 32
+   },
+   {
+    "id": "missile",
+    "weapon": "combinedassault:shturm",
+    "points": "ShootPointPrimary",
+    "secondary": true,
+    "follow": true,
+    "ammo": 4
+   }
+  ],
+  "main_hubs": [
+   [
+    0,
+    66,
+    0
+   ]
+  ],
+  "tail_hubs": [
+   [
+    224,
+    78,
+    3
+   ]
+  ]
+ },
+ "LittleBird": {
+  "main_hubs": [
+   [
+    0,
+    20,
+    0
+   ]
+  ],
+  "tail_hubs": [
+   [
+    77,
+    32,
+    -7
+   ]
+  ]
+ },
+ "SU25": {
+  "stations": [
+   {
+    "id": "gun",
+    "weapon": "flans_modern:gsh_30_2",
+    "points": "ShootPointPrimary"
+   },
+   {
+    "id": "rocket",
+    "weapon": "combinedassault:rocket",
+    "points": "ShootPointSecondary",
+    "secondary": true,
+    "follow": true,
+    "ammo": 80
+   }
+  ]
+ },
+ "EC665": {
+  "stations": [
+   {
+    "id": "gun",
+    "weapon": "combinedassault:giat_30",
+    "points": "ShootPointPrimary"
+   },
+   {
+    "id": "missile",
+    "weapon": "combinedassault:agm_114",
+    "points": "ShootPointSecondary",
+    "secondary": true,
+    "follow": true,
+    "ammo": 8
+   }
+  ],
+  "main_hubs": [
+   [
+    0,
+    65,
+    0
+   ]
+  ],
+  "tail_hubs": [
+   [
+    194,
+    58,
+    4
+   ]
+  ]
+ },
+ "tornado": {
+  "stations": [
+   {
+    "id": "gun",
+    "weapon": "combinedassault:bk_27",
+    "points": "ShootPointPrimary"
+   },
+   {
+    "id": "ir_missile",
+    "weapon": "combinedassault:aim_9",
+    "points": "ShootPointSecondary",
+    "secondary": true,
+    "follow": true,
+    "ammo": 2
+   },
+   {
+    "id": "bomb",
+    "weapon": "combinedassault:mk_82",
+    "points": "ShootPointSecondary",
+    "secondary": true,
+    "follow": true,
+    "ammo": 4
+   }
+  ]
+ }
+}

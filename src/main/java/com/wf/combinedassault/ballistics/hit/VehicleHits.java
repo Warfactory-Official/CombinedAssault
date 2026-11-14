@@ -29,15 +29,22 @@ public final class VehicleHits implements HullMesh {
     /** Drawn surface first met eye -> point more than this short of it, m => hidden. Seats sit ~1 m inside the near side. */
     public static final double SIGHT_DEPTH = 1.5;
 
+    /** Probe line of sight: eye -> anchor this close => reached through the model (obstructed handle). */
+    public static final double PROBE_CLOSE = 1.0;
+    /** Probe line of sight: blocker this far short of the anchor, m, tolerated (anchor on a surface). */
+    public static final double PROBE_SLACK = 0.05;
+    public static final IntPredicate NONE = i -> false;
+
     /** How far behind the struck surface an authored tagged piece still claims the hit: drawn inside the skin. */
     public static final double AUTHORED_DEPTH = 1.0;
 
     /**
      * @param fraction along the traced segment
      * @param normal   world, facing the shot
-     * @param armor    mm RHA from the face's {@code armor_<mm>} material; 0 = none
+     * @param plate    id from the face's {@code armor:<id>} material, null = unbound
      */
-    public record Hit(int node, double fraction, Vec3 point, Vector3f normal, float armor, SurfaceMaterial material) implements HullMesh.Strike {
+    public record Hit(int node, double fraction, Vec3 point, Vector3f normal, @Nullable String plate,
+                      SurfaceMaterial material) implements HullMesh.Strike {
     }
 
     private final AbstractVehicle vehicle;
@@ -177,11 +184,53 @@ public final class VehicleHits implements HullMesh {
         return centre != null ? centre : part.worldPivotPosition();
     }
 
+    /** World origin of {@code node} at its current pose (clips applied). */
+    public Vec3 origin(int node) {
+        Vec3 at = vehicle.position();
+        Vector3f o = pose(node, at, new Matrix4f()).getTranslation(new Vector3f());
+        return at.add(o.x, o.y, o.z);
+    }
+
+    /** Owning part of {@code node}, or null (hull). */
+    @Nullable
+    public PartUnit<?> partUnitOf(int node) {
+        return parts[node];
+    }
+
+    /** Nodes of {@code part}. */
+    public IntPredicate ofPart(PartUnit<?> part) {
+        return i -> parts[i] == part;
+    }
+
+    /**
+     * {@code eye -> at} within {@link #PROBE_CLOSE}, or no live surface outside {@code own} more than
+     * {@link #PROBE_SLACK} short of {@code at}.
+     */
+    public boolean probeReaches(Vec3 eye, Vec3 at, IntPredicate own) {
+        return probeReaches(eye, at, own, PROBE_CLOSE);
+    }
+
+    public boolean probeReaches(Vec3 eye, Vec3 at, IntPredicate own, double close) {
+        double distance = eye.distanceTo(at);
+        if (distance <= close) {
+            return true;
+        }
+        Hit hit = trace(eye, at, i -> !own.test(i) && live(i) && !model.nodes().get(i).mesh().module());
+        return hit == null || (1 - hit.fraction()) * distance <= PROBE_SLACK;
+    }
+
     /** Nearest live surface (drawn) node along {@code from -> to}, or null. */
     @Nullable
     @Override
     public Hit surface(Vec3 from, Vec3 to) {
         return trace(from, to, i -> live(i) && !model.nodes().get(i).mesh().module());
+    }
+
+    /** mm RHA {@code node}'s module consumes: its {@code rha} key, else its system kind's default. */
+    public float moduleRha(int node) {
+        HitModel.Node n = model.nodes().get(node);
+        float rha = n.mesh().rha();
+        return rha == rha ? rha : n.kind() == null ? 0.0f : n.kind().moduleRha();
     }
 
     /** Nearest live {@code hit_*} module along {@code from -> to}, or null. */
@@ -203,7 +252,7 @@ public final class VehicleHits implements HullMesh {
 
         double best = 1;
         int bestNode = -1;
-        float bestArmor = 0;
+        String bestPlate = null;
         SurfaceMaterial bestMaterial = SurfaceMaterial.STEEL;
         Vector3f bestNormal = new Vector3f();
         Quaternionf[] groupInverse = new Quaternionf[groups.length];
@@ -240,7 +289,7 @@ public final class VehicleHits implements HullMesh {
                     bestNode = i;
                     mesh.normal(triangle, scratch);
                     bestNormal.set(scratch[0], scratch[1], scratch[2]);
-                    bestArmor = mesh.armor(triangle);
+                    bestPlate = model.mesh().plateId(mesh.plate(triangle));
                     bestMaterial = mesh.material(triangle);
                     toWorld(bestNormal, i, g);
                 }
@@ -249,7 +298,7 @@ public final class VehicleHits implements HullMesh {
                 if (hit >= 0) {
                     best = hit;
                     bestNode = i;
-                    bestArmor = 0;
+                    bestPlate = null;
                     bestMaterial = SurfaceMaterial.STEEL;
                     toWorld(bestNormal, i, g);
                 }
@@ -262,7 +311,225 @@ public final class VehicleHits implements HullMesh {
         if (bestNormal.dot(dir) > 0) {
             bestNormal.negate();
         }
-        return new Hit(bestNode, best, from.add(to.subtract(from).scale(best)), bestNormal, bestArmor, bestMaterial);
+        return new Hit(bestNode, best, from.add(to.subtract(from).scale(best)), bestNormal, bestPlate, bestMaterial);
+    }
+
+    /** Per-thread query scratch: {@link #surfaces} and {@link #modules} allocate only their results. */
+    private static final class Scratch {
+        final int[] stack = new int[TriangleBvh.STACK];
+        final float[] nodeT = new float[MAX_CROSSINGS];
+        final int[] nodeTri = new int[MAX_CROSSINGS];
+        final float[] mergedT = new float[MAX_CROSSINGS];
+        final int[] mergedNode = new int[MAX_CROSSINGS];
+        /** Triangle, or -1 for a rotor disc. */
+        final int[] mergedTri = new int[MAX_CROSSINGS];
+        final float[] tOut = new float[1];
+        final float[] normalOut = new float[3];
+        final Quaternionf vehicleInverse = new Quaternionf();
+        final Quaternionf nodeInverse = new Quaternionf();
+        final Vector3f o = new Vector3f();
+        final Vector3f d = new Vector3f();
+        final Vector3f no = new Vector3f();
+        final Vector3f nd = new Vector3f();
+        final Vector3f normal = new Vector3f();
+        final Vector3f world = new Vector3f();
+        Quaternionf[] groupInverse = new Quaternionf[0];
+        Vector3f[] groupO = new Vector3f[0];
+        Vector3f[] groupD = new Vector3f[0];
+        boolean[] ready = new boolean[0];
+
+        void groups(int n) {
+            if (groupInverse.length < n) {
+                groupInverse = new Quaternionf[n];
+                groupO = new Vector3f[n];
+                groupD = new Vector3f[n];
+                ready = new boolean[n];
+                for (int i = 0; i < n; i++) {
+                    groupInverse[i] = new Quaternionf();
+                    groupO[i] = new Vector3f();
+                    groupD[i] = new Vector3f();
+                }
+            }
+            Arrays.fill(ready, false);
+        }
+    }
+
+    private static final ThreadLocal<Scratch> SCRATCH = ThreadLocal.withInitial(Scratch::new);
+
+    /** World {@code from -> to} into the vehicle frame ({@code s.o}, {@code s.d}); groups not yet posed. */
+    private void begin(Scratch s, Vec3 from, Vec3 to) {
+        s.vehicleInverse.set(vehicle.rotYXZ()).conjugate();
+        Vec3 c = vehicle.centerOffset;
+        double bx = vehicle.getX() + c.x, by = vehicle.getY() + c.y, bz = vehicle.getZ() + c.z;
+        s.vehicleInverse.transform(s.o.set((float) (from.x - bx), (float) (from.y - by), (float) (from.z - bz)))
+                .add((float) c.x, (float) c.y, (float) c.z);
+        s.vehicleInverse.transform(s.d.set((float) (to.x - from.x), (float) (to.y - from.y), (float) (to.z - from.z)));
+        s.groups(groups.length);
+    }
+
+    /** The ray of {@link #begin} in node {@code i}'s frame ({@code s.no}, {@code s.nd}). */
+    private void nodeRay(Scratch s, int i, HitModel.Node node) {
+        int g = node.group();
+        if (!s.ready[g]) {
+            s.ready[g] = true;
+            int index = groupIndex[g];
+            s.groupInverse[g].set(vehicle.groupRotation(index)).conjugate();
+            s.groupInverse[g].transform(s.groupO[g].set(s.o).sub(vehicle.groupOffset(index)));
+            s.groupInverse[g].transform(s.groupD[g].set(s.d));
+        }
+        s.nodeInverse.set(toGroup[i]).conjugate();
+        s.nodeInverse.transform(s.no.set(s.groupO[g]).sub(offset[i]));
+        s.nodeInverse.transform(s.nd.set(s.groupD[g]));
+    }
+
+    /**
+     * Every live drawn surface along {@code from -> to}, nearest first, at most {@link HullMesh#MAX_CROSSINGS}: BVH
+     * all-hits per node, merged; faces within {@link HullMesh#CROSSING_STEP} of the previous one are one crossing (the
+     * plate-bound one kept: coincident back faces, shared triangle edges). {@code entering} alternates from true,
+     * winding is not trusted. Rotor discs: their entry only. Normals face the shot.
+     */
+    @Override
+    public int surfaces(Vec3 from, Vec3 to, List<HullMesh.Crossing> out) {
+        double length = from.distanceTo(to);
+        if (length <= CROSSING_STEP) {
+            return 0;
+        }
+        Scratch s = SCRATCH.get();
+        begin(s, from, to);
+        int merged = 0;
+        List<HitModel.Node> all = model.nodes();
+        for (int i = 0; i < all.size(); i++) {
+            if (!live(i) || all.get(i).mesh().module()) {
+                continue;
+            }
+            HitModel.Node node = all.get(i);
+            float worst = merged == MAX_CROSSINGS ? s.mergedT[merged - 1] : 1.0f;
+            nodeRay(s, i, node);
+            if (slab(node.bounds(), s.no, s.nd, worst) < 0) {
+                continue;
+            }
+            TriangleBvh mesh = node.mesh().mesh();
+            HitMesh.Disc disc = node.mesh().disc();
+            if (mesh != null) {
+                int n = mesh.traceAll(s.no.x, s.no.y, s.no.z, s.nd.x, s.nd.y, s.nd.z, worst, s.stack, s.nodeT, s.nodeTri);
+                for (int k = 0; k < n; k++) {
+                    merged = merge(s, merged, s.nodeT[k], i, s.nodeTri[k]);
+                }
+            } else if (disc != null) {
+                double hit = disc(disc, s.no, s.nd, worst, s.normal);
+                if (hit >= 0) {
+                    merged = merge(s, merged, (float) hit, i, -1);
+                }
+            }
+        }
+        double scale = length;
+        int n = 0;
+        double lastAt = Double.NEGATIVE_INFINITY;
+        String lastPlate = null;
+        Vec3 line = to.subtract(from);
+        Vector3f dir = s.world.set((float) line.x, (float) line.y, (float) line.z);
+        for (int k = 0; k < merged; k++) {
+            int node = s.mergedNode[k];
+            int tri = s.mergedTri[k];
+            TriangleBvh mesh = all.get(node).mesh().mesh();
+            String plate = tri < 0 ? null : model.mesh().plateId(mesh.plate(tri));
+            double at = s.mergedT[k] * scale;
+            if (n > 0 && at - lastAt < CROSSING_STEP) {
+                if (lastPlate != null || plate == null) {
+                    continue;
+                }
+                n--;
+                out.remove(out.size() - 1);
+            }
+            Vector3f normal = new Vector3f();
+            if (tri >= 0) {
+                mesh.normal(tri, s.normalOut);
+                normal.set(s.normalOut[0], s.normalOut[1], s.normalOut[2]);
+            } else {
+                nodeRay(s, node, all.get(node));
+                HitMesh.Disc disc = all.get(node).mesh().disc();
+                disc(disc, s.no, s.nd, s.mergedT[k] + 1.0f, normal);
+            }
+            toWorld(normal, node, all.get(node).group());
+            if (normal.dot(dir) > 0) {
+                normal.negate();
+            }
+            out.add(new HullMesh.Ordered(node, from.add(line.scale(s.mergedT[k])), normal, plate, n % 2 == 0));
+            n++;
+            lastAt = at;
+            lastPlate = plate;
+        }
+        return n;
+    }
+
+    /** Insertion into the merged list, nearest {@link HullMesh#MAX_CROSSINGS}; returns the new count. */
+    private static int merge(Scratch s, int count, float t, int node, int tri) {
+        int at;
+        if (count < MAX_CROSSINGS) {
+            at = count++;
+        } else if (t < s.mergedT[count - 1]) {
+            at = count - 1;
+        } else {
+            return count;
+        }
+        while (at > 0 && s.mergedT[at - 1] > t) {
+            s.mergedT[at] = s.mergedT[at - 1];
+            s.mergedNode[at] = s.mergedNode[at - 1];
+            s.mergedTri[at] = s.mergedTri[at - 1];
+            at--;
+        }
+        s.mergedT[at] = t;
+        s.mergedNode[at] = node;
+        s.mergedTri[at] = tri;
+        return count;
+    }
+
+    /**
+     * Live {@code hit_*} modules along {@code from -> to}, each at its first entry, nearest first, into {@code out}
+     * (caller clears).
+     *
+     * @return modules appended
+     */
+    public int modules(Vec3 from, Vec3 to, List<Hit> out) {
+        if (from.distanceToSqr(to) < 1.0e-12) {
+            return 0;
+        }
+        Scratch s = SCRATCH.get();
+        begin(s, from, to);
+        List<HitModel.Node> all = model.nodes();
+        int n = 0;
+        Vec3 line = to.subtract(from);
+        Vector3f dir = s.world.set((float) line.x, (float) line.y, (float) line.z);
+        for (int i = 0; i < all.size(); i++) {
+            HitModel.Node node = all.get(i);
+            TriangleBvh mesh = node.mesh().mesh();
+            if (mesh == null || !node.mesh().module() || !live(i)) {
+                continue;
+            }
+            nodeRay(s, i, node);
+            if (slab(node.bounds(), s.no, s.nd, 1.0) < 0) {
+                continue;
+            }
+            int tri = mesh.trace(s.no.x, s.no.y, s.no.z, s.nd.x, s.nd.y, s.nd.z, 1.0f, s.tOut, s.stack);
+            if (tri < 0) {
+                continue;
+            }
+            mesh.normal(tri, s.normalOut);
+            Vector3f normal = new Vector3f(s.normalOut[0], s.normalOut[1], s.normalOut[2]);
+            toWorld(normal, i, node.group());
+            if (normal.dot(dir) > 0) {
+                normal.negate();
+            }
+            double t = s.tOut[0];
+            Hit hit = new Hit(i, t, from.add(line.scale(t)), normal, null, mesh.material(tri));
+            int at = out.size();
+            while (at > 0 && out.get(at - 1).fraction() > t) {
+                at--;
+            }
+            out.add(at, hit);
+            n++;
+        }
+        return n;
     }
 
     /** Entry fraction into the cylinder (inside => 0), normal into {@code normal}; -1 when missed before {@code limit}. */

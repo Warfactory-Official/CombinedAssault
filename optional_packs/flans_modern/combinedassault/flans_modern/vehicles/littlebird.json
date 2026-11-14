@@ -1,0 +1,137 @@
+{
+  "type": "combinedassault:rotary_wing_vehicle",
+  "attributes": {
+    "main_rotor_force": 26600.0,
+    "ceiling": 256,
+    "x_rot_speed_acceleration": 1.5,
+    "x_rot_speed_max": 4.0,
+    "y_rot_speed_acceleration": 1.5,
+    "y_rot_speed_max": 4.0,
+    "z_rot_speed_acceleration": 1.5,
+    "z_rot_speed_max": 4.0,
+    "max_air_speed": 3.92
+  },
+  "physics_info": {
+    "mass": 1400,
+    "friction": 2800
+  },
+  "landing_gear_part_id": "landing_gear",
+  "max_health": 300,
+  "view_info": {
+    "third_person_distance": 10.5,
+    "third_person_distance_zoomed": 4
+  },
+  "energy_info": {
+    "energy_capacity": 280,
+    "energy_consumption_per_tick": 0.00175
+  },
+  "defense_stats": {
+    "damage_threshold": 10,
+    "impact_multiplier": 3
+  },
+  "parts": [
+    {
+      "id": "pilot",
+      "name": "part.flans_modern.littlebird.pilot",
+      "type": "combinedassault:generic",
+      "crew_roles": [
+        "driver"
+      ]
+    },
+    {
+      "id": "landing_gear",
+      "name": "part.flans_modern.littlebird.landing_gear",
+      "type": "combinedassault:landing_gear",
+      "is_seat": false,
+      "drag_k": 0.5
+    },
+    {
+      "id": "seat_1",
+      "name": "part.flans_modern.littlebird.seat_1",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_2",
+      "name": "part.flans_modern.littlebird.seat_2",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_3",
+      "name": "part.flans_modern.littlebird.seat_3",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_4",
+      "name": "part.flans_modern.littlebird.seat_4",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_5",
+      "name": "part.flans_modern.littlebird.seat_5",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_6",
+      "name": "part.flans_modern.littlebird.seat_6",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    },
+    {
+      "id": "seat_7",
+      "name": "part.flans_modern.littlebird.seat_7",
+      "type": "combinedassault:generic",
+      "protect_passenger": false
+    }
+  ],
+  "model": "flans_modern:models/vehicle/littlebird/littlebird.glb",
+  "display": {
+    "icon": "flans_modern:textures/slot/littlebird.png",
+    "tab_index": 910,
+    "controller": "flans_modern:littlebird_controller",
+    "engine": {
+      "start": {
+        "event": "combinedassault:z10_engine_start",
+        "range": 360
+      },
+      "stop": {
+        "event": "combinedassault:z10_engine_stop",
+        "range": 360
+      },
+      "loops": [
+        {
+          "sound": {
+            "event": "combinedassault:z10_engine_run",
+            "range": 600
+          },
+          "input": "power",
+          "volume": [
+            [
+              0.2,
+              0
+            ],
+            [
+              0.5,
+              1
+            ]
+          ],
+          "pitch": [
+            [
+              0.5,
+              0.8
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "cabin_muffle": 0.5
+  }
+}

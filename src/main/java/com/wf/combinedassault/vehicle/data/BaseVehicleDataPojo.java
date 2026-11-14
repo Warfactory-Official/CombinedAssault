@@ -71,6 +71,10 @@ public class BaseVehicleDataPojo {
     @SerializedName("uav")
     public boolean uav = false;
 
+    /** Seconds to breach this vehicle's lock; null => server config. */
+    @SerializedName("breach_seconds")
+    public Integer breachSeconds = null;
+
     @SerializedName("pickup")
     public boolean pickup = false;
 
@@ -92,6 +96,10 @@ public class BaseVehicleDataPojo {
     /** Switchable part ids: boarding only through one, open and within reach. */
     @SerializedName("entry")
     public List<String> entry = List.of();
+
+    /** Interaction id -> {node, name?, actions}; parsed by {@code InteractionTypes}. */
+    @SerializedName("interactions")
+    public java.util.LinkedHashMap<String, com.google.gson.JsonObject> interactions = new java.util.LinkedHashMap<>();
 
     @SerializedName("experimental")
     public boolean experimental = false;

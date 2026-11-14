@@ -1,6 +1,7 @@
 package com.wf.combinedassault.ballistics.addon;
 
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.armor.api.hull.HullProfile;
 import com.wf.wflib.round.api.KineticPreset;
 import com.wf.wflib.round.api.KineticPresets;
 import com.wf.wflib.round.api.RocketEntity;
@@ -28,13 +29,19 @@ public final class AddonCommand {
     private AddonCommand() {
     }
 
+    /** Plates of {@code vehicle} that carry an integral ERA array. */
+    private static int arrays(AbstractVehicle vehicle) {
+        HullProfile profile = vehicle.hullProfile();
+        return profile == null ? 0 : (int) profile.plates.values().stream().filter(p -> p.era() != null).count();
+    }
+
     @Nullable
     private static AbstractVehicle nearest(CommandSourceStack source) {
         Vec3 at = source.getPosition();
         AbstractVehicle best = null;
         double bestDistance = Double.MAX_VALUE;
         for (AbstractVehicle vehicle : source.getLevel().getEntitiesOfClass(AbstractVehicle.class,
-                new AABB(at, at).inflate(SEARCH), candidate -> !candidate.addonArmor().isEmpty())) {
+                new AABB(at, at).inflate(SEARCH), candidate -> !candidate.addonArmor().isEmpty() || arrays(candidate) > 0)) {
             double distance = vehicle.distanceToSqr(at);
             if (distance < bestDistance) {
                 bestDistance = distance;
@@ -49,10 +56,19 @@ public final class AddonCommand {
 
     public static int fill(CommandSourceStack source, String fitName) {
         AddonFit fit;
+        if (fitName.equalsIgnoreCase("arrays")) {
+            AbstractVehicle vehicle = nearest(source);
+            if (vehicle == null) {
+                return 0;
+            }
+            vehicle.addonArmor().refillArrays();
+            source.sendSuccess(() -> Component.literal("integral arrays refilled"), false);
+            return 1;
+        }
         try {
             fit = AddonFit.valueOf(fitName.toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException unknown) {
-            source.sendFailure(Component.literal("fit: era_light | era_heavy | slat"));
+            source.sendFailure(Component.literal("fit: era_light | era_heavy | slat | arrays"));
             return 0;
         }
         AbstractVehicle vehicle = nearest(source);
@@ -105,6 +121,16 @@ public final class AddonCommand {
             String text = String.format(Locale.ROOT, "%s [%s] %s @ %.2f %.2f %.2f", mount.info.id,
                     mount.info.kind, line, centre.x, centre.y, centre.z);
             source.sendSuccess(() -> Component.literal(text), false);
+        }
+        HullProfile profile = vehicle.hullProfile();
+        if (profile != null) {
+            profile.plates.forEach((id, plate) -> {
+                if (plate.era() != null) {
+                    String text = id + " [array " + plate.era().id() + "] " + layer.arrayLiveCells(id, plate.eraCells())
+                            + "/" + plate.eraCells() + " live";
+                    source.sendSuccess(() -> Component.literal(text), false);
+                }
+            });
         }
         return layer.mounts().size();
     }

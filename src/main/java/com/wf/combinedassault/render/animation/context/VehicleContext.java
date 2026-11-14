@@ -223,4 +223,10 @@ public class VehicleContext<E extends AbstractVehicle> extends EntityContext<E> 
         return getEntity().lastRenderTime;
     }
 
+    /** Seconds since the vehicle was last drawn; 0 before its first draw (epoch-sized step => float accumulators lose all precision). */
+    public float frameSeconds() {
+        long last = lastRenderTime();
+        return last == 0 ? 0f : (currentTimeMillis() - last) / 1000f;
+    }
+
 }

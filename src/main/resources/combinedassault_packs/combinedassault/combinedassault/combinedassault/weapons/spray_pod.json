@@ -1,0 +1,8 @@
+{
+    "type": "combinedassault:spray_pod",
+    "name": "Spray Pod",
+    "shoot_interval": 100,
+    "max_capacity": 2000,
+    "mb_per_shot": 10,
+    "radius": 3
+}

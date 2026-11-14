@@ -4,6 +4,7 @@
         "brake_force": 6500,
         "forward_force": 7200,
         "backward_force": 3600,
+        "engine_power": 39,
         "max_speed_forward": 1.39,
         "max_speed_backward": 0.2,
         "steer_fade_speed": 0.6,
@@ -27,7 +28,16 @@
         "side": 10,
         "rear": 8,
         "top": 6,
-        "bottom": 8
+        "bottom": 8,
+        "plates": {
+            "grille": {"facing": "front", "layers": [{"mm": 12, "mat": "rha"}]},
+            "windshield": {"facing": "front", "slope": 10, "layers": [{"mm": 12, "mat": "rha"}]},
+            "hood": {"facing": "front", "slope": 75, "layers": [{"mm": 4, "mat": "rha"}]},
+            "roof": {"facing": "top", "layers": [{"mm": 6, "mat": "rha"}]},
+            "floor": {"facing": "bottom", "layers": [{"mm": 8, "mat": "rha"}]},
+            "side": {"facing": "side", "layers": [{"mm": 10, "mat": "rha"}]},
+            "rear": {"facing": "rear", "layers": [{"mm": 8, "mat": "rha"}]}
+        }
     },
     "view_info": {
         "third_person_distance": 7,
@@ -55,6 +65,145 @@
     "storage": {
         "slots": 18,
         "max_payload": 800
+    },
+    "entry": [
+        "door_fl",
+        "door_fr",
+        "door_rl",
+        "door_rr"
+    ],
+    "interactions": {
+        "door_fl": {
+            "node": [
+                "handle_door_fl",
+                "handle_door_fl_in"
+            ],
+            "actions": [
+                {
+                    "type": "combinedassault:toggle",
+                    "part": "door_fl"
+                }
+            ]
+        },
+        "door_fr": {
+            "node": [
+                "handle_door_fr",
+                "handle_door_fr_in"
+            ],
+            "actions": [
+                {
+                    "type": "combinedassault:toggle",
+                    "part": "door_fr"
+                }
+            ]
+        },
+        "door_rl": {
+            "node": [
+                "handle_door_rl",
+                "handle_door_rl_in"
+            ],
+            "actions": [
+                {
+                    "type": "combinedassault:toggle",
+                    "part": "door_rl"
+                }
+            ]
+        },
+        "door_rr": {
+            "node": [
+                "handle_door_rr",
+                "handle_door_rr_in"
+            ],
+            "actions": [
+                {
+                    "type": "combinedassault:toggle",
+                    "part": "door_rr"
+                }
+            ]
+        },
+        "tailgate": {
+            "node": "handle_tailgate",
+            "actions": [
+                {
+                    "type": "combinedassault:toggle",
+                    "part": "tailgate"
+                }
+            ]
+        },
+        "rear_hatch": {
+            "node": [
+                "handle_rear_hatch",
+                "handle_rear_hatch_in"
+            ],
+            "actions": [
+                {
+                    "type": "combinedassault:toggle",
+                    "part": "rear_hatch"
+                }
+            ]
+        },
+        "top_hatch": {
+            "node": [
+                "handle_top_hatch",
+                "handle_top_hatch_in"
+            ],
+            "actions": [
+                {
+                    "type": "combinedassault:toggle",
+                    "part": "top_hatch"
+                }
+            ]
+        },
+        "front_left_seat": {
+            "node": "enter_door_fl",
+            "actions": [
+                {
+                    "type": "combinedassault:board",
+                    "via": "door_fl",
+                    "seats": [
+                        "driver"
+                    ]
+                }
+            ]
+        },
+        "front_right_seat": {
+            "node": "enter_door_fr",
+            "actions": [
+                {
+                    "type": "combinedassault:board",
+                    "via": "door_fr",
+                    "seats": [
+                        "passenger"
+                    ]
+                }
+            ]
+        },
+        "rear_left_seat": {
+            "node": "enter_door_rl",
+            "actions": [
+                {
+                    "type": "combinedassault:board",
+                    "via": "door_rl",
+                    "seats": [
+                        "rear_left",
+                        "roof_mount"
+                    ]
+                }
+            ]
+        },
+        "rear_right_seat": {
+            "node": "enter_door_rr",
+            "actions": [
+                {
+                    "type": "combinedassault:board",
+                    "via": "door_rr",
+                    "seats": [
+                        "rear_right",
+                        "roof_mount"
+                    ]
+                }
+            ]
+        }
     },
     "parts": [
         {

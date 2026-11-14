@@ -4,6 +4,7 @@
         "brake_acceleration": 0.025,
         "forward_acceleration": 0.01,
         "backward_acceleration": 0.01,
+        "engine_power": 840,
         "max_speed_forward": 0.5,
         "max_speed_backward": 0.2,
         "turn_acceleration": 1,
@@ -46,12 +47,25 @@
             }
         },
         "zones": [
-            {"name": "lower_front_plate", "face": "front", "min": [-1.9, -0.1, 2.2], "max": [1.9, 0.62, 3.2], "ke": 230, "ce": 280},
-            {"name": "skirt_front", "face": "side", "min": [-1.9, 0.3, 1.0], "max": [1.9, 1.45, 3.5], "ke": 120, "ce": 400},
-            {"name": "barrel", "part": "turret", "min": [-0.3, 1.5, 1.65], "max": [0.3, 1.85, 5.9], "ke": 60},
-            {"name": "mantlet", "part": "turret", "face": "front", "min": [-0.4, 1.45, 1.0], "max": [0.4, 2, 1.7], "ke": 300, "ce": 450},
-            {"name": "turret_rear_side", "part": "turret", "face": "side", "min": [-1.6, 1.1, -1.6], "max": [1.6, 2.4, -0.3], "ke": 80, "ce": 80}
-        ]
+            {"name": "mantlet", "part": "turret", "face": "front", "min": [-0.4, 1.45, 1.0], "max": [0.4, 2, 1.7], "ke": 300, "ce": 450}
+        ],
+        "plates": {
+            "ufp": {"facing": "front", "slope": 68, "los": {"ke": 490, "ce": 550}, "layers": [{"era": "combinedassault:kontakt_5", "cells": 28}]},
+            "lfp": {"curved": true, "layers": [{"mm": 115, "mat": "rha"}]},
+            "hull_side": {"facing": "side", "los": {"ke": 80, "ce": 80}},
+            "skirt_front": {"facing": "side", "los": {"ke": 120, "ce": 400}},
+            "hull_roof": {"facing": "top", "layers": [{"mm": 45, "mat": "rha"}]},
+            "hull_belly": {"facing": "bottom", "layers": [{"mm": 25, "mat": "rha"}]},
+            "hull_rear": {"curved": true, "layers": [{"mm": 50, "mat": "rha"}]},
+            "turret_front": {"facing": "front", "los": {"ke": 774, "ce": 1148}, "layers": [{"era": "combinedassault:kontakt_5", "cells": 4}]},
+            "turret_cheek_a": {"facing": "50", "slope": 50, "los": {"ke": 496, "ce": 735}, "layers": [{"era": "combinedassault:kontakt_5", "cells": 5}]},
+            "turret_cheek_b": {"facing": "-50", "slope": 50, "los": {"ke": 496, "ce": 735}, "layers": [{"era": "combinedassault:kontakt_5", "cells": 2}]},
+            "turret_side": {"facing": "side", "los": {"ke": 350, "ce": 600}},
+            "turret_rear_side": {"facing": "side", "los": {"ke": 80, "ce": 80}},
+            "turret_roof": {"facing": "top", "layers": [{"mm": 50, "mat": "rha"}]},
+            "turret_rear": {"facing": "rear", "layers": [{"mm": 70, "mat": "rha"}]},
+            "barrel": {"curved": true, "layers": [{"mm": 60, "mat": "rha"}]}
+        }
     },
     "view_info": {
         "third_person_distance": 7
@@ -68,6 +82,7 @@
     "parts": [
         {
             "id": "turret",
+            "rangefinder": {"mode": "zero", "max_range": 4000},
             "crew_roles": [
                 "gunner"
             ],

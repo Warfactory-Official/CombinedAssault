@@ -1,0 +1,23 @@
+{
+  "type": "combinedassault:cannon",
+  "name": "M45 Quadmount (4x M2HB)",
+  "shoot_interval": 27,
+  "max_capacity": 800,
+  "reload": {
+    "time": 160,
+    "ammo": "wflib:cartridge_12_7x99"
+  },
+  "inaccuracy": 0.15,
+  "casing_delay": 0.03,
+  "sounds": {
+    "fire": {
+      "event": "combinedassault:gun_12.7mm_shot",
+      "range": 450,
+      "pitch_random": 0.1
+    },
+    "reload": {
+      "event": "combinedassault:gun_reload",
+      "range": 24
+    }
+  }
+}

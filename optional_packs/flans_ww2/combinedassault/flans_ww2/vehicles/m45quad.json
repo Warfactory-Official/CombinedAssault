@@ -1,0 +1,47 @@
+{
+  "type": "combinedassault:generic",
+  "attributes": {},
+  "physics_info": {
+    "mass": 2300
+  },
+  "max_health": 400,
+  "view_info": {
+    "third_person_distance": 7.5
+  },
+  "energy_info": {
+    "energy_capacity": 600,
+    "energy_consumption_per_tick": 0.004
+  },
+  "storage": {
+    "slots": 9
+  },
+  "parts": [
+    {
+      "id": "turret",
+      "name": "part.combinedassault.turret",
+      "type": "combinedassault:weapon",
+      "crew_roles": [
+        "driver",
+        "gunner"
+      ],
+      "max_health": 600,
+      "render_bone": "turret",
+      "rot_info": {
+        "x_rot_speed": 1.5,
+        "y_rot_speed": 2
+      },
+      "optical_sight_type": "optical_scope",
+      "zoom_max": 4,
+      "weapons": [
+        "flans_ww2:m45_quadmount"
+      ],
+      "protect_passenger": true
+    }
+  ],
+  "model": "flans_ww2:models/vehicle/m45quad/m45quad.glb",
+  "display": {
+    "tab_index": 900,
+    "icon": "flans_ww2:textures/slot/m45quad.png",
+    "description": "Amercian AA Gun"
+  }
+}

@@ -10,5 +10,12 @@
             "combinedassault:bomb_b61",
             "#wflib:bomb/large"
         ]
+    },
+    "sounds": {
+        "fire": {
+            "event": "combinedassault:bomb_drop",
+            "range": 48,
+            "pitch_random": 0.1
+        }
     }
 }
