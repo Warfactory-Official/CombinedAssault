@@ -4,6 +4,7 @@ import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.aircraft.FixedWingVehicle;
 import com.wf.combinedassault.aircraft.RotaryWingVehicle;
 import com.wf.combinedassault.ballistics.DamageSystem;
+import com.wf.combinedassault.ballistics.VehicleBlastResolver;
 import com.wf.combinedassault.ballistics.VehicleExplosion;
 import com.wf.combinedassault.ballistics.addon.AddonArmorLayer;
 import com.wf.combinedassault.ballistics.component.HullComponents;
@@ -13,6 +14,7 @@ import com.wf.combinedassault.ballistics.hit.HitModel;
 import com.wf.combinedassault.ballistics.hit.VehicleHits;
 import com.wf.combinedassault.ballistics.message.ServerAddonArmorSync;
 import com.wf.combinedassault.ballistics.pojo.DefenseStats;
+import com.wf.combinedassault.ballistics.spall.Spall;
 import com.wf.combinedassault.camo.CamoLayer;
 import com.wf.combinedassault.camo.message.ServerCamoAction;
 import com.wf.combinedassault.camo.message.ServerCamoSync;
@@ -33,6 +35,8 @@ import com.wf.combinedassault.dynamics.part.SuspensionUnit;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 import com.wf.combinedassault.dynamics.structure.VehicleStructOBBs;
+import com.wf.combinedassault.energy.FuelTransfer;
+import com.wf.combinedassault.energy.VehicleFluids;
 import com.wf.combinedassault.energy.*;
 import com.wf.combinedassault.energy.pojo.EnergyInfo;
 import com.wf.combinedassault.naval.trial.TrialProfile;
@@ -50,6 +54,8 @@ import com.wf.combinedassault.tow.TowLinks;
 import com.wf.combinedassault.tow.TowMode;
 import com.wf.combinedassault.uav.UavCamera;
 import com.wf.combinedassault.uav.autonomy.VehicleDrone;
+import com.wf.combinedassault.uav.fpv.payload.FpvPayloadTypes;
+import com.wf.combinedassault.uav.fpv.payload.PayloadUnit;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.OversizedVehicles;
 import com.wf.combinedassault.vehicle.VehicleConfig;
@@ -62,6 +68,7 @@ import com.wf.combinedassault.vehicle.crew.CrewRules;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.combinedassault.vehicle.event.VehicleAttackEvent;
 import com.wf.combinedassault.vehicle.event.VehicleMoveEvent;
+import com.wf.combinedassault.vehicle.interact.Interaction;
 import com.wf.combinedassault.vehicle.lock.VehicleBreach;
 import com.wf.combinedassault.vehicle.lock.VehicleLock;
 import com.wf.combinedassault.vehicle.item.VehicleItem;
@@ -89,21 +96,35 @@ import com.wf.combinedassault.weapon.part.MissileHolderUnit;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.pojo.AimContext;
 import com.wf.combinedassault.weapon.pojo.LoadoutInfo;
+import com.wf.wflib.armor.api.hull.HullBody;
 import com.wf.wflib.armor.api.hull.HullFace;
 import com.wf.wflib.armor.api.hull.HullProfile;
+import com.wf.wflib.armor.api.hull.HullWear;
 import com.wf.wflib.audio.api.EngineSound;
 import com.wf.wflib.cam.api.Datalink;
+import com.wf.wflib.compat.api.WarforgeCompat;
 import com.wf.wflib.drone.api.DroneNetBlock;
 import com.wf.wflib.drone.api.DroneTracker;
+import com.wf.wflib.explosion.api.BlastPayload;
+import com.wf.wflib.explosion.api.BlastTarget;
+import com.wf.wflib.explosion.api.ExplosionAEF;
 import com.wf.wflib.geom.api.OBB;
 import com.wf.wflib.geom.api.OBBEntity;
 import com.wf.wflib.laser.api.LaserTarget;
 import com.wf.wflib.missile.api.BeamSource;
+import com.wf.wflib.missile.api.InterceptTarget;
 import com.wf.wflib.missile.api.TargetIlluminator;
+import com.wf.wflib.physics.api.PhysicsTags;
+import com.wf.wflib.physics.api.TickClock;
 import com.wf.wflib.physics.api.*;
 import com.wf.wflib.probe.api.ProbeJobs;
 import com.wf.wflib.radio.api.RadioCarrier;
 import com.wf.wflib.radio.api.RadioVoice;
+import com.wf.wflib.recon.api.ContactClass;
+import com.wf.wflib.recon.api.ReconOwners;
+import com.wf.wflib.recon.api.Telemetry;
+import com.wf.wflib.recon.api.TelemetryKind;
+import com.wf.wflib.recon.api.TelemetryReporter;
 import com.wf.wflib.sim.api.SimTargets;
 import com.wf.wflib.stream.api.DetachedAnchors;
 import com.wf.wflib.stream.api.DetachedBodyHost;
@@ -111,6 +132,9 @@ import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -142,6 +166,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
@@ -164,8 +189,8 @@ import java.util.*;
 public abstract class AbstractVehicle extends ContainerCraft
         implements RemoteTickEntity, OBBEntity, ICustomVehicle, IEntityWithComplexSpawn, DetachedBodyHost,
         HarnessCarrier, DeckBody, Predictable<ControlUnit>, TargetIlluminator, BeamSource,
-        com.wf.wflib.recon.api.TelemetryReporter, com.wf.wflib.missile.api.InterceptTarget, LaserTarget,
-        RadioCarrier, com.wf.wflib.armor.api.hull.HullBody, com.wf.wflib.explosion.api.BlastTarget {
+        TelemetryReporter, InterceptTarget, LaserTarget,
+        RadioCarrier, HullBody, BlastTarget {
 
     public static final EntityDataAccessor<Float> X_ROT = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Float> Y_ROT = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
@@ -223,8 +248,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     /** Which of the tractor's hitches, and which kind of coupling: {@code index * TowMode.COUNT + mode}, or -1. */
     public static final EntityDataAccessor<Integer> TOW_HITCH = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Byte> LOCK_MODE = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.BYTE);
-    public static final EntityDataAccessor<java.util.Optional<UUID>> LOCK_OWNER = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.OPTIONAL_UUID);
-    public static final EntityDataAccessor<java.util.Optional<UUID>> LOCK_FACTION = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.OPTIONAL_UUID);
+    public static final EntityDataAccessor<Optional<UUID>> LOCK_OWNER = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.OPTIONAL_UUID);
+    public static final EntityDataAccessor<Optional<UUID>> LOCK_FACTION = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final String DETACHED_ANCHORS_TAG = "DetachedAnchors";
     protected ResourceLocation vehicleId;
     protected ResourceLocation displayId;
@@ -248,7 +273,7 @@ public abstract class AbstractVehicle extends ContainerCraft
     public EnergyInfo energyInfo;
     public DefenseStats defenseStats;
     public HullProfile armorProfile;
-    private final com.wf.wflib.armor.api.hull.HullWear hullWear = new com.wf.wflib.armor.api.hull.HullWear();
+    private final HullWear hullWear = new HullWear();
     public Vec3 centerOffset;
     public float curbWeight;
     /** Chassis mass added per kilogram of cargo; see StorageInfo#cargoMassPerKg. */
@@ -256,7 +281,7 @@ public abstract class AbstractVehicle extends ContainerCraft
     /** Cargo kg past which the engine strains; 0 = none. StorageInfo#maxPayload. */
     public float maxPayload;
     private final VehicleFuelTank fuelTank = new VehicleFuelTank(this);
-    private final com.wf.combinedassault.energy.VehicleFluids fluids = new com.wf.combinedassault.energy.VehicleFluids(this);
+    private final VehicleFluids fluids = new VehicleFluids(this);
     private final VehicleEnergyBuffer energyBuffer = new VehicleEnergyBuffer(this);
     /** Slotted battery item ({@link EnergyInfo#batterySlot}); drains into {@link #addEnergy}, never ejected on its own. */
     private ItemStack batteryItem = ItemStack.EMPTY;
@@ -468,8 +493,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     public boolean protectPassenger;
     /** Data {@code entry}: the only ways aboard; empty => any side. */
     private List<SwitchableUnit<?>> entries = List.of();
-    private List<com.wf.combinedassault.vehicle.interact.Interaction> interactions = List.of();
-    private java.util.Set<String> interactionClaims = java.util.Set.of();
+    private List<Interaction> interactions = List.of();
+    private Set<String> interactionClaims = Set.of();
     protected boolean dataInitialized;
     protected int destroyedTick;
     protected int engineParticleTick;
@@ -526,8 +551,8 @@ public abstract class AbstractVehicle extends ContainerCraft
         builder.define(TOW_TRACTOR, -1);
         builder.define(TOW_HITCH, -1);
         builder.define(LOCK_MODE, (byte) 0);
-        builder.define(LOCK_OWNER, java.util.Optional.empty());
-        builder.define(LOCK_FACTION, java.util.Optional.empty());
+        builder.define(LOCK_OWNER, Optional.empty());
+        builder.define(LOCK_FACTION, Optional.empty());
     }
 
     @Override
@@ -672,10 +697,10 @@ public abstract class AbstractVehicle extends ContainerCraft
         }
         side = compound.hasUUID("Side") ? compound.getUUID("Side") : null;
         entityData.set(LOCK_MODE, compound.getByte("Lock"));
-        entityData.set(LOCK_OWNER, compound.hasUUID("LockOwner") ? java.util.Optional.of(compound.getUUID("LockOwner"))
-                : java.util.Optional.empty());
-        entityData.set(LOCK_FACTION, compound.hasUUID("LockFaction") ? java.util.Optional.of(compound.getUUID("LockFaction"))
-                : java.util.Optional.empty());
+        entityData.set(LOCK_OWNER, compound.hasUUID("LockOwner") ? Optional.of(compound.getUUID("LockOwner"))
+                : Optional.empty());
+        entityData.set(LOCK_FACTION, compound.hasUUID("LockFaction") ? Optional.of(compound.getUUID("LockFaction"))
+                : Optional.empty());
         if (compound.contains("Destroyed", Tag.TAG_ANY_NUMERIC)) {
             entityData.set(DESTROYED, compound.getBoolean("Destroyed"));
         }
@@ -1083,7 +1108,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         if (trace != null) {
             trace.beginTick(this);
         }
-        lastTickTime = com.wf.wflib.physics.api.TickClock.now(level());
+        lastTickTime = TickClock.now(level());
         if (!level().isClientSide() && controlUnit.consume() && predictable()) {
             Prediction.due(this);
         }
@@ -1113,7 +1138,7 @@ public abstract class AbstractVehicle extends ContainerCraft
                 drone.tick();
             }
             VehicleResupply.tick(this);
-            com.wf.combinedassault.energy.FuelTransfer.tick(this);
+            FuelTransfer.tick(this);
             VehicleBattery.tick(this);
             float partMass = addonArmor.mass();
             for (PartUnit<?> part : partUnits) {
@@ -1483,7 +1508,7 @@ public abstract class AbstractVehicle extends ContainerCraft
                     if (isDestroyed()) {
                         this.discard();
                     } else {
-                        com.wf.combinedassault.ballistics.spall.Spall.onDestroyed(this);
+                        Spall.onDestroyed(this);
                         this.getPassengers().forEach(Entity::stopRiding);
                         setDestroyed();
                         VehicleExplosion.detonate(this, damageSource.getEntity());
@@ -2136,11 +2161,11 @@ public abstract class AbstractVehicle extends ContainerCraft
     /** UAVs only. */
     @Override
     @Nullable
-    public com.wf.wflib.recon.api.Telemetry datalink() {
+    public Telemetry datalink() {
         if (!uav || isDestroyed() || drone != null && drone.orders().isClassified()) {
             return null;
         }
-        return new com.wf.wflib.recon.api.Telemetry(com.wf.wflib.recon.api.TelemetryKind.DRONE,
+        return new Telemetry(TelemetryKind.DRONE,
                 getVehicleId().getPath(), uavSide(), uavOperator);
     }
 
@@ -2205,9 +2230,9 @@ public abstract class AbstractVehicle extends ContainerCraft
     /** The vehicle's team, else its operator's WarForge faction. */
     @Nullable
     public UUID uavSide() {
-        UUID team = com.wf.wflib.recon.api.ReconOwners.owningEntity(this);
+        UUID team = ReconOwners.owningEntity(this);
         if (team == null && uavOperator != null) {
-            team = com.wf.wflib.compat.api.WarforgeCompat.factionOfPlayer(uavOperator);
+            team = WarforgeCompat.factionOfPlayer(uavOperator);
         }
         return team;
     }
@@ -2219,8 +2244,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     }
 
     @Override
-    public com.wf.wflib.recon.api.ContactClass interceptClass() {
-        return uav ? com.wf.wflib.recon.api.ContactClass.DRONE : com.wf.wflib.recon.api.ContactClass.VEHICLE;
+    public ContactClass interceptClass() {
+        return uav ? ContactClass.DRONE : ContactClass.VEHICLE;
     }
 
     @Override
@@ -2236,8 +2261,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     }
 
     @Override
-    public void blast(com.wf.wflib.explosion.api.ExplosionAEF explosion, com.wf.wflib.explosion.api.BlastPayload payload, Vec3 centre) {
-        com.wf.combinedassault.ballistics.VehicleBlastResolver.resolve(this, explosion.compat, explosion, payload, centre);
+    public void blast(ExplosionAEF explosion, BlastPayload payload, Vec3 centre) {
+        VehicleBlastResolver.resolve(this, explosion.compat, explosion, payload, centre);
     }
 
     /** Rigid body: a blast never set a vehicle's {@code deltaMovement}. */
@@ -2282,7 +2307,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         return entries;
     }
 
-    public List<com.wf.combinedassault.vehicle.interact.Interaction> interactions() {
+    public List<Interaction> interactions() {
         return interactions;
     }
 
@@ -3220,7 +3245,7 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     /** Server: active vehicle-to-vehicle refuel into this vehicle. */
     @Nullable
-    public com.wf.combinedassault.energy.FuelTransfer.Session refuel;
+    public FuelTransfer.Session refuel;
 
     public VehicleFuelTank fuelTank() {
         return fuelTank;
@@ -3228,7 +3253,7 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     /** Fuel + spray pod tanks; null when the vehicle has neither. */
     @Nullable
-    public com.wf.combinedassault.energy.VehicleFluids fluids() {
+    public VehicleFluids fluids() {
         return isElectric() && fluids.pods().isEmpty() ? null : fluids;
     }
 
@@ -3245,7 +3270,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             return 0;
         }
         int room = energyInfo.feCapacity() - energyBuffer.getEnergyStored();
-        int accepted = java.lang.Math.min(fe, room);
+        int accepted = Math.min(fe, room);
         if (accepted <= 0) {
             return 0;
         }
@@ -3329,8 +3354,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     @Override
     @Nullable
     public RadioVoice radioVoice() {
-        com.wf.combinedassault.uav.fpv.payload.PayloadUnit hardpoint = com.wf.combinedassault.uav.fpv.payload.PayloadUnit.on(this);
-        if (hardpoint != null && hardpoint.payloadType() == com.wf.combinedassault.uav.fpv.payload.FpvPayloadTypes.SPEAKER
+        PayloadUnit hardpoint = PayloadUnit.on(this);
+        if (hardpoint != null && hardpoint.payloadType() == FpvPayloadTypes.SPEAKER
                 && hardpoint.isLoaded()) {
             return RadioVoice.SPEAKER;
         }
@@ -3382,9 +3407,9 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     /** Owner (claimed side, else crew team) unset, or {@code player}'s side allied to it. Server. */
     public boolean mayCommand(Player player) {
-        UUID owner = com.wf.wflib.recon.api.ReconOwners.owningEntity(this);
-        return owner == null || com.wf.wflib.compat.api.WarforgeCompat.areFactionsAllied(owner,
-                com.wf.wflib.recon.api.ReconOwners.owningEntity(player));
+        UUID owner = ReconOwners.owningEntity(this);
+        return owner == null || WarforgeCompat.areFactionsAllied(owner,
+                ReconOwners.owningEntity(player));
     }
 
     @Override
@@ -3870,7 +3895,7 @@ public abstract class AbstractVehicle extends ContainerCraft
     }
 
     @Override
-    public com.wf.wflib.armor.api.hull.HullWear hullWear() {
+    public HullWear hullWear() {
         return hullWear;
     }
 
@@ -4360,11 +4385,11 @@ public abstract class AbstractVehicle extends ContainerCraft
         // No step => no margin: 0.05 over the underside sank a dropped base plate 5 cm into the floor.
         float step = maxUpStep();
         float extentY = mainCubeOBB.obb().extents().y;
-        double skirt = java.lang.Math.min(mainCubeOBB.climbSkirt(),
+        double skirt = Math.min(mainCubeOBB.climbSkirt(),
                 -extentY + step + (step > 0 ? SWEEP_STEP_MARGIN : SweptHull.SLOP));
-        double roll = java.lang.Math.abs(2 * (rotation.x * rotation.y + rotation.z * rotation.w));
+        double roll = Math.abs(2 * (rotation.x * rotation.y + rotation.z * rotation.w));
         double keep = Mth.clamp((SKIRT_GONE_ROLL - roll) / (SKIRT_GONE_ROLL - PhysicsEngine.MAX_STEP_ROLL), 0, 1);
-        keep = java.lang.Math.ceil(keep * SKIRT_STEPS) / SKIRT_STEPS;
+        keep = Math.ceil(keep * SKIRT_STEPS) / SKIRT_STEPS;
         return -extentY + (skirt + extentY) * keep;
     }
 
@@ -4633,7 +4658,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             rig.move(movement.x / slices, movement.y / slices, movement.z / slices);
         }
         if (Boolean.getBoolean("wflib.physics.debug")) {
-            CombinedAssault.LOGGER.info(String.format(java.util.Locale.ROOT, "[rigid] body %d dp %s dq %s v %s rot %.2f/%.2f/%.2f",
+            CombinedAssault.LOGGER.info(String.format(Locale.ROOT, "[rigid] body %d dp %s dq %s v %s rot %.2f/%.2f/%.2f",
                     getId(), dp, dq, velocity, rig.getXRot(), rig.getYRot(), rig.getZRot()));
         }
         rig.setDeltaMovement(new Vec3(velocity.x, velocity.y, velocity.z));
@@ -4990,7 +5015,9 @@ public abstract class AbstractVehicle extends ContainerCraft
         }
         BlockPos.MutableBlockPos pos = BlockPos.containing(getX(), getBoundingBox().minY, getZ()).mutable();
         for (int i = 0; i <= SUPPORT_PROBE_CELLS; i++, pos.move(Direction.DOWN)) {
-            if (!level().getBlockState(pos).getCollisionShape(level(), pos, CollisionContext.of(this)).isEmpty()) {
+            BlockState state = level().getBlockState(pos);
+            if (!state.is(PhysicsTags.VEHICLE_GHOST)
+                    && !state.getCollisionShape(level(), pos, CollisionContext.of(this)).isEmpty()) {
                 mainSupportingBlockPos = Optional.of(pos.immutable());
                 return;
             }

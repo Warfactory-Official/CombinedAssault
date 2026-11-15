@@ -345,7 +345,13 @@ test('planImport: shipped humvee', () => {
 		['paint', 'MASK', 0.5, false]);
 	const door = plan.clips.find(c => c.name === 'door_fl');
 	assert.equal(door.channels[0].channel, 'rotation');
-	assert.ok(Math.abs(door.channels[0].keys[1].value[1] + 60) < 1e-4);
+	const clip = gltf.animations.find(a => a.name === 'door_fl');
+	const sampler = clip.samplers[clip.channels[0].sampler];
+	const quats = ca.readAccessor(gltf, [bin], sampler.output);
+	const [, qy, , qw] = quats[quats.length - 1];
+	const keys = door.channels[0].keys;
+	assert.equal(keys.length, quats.length);
+	assert.ok(Math.abs(keys[keys.length - 1].value[1] - 2 * Math.atan2(qy, qw) * 180 / Math.PI) < 1e-3, JSON.stringify(keys.at(-1)));
 	const faces = plan.entries.filter(e => e.mesh && e.props.role !== 'collider').reduce((n, e) => n + e.mesh.faces.length, 0);
 	const triangles = gltf.nodes.filter(n => n.mesh !== undefined && (n.extras || {}).combinedassaultRole !== 'collider')
 		.reduce((n, x) => n + gltf.meshes[x.mesh].primitives.reduce((m, p) => m + gltf.accessors[p.indices].count / 3, 0), 0);
@@ -429,6 +435,141 @@ test('sparse accessor overrides base rows', () => {
 	assert.deepEqual(ca.readAccessor(gltf, [bin], 0), [[1, 2, 3], [9, 9, 9]]);
 });
 
+const PACK = path.join(repo, 'src/main/resources/combinedassault_packs/combinedassault');
+const KITS = path.join(PACK, 'combinedassault/combinedassault/hardware');
+const javaSet = (file, name) => {
+	const body = fs.readFileSync(path.join(repo, 'src/main/java/com/wf/combinedassault', file), 'utf8')
+		.match(new RegExp(`${name} = (?:Set|EnumSet)\\.of\\(([^;]*)\\);`))[1];
+	return [...body.matchAll(/"([a-z_]+)"|NodeRole\.([A-Z_]+)/g)].map(m => m[1] || m[2].toLowerCase()).sort();
+};
+
+test('kit vocabularies equal the Java sources and tools/blender', () => {
+	assert.deepEqual([...ca.KIT_ROLES].sort(), javaSet('ballistics/hit/ModelDataManager.java', 'KIT_ROLES'));
+	assert.deepEqual([...ca.STATION_KEYS].sort(), javaSet('weapon/kit/HardwareKits.java', 'STATION_KEYS'));
+	const py = fs.readFileSync(path.join(repo, 'tools/blender/ca_validate.py'), 'utf8');
+	assert.deepEqual([...ca.KIT_ROLES].sort(), pyList(py, 'KIT_ROLES').sort());
+	assert.deepEqual([...ca.STATION_KEYS].sort(), pyList(py, 'STATION_KEYS').sort());
+	assert.deepEqual(ca.HANDS, py.match(/^HANDS = \(([^)]*)\)/m)[1].match(/[a-z]+/g));
+});
+
+test('hand socket: extras round trip, validation', () => {
+	const props = {role: 'socket', field: 'hand', hand: 'left', action: 'fire'};
+	const extras = {combinedassaultRole: 'hand', gemrenderHidden: true, combinedassault: {hand: 'left', action: 'fire'}};
+	assert.deepEqual(ca.nodeExtras(props), extras);
+	assert.deepEqual(ca.splitExtras(extras), props);
+	assert.deepEqual(ca.mergeExtras(extras, ca.splitExtras(extras)), extras);
+	assert.deepEqual(ca.nodeExtras({role: 'socket', field: 'hand', interface: 'driver'}),
+		{combinedassaultRole: 'hand', combinedassaultInterface: 'driver', gemrenderHidden: true, combinedassault: {hand: 'right'}});
+	assert.deepEqual(ca.limbProblems({hand: 'right', action: 'shift'}, 'hand'), []);
+	assert.match(ca.limbProblems({}, 'hand').join(), /right \/ left/);
+	assert.match(ca.limbProblems({hand: 'middle'}, 'hand').join(), /middle/);
+	assert.match(ca.limbProblems({hand: 'left', action: 3}, 'hand').join(), /action/);
+	assert.match(ca.limbProblems({hand: 'left', action: 'brake'}, 'hand').join(), /brake/);
+});
+
+test('foot socket: extras round trip, validation', () => {
+	const props = {role: 'socket', field: 'foot', foot: 'left', action: 'brake'};
+	const extras = {combinedassaultRole: 'foot', gemrenderHidden: true, combinedassault: {foot: 'left', action: 'brake'}};
+	assert.deepEqual(ca.nodeExtras(props), extras);
+	assert.deepEqual(ca.splitExtras(extras), props);
+	assert.deepEqual(ca.mergeExtras(extras, ca.splitExtras(extras)), extras);
+	assert.deepEqual(ca.nodeExtras({role: 'socket', field: 'foot', interface: 'driver'}),
+		{combinedassaultRole: 'foot', combinedassaultInterface: 'driver', gemrenderHidden: true, combinedassault: {foot: 'right'}});
+	assert.deepEqual(ca.limbProblems({foot: 'right', action: 'brake'}, 'foot'), []);
+	assert.match(ca.limbProblems({}, 'foot').join(), /right \/ left/);
+	assert.match(ca.limbProblems({foot: 'middle'}, 'foot').join(), /middle/);
+	assert.match(ca.limbProblems({foot: 'left', action: 3}, 'foot').join(), /action/);
+	assert.match(ca.limbProblems({foot: 'left', action: 'shift'}, 'foot').join(), /shift/);
+	assert.equal(ca.kitRoleProblem('foot') === null, false);
+});
+
+test('kit role restriction', () => {
+	for (const role of ca.KIT_ROLES) assert.equal(ca.kitRoleProblem(role), null);
+	assert.equal(ca.kitRoleProblem(''), null);
+	assert.match(ca.kitRoleProblem('collider'), /kit model/);
+	assert.match(ca.kitRoleProblem('light'), /kit model/);
+	const {gltf} = ca.readContainer(fs.readFileSync(path.join(PACK, 'assets/combinedassault/models/weapon/m2/m2.glb')));
+	assert.deepEqual(gltf.nodes.map(n => ca.kitRoleProblem((n.extras || {}).combinedassaultRole || '')).filter(Boolean), []);
+});
+
+test('belt sockets: indices 0 + 1, kit model only, kit belt agrees with the model', () => {
+	assert.deepEqual(ca.beltProblems([], true), {errors: [], warnings: []});
+	assert.deepEqual(ca.beltProblems([1, 0], true), {errors: [], warnings: []});
+	for (const bad of [[0], [0, 0], [0, 2], [undefined, 1]]) assert.match(ca.beltProblems(bad, true).errors.join(), /belt sockets/, JSON.stringify(bad));
+	assert.match(ca.beltProblems([0, 1], false).warnings.join(), /outside a kit/);
+	const belt = {link: 'ma_lmgs:models/link.glb', pitch: 0.012};
+	assert.deepEqual(ca.kitBeltProblems({belt}, true), []);
+	assert.match(ca.kitBeltProblems({}, true).join(), /kit belt unset/);
+	assert.match(ca.kitBeltProblems({belt}, false).join(), /no belt sockets/);
+	assert.match(ca.kitProblems({model: 'a:b', weapons: ['a:b'], fits: ['door'], belt: {...belt, pitch: 0}}).join(), /belt/);
+	const text = '{\n  "model": "a:b",\n  "belt": {"link": "a:l", "pitch": 0.01}\n}\n';
+	assert.ok(!('belt' in JSON.parse(ca.editKitText(text, {belt: null}))));
+	assert.equal(ca.editKitText(text, {belt: {link: 'a:l', pitch: 0.01}}), text);
+	for (const name of ['ma_pkm', 'ma_m240b', 'ma_m249']) {
+		const kit = JSON.parse(fs.readFileSync(path.join(KITS, `${name}.json`), 'utf8'));
+		const {gltf} = ca.readContainer(fs.readFileSync(path.join(PACK, `assets/combinedassault/models/weapon/ma/${name}.glb`)));
+		const indices = gltf.nodes.filter(n => (n.extras || {}).combinedassaultRole === 'belt').map(n => n.extras.combinedassault.index);
+		assert.deepEqual(ca.beltProblems(indices, true).errors, [], name);
+		assert.deepEqual(ca.kitBeltProblems(kit, indices.length > 0), [], name);
+		assert.deepEqual(gltf.nodes.map(n => ca.kitRoleProblem((n.extras || {}).combinedassaultRole || '')).filter(Boolean), [], name);
+	}
+});
+
+test('kit json: path, problems, in-place edit round trip on a build/ copy', () => {
+	assert.deepEqual(ca.kitOf('/p/pack/combinedassault/wf/hardware/guns/m2.json'), {packRoot: '/p/pack', id: 'wf:guns/m2'});
+	assert.equal(ca.kitOf('/p/pack/assets/wf/models/m2.json'), null);
+	for (const name of fs.readdirSync(KITS)) {
+		const text = fs.readFileSync(path.join(KITS, name), 'utf8');
+		const kit = JSON.parse(text);
+		assert.deepEqual(ca.kitProblems(kit), [], name);
+		const same = {weapons: kit.weapons, fits: kit.fits, install_ticks: kit.install_ticks, item: kit.item || '',
+			replaces: kit.replaces || '', station: kit.station || {}};
+		assert.equal(ca.editKitText(text, same), text, name);
+	}
+	assert.match(ca.kitProblems({model: 'a:b', weapons: [], fits: ['x'], station: {laser: 1}}).join(), /weapons.*laser/);
+	const scratch = path.join(repo, 'build/test_combinedassault_kit_bb');
+	fs.mkdirSync(scratch, {recursive: true});
+	const copy = path.join(scratch, 'm2.json');
+	fs.copyFileSync(path.join(KITS, 'm2.json'), copy);
+	const original = fs.readFileSync(copy, 'utf8');
+	fs.writeFileSync(copy, ca.editKitText(original, {install_ticks: 90, item: '', station: JSON.parse(original).station}));
+	assert.equal(fs.readFileSync(copy, 'utf8'), original.replace('"install_ticks": 120', '"install_ticks": 90'));
+	fs.rmSync(scratch, {recursive: true});
+	const spg9 = fs.readFileSync(path.join(KITS, 'spg9.json'), 'utf8');
+	const at = spg9.lastIndexOf('}', spg9.lastIndexOf('}') - 1) + 1;
+	assert.equal(ca.editKitText(spg9, {replaces: 'combinedassault:old'}),
+		spg9.slice(0, at) + ',\n  "replaces": "combinedassault:old"' + spg9.slice(at));
+	const pkm = fs.readFileSync(path.join(KITS, 'ma_pkm.json'), 'utf8');
+	const stripped = ca.editKitText(pkm, {item: '', replaces: ''});
+	assert.deepEqual(Object.keys(JSON.parse(stripped)), ['model', 'weapons', 'fits', 'install_ticks', 'belt', 'station']);
+	assert.equal(ca.editKitText(stripped, {item: 'ma_lmgs:pkm'}), stripped.replace(/\n}\s*$/, ',\n  "item": "ma_lmgs:pkm"\n}\n'));
+});
+
+test('kit hardpoints: humvee roof, node at the kit origin in the preview frame', () => {
+	const load = location => {
+		const file = path.join(PACK, 'assets', ...location.split(':'));
+		if (!fs.existsSync(file)) return null;
+		const {gltf, bin} = ca.readContainer(fs.readFileSync(file));
+		return {gltf, buffers: [bin]};
+	};
+	const dir = path.join(PACK, 'combinedassault/combinedassault/vehicles');
+	const vehicles = fs.readdirSync(dir).map(n => ({id: `combinedassault:${n.slice(0, -5)}`, def: JSON.parse(fs.readFileSync(path.join(dir, n), 'utf8'))}));
+	const points = ca.kitHardpoints(vehicles, 'combinedassault:m2', ['pintle', 'tripod', 'door']);
+	const roof = points.find(p => p.vehicle === 'combinedassault:humvee');
+	assert.equal(roof.node, 'roof_mount_pitch');
+	assert.ok(!points.some(p => p.vehicle === 'combinedassault:mavic'));
+	const world = ca.hardpointWorld(roof.def, roof.node, l => (load(l) || {}).gltf || null);
+	assert.ok(Math.abs(world[1][3] - 2.3517) < 1e-3 && Math.abs(world[2][3] - 0.7821) < 1e-3, JSON.stringify(world));
+	const at = ca.mat4Mul(ca.rigidInverse(world), world);
+	assert.ok(at.every((row, r) => row.every((v, c) => Math.abs(v - (r === c ? 1 : 0)) < 1e-9)));
+	const {positions, seats} = ca.previewTriangles(roof.def, ca.rigidInverse(world), load);
+	assert.ok(positions.length > 0 && positions.length % 9 === 0);
+	assert.equal(seats.length, 5);
+	const override = ca.kitHardpoints([{id: 'v', def: {parts: [{id: 'p', hardpoint: {node: 'a', accepts: ['door'],
+		overrides: {'combinedassault:m2': {node: 'b'}}}}]}}], 'combinedassault:m2', ['door']);
+	assert.equal(override[0].node, 'b');
+});
+
 if (failures) {
 	console.log(`${failures} failed`);
 	process.exit(1);
@@ -469,13 +610,21 @@ test('coplanarGroups: triangulated box bottom -> one plane', () => {
 });
 
 test('material tags mirror the Blender add-on', () => {
-	assert.equal(ca.taggedName('hull_armor_50', 120, 'steel', false), 'hull_armor_120');
-	assert.equal(ca.taggedName('tyre', 0, 'rubber', false), 'tyre_rubber');
-	assert.equal(ca.taggedName('hull_armor_50_rubber', 0, 'steel', true), 'hull_decor');
+	assert.equal(ca.taggedName('hull_armor_50', 'ufp', 'steel', false), 'hull_armor:ufp');
+	assert.equal(ca.taggedName('hull_armor:ufp', 'lfp', 'steel', false), 'hull_armor:lfp');
+	assert.equal(ca.taggedName('tyre', '', 'rubber', false), 'tyre_rubber');
+	assert.equal(ca.taggedName('hull_armor:ufp_rubber', '', 'steel', true), 'hull_decor');
 	assert.equal(ca.stripTags('a_rubber_glass_armor_5'), 'a');
-	assert.deepEqual(ca.materialTags('seat_fabric_armor_2.5'), {armor: 2.5, surface: 'soft', decor: false});
-	assert.deepEqual(ca.materialTags('plain'), {armor: 0, surface: 'steel', decor: false});
-	assert.equal(ca.taggedName('', 0, 'steel', false), 'material');
+	assert.deepEqual(ca.materialTags('seat_fabric_armor:side_1'), {plate: 'side_1', surface: 'soft', decor: false});
+	assert.deepEqual(ca.materialTags('paint_armor:ufp.001'), {plate: 'ufp', surface: 'steel', decor: false});
+	assert.deepEqual(ca.materialTags('hull_armor_80'), {plate: '', surface: 'steel', decor: false});
+	assert.deepEqual(ca.materialTags('plain'), {plate: '', surface: 'steel', decor: false});
+	assert.equal(ca.taggedName('', '', 'steel', false), 'material');
+	assert.deepEqual(ca.plateProblems('paint_armor:ufp'), []);
+	assert.match(ca.plateProblems('hull_armor_80').join(), /no longer read/);
+	assert.match(ca.plateProblems('hull_armor:u-p').join(), /unbound/);
+	const java = fs.readFileSync(path.join(repo, 'src/main/java/com/wf/combinedassault/ballistics/hit/ModelDataManager.java'), 'utf8');
+	assert.equal(java.match(/PLATE = Pattern\.compile\("(.*?)"\)/)[1].replace(/\\\\/g, '\\'), ca.PLATE.source);
 });
 
 test('scale-valued sockets', () => {

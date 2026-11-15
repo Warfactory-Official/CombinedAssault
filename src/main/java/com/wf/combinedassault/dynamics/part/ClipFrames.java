@@ -13,6 +13,7 @@ import org.joml.Vector3f;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Frames flagged {@code follows_clips} (frame {@code extras.combinedassault}) whose part, if any, is not a
@@ -115,7 +116,7 @@ public final class ClipFrames {
             group.rotationO = group.rotation;
             group.rotation = new Quaternionf(rotation);
             group.offsetO = group.offset;
-            group.offset = new net.minecraft.world.phys.Vec3(origin.x - restPivot[i].x, origin.y - restPivot[i].y,
+            group.offset = new Vec3(origin.x - restPivot[i].x, origin.y - restPivot[i].y,
                     origin.z - restPivot[i].z);
         }
     }

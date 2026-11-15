@@ -8,6 +8,7 @@ import com.wf.combinedassault.render.particle.SmokeCloudOption;
 import com.wf.combinedassault.render.particle.TrackDustOption;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.geom.api.OBB;
+import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -33,7 +34,7 @@ public final class ParticleUtil {
 
     public static void spawnWaterSurfaceBubbles(Level level, RandomSource random, VehicleCubeOBB mainCubeOBB) {
         OBB obb = mainCubeOBB.obb();
-        AABB bounds = OBB.toAABB(java.util.List.of(obb));
+        AABB bounds = OBB.toAABB(List.of(obb));
         Vector3f[] axes = obb.getAxes();
         Vector3f extents = obb.extents();
         int minY = Mth.floor(bounds.minY);

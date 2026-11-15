@@ -1,9 +1,25 @@
 package com.wf.combinedassault;
 
+import com.wf.combinedassault.aircraft.AircraftSystem;
+import com.wf.combinedassault.airdefense.AirDefenseSystem;
+import com.wf.combinedassault.ballistics.BallisticsSystem;
 import com.wf.combinedassault.camo.CamoSystem;
 import com.wf.combinedassault.cargo.CargoSystem;
+import com.wf.combinedassault.deck.DeckSystem;
+import com.wf.combinedassault.dynamics.DynamicsSystem;
 import com.wf.combinedassault.energy.EnergySystem;
+import com.wf.combinedassault.hud.HudSystem;
+import com.wf.combinedassault.indirect.IndirectSystem;
+import com.wf.combinedassault.labs.LabsSystem;
+import com.wf.combinedassault.naval.NavalSystem;
+import com.wf.combinedassault.pack.PackSystem;
 import com.wf.combinedassault.props.PropsSystem;
+import com.wf.combinedassault.radar.RadarSystem;
+import com.wf.combinedassault.render.RenderSystem;
+import com.wf.combinedassault.tow.TowSystem;
+import com.wf.combinedassault.uav.UavSystem;
+import com.wf.combinedassault.vehicle.VehicleSystem;
+import com.wf.combinedassault.weapon.WeaponSystem;
 import com.wf.wflib.core.api.WFSystems;
 import com.wf.wflib.packs.api.PackHost;
 import com.wf.wflib.packs.api.PackHosts;
@@ -27,22 +43,22 @@ public class CombinedAssault {
             new EnergySystem(),
             new CargoSystem(),
             new PropsSystem(),
-            new com.wf.combinedassault.render.RenderSystem(),
-            new com.wf.combinedassault.hud.HudSystem(),
-            new com.wf.combinedassault.indirect.IndirectSystem(),
-            new com.wf.combinedassault.uav.UavSystem(),
-            new com.wf.combinedassault.weapon.WeaponSystem(),
-            new com.wf.combinedassault.ballistics.BallisticsSystem(),
-            new com.wf.combinedassault.radar.RadarSystem(),
-            new com.wf.combinedassault.airdefense.AirDefenseSystem(),
-            new com.wf.combinedassault.tow.TowSystem(),
-            new com.wf.combinedassault.naval.NavalSystem(),
-            new com.wf.combinedassault.aircraft.AircraftSystem(),
-            new com.wf.combinedassault.deck.DeckSystem(),
-            new com.wf.combinedassault.dynamics.DynamicsSystem(),
-            new com.wf.combinedassault.vehicle.VehicleSystem(),
-            new com.wf.combinedassault.pack.PackSystem(),
-            new com.wf.combinedassault.labs.LabsSystem());
+            new RenderSystem(),
+            new HudSystem(),
+            new IndirectSystem(),
+            new UavSystem(),
+            new WeaponSystem(),
+            new BallisticsSystem(),
+            new RadarSystem(),
+            new AirDefenseSystem(),
+            new TowSystem(),
+            new NavalSystem(),
+            new AircraftSystem(),
+            new DeckSystem(),
+            new DynamicsSystem(),
+            new VehicleSystem(),
+            new PackSystem(),
+            new LabsSystem());
 
     private static PackHost packs;
 

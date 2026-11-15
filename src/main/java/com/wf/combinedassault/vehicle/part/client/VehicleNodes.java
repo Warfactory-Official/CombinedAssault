@@ -54,6 +54,7 @@ import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Probe nodes on a vehicle, on foot: doors, free seats, hull (storage, systems grid, air defence, repairs without a place),
@@ -240,7 +241,7 @@ public final class VehicleNodes {
 
     private static void fill(ProbeInfo info, Interaction entry, int index, InteractionContext ctx, boolean rider) {
         String spelled = entry.id().replace('_', ' ');
-        spelled = spelled.substring(0, 1).toUpperCase(java.util.Locale.ROOT) + spelled.substring(1);
+        spelled = spelled.substring(0, 1).toUpperCase(Locale.ROOT) + spelled.substring(1);
         info.title(entry.name() != null ? Component.translatableWithFallback(entry.name(), spelled)
                 : Component.literal(spelled));
         for (int a = 0; a < entry.actions().size(); a++) {
@@ -423,7 +424,7 @@ public final class VehicleNodes {
 
     private static void lock(ProbeInfo info, Player player, AbstractVehicle vehicle) {
         VehicleLock mode = VehicleLock.of(vehicle);
-        info.entry(Component.translatable(PROBE + "lock"), Component.translatable(PROBE + "lock." + mode.name().toLowerCase(java.util.Locale.ROOT)));
+        info.entry(Component.translatable(PROBE + "lock"), Component.translatable(PROBE + "lock." + mode.name().toLowerCase(Locale.ROOT)));
         boolean foreign = mode != VehicleLock.OPEN && !VehicleLock.owner(vehicle).filter(player.getUUID()::equals).isPresent()
                 && !player.hasPermissions(2);
         for (VehicleLock target : VehicleLock.values()) {
@@ -431,7 +432,7 @@ public final class VehicleNodes {
                 continue;
             }
             ProbeAction row = ProbeAction.of(AccessActions.LOCK, target.ordinal(),
-                    Component.translatable(KEY + "lock." + target.name().toLowerCase(java.util.Locale.ROOT)));
+                    Component.translatable(KEY + "lock." + target.name().toLowerCase(Locale.ROOT)));
             info.action(foreign ? row.unavailable(Component.translatable("lock.combinedassault.owned")) : row);
         }
     }

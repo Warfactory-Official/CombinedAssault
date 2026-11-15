@@ -11,6 +11,7 @@ import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.pojo.AimContext;
+import com.wf.wflib.ammo.api.AmmoItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -172,8 +173,8 @@ public class MortarEmplacementGameTest {
             helper.fail("the emplacement has a mount with no gun on it");
             return;
         }
-        if (!gun.isAmmoForWeapon(com.wf.wflib.ammo.api.AmmoItems.stack(
-                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("wflib", "81mm/he"), 1))) {
+        if (!gun.isAmmoForWeapon(AmmoItems.stack(
+                ResourceLocation.fromNamespaceAndPath("wflib", "81mm/he"), 1))) {
             helper.fail("the mortar will not take WFLib 81 mm rounds");
             return;
         }

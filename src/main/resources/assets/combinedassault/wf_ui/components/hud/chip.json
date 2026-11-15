@@ -1,0 +1,5 @@
+{
+  "use": ["combinedassault:hud"],
+  "params": {"value": "widget"},
+  "root": {"type": "box", "background": "$shade", "border_width": 0, "pad_x": 3, "pad_y": 2, "child": "$value"}
+}

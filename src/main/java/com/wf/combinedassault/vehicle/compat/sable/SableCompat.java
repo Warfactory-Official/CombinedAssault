@@ -1,6 +1,7 @@
 package com.wf.combinedassault.vehicle.compat.sable;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.vehicle.compat.sable.gametest.SableProviderGameTest;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.core.api.WFSystems;
 import com.wf.wflib.physics.api.*;
@@ -26,20 +27,22 @@ import org.joml.*;
 import java.lang.Math;
 import java.util.ArrayList;
 import java.util.List;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 
 public class SableCompat {
 
     private static final String MOD_ID = "sable";
     private static boolean IS_LOADED = false;
 
-    public static void init(net.neoforged.bus.api.IEventBus modBus) {
+    public static void init(IEventBus modBus) {
         IS_LOADED = ModList.get().isLoaded(MOD_ID);
         if (IS_LOADED) {
             if (WFSystems.enabled(CombinedAssault.MOD_ID + ":radar")) {
                 SubLevelRadarManager.init();
             }
-            modBus.addListener(net.neoforged.neoforge.event.RegisterGameTestsEvent.class,
-                    event -> event.register(com.wf.combinedassault.vehicle.compat.sable.gametest.SableProviderGameTest.class));
+            modBus.addListener(RegisterGameTestsEvent.class,
+                    event -> event.register(SableProviderGameTest.class));
             // Guarded: avoids classloading when Sable absent.
             CollisionProviders.PROVIDERS.register(CombinedAssault.modLocation("sable"), 0, new SableCollisionProvider());
         }

@@ -3,6 +3,7 @@ package com.wf.combinedassault.render.gem;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.wf.combinedassault.pack.client.ClientAssetsManager;
 import com.wf.combinedassault.pack.client.vehicle.BaseDisplay;
+import com.wf.combinedassault.vehicle.light.client.VehicleLights;
 import com.wf.gemrender.asset.GemRenderModels;
 import dev.engine_room.flywheel.api.event.EndClientResourceReloadEvent;
 import net.minecraft.client.Minecraft;
@@ -23,7 +24,7 @@ public final class GemRenderSetup {
 
     public static void init() {
         VehicleGemVisual.register();
-        com.wf.combinedassault.vehicle.light.client.VehicleLights.register();
+        VehicleLights.register();
     }
 
     public static void registerListeners(Consumer<PreparableReloadListener> consumer) {

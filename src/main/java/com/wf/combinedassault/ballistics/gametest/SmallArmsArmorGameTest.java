@@ -13,6 +13,7 @@ import com.wf.wflib.round.api.KineticPreset;
 import com.wf.wflib.round.api.KineticPresets;
 import com.wf.wflib.round.api.RocketEntity;
 import com.wf.wflib.round.api.Rounds;
+import java.util.Arrays;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -91,7 +92,7 @@ public class SmallArmsArmorGameTest {
             return seq.thenExecute(() -> {
                 for (int k = 1; k < 4; k++) {
                     helper.assertTrue(damage[k] < damage[k - 1], String.format(Locale.ROOT,
-                            "damage not falling with speed: %s", java.util.Arrays.toString(damage)));
+                            "damage not falling with speed: %s", Arrays.toString(damage)));
                 }
             });
         });

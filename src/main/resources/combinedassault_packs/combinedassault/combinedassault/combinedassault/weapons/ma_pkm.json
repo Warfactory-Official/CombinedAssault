@@ -3,14 +3,8 @@
     "name": "PKM",
     "shoot_interval": 86,
     "max_capacity": 100,
-    "reload": {
-        "time": 120,
-        "ammo": "wflib:cartridge_7_62x54r"
-    },
-    "barrel": {
-        "perShot": 1.76,
-        "tau": 190
-    },
+    "reload": {"time": 168, "ammo": "wflib:cartridge_7_62x54r"},
+    "barrel": {"perShot": 1.76, "tau": 190},
     "sounds": {
         "fire": {"event": "ma_stalker:fire/pkm", "range": 96},
         "reload": {"event": "combinedassault:gun_reload", "range": 24}

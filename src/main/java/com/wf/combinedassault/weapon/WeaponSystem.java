@@ -9,8 +9,10 @@ import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
 import com.wf.combinedassault.weapon.barrel.BarrelActions;
 import com.wf.combinedassault.weapon.barrel.BarrelCommand;
 import com.wf.combinedassault.weapon.barrel.BarrelPacket;
+import com.wf.combinedassault.weapon.gametest.CountermeasureGameTest;
 import com.wf.combinedassault.weapon.gametest.*;
 import com.wf.combinedassault.weapon.kit.Hardpoints;
+import com.wf.combinedassault.weapon.kit.HardwareItem;
 import com.wf.combinedassault.weapon.kit.Loadouts;
 import com.wf.combinedassault.weapon.message.*;
 import com.wf.combinedassault.weapon.ordnance.GuidedRounds;
@@ -20,6 +22,7 @@ import com.wf.combinedassault.weapon.part.BarrelCharge;
 import com.wf.combinedassault.weapon.part.BatteryActions;
 import com.wf.combinedassault.weapon.part.StationActions;
 import com.wf.combinedassault.weapon.part.WeaponActions;
+import com.wf.wflib.carry.api.Shoulder;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.common.NeoForge;
@@ -27,6 +30,8 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.Set;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 
 public final class WeaponSystem implements CombinedAssaultSystem {
 
@@ -47,8 +52,8 @@ public final class WeaponSystem implements CombinedAssaultSystem {
 
     @Override
     public void register(IEventBus modBus, ModContainer container) {
-        GameTestSetup.testsNeeding(modBus, java.util.Set.of("aircraft", "uav"), LoadoutGameTest.class, PylonGameTest.class, RadioGameTest.class, com.wf.combinedassault.weapon.gametest.CountermeasureGameTest.class);
-        GameTestSetup.testsNeeding(modBus, java.util.Set.of("aircraft"), BombRoundsGameTest.class, MissileRoundsGameTest.class);
+        GameTestSetup.testsNeeding(modBus, Set.of("aircraft", "uav"), LoadoutGameTest.class, PylonGameTest.class, RadioGameTest.class, CountermeasureGameTest.class);
+        GameTestSetup.testsNeeding(modBus, Set.of("aircraft"), BombRoundsGameTest.class, MissileRoundsGameTest.class);
         WeaponContent.ITEMS.register(modBus);
         WeaponContent.DATA_COMPONENTS.register(modBus);
         VehicleTabs.addMisc(WeaponContent.AMMO_CREATIVE);
@@ -71,17 +76,17 @@ public final class WeaponSystem implements CombinedAssaultSystem {
             registrar.playToServer(BarrelPacket.TYPE, BarrelPacket.STREAM_CODEC, BarrelPacket::handle);
         });
         NeoForge.EVENT_BUS.addListener(VehicleFireEvent.Post.class, WeaponSystem::onFire);
-        com.wf.wflib.carry.api.Shoulder.WEAPONS.register(
-                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(CombinedAssault.MOD_ID, "hardware"), 0,
-                new com.wf.wflib.carry.api.Shoulder.Weapon() {
+        Shoulder.WEAPONS.register(
+                ResourceLocation.fromNamespaceAndPath(CombinedAssault.MOD_ID, "hardware"), 0,
+                new Shoulder.Weapon() {
                     @Override
-                    public boolean matches(net.minecraft.world.item.ItemStack carried) {
-                        return com.wf.combinedassault.weapon.kit.HardwareItem.kit(carried) != null;
+                    public boolean matches(ItemStack carried) {
+                        return HardwareItem.kit(carried) != null;
                     }
 
                     @Override
-                    public net.minecraft.resources.ResourceLocation gun(net.minecraft.world.item.ItemStack carried) {
-                        var kit = com.wf.combinedassault.weapon.kit.HardwareItem.kit(carried);
+                    public ResourceLocation gun(ItemStack carried) {
+                        var kit = HardwareItem.kit(carried);
                         return kit == null ? null : kit.shoulderGun();
                     }
                 });

@@ -8,6 +8,7 @@ import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /** Seat {@code view_hide}: nodes hidden in that seat's first person. Load check keeps it off hulls. */
@@ -61,7 +62,7 @@ public final class ViewHide {
                     throw new IllegalArgumentException("part " + id + " view_hide " + name + ": draws nothing");
                 }
                 if (worst > LIMIT) {
-                    throw new IllegalArgumentException(String.format(java.util.Locale.ROOT,
+                    throw new IllegalArgumentException(String.format(Locale.ROOT,
                             "part %s view_hide %s: reaches %.2f m from its nearest seat eye; limit %.1f", id, name,
                             worst, LIMIT));
                 }

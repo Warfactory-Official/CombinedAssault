@@ -1,6 +1,7 @@
 package com.wf.combinedassault.props;
 
 import com.mojang.serialization.MapCodec;
+import com.wf.combinedassault.props.client.FigureBoxScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -45,7 +46,7 @@ public class FigureBoxBlock extends HorizontalEntityBlock {
 
     public FigureBoxBlock(Properties properties) {
         super(properties);
-        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, net.minecraft.core.Direction.NORTH).setValue(OPEN, false));
+        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(OPEN, false));
     }
 
     @Override
@@ -86,7 +87,7 @@ public class FigureBoxBlock extends HorizontalEntityBlock {
 
     @OnlyIn(Dist.CLIENT)
     public void openScreen(FigureBoxBlockEntity figureBoxBlockEntity) {
-        Minecraft.getInstance().setScreen(new com.wf.combinedassault.props.client.FigureBoxScreen(figureBoxBlockEntity));
+        Minecraft.getInstance().setScreen(new FigureBoxScreen(figureBoxBlockEntity));
     }
 
     @Override

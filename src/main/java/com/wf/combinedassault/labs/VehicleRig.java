@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import net.minecraft.core.BlockPos;
 
 /** One vehicle at rest (yaw 0, unticked) with its aim points. Lab frame: vehicle origin, +Z front, +X port, +Y up. */
 public final class VehicleRig {
@@ -50,7 +51,7 @@ public final class VehicleRig {
 
     /** In the level (chunk loaded, never ticked): paths that call {@code AbstractVehicle.hurt} or carry riders. */
     static VehicleRig spawnLive(ServerLevel level, ResourceLocation id, BaseVehicleData data, boolean parts) {
-        net.minecraft.core.BlockPos spawn = level.getSharedSpawnPos();
+        BlockPos spawn = level.getSharedSpawnPos();
         level.getChunk(spawn);
         AbstractVehicle vehicle = data.construct(level, Vec3.atBottomCenterOf(spawn.above(40)), 0, 0);
         vehicle.setDisplayId(id);

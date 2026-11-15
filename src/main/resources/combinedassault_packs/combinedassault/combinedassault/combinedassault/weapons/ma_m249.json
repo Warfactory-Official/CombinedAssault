@@ -1,0 +1,12 @@
+{
+    "type": "combinedassault:cannon",
+    "name": "M249",
+    "shoot_interval": 75,
+    "max_capacity": 200,
+    "reload": {"time": 168, "ammo": "wflib:cartridge_5_56x45"},
+    "barrel": {"perShot": 1.26, "tau": 163},
+    "sounds": {
+        "fire": {"event": "ma_stalker:fire/m249", "range": 96},
+        "reload": {"event": "combinedassault:gun_reload", "range": 24}
+    }
+}

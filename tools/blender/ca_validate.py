@@ -13,6 +13,12 @@ import re
 import struct
 import sys
 
+try:
+    from . import jsonedit
+except ImportError:  # plain module: jsonedit lives in tools/
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    import jsonedit
+
 # Must equal the game's vocabularies; test_combinedassault_tools.py parses the Java sources and compares.
 # ComponentKind names but crew, generic.
 SYSTEMS = ["hull", "engine", "track", "wheel", "turret", "barrel", "fuel", "ammo", "optics", "rotor",
@@ -20,7 +26,7 @@ SYSTEMS = ["hull", "engine", "track", "wheel", "turret", "barrel", "fuel", "ammo
 # NodeRole SOCKET kind.
 SOCKET_FIELDS = ["seat", "dismount", "view", "sight", "sight_lens", "bolt", "eject", "era", "slat", "mount_point", "hitch", "towable",
                  "axle", "exhaust", "vortex", "smoke", "afterburner", "camera", "camera_zoomed", "light", "cargo_bay",
-                 "center_of_mass", "pivot", "track", "propeller", "station"]
+                 "center_of_mass", "pivot", "track", "propeller", "station", "hand", "foot", "belt"]
 # Socket fields with no interface (MountDefaults `none`).
 UNTARGETED = {"towable", "axle", "camera", "camera_zoomed", "exhaust", "vortex", "smoke", "afterburner", "light",
               "cargo_bay", "center_of_mass", "pivot", "propeller"}
@@ -29,10 +35,21 @@ DRAWN_SOCKETS = {"sight_lens"}
 FRAME_ROLES = {"body", "part", "pitch"}
 SHAPE_ROLES = {"collider", "hit", "hit_surface"}
 ROLES = FRAME_ROLES | SHAPE_ROLES | set(SOCKET_FIELDS)
+# ModelDataManager.KIT_ROLES.
+KIT_ROLES = {"seat", "view", "bolt", "eject", "sight", "sight_lens", "hit", "hit_surface", "hand", "belt"}
+HANDS = ("right", "left")
+# KitBelts: 0 feed, 1 box mouth.
+BELT_INDICES = [0, 1]
+# HardwareKits.STATION_KEYS.
+STATION_KEYS = {"pose", "dismount_offset", "protect_passenger", "passenger_can_use_item", "crew_roles", "rot_info",
+                "bolts", "ejects", "ammo_capacity", "firing_mode", "operator_on_weapon_unit", "fire_control_sensor_type",
+                "optical_sight_type", "with_stabilizer", "with_focus_locker", "with_thermal_imager", "with_night_vision",
+                "with_ir", "loading", "zoom_min", "zoom_max", "crosshair_style", "handling", "optic", "rangefinder"}
+KIT_INSTALL_TICKS = 100
 # ModelRig.COLLIDER_KEYS.
 COLLIDER_KEYS = {"main", "deck", "solid", "world", "name", "hit"}
 # ModelDataManager.HIT_KEYS (untagged, frame, hit, hit_surface nodes); FRAME_KEYS on frames too.
-HIT_KEYS = {"system", "side", "unit", "spin", "health", "swept", "skip", "index", "road_wheel"}
+HIT_KEYS = {"system", "side", "unit", "spin", "health", "rha", "swept", "skip", "index", "road_wheel"}
 FRAME_KEYS = {"x_rot_min", "x_rot_max", "y_rot_min", "y_rot_max", "follows_clips"}
 SPINS = ("cw", "ccw")
 # VehicleLight.KEYS; Kind -> (color, range, intensity, inner, outer).
@@ -40,6 +57,11 @@ LIGHT_KEYS = {"kind", "color", "range", "intensity", "inner", "outer", "shadow",
 LIGHT_KINDS = {"head": (0xFFF1D8, 40.0, 300.0, 12.0, 32.0), "search": (0xEEF4FF, 96.0, 4000.0, 2.5, 6.0)}
 # SurfaceMaterial tokens (`_ . space` delimited); untagged = steel.
 SURFACES = {"rubber": "rubber", "glass": "glass", "soft": "soft|fabric|cloth|canvas"}
+# ModelDataManager.PLATE: `armor:<id>` last token (Blender `.001` ignored).
+PLATE = re.compile(r"(?:^|[\s_.])armor:([A-Za-z0-9_]+)(?:\.\d+)?$")
+PLATE_ID = re.compile(r"^[A-Za-z0-9_]*$")
+# `armor_<mm>`: no longer read.
+LEGACY_ARMOR = re.compile(r"(?i)armou?r[_ ]?(\d+(?:\.\d+)?)")
 # GltfImporter.TEXTURE_SLOT.
 TEXTURE_SLOT = "textureSlot"
 ROLE = "combinedassaultRole"
@@ -219,7 +241,7 @@ class Model:
         return out
 
 
-def roles(model):
+def roles(model, kit=False):
     nodes = model.gltf.get("nodes", [])
     body = [i for i, n in enumerate(nodes) if n.get("extras", {}).get(ROLE) == "body"]
     # No body: a part model (gun, turret on a part frame) or a plain display; its sockets take the part's interface.
@@ -239,7 +261,7 @@ def roles(model):
             mark(c)
     for b in body:
         mark(b)
-    seen, mains = {}, []
+    seen, mains, belts = {}, [], []
     for i, node in enumerate(nodes):
         extras = node.get("extras", {})
         role = extras.get(ROLE, "")
@@ -251,6 +273,8 @@ def roles(model):
         if role not in ROLES:
             model.errors.append("%s: unknown role '%s'" % (name, role))
             continue
+        if kit and role not in KIT_ROLES:
+            model.errors.append("%s: role %s in a kit model; kits carry %s only" % (name, role, ", ".join(sorted(KIT_ROLES))))
         if rig and role != "body" and i not in under:
             model.errors.append("%s (%s) is not under the body node" % (name, role))
         if role in ("part", "pitch"):
@@ -284,6 +308,15 @@ def roles(model):
         if role == "light":
             for problem in light_problems(meta):
                 model.errors.append("light %s: %s" % (name, problem))
+        if role in ("hand", "foot"):
+            for problem in limb_problems(meta, role):
+                model.errors.append("%s %s: %s" % (role, name, problem))
+        if role == "belt":
+            belts.append(meta.get("index"))
+    if belts and sorted(belts, key=str) != BELT_INDICES:
+        model.errors.append("belt sockets index %s; need one each of 0 (feed) and 1 (box mouth)" % sorted(belts, key=str))
+    if belts and not kit:
+        model.warnings.append("belt sockets outside a kit model: drawn for a fitted kit with `belt` only")
     for i, node in enumerate(nodes):
         extras = node.get("extras", {})
         role = extras.get(ROLE, "")
@@ -298,6 +331,10 @@ def roles(model):
         system = meta.get("system")
         if system is not None and system != "none" and system not in SYSTEMS:
             model.errors.append("node %s: system '%s' not one of %s or none" % (name, system, SYSTEMS))
+        if "rha" in meta and role != "hit":
+            model.errors.append("node %s: rha is for hit modules only" % name)
+        elif "rha" in meta and not (isinstance(meta["rha"], (int, float)) and meta["rha"] >= 0):
+            model.errors.append("hit module %s: rha %r must be >= 0" % (name, meta["rha"]))
         if "spin" in meta and str(meta["spin"]).lower() not in SPINS:
             model.errors.append("node %s: spin '%s' not cw / ccw" % (name, meta["spin"]))
         if role == "pitch" and any(k.startswith("y_rot_") for k in meta):
@@ -322,6 +359,20 @@ def light_problems(meta):
     inner = meta.get("inner", min(inner, outer))
     if isinstance(inner, (int, float)) and isinstance(outer, (int, float)) and (outer >= 89 or inner > outer):
         problems.append("need 0 < inner <= outer < 89, got %s, %s" % (inner, outer))
+    return problems
+
+
+# Built-in action of the other limb.
+WRONG_ACTION = {"hand": "brake", "foot": "shift"}
+
+
+def limb_problems(meta, limb):
+    problems = [] if meta.get(limb) in HANDS else ["%s '%s' not right / left" % (limb, meta.get(limb))]
+    action = meta.get("action")
+    if "action" in meta and not (isinstance(action, str) and action):
+        problems.append("action %r; expected a clip name or %s" % (action, "brake" if limb == "foot" else "shift"))
+    elif action == WRONG_ACTION[limb]:
+        problems.append("action '%s' is a %s action" % (action, "hand" if limb == "foot" else "foot"))
     return problems
 
 
@@ -432,22 +483,41 @@ def hull_problems(model, i):
     return []
 
 
+def plate_problems(name):
+    """Material name tokens the game skips: unbound plate faces."""
+    if PLATE.search(name):
+        return []
+    if "armor:" in name:
+        return ["material %s: armor:<id> not the last token or id not [A-Za-z0-9_]: unbound" % name]
+    if LEGACY_ARMOR.search(name):
+        return ["material %s: armor_<mm> no longer read: bind a plate (armor:<id>, armor.plates)" % name]
+    return []
+
+
 def materials(model):
     gltf = model.gltf
+    for material in gltf.get("materials", []):
+        model.warnings += plate_problems(material.get("name", ""))
     images = gltf.get("images", [])
-    used = set()
+    used, foreign = set(), set()
     for index, image in enumerate(images):
         name = image.get("name", "image %d" % index)
-        if "uri" in image:
+        location = image.get("extras", {}).get(RESOURCE)
+        if location is None and "uri" in image:
             model.errors.append("image %s has uri '%s': GemRender draws it untextured (needs extras.%s)"
                                 % (name, image["uri"], RESOURCE))
             continue
-        location = image.get("extras", {}).get(RESOURCE)
         if location is None:
             model.errors.append("image %s has no extras.%s: drawn untextured" % (name, RESOURCE))
             continue
         path = resolve(model.root, location)
         if path is None:
+            continue
+        ns = location.split(":", 1)[0]
+        if not os.path.isdir(os.path.join(model.root, "assets", ns)):
+            if ns not in foreign:
+                foreign.add(ns)
+                model.notes.append("images from namespace %s: another mod's, unchecked" % ns)
             continue
         if not location.split(":", 1)[1].startswith("textures/"):
             model.warnings.append("image %s: %s is outside textures/" % (name, location))
@@ -523,24 +593,135 @@ def animations(model):
                 model.errors.append("clip '%s' targets a missing node" % name)
 
 
-def validate(path):
-    """(errors, warnings, notes) for one glTF file."""
+def validate(path, kit=False):
+    """(errors, warnings, notes) for one glTF file; kit: a hardware kit model (KIT_ROLES only)."""
     try:
         model = Model(path)
     except (OSError, ValueError) as e:
         return ["cannot read: %s" % e], [], []
     if model.root is None:
         model.warnings.append("not inside <pack>/assets/<ns>/models/: file references unchecked")
-    roles(model)
+    roles(model, kit)
     materials(model)
     animations(model)
     return model.errors, model.warnings, model.notes
 
 
+def kit_of(json_path):
+    """(pack root, kit id) of <pack>/combinedassault/<ns>/hardware/<path>.json; ValueError elsewhere."""
+    parts = os.path.abspath(json_path).split(os.sep)
+    for i in range(len(parts) - 4, 0, -1):
+        if parts[i] == "combinedassault" and parts[i + 2] == "hardware" and json_path.endswith(".json"):
+            return os.sep.join(parts[:i]) or os.sep, "%s:%s" % (parts[i + 1], "/".join(parts[i + 3:])[:-5])
+    raise ValueError("not <pack>/combinedassault/<namespace>/hardware/<path>.json: " + json_path)
+
+
+def kit_problems(kit):
+    """HardwareKit.parse refusals."""
+    problems = []
+    if not isinstance(kit.get("model"), str) or ":" not in kit["model"]:
+        problems.append("model %r: expected a glTF id ns:path" % kit.get("model"))
+    for key in ("weapons", "fits"):
+        value = kit.get(key)
+        if not isinstance(value, list) or not value or not all(isinstance(v, str) and v for v in value):
+            problems.append("%s: expected a non-empty list of strings" % key)
+    ticks = kit.get("install_ticks", KIT_INSTALL_TICKS)
+    if not isinstance(ticks, int) or isinstance(ticks, bool) or ticks < 0:
+        problems.append("install_ticks %r: expected a whole number >= 0" % ticks)
+    for key in ("item", "replaces"):
+        if key in kit and (not isinstance(kit[key], str) or ":" not in kit[key]):
+            problems.append("%s %r: expected an id ns:path" % (key, kit[key]))
+    belt = kit.get("belt")
+    if belt is not None and not (isinstance(belt, dict) and isinstance(belt.get("link"), str) and ":" in belt["link"]
+                                 and isinstance(belt.get("pitch"), (int, float)) and belt["pitch"] > 0):
+        problems.append("belt %r: expected {link: ns:path, pitch > 0}" % (belt,))
+    station = kit.get("station", {})
+    if not isinstance(station, dict):
+        problems.append("station: expected an object")
+    else:
+        problems += ["station: %s is no station key" % k for k in sorted(set(station) - STATION_KEYS)]
+    return problems
+
+
+def kit_belt_problems(kit, path):
+    """`belt` xor model belt sockets => no belt drawn."""
+    nodes = Model(path).gltf.get("nodes", [])
+    sockets = any(n.get("extras", {}).get(ROLE) == "belt" for n in nodes)
+    if bool(kit.get("belt")) == sockets:
+        return []
+    return ["kit belt set, model has no belt sockets" if not sockets else "model belt sockets, kit belt unset"]
+
+
+def edit_kit_text(text, values):
+    """Kit json text with `values` (weapons, fits, install_ticks, item, replaces, station, belt) applied in place:
+    unchanged keys keep their bytes; empty item / replaces / belt and absent default install_ticks / empty station stay
+    absent."""
+    current = json.loads(text)
+    for key, value in values.items():
+        if key in ("item", "replaces", "belt") and not value or key == "install_ticks" and value == KIT_INSTALL_TICKS \
+                and key not in current or key == "station" and not value and key not in current:
+            if key in current:
+                text = jsonedit.remove(text, [key])
+        elif current.get(key, None if key in current else object()) != value:
+            text = jsonedit.put(text, [key], value)
+    return text
+
+
+def vehicle_defs(pack_root):
+    """(vehicle id, def path, def) per <pack>/combinedassault/<ns>/vehicles/**.json."""
+    base = os.path.join(pack_root, "combinedassault")
+    out = []
+    for ns in sorted(os.listdir(base)) if os.path.isdir(base) else []:
+        folder = os.path.join(base, ns, "vehicles")
+        for dirpath, _, files in os.walk(folder):
+            for name in sorted(files):
+                if name.endswith(".json"):
+                    path = os.path.join(dirpath, name)
+                    with open(path, encoding="utf-8") as source:
+                        out.append(("%s:%s" % (ns, os.path.relpath(path, folder)[:-5].replace(os.sep, "/")), path,
+                                    json.load(source)))
+    return out
+
+
+def hardpoints(pack_root, kit_id, fits):
+    """Hardpoints accepting a kit class: dicts vehicle, part, node (override `node` for kit_id wins), def."""
+    out = []
+    for vehicle, _, definition in vehicle_defs(pack_root):
+        for part in definition.get("parts", []):
+            point = part.get("hardpoint")
+            if point and set(point.get("accepts", [])) & set(fits):
+                node = point.get("overrides", {}).get(kit_id, {}).get("node", point.get("node"))
+                out.append({"vehicle": vehicle, "part": part.get("id"), "node": node, "def": definition})
+    return out
+
+
+def hardpoint_world(pack_root, definition, node):
+    """glTF-frame rest world matrix of `node` in the vehicle model, else in a part mount grafted onto it; None when
+    neither has it."""
+    def find(location, name):
+        path = resolve(pack_root, location)
+        if path is None or not os.path.isfile(path):
+            return None
+        model = Model(path)
+        index = next((i for i, n in enumerate(model.gltf.get("nodes", [])) if n.get("name") == name), None)
+        return None if index is None else model.node_world(index)
+    world = find(definition["model"], node)
+    if world is not None:
+        return world
+    for part in definition.get("parts", []):
+        for mount in part.get("mounts", []):
+            inner = find(mount["model"], node)
+            if inner is not None:
+                attach = find(definition["model"], mount["node"])
+                return mul(attach, inner) if attach is not None else None
+    return None
+
+
 def main(argv):
     failed = 0
-    for path in argv:
-        errors, warnings, notes = validate(path)
+    kit = "--kit" in argv
+    for path in [a for a in argv if a != "--kit"]:
+        errors, warnings, notes = validate(path, kit)
         print("%s: %d error(s), %d warning(s)" % (path, len(errors), len(warnings)))
         for kind, messages in (("ERROR", errors), ("warning", warnings), ("note", notes)):
             for message in messages:

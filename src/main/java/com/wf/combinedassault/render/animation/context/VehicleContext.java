@@ -1,5 +1,6 @@
 package com.wf.combinedassault.render.animation.context;
 
+import com.wf.combinedassault.ballistics.component.HullComponents;
 import com.wf.combinedassault.render.entity.vehicle.VehicleRender;
 import com.wf.combinedassault.render.model.VehicleModelInstance;
 import com.wf.combinedassault.vehicle.control.ControlUnit;
@@ -127,7 +128,7 @@ public class VehicleContext<E extends AbstractVehicle> extends EntityContext<E> 
 
     /** Hull system pool {@code id} ({@code "rotor FL"}): 0 broken .. 1; no such pool => 1. */
     public float getSystemEffectiveness(String id) {
-        com.wf.combinedassault.ballistics.component.HullComponents systems = entity.hullComponents();
+        HullComponents systems = entity.hullComponents();
         int at = systems.indexOf(id);
         return at < 0 ? 1 : systems.effectiveness(at);
     }

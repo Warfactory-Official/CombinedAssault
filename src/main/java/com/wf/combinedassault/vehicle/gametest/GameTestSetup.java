@@ -2,6 +2,7 @@ package com.wf.combinedassault.vehicle.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.wflib.core.api.WFSystems;
+import java.util.Set;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 
@@ -19,7 +20,7 @@ public final class GameTestSetup {
         });
     }
 
-    public static void testsNeeding(IEventBus modBus, java.util.Set<String> systems, Class<?>... classes) {
+    public static void testsNeeding(IEventBus modBus, Set<String> systems, Class<?>... classes) {
         modBus.addListener(RegisterGameTestsEvent.class, event -> {
             if (systems.stream().allMatch(s -> WFSystems.enabled(CombinedAssault.MOD_ID + ":" + s))) {
                 for (Class<?> c : classes) {

@@ -6,6 +6,7 @@ import com.wf.combinedassault.aircraft.part.FlapUnit;
 import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.wflib.testkit.api.ForcedChunks;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -109,7 +110,7 @@ public class FlapsGameTest {
 
     @Nullable
     private static FixedWingVehicle spawn(GameTestHelper helper, BlockPos at) {
-        java.util.Optional<BaseVehicleData> data = CommonAssetsManager.vehicleDataManager().getVehicleData(MQ9);
+        Optional<BaseVehicleData> data = CommonAssetsManager.vehicleDataManager().getVehicleData(MQ9);
         if (data.isEmpty()) {
             helper.fail(MQ9 + " is not in the roster");
             return null;

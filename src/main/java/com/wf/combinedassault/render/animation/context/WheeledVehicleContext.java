@@ -25,6 +25,10 @@ public class WheeledVehicleContext extends VehicleContext<WheeledVehicle> {
         return Mth.lerp(partialTick, entity.turnAngleO, entity.turnAngle);
     }
 
+    public DriverControls controls() {
+        return controls;
+    }
+
     @Override
     public void tick() {
         super.tick();

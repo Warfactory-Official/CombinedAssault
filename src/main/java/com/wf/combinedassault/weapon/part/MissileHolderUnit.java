@@ -13,6 +13,7 @@ import com.wf.combinedassault.weapon.pojo.Station;
 import com.wf.wflib.magazine.api.MagazineItems;
 import com.wf.wflib.magazine.api.PodItem;
 import com.wf.wflib.magazine.api.PodTubes;
+import java.util.ArrayList;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -35,6 +36,8 @@ import org.joml.Vector3f;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
+import net.minecraft.world.item.Item;
 
 /**
  * Fit is datapack-only: round's size tag vs holder's accept list; cross-mod the moment a pack tags the round.
@@ -221,7 +224,7 @@ public class MissileHolderUnit extends PartUnit<MissileHolderUnitData> {
     }
 
     /** Lowest slot holding {@code kind}; {@code AIR} = any. -1 if none. */
-    public int nextLoaded(net.minecraft.world.item.Item kind) {
+    public int nextLoaded(Item kind) {
         if (kind == Items.AIR) {
             return nextLoaded();
         }
@@ -234,7 +237,7 @@ public class MissileHolderUnit extends PartUnit<MissileHolderUnitData> {
     }
 
     /** Lowest slot whose round passes {@code kind}; -1 if none. */
-    public int nextLoaded(java.util.function.Predicate<ItemStack> kind) {
+    public int nextLoaded(Predicate<ItemStack> kind) {
         for (int i = 0; i < slots.length; i++) {
             if (!slots[i].isEmpty() && kind.test(slots[i])) {
                 return i;
@@ -244,8 +247,8 @@ public class MissileHolderUnit extends PartUnit<MissileHolderUnitData> {
     }
 
     /** Distinct round items loaded, slot order. */
-    public java.util.List<net.minecraft.world.item.Item> kinds() {
-        java.util.List<net.minecraft.world.item.Item> out = new java.util.ArrayList<>();
+    public List<Item> kinds() {
+        List<Item> out = new ArrayList<>();
         for (ItemStack slot : slots) {
             if (!slot.isEmpty() && !out.contains(slot.getItem())) {
                 out.add(slot.getItem());
@@ -254,7 +257,7 @@ public class MissileHolderUnit extends PartUnit<MissileHolderUnitData> {
         return out;
     }
 
-    public int count(net.minecraft.world.item.Item kind) {
+    public int count(Item kind) {
         int count = 0;
         for (ItemStack slot : slots) {
             if (!slot.isEmpty() && (kind == Items.AIR || slot.is(kind))) {

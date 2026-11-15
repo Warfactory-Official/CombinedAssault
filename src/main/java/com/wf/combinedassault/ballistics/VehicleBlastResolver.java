@@ -15,6 +15,7 @@ import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.util.VectorUtil;
 import com.wf.wflib.armor.api.hull.HullResult;
+import com.wf.wflib.damage.api.BlastDamageSource;
 import com.wf.wflib.damage.api.DamageClass;
 import com.wf.wflib.damage.api.Threat;
 import com.wf.wflib.damage.api.ThreatKind;
@@ -352,7 +353,7 @@ public final class VehicleBlastResolver {
         }
 
         void crew(LivingEntity victim, Vec3 from, Vec3 to, float amount) {
-            DamageSource source = com.wf.wflib.damage.api.BlastDamageSource.of(
+            DamageSource source = BlastDamageSource.of(
                     WFDamageSources.create(vehicle.level(), DamageClass.EXPLOSIVE, shooter(), vehicle), victim, from, to, null);
             Spall.deliver(() -> victim.hurt(source, amount));
         }

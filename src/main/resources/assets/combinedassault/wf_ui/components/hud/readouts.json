@@ -1,0 +1,37 @@
+{
+  "use": ["combinedassault:hud"],
+  "root": {"type": "column", "gap": 2, "align": "center", "children": [
+    {"type": "sized", "w": 150, "h": 0},
+    {"type": "when", "if": "payload.loaded", "then": {"type": "column", "gap": 2, "align": "center", "children": [
+      {"type": "when", "if": "payload.single",
+        "then": {"type": "text", "text": "{payload.name}", "color": "$white", "shadow": true, "scale": 0.6},
+        "else": {"type": "text", "text": "{tr:ui.vehicle_payload.rounds(payload.remaining, payload.capacity)}",
+          "color": "$white", "shadow": true, "scale": 0.6}},
+      {"type": "when", "if": "payload.armable", "then": {"type": "when", "if": "!payload.armed",
+        "then": {"type": "text", "text": "{tr:ui.vehicle_payload.safe(payload.arm_key)}", "color": "$gray", "shadow": true, "scale": 0.6},
+        "else": {"type": "when", "if": "!payload.live",
+          "then": {"type": "text", "text": "{tr:ui.vehicle_payload.arming(payload.arming|.1)}", "color": "$amber",
+            "shadow": true, "scale": 0.6},
+          "else": {"type": "when", "if": "payload.releasable",
+            "then": {"type": "text", "text": "{tr:ui.vehicle_payload.armed_release(payload.fire_key, payload.release_key)}",
+              "color": "$red", "shadow": true, "scale": 0.6},
+            "else": {"type": "text", "text": "{tr:ui.vehicle_payload.armed(payload.fire_key)}", "color": "$red",
+              "shadow": true, "scale": 0.6}}}}}
+    ]}},
+    {"type": "when", "if": "local.driver && vehicle.rotary", "then": {"type": "column", "gap": 2, "align": "center", "children": [
+      {"type": "row", "gap": 3, "children": [
+        {"type": "combinedassault:hud/chip", "value": {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.rpm(trunc(rotary.rpm))}", "color": "$white", "shadow": true, "scale": 0.75}},
+        {"type": "combinedassault:hud/chip", "value": {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.collective_pitch(trunc(rotary.collective))}", "color": "$white", "shadow": true, "scale": 0.75}},
+        {"type": "combinedassault:hud/chip", "value": {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.altitude(trunc(vehicle.altitude))}", "color": "$white", "shadow": true, "scale": 0.75}},
+        {"type": "combinedassault:hud/chip", "value": {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.vspeed(vehicle.vspeed|+.0)}", "color": "$white", "shadow": true, "scale": 0.75}}
+      ]},
+      {"type": "combinedassault:hud/chip", "value": {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.fuel(vehicle.fuel_seconds|clockh)}", "color": "$white", "shadow": true, "scale": 0.75}}
+    ]}},
+    {"type": "when", "if": "local.driver && fixed_wing.present", "then": {"type": "row", "gap": 3, "children": [
+      {"type": "combinedassault:hud/chip", "value": {"type": "row", "children": [{"type": "text", "text": "{tr:ui.vehicle_rotary_wing.throttle_level}", "color": "$white", "shadow": true, "scale": 0.75}, {"type": "when", "if": "fixed_wing.brake", "then": {"type": "text", "text": "{tr:ui.brake}", "color": "$red", "shadow": true, "scale": 0.75}, "else": {"type": "when", "if": "trunc(fixed_wing.throttle) <= 100", "then": {"type": "text", "text": "{trunc(fixed_wing.throttle)}", "color": "$white", "shadow": true, "scale": 0.75}, "else": {"type": "text", "text": "{tr:ui.war_emergency_power}", "color": "$red", "shadow": true, "scale": 0.75}}}]}},
+      {"type": "combinedassault:hud/chip", "value": {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.altitude(trunc(vehicle.altitude))}", "color": "$white", "shadow": true, "scale": 0.75}},
+      {"type": "combinedassault:hud/chip", "value": {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.fuel(vehicle.fuel_seconds|clockh)}", "color": "$white", "shadow": true, "scale": 0.75}}
+    ]}},
+    {"type": "when", "if": "local.driver && vehicle.transmission", "then": {"type": "combinedassault:hud/chip", "value": {"type": "text", "text": "{tr:hud.combinedassault.gear(vehicle.gear)}", "color": "$white", "shadow": true, "scale": 0.75}}}
+  ]}
+}

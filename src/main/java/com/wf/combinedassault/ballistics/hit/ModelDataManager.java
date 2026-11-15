@@ -10,6 +10,7 @@ import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.dynamics.part.PartClipTracks;
 import com.wf.combinedassault.vehicle.sightline.ViewHide;
+import com.wf.combinedassault.vehicle.hands.RiderHand;
 import com.wf.combinedassault.vehicle.light.VehicleLight;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
@@ -17,6 +18,10 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.Locale;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,7 +46,7 @@ public final class ModelDataManager {
     /** Material token: drawn only, never hit (gen_hulls.py: never collides). */
     private static final Pattern DECOR = Pattern.compile("(?i)(?:^|[_ .])decor(?:$|[_ .])");
     private static final Set<NodeRole> PART_TARGET = EnumSet.of(NodeRole.SEAT, NodeRole.DISMOUNT, NodeRole.VIEW,
-            NodeRole.SIGHT, NodeRole.SIGHT_LENS, NodeRole.BOLT, NodeRole.EJECT);
+            NodeRole.SIGHT, NodeRole.SIGHT_LENS, NodeRole.BOLT, NodeRole.EJECT, NodeRole.HAND, NodeRole.FOOT, NodeRole.BELT);
 
     private ModelDataManager() {
     }
@@ -74,7 +79,7 @@ public final class ModelDataManager {
     }
 
     private static final Set<NodeRole> KIT_ROLES = EnumSet.of(NodeRole.SEAT, NodeRole.VIEW, NodeRole.BOLT, NodeRole.EJECT,
-            NodeRole.SIGHT, NodeRole.SIGHT_LENS, NodeRole.HIT, NodeRole.HIT_SURFACE);
+            NodeRole.SIGHT, NodeRole.SIGHT_LENS, NodeRole.HIT, NodeRole.HIT_SURFACE, NodeRole.HAND, NodeRole.BELT);
 
     static ModelData build(ResourceLocation id, JsonObject vehicle) throws IOException {
         if (!vehicle.has("model")) {
@@ -106,6 +111,8 @@ public final class ModelDataManager {
         List<ModelMounts.Mount> mounts = new ArrayList<>();
         List<VehicleLight> lights = new ArrayList<>();
         List<ModelMounts.Wheel> wheels = new ArrayList<>();
+        List<RiderHand> hands = new ArrayList<>();
+        Set<String> seats = seats(vehicle);
         for (int i = 0; i < gltf.nodes().size(); i++) {
             GltfReader.Node node = gltf.nodes().get(i);
             NodeRole role = NodeRole.of(node.role());
@@ -123,6 +130,12 @@ public final class ModelDataManager {
             }
             if (role == NodeRole.LIGHT) {
                 lights.add(VehicleLight.read(i, node.name(), node.meta()));
+            } else if (role == NodeRole.HAND || role == NodeRole.FOOT) {
+                RiderHand hand = RiderHand.read(i, node.name(), node.iface(), role == NodeRole.FOOT, node.meta(),
+                        kitOf.get(i), seats);
+                if (hand != null) {
+                    hands.add(hand);
+                }
             } else if (role != null && role.kind == NodeRole.Kind.SOCKET) {
                 float[] world = node.triangles().clone();
                 Vector3f v = new Vector3f();
@@ -140,10 +153,24 @@ public final class ModelDataManager {
         ModelMounts modelMounts = new ModelMounts(List.copyOf(links), List.copyOf(mounts), List.copyOf(wheels), rig);
         ClipRig clips = ClipRig.of(gltf);
         if (vehicle.has("hitbox") && !vehicle.get("hitbox").getAsBoolean()) {
-            return new ModelData(source, rig, null, modelMounts, clips, List.copyOf(lights), List.copyOf(grafts));
+            return new ModelData(source, rig, null, modelMounts, clips, List.copyOf(lights), List.copyOf(hands),
+                    List.copyOf(grafts));
         }
         return new ModelData(source, rig, hitMesh(source, gltf, rig, kitOf), modelMounts, clips, List.copyOf(lights),
-                List.copyOf(grafts));
+                List.copyOf(hands), List.copyOf(grafts));
+    }
+
+    private static Set<String> seats(JsonObject vehicle) {
+        Set<String> seats = new HashSet<>();
+        if (vehicle.has("parts")) {
+            for (JsonElement element : vehicle.getAsJsonArray("parts")) {
+                JsonObject part = element.getAsJsonObject();
+                if (!part.has("is_seat") || part.get("is_seat").getAsBoolean()) {
+                    seats.add(part.get("id").getAsString());
+                }
+            }
+        }
+        return seats;
     }
 
     /** @param kitOf per node: kit of the kit-scoped mount it was grafted from, else null */
@@ -153,14 +180,14 @@ public final class ModelDataManager {
     /** {@code modelId} with {@code grafts} applied in order: node indices = {@link HitMesh#nodes}. */
     public static Grafted grafted(ResourceLocation modelId, List<ModelData.Graft> grafts) throws IOException {
         GltfReader.Model gltf = gltf(modelId);
-        List<String> kitOf = new ArrayList<>(java.util.Collections.nCopies(gltf.nodes().size(), (String) null));
+        List<String> kitOf = new ArrayList<>(Collections.nCopies(gltf.nodes().size(), (String) null));
         for (ModelData.Graft graft : grafts) {
             gltf = graft(gltf, gltf(graft.model()), graft.node(), graft.part());
             while (kitOf.size() < gltf.nodes().size()) {
                 kitOf.add(graft.kit());
             }
         }
-        return new Grafted(gltf, java.util.Collections.unmodifiableList(kitOf)); // nulls: List.copyOf refuses them
+        return new Grafted(gltf, Collections.unmodifiableList(kitOf)); // nulls: List.copyOf refuses them
     }
 
     /** @param kitOf per node: kit of the kit-scoped mount it was grafted from, else null */
@@ -245,7 +272,7 @@ public final class ModelDataManager {
                 throw new IllegalArgumentException(source + ": node " + node.name() + ": rha " + (module ? rha
                         + " must be >= 0" : "is for hit modules only"));
             }
-            String spin = meta.has("spin") ? meta.get("spin").getAsString().toLowerCase(java.util.Locale.ROOT) : "";
+            String spin = meta.has("spin") ? meta.get("spin").getAsString().toLowerCase(Locale.ROOT) : "";
             if (!spin.isEmpty() && !spin.equals("cw") && !spin.equals("ccw")) {
                 throw new IllegalArgumentException(source + ": node " + node.name() + ": spin " + spin
                         + "; expected cw or ccw");
@@ -264,8 +291,8 @@ public final class ModelDataManager {
                 }
             }
             if (kept < faceMaterials.length) {
-                tris = java.util.Arrays.copyOf(tris, kept * 9);
-                faceMaterials = java.util.Arrays.copyOf(faceMaterials, kept);
+                tris = Arrays.copyOf(tris, kept * 9);
+                faceMaterials = Arrays.copyOf(faceMaterials, kept);
             }
             Vector3f v = new Vector3f();
             for (int i = 0; i < tris.length; i += 3) {
@@ -363,7 +390,7 @@ public final class ModelDataManager {
         materials.addAll(mount.materials());
         List<GltfReader.Look> looks = new ArrayList<>(base.looks());
         looks.addAll(mount.looks());
-        java.util.BitSet undrawn = (java.util.BitSet) base.undrawn().clone();
+        BitSet undrawn = (BitSet) base.undrawn().clone();
         mount.undrawn().stream().forEach(n -> undrawn.set(n + nodeBase));
         List<GltfReader.Clip> clips = new ArrayList<>(base.clips());
         for (GltfReader.Clip clip : mount.clips()) {

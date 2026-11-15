@@ -9,6 +9,7 @@ import com.wf.combinedassault.vehicle.util.VectorUtil;
 import com.wf.wflib.armor.api.hull.HullProfile;
 import com.wf.wflib.armor.api.hull.HullResolver;
 import com.wf.wflib.armor.api.hull.PlateSpec;
+import com.wf.wflib.core.api.client.DebugGate;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -32,7 +33,7 @@ public final class ArmorDebugText {
     @SubscribeEvent
     public static void onDebugText(CustomizeGuiOverlayEvent.DebugText event) {
         Minecraft mc = Minecraft.getInstance();
-        if (!mc.getDebugOverlay().showDebugScreen() || mc.player == null || !com.wf.wflib.core.api.client.DebugGate.allowed()) {
+        if (!mc.getDebugOverlay().showDebugScreen() || mc.player == null || !DebugGate.allowed()) {
             return;
         }
         Camera camera = mc.gameRenderer.getMainCamera();

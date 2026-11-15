@@ -1,6 +1,7 @@
 package com.wf.combinedassault.pack.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.aircraft.FixedWingVehicle;
 import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
@@ -19,6 +20,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import net.minecraft.world.level.block.Block;
 
 /**
  * `-PoptionalPacks` (gradle copies optional_packs/* into the run): every vehicle of a namespace in
@@ -112,7 +114,7 @@ public class OptionalPackGameTest {
                 if (v != null) {
                     // fixed wing rests at ground_pitch (nose up = -xRot)
                     float pitch = Mth.wrapDegrees(v.getXRot()
-                            + (v instanceof com.wf.combinedassault.aircraft.FixedWingVehicle plane ? plane.groundPitch : 0));
+                            + (v instanceof FixedWingVehicle plane ? plane.groundPitch : 0));
                     float roll = Mth.wrapDegrees(v.getZRot());
                     double drop = c.getY() + 1 - v.getY();
                     if (hi[i][0] - lo[i][0] > 0.01f || hi[i][1] - lo[i][1] > 0.2f || hi[i][2] - lo[i][2] > 0.2f) {
@@ -192,7 +194,7 @@ public class OptionalPackGameTest {
         helper.succeed();
     }
 
-    private static void pad(ServerLevel level, BlockPos c, net.minecraft.world.level.block.Block block) {
+    private static void pad(ServerLevel level, BlockPos c, Block block) {
         for (int x = -HALF; x <= HALF; x++) {
             for (int z = -HALF; z <= HALF; z++) {
                 level.setBlockAndUpdate(c.offset(x, 0, z), block.defaultBlockState());

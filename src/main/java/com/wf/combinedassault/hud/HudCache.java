@@ -1,5 +1,6 @@
 package com.wf.combinedassault.hud;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.wf.combinedassault.ballistics.component.ComponentState;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
@@ -12,6 +13,9 @@ import com.wf.wflib.ammo.api.AmmoItems;
 import com.wf.wflib.ammo.api.AmmoVariant;
 import com.wf.wflib.magazine.api.MagFill;
 import com.wf.wflib.ui.api.UiHud;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.locale.Language;
 import net.minecraft.resources.ResourceLocation;
@@ -44,7 +48,7 @@ public final class HudCache {
     /** Keyed by the synced id instance: {@code fuelFluid()} parses a ResourceLocation per call. */
     private static String fuelLabelId;
     private static String fuelLabel;
-    private static final Map<String, String> TRANSLATIONS = new java.util.HashMap<>();
+    private static final Map<String, String> TRANSLATIONS = new HashMap<>();
     private static Language translationsFor;
 
     private static AbstractVehicle systemsFor;
@@ -128,7 +132,7 @@ public final class HudCache {
     }
 
     /** Key: variant id, else item; bounded by registered kinds. */
-    private static final Map<Object, String> ROUND_LABELS = new java.util.HashMap<>();
+    private static final Map<Object, String> ROUND_LABELS = new HashMap<>();
 
     /** Variant only ({@code APFSDS}); not a cartridge => full name. */
     public static String roundLabel(ItemStack round) {
@@ -144,7 +148,7 @@ public final class HudCache {
         });
     }
 
-    private static final Map<Object, List<AmmoVariant>> ROUND_VARIANTS = new java.util.HashMap<>();
+    private static final Map<Object, List<AmmoVariant>> ROUND_VARIANTS = new HashMap<>();
 
     /** Loads of a cartridge / magazine; other item => none. */
     public static List<AmmoVariant> roundVariants(ItemStack round) {
@@ -171,12 +175,12 @@ public final class HudCache {
 
     private static final Map<Object, String> PAYLOAD_NAMES = new WeakHashMap<>();
 
-    private static final Map<net.minecraft.client.KeyMapping, com.mojang.blaze3d.platform.InputConstants.Key> BOUND =
-            new java.util.IdentityHashMap<>();
-    private static final Map<net.minecraft.client.KeyMapping, String> KEY_NAMES = new java.util.IdentityHashMap<>();
+    private static final Map<KeyMapping, InputConstants.Key> BOUND =
+            new IdentityHashMap<>();
+    private static final Map<KeyMapping, String> KEY_NAMES = new IdentityHashMap<>();
 
     /** Bound key's display name; re-read on rebind. */
-    public static String keyName(net.minecraft.client.KeyMapping mapping) {
+    public static String keyName(KeyMapping mapping) {
         if (BOUND.get(mapping) != mapping.getKey()) {
             BOUND.put(mapping, mapping.getKey());
             KEY_NAMES.put(mapping, mapping.getTranslatedKeyMessage().getString());
@@ -185,7 +189,7 @@ public final class HudCache {
     }
 
     /** Keyed by stack identity: a sync replaces the stack. */
-    public static String payloadName(net.minecraft.world.item.ItemStack stack) {
+    public static String payloadName(ItemStack stack) {
         String name = PAYLOAD_NAMES.get(stack);
         if (name == null) {
             name = stack.getHoverName().getString();

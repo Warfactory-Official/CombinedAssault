@@ -17,6 +17,7 @@ import com.wf.combinedassault.vehicle.part.DoorUnit;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import com.wf.combinedassault.vehicle.util.VectorUtil;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -33,11 +34,14 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.IntPredicate;
 
 @PrefixGameTestTemplate(false)
 public class AccessGameTest {
@@ -230,8 +234,8 @@ public class AccessGameTest {
         helper.startSequence().thenIdle(3).thenExecute(() -> {
             StringBuilder log = new StringBuilder();
             for (String id : List.of("anti_aircraft_machine_gun", "loader_machine_gun")) {
-                com.wf.combinedassault.weapon.part.WeaponUnit unit =
-                        (com.wf.combinedassault.weapon.part.WeaponUnit) tank.getPartUnit(id).orElseThrow();
+                WeaponUnit unit =
+                        (WeaponUnit) tank.getPartUnit(id).orElseThrow();
                 Vec3 pivot = unit.worldPivotPosition();
                 Vec3 seat = unit.worldSeatPosition();
                 Vec3 muzzle = unit.aimContext().from;
@@ -417,7 +421,7 @@ public class AccessGameTest {
 
     /** Eye 0.9 m from {@code at} with another surface in the way, reached; null if none found or refused. */
     @Nullable
-    private static Vec3 closeBlocked(VehicleHits hits, Vec3 at, java.util.function.IntPredicate own) {
+    private static Vec3 closeBlocked(VehicleHits hits, Vec3 at, IntPredicate own) {
         for (int x = -1; x <= 1; x++) {
             for (int y = -1; y <= 1; y++) {
                 for (int z = -1; z <= 1; z++) {
@@ -849,7 +853,7 @@ public class AccessGameTest {
                         SwitchableUnit<?> own = seat.partUnit.hatch() != null ? seat.partUnit.hatch()
                                 : seat.partUnit.turnOut() != null ? seat.partUnit.turnOut().hatch() : null;
                         SwitchableUnit<?> entry = vehicle.entries().stream().filter(e -> vehicle.serves(e, seat))
-                                .min(java.util.Comparator.comparingInt(e -> e == own ? 0 : 1)).orElse(null);
+                                .min(Comparator.comparingInt(e -> e == own ? 0 : 1)).orElse(null);
                         if (entry == null) {
                             log.append(seat.partUnit.getId()).append(": no entry; ");
                             ok = false;
@@ -896,7 +900,7 @@ public class AccessGameTest {
                     Vec3 seat = commander.getSeatOffset();
                     Quaternionf hull = centauro.rotYXZ().invert();
                     Vec3 centre = centauro.position().add(centauro.centerOffset);
-                    java.util.function.Function<Vec3, Vec3> local = w -> new Vec3(hull.transform(w.subtract(centre).toVector3f()));
+                    Function<Vec3, Vec3> local = w -> new Vec3(hull.transform(w.subtract(centre).toVector3f()));
                     Vec3 before = local.apply(commander.worldPosition(seat));
                     Quaternionf rest = new Quaternionf(turret.rotation);
                     turret.rotation.rotateY((float) Math.toRadians(90));

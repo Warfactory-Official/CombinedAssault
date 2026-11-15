@@ -16,6 +16,7 @@ import dev.kosmx.playerAnim.core.util.Ease;
 import dev.kosmx.playerAnim.core.util.Vec3f;
 import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationAccess;
 import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationFactory;
+import java.util.Arrays;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;
@@ -126,9 +127,9 @@ public final class SeatPoseAnim {
             }
             int bone = PoseClip.bone(part);
             switch (bone) {
-                case PoseClip.BODY -> java.util.Arrays.fill(r, 0);
+                case PoseClip.BODY -> Arrays.fill(r, 0);
                 case PoseClip.HEAD, PoseClip.RIGHT_ARM, PoseClip.LEFT_ARM -> {
-                    java.util.Arrays.fill(r, 0);
+                    Arrays.fill(r, 0);
                     r[3] = value.getX();
                     r[4] = value.getY();
                     r[5] = value.getZ();

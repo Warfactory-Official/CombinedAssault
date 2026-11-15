@@ -1,6 +1,7 @@
 package com.wf.combinedassault.vehicle.audio;
 
 import com.wf.combinedassault.CombinedAssault;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.neoforged.bus.api.IEventBus;
@@ -9,7 +10,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 public class VehicleSoundEvents {
 
-    public static final DeferredRegister<SoundEvent> SOUND_EVENTS = DeferredRegister.create(net.minecraft.core.registries.Registries.SOUND_EVENT, CombinedAssault.MOD_ID);
+    public static final DeferredRegister<SoundEvent> SOUND_EVENTS = DeferredRegister.create(Registries.SOUND_EVENT, CombinedAssault.MOD_ID);
 
     public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_HURT = registerSoundEvent("vehicle_hurt", CombinedAssault.modLocation("vehicle_hurt"));
     public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_HIT_SMALL = registerSoundEvent("vehicle_hit_small", CombinedAssault.modLocation("vehicle_hit_small"));

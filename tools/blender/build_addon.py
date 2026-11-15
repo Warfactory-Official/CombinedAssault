@@ -11,7 +11,8 @@ OUT = os.path.join(os.path.dirname(os.path.dirname(HERE)), "build", "combinedass
 FILES = {"blender_manifest.toml": "blender_manifest.toml",
          "__init__.py": "combinedassault_tools.py",
          "ca_validate.py": "ca_validate.py",
-         "ca_reference.py": "ca_reference.py"}
+         "ca_reference.py": "ca_reference.py",
+         "jsonedit.py": "../jsonedit.py"}
 
 
 def main():

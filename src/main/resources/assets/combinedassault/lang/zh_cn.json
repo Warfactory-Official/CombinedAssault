@@ -105,6 +105,8 @@
   "ui.vehicle_rotary_wing.speed": "速度: %d",
   "ui.vehicle_rotary_wing.fuel": "燃油: %s",
   "ui.vehicle_rotary_wing.altitude": "高度: %d",
+  "ui.vehicle_rotary_wing.vspeed": "垂速: %s",
+  "hud.combinedassault.gear": "档位 %s",
   "ui.war_emergency_power": "加力",
   "ui.brake": "制动",
   "ui.out_of_launch_limits": "超出射界",

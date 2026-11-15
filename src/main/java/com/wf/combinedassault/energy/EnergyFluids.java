@@ -71,7 +71,7 @@ public class EnergyFluids {
             new BaseFlowingFluid.Source(EnergyFluids.FUEL_PROPERTIES));
     public static final DeferredHolder<Fluid, FlowingFluid> FUEL_FLOWING = FLUIDS.register("fuel_flowing", () ->
             new BaseFlowingFluid.Flowing(EnergyFluids.FUEL_PROPERTIES));
-    public static final DeferredHolder<net.minecraft.world.level.block.Block, LiquidBlock> FUEL_BLOCK = BLOCKS.register("fuel_block", () ->
+    public static final DeferredHolder<Block, LiquidBlock> FUEL_BLOCK = BLOCKS.register("fuel_block", () ->
             new LiquidBlock(FUEL_SOURCE.get(), BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_YELLOW).noCollission().strength(100.0F).pushReaction(PushReaction.DESTROY).noLootTable()));
     public static final DeferredHolder<Item, Item> FUEL_BUCKET = ITEMS.register("fuel_bucket", () ->
             new BucketItem(FUEL_SOURCE.get(), new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1)));

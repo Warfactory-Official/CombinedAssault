@@ -24,6 +24,7 @@ import net.minecraft.world.item.component.CustomData;
 import org.joml.Matrix4f;
 
 import javax.annotation.Nonnull;
+import net.minecraft.client.gui.Font;
 
 import static com.wf.combinedassault.vehicle.entity.ICustomVehicle.TAG_VEHICLE_ID;
 
@@ -86,7 +87,7 @@ public class VehicleSpawnItemRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.scale(scale, -scale, scale);
             Matrix4f textMatrix = poseStack.last().pose();
             font.drawInBatch(text, 0, 0, 0xFFFF0000, true,
-                    textMatrix, pBuffer, net.minecraft.client.gui.Font.DisplayMode.NORMAL,
+                    textMatrix, pBuffer, Font.DisplayMode.NORMAL,
                     0, pPackedLight);
         }
         poseStack.popPose();

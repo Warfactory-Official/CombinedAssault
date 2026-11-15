@@ -1,6 +1,7 @@
 package com.wf.combinedassault.tow;
 
 import com.google.gson.annotations.SerializedName;
+import java.util.Locale;
 
 /**
  * HITCH: joint, trailer heading from geometry (one articulated vehicle). CABLE: slack rope, pulls only once taut.
@@ -26,7 +27,7 @@ public enum TowMode {
     }
 
     public String lowerName() {
-        return name().toLowerCase(java.util.Locale.ROOT);
+        return name().toLowerCase(Locale.ROOT);
     }
 
 }

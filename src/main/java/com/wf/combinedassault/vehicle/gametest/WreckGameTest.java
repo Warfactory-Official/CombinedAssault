@@ -15,6 +15,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import net.minecraft.world.phys.AABB;
 
 /**
  * Aircraft killed in the air: wreck turns out of its kill attitude on the ground, comes to rest. Ground vehicle killed
@@ -186,7 +189,7 @@ public class WreckGameTest {
                     helper.assertTrue(v.getDeltaMovement().horizontalDistance() < 0.01, "wreck still sliding: " + state);
                     helper.assertTrue(slid.horizontalDistance() < limit, "wreck slid: " + state);
                 }), at -> {
-            helper.getLevel().getEntitiesOfClass(VehiclePart.class, new net.minecraft.world.phys.AABB(at).inflate(24))
+            helper.getLevel().getEntitiesOfClass(VehiclePart.class, new AABB(at).inflate(24))
                     .forEach(VehiclePart::discard);
             for (int z = -RIDGE; z <= RIDGE; z++) {
                 helper.getLevel().setBlockAndUpdate(at.offset(0, 1, z), Blocks.AIR.defaultBlockState());
@@ -195,8 +198,8 @@ public class WreckGameTest {
     }
 
     private static void wreck(GameTestHelper helper, int lane, ResourceLocation id, float pitch, float roll, Vec3 velocity,
-                              java.util.function.Predicate<AbstractVehicle> turned,
-                              java.util.function.Function<AbstractVehicle, String> attitude) {
+                              Predicate<AbstractVehicle> turned,
+                              Function<AbstractVehicle, String> attitude) {
         double[] floorY = new double[1];
         TestLanes.run(helper, lane, 24, 48, id, (seq, vehicle) -> seq
                 .thenExecute(() -> {

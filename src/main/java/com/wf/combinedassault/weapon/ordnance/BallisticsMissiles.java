@@ -5,13 +5,17 @@ import com.wf.combinedassault.aircraft.RotaryWingVehicle;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.pojo.AimContext;
+import com.wf.wflib.recon.api.ReconOwners;
+import java.util.UUID;
 import com.wf.wflib.missile.api.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 /** WFLib missile items (their own preset) and command launches. */
 public final class BallisticsMissiles {
@@ -91,9 +95,9 @@ public final class BallisticsMissiles {
 
     /** Team: the operator's side, else the vehicle's; operator's terminal hears the round. */
     static void side(MissileEntity missile, AbstractVehicle vehicle, @Nullable Entity operator) {
-        java.util.UUID team = operator == null ? null : com.wf.wflib.recon.api.ReconOwners.owningEntity(operator);
-        missile.setTeamId(team != null ? team : com.wf.wflib.recon.api.ReconOwners.owningEntity(vehicle));
-        if (operator instanceof net.minecraft.world.entity.player.Player) {
+        UUID team = operator == null ? null : ReconOwners.owningEntity(operator);
+        missile.setTeamId(team != null ? team : ReconOwners.owningEntity(vehicle));
+        if (operator instanceof Player) {
             missile.setOperatorId(operator.getUUID());
         }
     }
@@ -121,7 +125,7 @@ public final class BallisticsMissiles {
                 && !(vehicle instanceof FixedWingVehicle) && !(vehicle instanceof RotaryWingVehicle)) {
             launch = launch.add(tube.scale(missile.flight().getAscentSpeed()));
         } else if (launcher.getColdLaunchTimeTick() > 0 && vehicle.getMainCubeOBB() != null) {
-            org.joml.Vector3f[] axes = vehicle.getMainCubeOBB().obb().getAxes();
+            Vector3f[] axes = vehicle.getMainCubeOBB().obb().getAxes();
             Vec3 eject = launcher.getColdLaunchVelocity();
             launch = launch.add(new Vec3(axes[0]).scale(eject.x)).add(new Vec3(axes[1]).scale(eject.y))
                     .add(new Vec3(axes[2]).scale(eject.z));

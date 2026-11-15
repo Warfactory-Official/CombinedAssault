@@ -14,6 +14,8 @@ import com.wf.combinedassault.weapon.kit.HardwareKits;
 import com.wf.combinedassault.weapon.kit.Loadouts;
 import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
 import com.wf.combinedassault.weapon.pojo.WeaponInfo;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
@@ -121,7 +123,7 @@ public class VehicleDataManager implements IVehicleDataManager {
 
     /** Each hardpoint part: one data per accepted kit, its final json with the kit's station over it. */
     private static void variants(JsonObject merged, BaseVehicleData<?> data) {
-        Map<String, JsonObject> parts = new java.util.HashMap<>();
+        Map<String, JsonObject> parts = new HashMap<>();
         merged.getAsJsonArray("parts").forEach(p -> parts.put(p.getAsJsonObject().get("id").getAsString(),
                 p.getAsJsonObject()));
         for (PartUnitEntry<?, ?> entry : data.getParts()) {
@@ -129,7 +131,7 @@ public class VehicleDataManager implements IVehicleDataManager {
                 continue;
             }
             HardwareKits.Hardpoint hardpoint = unit.getHardpoint();
-            Map<ResourceLocation, WeaponUnitData> out = new java.util.LinkedHashMap<>();
+            Map<ResourceLocation, WeaponUnitData> out = new LinkedHashMap<>();
             for (HardwareKit kit : hardpoint.kits()) {
                 JsonObject part = parts.get(unit.getId());
                 JsonObject station = HardwareKits.station(part, kit, hardpoint.overrides().get(kit.id()));

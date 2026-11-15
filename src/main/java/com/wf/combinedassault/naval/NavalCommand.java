@@ -5,7 +5,9 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.wf.combinedassault.naval.trial.TrialCommand;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.weapon.ordnance.BallisticsMissiles;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
@@ -50,7 +52,7 @@ public final class NavalCommand {
                                                 .executes(NavalCommand::fire)))))
                 .then(Commands.literal("fuel").executes(NavalCommand::fuel)
                         .then(Commands.argument("id", IntegerArgumentType.integer(0)).executes(NavalCommand::fuel)))
-                .then(com.wf.combinedassault.naval.trial.TrialCommand.get())
+                .then(TrialCommand.get())
                 .then(Commands.literal("engine")
                         .then(Commands.literal("on").executes(context -> engine(context, true))
                                 .then(Commands.argument("id", IntegerArgumentType.integer(0))
@@ -110,7 +112,7 @@ public final class NavalCommand {
         ResourceLocation preset = context.getArgument("preset", ResourceLocation.class);
         Vec3 from = Vec3Argument.getVec3(context, "from");
         Vec3 target = Vec3Argument.getVec3(context, "target");
-        if (!com.wf.combinedassault.weapon.ordnance.BallisticsMissiles.launch(
+        if (!BallisticsMissiles.launch(
                 context.getSource().getLevel(), preset, from, target)) {
             context.getSource().sendFailure(Component.literal("could not launch " + preset + " (WFLib absent, or no such preset)"));
             return 0;

@@ -11,6 +11,7 @@ import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.pojo.WarnType;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.wflib.missile.api.MissileEntity;
 import com.wf.wflib.ui.api.Signals;
 import com.wf.wflib.ui.api.Subject;
 import net.minecraft.client.Minecraft;
@@ -180,7 +181,7 @@ public final class MfdView implements ScreenView {
                 for (RadarUnit.DetectedObject object : radar.getDetectedEntities().values()) {
                     Entity entity = object.entity;
                     Track t = add(object.detectedPosition.x, object.detectedPosition.z, entity);
-                    t.kind = entity instanceof com.wf.wflib.missile.api.MissileEntity ? Kind.MISSILE
+                    t.kind = entity instanceof MissileEntity ? Kind.MISSILE
                             : allied(entity) ? Kind.FRIEND : entity.getTeam() == null ? Kind.UNKNOWN : Kind.HOSTILE;
                 }
             }

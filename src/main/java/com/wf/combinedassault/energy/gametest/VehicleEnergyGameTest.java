@@ -32,6 +32,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
+import net.minecraft.core.Direction;
 
 /**
  * Fuel as a real fluid, and charge as real Forge Energy.
@@ -478,7 +479,7 @@ public class VehicleEnergyGameTest {
             return;
         }
         if (GregTechCompat.pullFromBlock(vehicle, helper.getLevel(),
-                helper.absolutePos(new BlockPos(1, 1, 1)), net.minecraft.core.Direction.UP, 10000) != 0) {
+                helper.absolutePos(new BlockPos(1, 1, 1)), Direction.UP, 10000) != 0) {
             helper.fail("the EU bridge pulled from a block without GregTech");
             return;
         }

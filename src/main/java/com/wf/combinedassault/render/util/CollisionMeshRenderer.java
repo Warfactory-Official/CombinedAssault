@@ -3,6 +3,7 @@ package com.wf.combinedassault.render.util;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.wf.combinedassault.vehicle.client.VehicleKeys;
+import com.wf.wflib.core.api.client.DebugGate;
 import com.wf.wflib.physics.api.ChunkCollisionCache;
 import com.wf.wflib.physics.api.SectionCollision;
 import net.minecraft.client.Minecraft;
@@ -72,7 +73,7 @@ public final class CollisionMeshRenderer {
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
         while (VehicleKeys.TOGGLE_COLLISION_DEBUG.consumeClick()) {
-            if (!com.wf.wflib.core.api.client.DebugGate.allowed()) {
+            if (!DebugGate.allowed()) {
                 mode = Mode.OFF;
                 continue;
             }
@@ -86,7 +87,7 @@ public final class CollisionMeshRenderer {
                         Component.literal("Vehicle collision overlay: " + mode.label), true);
             }
         }
-        if (mode == Mode.OFF || !com.wf.wflib.core.api.client.DebugGate.allowed()) {
+        if (mode == Mode.OFF || !DebugGate.allowed()) {
             return;
         }
         // Client never runs tickPhysics; prepare cache here so overlay isn't empty.
@@ -102,7 +103,7 @@ public final class CollisionMeshRenderer {
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
-        if (mode == Mode.OFF || !com.wf.wflib.core.api.client.DebugGate.allowed() || event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+        if (mode == Mode.OFF || !DebugGate.allowed() || event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
             return;
         }
         Minecraft minecraft = Minecraft.getInstance();

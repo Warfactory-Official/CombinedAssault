@@ -27,6 +27,7 @@ import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -217,7 +218,7 @@ public class HullShapeGameTest {
             }
             HitModel.Node node = model.nodes().get(at);
             String group = vehicle.hits().groups()[node.group()].name;
-            if (!group.equals(expect[1]) || !java.util.Objects.equals(node.part(), expect[2])) {
+            if (!group.equals(expect[1]) || !Objects.equals(node.part(), expect[2])) {
                 helper.fail(expect[0] + " bound to " + group + " / part " + node.part());
                 return;
             }

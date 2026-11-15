@@ -15,7 +15,9 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 /** One shot at a resting vehicle through the strike path {@code DamageSystem} takes. */
 public final class VehicleShots {
@@ -46,7 +48,7 @@ public final class VehicleShots {
             return first;
         }
         List<Vec3> near = new ArrayList<>(rig.nodeCentres);
-        near.sort(java.util.Comparator.comparingDouble(c -> c.subtract(aim).cross(dir).lengthSqr()));
+        near.sort(Comparator.comparingDouble(c -> c.subtract(aim).cross(dir).lengthSqr()));
         for (int i = 0; i < Math.min(6, near.size()); i++) {
             Vec3 c = near.get(i);
             Vec3 along = c.subtract(aim);
@@ -88,7 +90,7 @@ public final class VehicleShots {
                 hitPos.add(ray.dir().scale(0.1)), ray.dir().normalize(), threat.kind().isShapedCharge());
         String partDamaged = r.partDamage() > 0 && part != null && !part.isDetached() ? part.getId() : "";
         return new Result(r.outcome().name(), node, part == null ? "" : part.getId(),
-                plate == null ? "" : plate.face().name().toLowerCase(java.util.Locale.ROOT),
+                plate == null ? "" : plate.face().name().toLowerCase(Locale.ROOT),
                 plate == null || plate.zone() == null ? "" : plate.zone(), plate == null || plate.plateId() == null ? "" : plate.plateId(),
                 r.nominalThickness(), r.effectiveThickness(), r.penetration(), r.ratio(),
                 plate == null ? 0 : plate.incidence(), plate == null ? 0 : plate.surfaceIncidence(),

@@ -1,5 +1,6 @@
 package com.wf.combinedassault.weapon;
 
+import com.wf.combinedassault.hud.HudTips;
 import com.wf.combinedassault.pack.sync.PartUnitSyncData;
 import com.wf.combinedassault.pack.sync.SyncDataHolder;
 import com.wf.combinedassault.pack.sync.SyncDataSerializers;
@@ -16,6 +17,7 @@ import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
 import com.wf.combinedassault.weapon.pojo.AimContext;
 import com.wf.wflib.missile.api.MissilePreset;
 import com.wf.wflib.missile.api.SeekerMode;
+import java.util.ArrayList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
@@ -26,6 +28,12 @@ import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Predicate;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 
 public class VehicleMissile extends AbstractVehicleWeapon<VehicleMissileWeaponData> {
 
@@ -51,7 +59,7 @@ public class VehicleMissile extends AbstractVehicleWeapon<VehicleMissileWeaponDa
         if (rack == null) {
             return super.roundOptions();
         }
-        List<RoundCount> out = new java.util.ArrayList<>();
+        List<RoundCount> out = new ArrayList<>();
         out.add(new RoundCount(ItemStack.EMPTY, rack.loaded()));
         for (Item kind : rack.kinds()) {
             out.add(new RoundCount(kind.getDefaultInstance(), rack.count(kind)));
@@ -94,7 +102,7 @@ public class VehicleMissile extends AbstractVehicleWeapon<VehicleMissileWeaponDa
                 || missileWeaponUnit.getXRot() > data.getXRotMax()
                 || missileWeaponUnit.getYRot() < data.getYRotMin()
                 || missileWeaponUnit.getYRot() > data.getYRotMax()) {
-            com.wf.combinedassault.hud.HudTips.show(Component.translatable("ui.out_of_launch_limits"));
+            HudTips.show(Component.translatable("ui.out_of_launch_limits"));
             return false;
         }
         if (homing()) {
@@ -185,8 +193,8 @@ public class VehicleMissile extends AbstractVehicleWeapon<VehicleMissileWeaponDa
      *
      * @return true if it left
      */
-    public boolean fireRound(java.util.function.Predicate<net.minecraft.world.item.ItemStack> round,
-                             net.minecraft.world.entity.Entity target) {
+    public boolean fireRound(Predicate<ItemStack> round,
+                             Entity target) {
         MissileHolderUnit holder = missileHolder();
         int slot = holder == null ? -1 : holder.nextLoaded(round);
         if (slot < 0 || isCoolingDown()) {
@@ -202,8 +210,8 @@ public class VehicleMissile extends AbstractVehicleWeapon<VehicleMissileWeaponDa
     }
 
     private boolean launchSlot(MissileHolderUnit holder, int slot, AimContext aimContext,
-                               @Nullable net.minecraft.world.entity.Entity locked,
-                               @Nullable net.minecraft.world.entity.Entity operator) {
+                               @Nullable Entity locked,
+                               @Nullable Entity operator) {
         if (!Munitions.fire(getVehicle(), getWeaponUnit(), fromStation(holder, slot, aimContext), holder.round(slot),
                 0f, locked, operator)) {
             return false;
@@ -272,21 +280,21 @@ public class VehicleMissile extends AbstractVehicleWeapon<VehicleMissileWeaponDa
     }
 
     @Override
-    public net.minecraft.nbt.CompoundTag serializeNBT(net.minecraft.core.HolderLookup.Provider provider) {
-        net.minecraft.nbt.CompoundTag tag = super.serializeNBT(provider);
+    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
+        CompoundTag tag = super.serializeNBT(provider);
         if (rackRound != Items.AIR) {
-            tag.putString("RackRound", net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(rackRound)
+            tag.putString("RackRound", BuiltInRegistries.ITEM.getKey(rackRound)
                     .toString());
         }
         return tag;
     }
 
     @Override
-    public void deserializeNBT(net.minecraft.core.HolderLookup.Provider provider, net.minecraft.nbt.CompoundTag nbt) {
+    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
         super.deserializeNBT(provider, nbt);
         this.rackRound = nbt.contains("RackRound")
-                ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(
-                net.minecraft.resources.ResourceLocation.parse(nbt.getString("RackRound")))
+                ? BuiltInRegistries.ITEM.get(
+                ResourceLocation.parse(nbt.getString("RackRound")))
                 : Items.AIR;
     }
 

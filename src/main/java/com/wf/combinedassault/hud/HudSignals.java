@@ -1,10 +1,15 @@
 package com.wf.combinedassault.hud;
 
+import com.wf.combinedassault.aircraft.FixedWingVehicle;
 import com.wf.combinedassault.radar.client.RadarExpanded;
 import com.wf.combinedassault.aircraft.RotaryWingVehicle;
 import com.wf.combinedassault.naval.ShipVehicle;
 import com.wf.combinedassault.radar.WarningReceiver;
+import com.wf.combinedassault.uav.fpv.client.FpvKeys;
+import com.wf.combinedassault.uav.fpv.payload.FpvPayloadTypes;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.client.VehicleKeys;
+import com.wf.combinedassault.vehicle.drive.Transmission;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.entity.GroundVehicle;
 import com.wf.combinedassault.vehicle.entity.NoneVehicle;
@@ -15,9 +20,12 @@ import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.VehicleDecoyFlare;
 import com.wf.combinedassault.weapon.VehicleGrenade;
 import com.wf.combinedassault.weapon.VehicleMissile;
+import com.wf.combinedassault.weapon.client.BarrelHud;
+import com.wf.combinedassault.weapon.part.WeaponBayUnit;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
 import com.wf.wflib.ammo.api.client.AmmoGlyph;
+import com.wf.wflib.radio.api.client.RadioCatalog;
 import com.wf.wflib.ui.api.Signals;
 import com.wf.wflib.ui.api.Subject;
 import net.minecraft.client.Minecraft;
@@ -29,6 +37,7 @@ import org.joml.Vector3f;
 import static com.wf.combinedassault.hud.HudSubjects.*;
 
 import java.util.List;
+import java.util.Locale;
 
 /** Every value CA's HUD layouts can read. Units: km/h, metres, percent, degrees, seconds. */
 public final class HudSignals {
@@ -88,9 +97,9 @@ public final class HudSignals {
         });
         Signals.num(VEHICLE, "power", AbstractVehicle::getPower);
         Signals.bool(VEHICLE, "radio", v -> v.radioVoice() != null);
-        Signals.text(VEHICLE, "radio_station", 48, v -> com.wf.wflib.radio.api.client.RadioCatalog.name(v.radioStation())
-                .getString().toUpperCase(java.util.Locale.ROOT));
-        Signals.text(VEHICLE, "radio_key", 16, v -> HudCache.keyName(com.wf.combinedassault.uav.fpv.client.FpvKeys.RADIO_STATION));
+        Signals.text(VEHICLE, "radio_station", 48, v -> RadioCatalog.name(v.radioStation())
+                .getString().toUpperCase(Locale.ROOT));
+        Signals.text(VEHICLE, "radio_key", 16, v -> HudCache.keyName(FpvKeys.RADIO_STATION));
         Signals.text(VEHICLE, "fuel_label", 24, HudCache::fuelLabel);
         Signals.bool(VEHICLE, "cargo_door", v -> v.cargoDoor() != null);
         Signals.num(VEHICLE, "payload_pct", v -> v.overload() * 100);
@@ -106,6 +115,9 @@ public final class HudSignals {
         Signals.bool(VEHICLE, "wheeled", v -> v instanceof WheeledVehicle);
         Signals.bool(VEHICLE, "manual", v -> v instanceof GroundVehicle g
                 && g.transmission != null && !g.automatic());
+        Signals.bool(VEHICLE, "transmission", v -> v instanceof GroundVehicle g && g.transmission != null);
+        Signals.text(VEHICLE, "gear", 2, v -> v instanceof GroundVehicle g && g.transmission != null
+                ? Transmission.label(g.getGear()) : "");
         Signals.bool(VEHICLE, "lights", v -> !VehicleLight.of(v).isEmpty());
         Signals.bool(VEHICLE, "hitches", v -> !v.towing.hitches.isEmpty());
         Signals.bool(VEHICLE, "ship", v -> v instanceof ShipVehicle);
@@ -205,7 +217,7 @@ public final class HudSignals {
         Signals.text(subject, "round", 24, w -> HudCache.roundLabel(shownRound(w)));
         Signals.items(subject, "round_variants", w -> HudCache.roundVariants(shownRound(w)), AmmoGlyph.VARIANT);
         Signals.num(subject, "round_variant_count", w -> HudCache.roundVariants(shownRound(w)).size());
-        com.wf.combinedassault.weapon.client.BarrelHud.weapon(subject);
+        BarrelHud.weapon(subject);
     }
 
     private static void flight() {
@@ -222,20 +234,20 @@ public final class HudSignals {
         Signals.num(FIXED, "throttle", f -> f.getThrottleLevel());
         Signals.bool(FIXED, "brake", f -> (int) f.getThrottleLevel() == 0 && f.controlUnit.backward && f.onGround());
         Signals.bool(FIXED, "can_lift_off", f -> f.getDeltaMovement().length() >= f.liftOffSpeed());
-        Signals.bool(FIXED, "gear_up", com.wf.combinedassault.aircraft.FixedWingVehicle::isLandingGearUp);
-        Signals.bool(FIXED, "airbrake", com.wf.combinedassault.aircraft.FixedWingVehicle::isAirbrakeOn);
+        Signals.bool(FIXED, "gear_up", FixedWingVehicle::isLandingGearUp);
+        Signals.bool(FIXED, "airbrake", FixedWingVehicle::isAirbrakeOn);
         Signals.num(FIXED, "flaps", f -> f.flapUnits.isEmpty() ? Double.NaN : f.flapUnits.get(0).level(partialTick()));
         Signals.num(FIXED, "nozzle", f -> f.thrustUnit == null ? Double.NaN : f.thrustUnit.getXRot());
         Signals.num(FIXED, "bays", f -> {
             int n = 0;
             for (var unit : f.getPartUnits()) {
-                n += unit instanceof com.wf.combinedassault.weapon.part.WeaponBayUnit ? 1 : 0;
+                n += unit instanceof WeaponBayUnit ? 1 : 0;
             }
             return n;
         });
         Signals.bool(FIXED, "bay_open", f -> {
             for (var unit : f.getPartUnits()) {
-                if (unit instanceof com.wf.combinedassault.weapon.part.WeaponBayUnit bay && bay.isOn()) {
+                if (unit instanceof WeaponBayUnit bay && bay.isOn()) {
                     return true;
                 }
             }
@@ -307,10 +319,10 @@ public final class HudSignals {
         Signals.bool(PAYLOAD, "armed", p -> p.isArmed());
         Signals.bool(PAYLOAD, "live", p -> p.isLive());
         Signals.num(PAYLOAD, "arming", p -> p.armingRemaining() / 20.0);
-        Signals.text(PAYLOAD, "arm_key", 16, p -> HudCache.keyName(com.wf.combinedassault.uav.fpv.client.FpvKeys.ARM_PAYLOAD));
-        Signals.text(PAYLOAD, "fire_key", 16, p -> HudCache.keyName(com.wf.combinedassault.vehicle.client.VehicleKeys.MAIN_WEAPON_SHOOT));
-        Signals.bool(PAYLOAD, "armable", p -> p.payloadType() != com.wf.combinedassault.uav.fpv.payload.FpvPayloadTypes.SPEAKER);
-        Signals.bool(PAYLOAD, "releasable", p -> p.payloadType() == com.wf.combinedassault.uav.fpv.payload.FpvPayloadTypes.WARHEAD);
-        Signals.text(PAYLOAD, "release_key", 16, p -> HudCache.keyName(com.wf.combinedassault.vehicle.client.VehicleKeys.SECONDARY_WEAPON_SHOOT));
+        Signals.text(PAYLOAD, "arm_key", 16, p -> HudCache.keyName(FpvKeys.ARM_PAYLOAD));
+        Signals.text(PAYLOAD, "fire_key", 16, p -> HudCache.keyName(VehicleKeys.MAIN_WEAPON_SHOOT));
+        Signals.bool(PAYLOAD, "armable", p -> p.payloadType() != FpvPayloadTypes.SPEAKER);
+        Signals.bool(PAYLOAD, "releasable", p -> p.payloadType() == FpvPayloadTypes.WARHEAD);
+        Signals.text(PAYLOAD, "release_key", 16, p -> HudCache.keyName(VehicleKeys.SECONDARY_WEAPON_SHOOT));
     }
 }

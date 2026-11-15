@@ -1,5 +1,6 @@
 package com.wf.combinedassault.camo;
 
+import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.CombinedAssaultSystem;
 import com.wf.combinedassault.camo.client.CamoBrush;
 import com.wf.combinedassault.camo.client.VehicleCamoRenderer;
@@ -38,7 +39,7 @@ public final class CamoSystem implements CombinedAssaultSystem {
             registrar.playToClient(ServerCamoAction.TYPE, ServerCamoAction.STREAM_CODEC, ServerCamoAction::handle);
             registrar.playToClient(ServerCamoSync.TYPE, ServerCamoSync.STREAM_CODEC, ServerCamoSync::handle);
         });
-        RootCommand.SUBCOMMANDS.register(com.wf.combinedassault.CombinedAssault.modLocation("camo"), 0, CamoCommand::get);
+        RootCommand.SUBCOMMANDS.register(CombinedAssault.modLocation("camo"), 0, CamoCommand::get);
     }
 
     @Override

@@ -1,6 +1,8 @@
 package com.wf.combinedassault.indirect;
 
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.VehicleMissile;
+import com.wf.combinedassault.weapon.ordnance.Munitions;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.pojo.AimContext;
 import net.minecraft.world.phys.Vec3;
@@ -49,7 +51,7 @@ public final class IndirectFire {
 
     /** Round flies its own guidance to the point: nothing to solve. */
     public static boolean selfGuided(WeaponUnit unit) {
-        return unit.getCurrentWeapon().orElse(null) instanceof com.wf.combinedassault.weapon.VehicleMissile;
+        return unit.getCurrentWeapon().orElse(null) instanceof VehicleMissile;
     }
 
     /** Null if the current weapon's round isn't one the solver understands. */
@@ -59,7 +61,7 @@ public final class IndirectFire {
         if (weapon == null) {
             return null;
         }
-        return com.wf.combinedassault.weapon.ordnance.Munitions.spec(weapon.solutionRound());
+        return Munitions.spec(weapon.solutionRound());
     }
 
     public static Vec3 muzzleOf(WeaponUnit unit) {

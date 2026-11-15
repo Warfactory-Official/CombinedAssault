@@ -2,6 +2,7 @@ package com.wf.combinedassault.indirect.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.dynamics.PhysicsEngine;
+import com.wf.combinedassault.indirect.LayingMode;
 import com.wf.combinedassault.indirect.*;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -213,7 +214,7 @@ public class BallisticSolverGameTest {
     public static void layingSolvesAndPointsAtTheTarget(GameTestHelper helper) {
         RoundSpec spec = new RoundSpec(25, 0.005, PhysicsEngine.G, 20 * 60 * 20);
         GunLaying laying = new GunLaying();
-        laying.setMode(com.wf.combinedassault.indirect.LayingMode.MANUAL);
+        laying.setMode(LayingMode.MANUAL);
         Vec3 muzzle = new Vec3(0, 70, 0);
         Vec3 target = new Vec3(1200, 70, -900);
         if (!laying.solveTo(spec, muzzle, target)) {

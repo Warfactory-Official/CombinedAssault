@@ -12,6 +12,8 @@ import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.pojo.AimContext;
 import com.wf.wflib.ammo.api.AmmoItems;
 import com.wf.wflib.round.api.Rounds;
+import java.util.ArrayList;
+import java.util.Arrays;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
@@ -122,7 +124,7 @@ public class BallisticsShellGameTest {
         aim.from = muzzle;
         // Straight up: keeps round in this arena's chunk, not ticked into another test.
         aim.direction = new Vec2(-90.0f, 0.0f);
-        if (!gun.shoot(new java.util.ArrayList<>(List.of(aim)), null)) {
+        if (!gun.shoot(new ArrayList<>(List.of(aim)), null)) {
             vehicle.discard();
             helper.fail("the gun refused to fire a loaded round");
             return;
@@ -130,9 +132,9 @@ public class BallisticsShellGameTest {
 
         AABB around = new AABB(muzzle.subtract(24.0, 24.0, 24.0), muzzle.add(24.0, 64.0, 24.0));
         long[] rounds = Rounds.within(level, around);
-        List<ResourceLocation> fired = java.util.Arrays.stream(rounds)
+        List<ResourceLocation> fired = Arrays.stream(rounds)
                 .mapToObj(key -> Rounds.preset(level, key).id()).toList();
-        java.util.Arrays.stream(rounds).forEach(key -> Rounds.destroy(level, key));
+        Arrays.stream(rounds).forEach(key -> Rounds.destroy(level, key));
         vehicle.discard();
         if (!fired.equals(List.of(APFSDS))) {
             helper.fail("one shot fired " + fired + ", expected exactly " + APFSDS);

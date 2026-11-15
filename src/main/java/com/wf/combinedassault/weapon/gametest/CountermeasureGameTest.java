@@ -2,6 +2,7 @@ package com.wf.combinedassault.weapon.gametest;
 
 import com.mojang.authlib.GameProfile;
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.uav.fpv.gametest.KamikazeKit;
 import com.wf.combinedassault.uav.fpv.payload.FpvTrigger;
 import com.wf.combinedassault.uav.fpv.payload.PayloadUnit;
@@ -13,9 +14,11 @@ import com.wf.wflib.grenade.api.ChargeSpec;
 import com.wf.wflib.grenade.api.GrenadeWarheads;
 import com.wf.wflib.grenade.api.SightBlocker;
 import com.wf.wflib.grenade.api.ThrownCharge;
+import com.wf.wflib.missile.api.AttackProfile;
 import com.wf.wflib.missile.api.MissileEntity;
 import com.wf.wflib.missile.api.MissilePreset;
 import com.wf.wflib.missile.api.MissilePresets;
+import com.wf.wflib.missile.api.SeekerMode;
 import com.wf.wflib.recon.api.*;
 import com.wf.wflib.round.api.KineticPreset;
 import com.wf.wflib.round.api.KineticPresets;
@@ -124,9 +127,9 @@ public class CountermeasureGameTest {
             return;
         }
         MissileEntity m = javelin.build(helper.getLevel(), Vec3.ZERO);
-        helper.assertTrue(m.seeker().mode() == com.wf.wflib.missile.api.SeekerMode.INFRARED,
+        helper.assertTrue(m.seeker().mode() == SeekerMode.INFRARED,
                 "Javelin seeker " + m.seeker().mode());
-        helper.assertTrue(m.flight().getAttackProfile() == com.wf.wflib.missile.api.AttackProfile.LOFT,
+        helper.assertTrue(m.flight().getAttackProfile() == AttackProfile.LOFT,
                 "Javelin attack profile " + m.flight().getAttackProfile());
         m.discard();
         helper.succeed();
@@ -723,7 +726,7 @@ public class CountermeasureGameTest {
         String[][] weapons = {{"decoy_flare", "flare_cartridge"}, {"launcher_smoke_grenade", "smoke_grenade"},
                 {"launcher_aps_grenade", "aps_grenade"}};
         for (String[] w : weapons) {
-            var index = com.wf.combinedassault.pack.CommonAssetsManager.vehicleWeaponManager()
+            var index = CommonAssetsManager.vehicleWeaponManager()
                     .getIndex(CombinedAssault.modLocation(w[0]));
             helper.assertTrue(index.isPresent() && index.get().data().getReload() != null, w[0] + " weapon missing");
             ItemStack ammo = new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("wflib", w[1])));

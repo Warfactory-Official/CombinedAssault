@@ -6,6 +6,8 @@ import com.wf.combinedassault.pack.client.ClientAssetsManager;
 import com.wf.combinedassault.props.PropsContent;
 import com.wf.combinedassault.weapon.kit.HardwareKits;
 import com.wf.wflib.core.api.WFSystems;
+import com.wf.wflib.missile.api.MissileContent;
+import com.wf.wflib.round.api.RoundContent;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -44,10 +46,10 @@ public class VehicleTabs {
                         MISC_ITEMS.forEach(itemLike -> output.accept(itemLike.get()));
                         CommonAssetsManager.ensureLoaded();
                         HardwareKits.all().stream().filter(kit -> kit.item() == null).forEach(kit -> output.accept(kit.stack()));
-                        com.wf.wflib.missile.api.MissileContent.missileItems().stream().map(DeferredHolder::get)
+                        MissileContent.missileItems().stream().map(DeferredHolder::get)
                                 .filter(i -> i.preset().id().getNamespace().equals(CombinedAssault.MOD_ID))
                                 .forEach(output::accept);
-                        com.wf.wflib.round.api.RoundContent.shellItems().stream().map(DeferredHolder::get)
+                        RoundContent.shellItems().stream().map(DeferredHolder::get)
                                 .filter(i -> i.preset().id().getNamespace().equals(CombinedAssault.MOD_ID))
                                 .forEach(output::accept);
                     })

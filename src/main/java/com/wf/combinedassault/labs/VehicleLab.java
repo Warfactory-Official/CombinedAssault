@@ -1,8 +1,13 @@
 package com.wf.combinedassault.labs;
 
+import com.wf.combinedassault.ballistics.Ballistics;
+import com.wf.combinedassault.ballistics.DamageSystem;
+import com.wf.combinedassault.ballistics.spall.Spall;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.armor.api.hull.HullResult;
 import com.wf.wflib.damage.api.Threat;
 import com.wf.wflib.labs.api.LabContext;
+import com.wf.wflib.labs.api.LabTable;
 import com.wf.wflib.round.api.KineticPreset;
 import com.wf.wflib.round.api.KineticPresets;
 import com.wf.wflib.round.api.Rounds;
@@ -66,7 +71,7 @@ public final class VehicleLab {
     }
 
     private static int column(String name) {
-        List<com.wf.wflib.labs.api.LabTable.Column> columns = VehicleProducer.TABLE.columns();
+        List<LabTable.Column> columns = VehicleProducer.TABLE.columns();
         for (int i = 0; i < columns.size(); i++) {
             if (columns.get(i).name().equals(name)) {
                 return i;
@@ -79,14 +84,14 @@ public final class VehicleLab {
     public static double spallNanos(ServerLevel level, Shot shot, Vec3 velocity, Threat threat, float damage, int n) {
         StrikeSource source = new StrikeSource(level, threat, shot.ray().start(), velocity);
         Vec3 hit = shot.ray().hit().point();
-        com.wf.wflib.armor.api.hull.HullResult r = com.wf.combinedassault.ballistics.Ballistics.resolve(shot.rig().vehicle, source,
+        HullResult r = Ballistics.resolve(shot.rig().vehicle, source,
                 damage, hit, null);
         if (r == null || !r.through()) {
             throw new IllegalStateException("shot does not penetrate: " + (r == null ? "no model" : r.outcome()));
         }
         long t0 = System.nanoTime();
         for (int i = 0; i < n; i++) {
-            com.wf.combinedassault.ballistics.spall.Spall.onPenetration(shot.rig().vehicle, source, r, damage, damage);
+            Spall.onPenetration(shot.rig().vehicle, source, r, damage, damage);
         }
         return (System.nanoTime() - t0) / (double) n;
     }
@@ -104,17 +109,17 @@ public final class VehicleLab {
         StrikeSource source = new StrikeSource(level, threat, position, velocity);
         for (int i = 0; i < n / 4; i++) {
             vehicle.setHealth(vehicle.getMaxHealth());
-            com.wf.combinedassault.ballistics.DamageSystem.hurt(source, damage, vehicle);
+            DamageSystem.hurt(source, damage, vehicle);
         }
         long t0 = System.nanoTime();
         for (int i = 0; i < n; i++) {
             vehicle.setHealth(vehicle.getMaxHealth());
-            com.wf.combinedassault.ballistics.DamageSystem.hurt(source, damage, vehicle);
+            DamageSystem.hurt(source, damage, vehicle);
         }
         double hurt = (System.nanoTime() - t0) / (double) n;
         t0 = System.nanoTime();
         for (int i = 0; i < n; i++) {
-            com.wf.combinedassault.ballistics.Ballistics.resolve(vehicle, source, damage, hit, null);
+            Ballistics.resolve(vehicle, source, damage, hit, null);
         }
         return new double[]{hurt, (System.nanoTime() - t0) / (double) n};
     }

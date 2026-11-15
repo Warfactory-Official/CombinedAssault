@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec2;
 
 /**
  * The MQ-9's six stations: racked and launched from their own rails. WFLib-dependent tests pass untested
@@ -154,7 +156,7 @@ public class PylonGameTest {
             }
             AimContext aim = new AimContext();
             aim.from = vehicle.position().add(0, 30, 0);
-            aim.direction = new net.minecraft.world.phys.Vec2(0, 0);
+            aim.direction = new Vec2(0, 0);
             aim.position = vehicle.position().add(0, 0, 60);
             Vec3 carrier = vehicle.getDeltaMovement();
             boolean fired = launcher.shoot(new ArrayList<>(List.of(aim)), null);
@@ -190,12 +192,12 @@ public class PylonGameTest {
             AbstractVehicleWeapon<?> launcher = launcher(vehicle);
             AimContext aim = new AimContext();
             aim.from = vehicle.position().add(0, 30, 0);
-            aim.direction = new net.minecraft.world.phys.Vec2(-90, 0);
+            aim.direction = new Vec2(-90, 0);
             aim.position = vehicle.position().add(0, 0, 60);
             boolean fired = launcher != null && launcher.shoot(new ArrayList<>(List.of(aim)), null);
             List<Entity> projectiles = helper.getLevel().getEntities((Entity) null,
                     vehicle.getBoundingBox().inflate(40), e -> e != vehicle && !(e instanceof AbstractVehicle)
-                            && !(e instanceof net.minecraft.world.entity.LivingEntity));
+                            && !(e instanceof LivingEntity));
             vehicle.discard();
             if (launcher == null) {
                 helper.fail("the MQ-9 has no launcher");

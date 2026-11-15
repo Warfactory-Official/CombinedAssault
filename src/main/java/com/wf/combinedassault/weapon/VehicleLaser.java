@@ -19,6 +19,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import net.minecraft.world.phys.AABB;
 
 /** Beam, one tick per shot: first entity on the aim line burns (wflib {@link LaserDamage}); no ammo, vehicle energy. */
 public class VehicleLaser extends AbstractVehicleWeapon<VehicleLaserWeaponData> {
@@ -64,7 +65,7 @@ public class VehicleLaser extends AbstractVehicleWeapon<VehicleLaserWeaponData> 
             end = block.getLocation();
         }
         EntityHitResult hit = ProjectileUtil.getEntityHitResult(level, null, from, end,
-                new net.minecraft.world.phys.AABB(from, end).inflate(1.0), this::burnable, 0.0f);
+                new AABB(from, end).inflate(1.0), this::burnable, 0.0f);
         if (hit != null) {
             LaserDamage.burn(level, from, hit.getEntity(), getData().power, shooter);
         } else {

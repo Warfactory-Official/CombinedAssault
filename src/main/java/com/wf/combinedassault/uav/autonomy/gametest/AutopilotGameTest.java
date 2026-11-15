@@ -3,6 +3,7 @@ package com.wf.combinedassault.uav.autonomy.gametest;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.gametest.TestLanes;
+import com.wf.wflib.drone.api.DroneProgram;
 import com.wf.wflib.drone.api.*;
 import com.wf.wflib.testkit.api.ForcedChunks;
 import net.minecraft.core.BlockPos;
@@ -119,7 +120,7 @@ public class AutopilotGameTest {
                     "pad flew " + result.drones() + ", not the parked quadcopter");
             helper.assertTrue(DroneTracker.drones(level).size() == before, "pad spawned a wflib drone too");
             helper.assertTrue(player.getUUID().equals(quad.drone.getOperatorId()), "operator not stamped");
-            quad.drone.orders().setProgram(com.wf.wflib.drone.api.DroneProgram.EMPTY);
+            quad.drone.orders().setProgram(DroneProgram.EMPTY);
             quad.discard();
             level.removeBlock(padPos, false);
             helper.succeed();

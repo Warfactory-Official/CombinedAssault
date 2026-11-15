@@ -1,0 +1,9 @@
+{
+  "model": "combinedassault:models/weapon/ma/ma_m240b.glb",
+  "item": "ma_gpmg:m240b",
+  "weapons": ["combinedassault:ma_m240b"],
+  "fits": ["door", "pintle"],
+  "install_ticks": 80,
+  "belt": {"link": "ma_lmgs:models/mag_7.62x51_100_belt_link.glb", "pitch": 0.0151},
+  "station": {"optical_sight_type": "operator", "zoom_max": 2}
+}

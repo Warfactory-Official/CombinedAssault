@@ -9,6 +9,7 @@ import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 public class TrackUnitData extends SuspensionUnitData {
 
@@ -48,8 +49,8 @@ public class TrackUnitData extends SuspensionUnitData {
     }
 
     @Override
-    public void initFrames(@org.jetbrains.annotations.Nullable VehicleCubeGroup part,
-                           @org.jetbrains.annotations.Nullable VehicleCubeGroup pitch) {
+    public void initFrames(@Nullable VehicleCubeGroup part,
+                           @Nullable VehicleCubeGroup pitch) {
         super.initFrames(part, pitch);
         partCubeOBBs = new ArrayList<>();
         if (part == null) {

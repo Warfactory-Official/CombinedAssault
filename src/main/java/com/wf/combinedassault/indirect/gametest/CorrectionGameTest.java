@@ -5,6 +5,7 @@ import com.wf.combinedassault.dynamics.PhysicsEngine;
 import com.wf.combinedassault.indirect.BallisticSolver;
 import com.wf.combinedassault.indirect.FireArc;
 import com.wf.combinedassault.indirect.GunLaying;
+import com.wf.combinedassault.indirect.LayingMode;
 import com.wf.combinedassault.indirect.RoundSpec;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -131,7 +132,7 @@ public class CorrectionGameTest {
     @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void correctingAGunLaidOnAPointMovesThePoint(GameTestHelper helper) {
         GunLaying laying = new GunLaying();
-        laying.setMode(com.wf.combinedassault.indirect.LayingMode.MANUAL);
+        laying.setMode(LayingMode.MANUAL);
         laying.setArc(FireArc.HIGH);
         Vec3 muzzle = new Vec3(0, 70, 0);
         Vec3 target = new Vec3(0, 70, 250);
@@ -164,7 +165,7 @@ public class CorrectionGameTest {
     /** A hand-laid gun on the given elevation, with the ladder wound to the rung at {@code rung}. */
     private static GunLaying laid(RoundSpec spec, double elevation, int rung) {
         GunLaying laying = new GunLaying();
-        laying.setMode(com.wf.combinedassault.indirect.LayingMode.MANUAL);
+        laying.setMode(LayingMode.MANUAL);
         laying.setArc(elevation > BallisticSolver.bestElevation(spec) ? FireArc.HIGH : FireArc.LOW);
         laying.setElevation(elevation);
         while (laying.stepIndex() != rung) {

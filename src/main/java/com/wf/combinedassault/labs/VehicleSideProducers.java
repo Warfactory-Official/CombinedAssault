@@ -2,6 +2,8 @@ package com.wf.combinedassault.labs;
 
 import com.wf.wflib.labs.api.*;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,7 +37,7 @@ final class VehicleSideProducers {
         @Override
         public void produce(LabContext ctx, LabSink sink) {
             VehicleProducer.Groups g = VehicleProducer.groups(ctx);
-            Map<String, LabLauncher> byId = new java.util.HashMap<>();
+            Map<String, LabLauncher> byId = new HashMap<>();
             for (LabLauncher l : ctx.launchers()) {
                 byId.put(l.id(), l);
             }
@@ -73,9 +75,9 @@ final class VehicleSideProducers {
             VehicleProducer.Grid grid = VehicleProducer.grid(ctx, rigs, keys);
             sink.row("vehicles", rigs.size(), "");
             sink.row("sweep_keys", keys, "distinct round x muzzle velocity x damage scale");
-            sink.row("ranges", grid.ranges().length, java.util.Arrays.toString(grid.ranges()));
+            sink.row("ranges", grid.ranges().length, Arrays.toString(grid.ranges()));
             sink.row("azimuths", grid.azimuths().length, "step " + (grid.azimuths().length > 1 ? grid.azimuths()[1] : 0));
-            sink.row("elevations", grid.elevations().length, java.util.Arrays.toString(grid.elevations()));
+            sink.row("elevations", grid.elevations().length, Arrays.toString(grid.elevations()));
             sink.row("aims", grid.parts() ? 1 : 0, grid.parts() ? "hull + parts" : "hull");
             sink.row("max_rows", ctx.paramNum("max_rows", 1.5e6), "");
             sink.row("coarsened", grid.coarsened().isEmpty() ? 0 : 1, grid.coarsened());

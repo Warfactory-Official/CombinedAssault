@@ -21,6 +21,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -429,8 +430,8 @@ public final class Sightlines {
     /** Fills {@link #depth} (< {@link #REACH} = obstructed) and {@link #who}. */
     private void trace(Vec3 eye, Quaternionf look, float fov, boolean[] hidden) {
         rays(fov);
-        java.util.Arrays.fill(depth, REACH);
-        java.util.Arrays.fill(who, -1);
+        Arrays.fill(depth, REACH);
+        Arrays.fill(who, -1);
         Quaternionf inverse = new Quaternionf(look).conjugate();
         Matrix4f pose = new Matrix4f();
         Matrix4f toCam = new Matrix4f();

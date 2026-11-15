@@ -1,12 +1,16 @@
 package com.wf.combinedassault.uav.fpv.payload;
 
 import com.google.gson.JsonObject;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.pack.sync.SyncDataSerializers;
 import com.wf.combinedassault.uav.fpv.FpvImpact;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
+import com.wf.wflib.drone.api.StrappedExplosive;
+import java.util.ArrayList;
+import java.util.Arrays;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -17,6 +21,12 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 /**
  * Mount (this unit) + payload (the load), matching the host's missile rack so a new ordnance kind is a
@@ -62,7 +72,7 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
         this.payload = data.createPayload();
         // Fuze countdown synced for ARMING-vs-ARMED HUD state; only bit SwitchableUnit doesn't already carry.
         this.getSyncData().define(SyncDataSerializers.INT, this::setArmedTicks, this::getArmedTicks, 0);
-        java.util.Arrays.fill(this.syncedSlots, ItemStack.EMPTY);
+        Arrays.fill(this.syncedSlots, ItemStack.EMPTY);
         this.getSyncData().define(SyncDataSerializers.STRING, id -> this.syncedType = id,
                 () -> this.payload == null ? "" : this.payload.type().id().toString(), "");
         for (int i = 0; i < SYNCED_SLOTS; i++) {
@@ -92,7 +102,7 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
         if (!vehicle.level().isClientSide()) {
             return payload == null ? List.of() : payload.contents();
         }
-        List<ItemStack> out = new java.util.ArrayList<>(SYNCED_SLOTS);
+        List<ItemStack> out = new ArrayList<>(SYNCED_SLOTS);
         for (ItemStack stack : syncedSlots) {
             if (!stack.isEmpty()) {
                 out.add(stack);
@@ -356,8 +366,8 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
      * cartridges true size along the hull axis (wflib ammo NONE context); others item-sized.
      */
     @Override
-    @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
-    public void render(com.mojang.blaze3d.vertex.PoseStack poseStack, net.minecraft.client.renderer.MultiBufferSource
+    @OnlyIn(Dist.CLIENT)
+    public void render(PoseStack poseStack, MultiBufferSource
             bufferSource, int packedLight, float partialTick) {
         Vec3 at = data.getAttachOffset();
         int n = remaining();
@@ -365,16 +375,16 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
             ItemStack item = syncedSlots[i];
             double dx = n == 1 ? 0 : (i % 2 - 0.5) * RACK_SPACING;
             double dz = n == 1 ? 0 : (i / 2 - 0.5) * RACK_SPACING;
-            boolean cartridge = item.is(com.wf.wflib.drone.api.StrappedExplosive.TAG);
+            boolean cartridge = item.is(StrappedExplosive.TAG);
             poseStack.pushPose();
             poseStack.translate(at.x + dx, at.y, at.z + dz);
             if (!cartridge) {
                 poseStack.scale(ITEM_SCALE, ITEM_SCALE, ITEM_SCALE);
             }
-            net.minecraft.client.Minecraft.getInstance().getItemRenderer().renderStatic(item, cartridge
-                            ? net.minecraft.world.item.ItemDisplayContext.NONE
-                            : net.minecraft.world.item.ItemDisplayContext.FIXED, packedLight,
-                    net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, poseStack, bufferSource,
+            Minecraft.getInstance().getItemRenderer().renderStatic(item, cartridge
+                            ? ItemDisplayContext.NONE
+                            : ItemDisplayContext.FIXED, packedLight,
+                    OverlayTexture.NO_OVERLAY, poseStack, bufferSource,
                     vehicle.level(), 0);
             poseStack.popPose();
         }

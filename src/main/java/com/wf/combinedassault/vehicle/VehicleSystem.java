@@ -11,6 +11,7 @@ import com.wf.combinedassault.vehicle.compat.sable.SableCompat;
 import com.wf.combinedassault.vehicle.crew.CrewCommand;
 import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
 import com.wf.combinedassault.vehicle.gametest.WreckGameTest;
+import com.wf.combinedassault.vehicle.interact.InteractionActions;
 import com.wf.combinedassault.vehicle.light.IrSightMessage;
 import com.wf.combinedassault.vehicle.light.LightToggleMessage;
 import com.wf.combinedassault.vehicle.lock.VehicleLockMessage;
@@ -20,6 +21,7 @@ import com.wf.combinedassault.vehicle.part.gametest.AccessGameTest;
 import com.wf.combinedassault.vehicle.part.gametest.PickupGameTest;
 import com.wf.combinedassault.vehicle.pose.SeatPoses;
 import com.wf.combinedassault.vehicle.pose.gametest.SeatPoseGameTest;
+import com.wf.combinedassault.vehicle.sightline.CamAudit;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
@@ -49,10 +51,10 @@ public final class VehicleSystem implements CombinedAssaultSystem {
 
     @Override
     public void register(IEventBus modBus, ModContainer container) {
-        GameTestSetup.testsNeeding(modBus, java.util.Set.of("naval"), SeatPoseGameTest.class);
-        GameTestSetup.testsNeeding(modBus, java.util.Set.of("aircraft", "uav"), PickupGameTest.class);
-        GameTestSetup.testsNeeding(modBus, java.util.Set.of("aircraft"), WreckGameTest.class);
-        GameTestSetup.testsNeeding(modBus, java.util.Set.of("aircraft", "cargo"), AccessGameTest.class);
+        GameTestSetup.testsNeeding(modBus, Set.of("naval"), SeatPoseGameTest.class);
+        GameTestSetup.testsNeeding(modBus, Set.of("aircraft", "uav"), PickupGameTest.class);
+        GameTestSetup.testsNeeding(modBus, Set.of("aircraft"), WreckGameTest.class);
+        GameTestSetup.testsNeeding(modBus, Set.of("aircraft", "cargo"), AccessGameTest.class);
         VehicleContent.ITEMS.register(modBus);
         VehicleContent.ENTITIES.register(modBus);
         VehicleContent.RECIPE_SERIALIZERS.register(modBus);
@@ -77,11 +79,11 @@ public final class VehicleSystem implements CombinedAssaultSystem {
         RootCommand.SUBCOMMANDS.register(CombinedAssault.modLocation("summon"), 0, SummonCommand::get);
         RootCommand.SUBCOMMANDS.register(CombinedAssault.modLocation("spawn"), 0, SpawnCommand::get);
         RootCommand.SUBCOMMANDS.register(CombinedAssault.modLocation("camaudit"), 0,
-                com.wf.combinedassault.vehicle.sightline.CamAudit::command);
+                CamAudit::command);
         RootCommand.SUBCOMMANDS.register(CombinedAssault.modLocation("crew"), 0, CrewCommand::get);
         NeoForge.EVENT_BUS.register(VehicleEvents.class);
         AccessActions.register();
-        com.wf.combinedassault.vehicle.interact.InteractionActions.register();
+        InteractionActions.register();
         SeatPoses.register();
         SableCompat.init(modBus);
         CreateCompat.init();

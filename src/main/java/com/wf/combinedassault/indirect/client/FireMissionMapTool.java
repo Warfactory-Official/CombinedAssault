@@ -6,6 +6,7 @@ import com.wf.combinedassault.indirect.IndirectFireSpec;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.gemrender.ui.Canvas;
+import java.util.Arrays;
 import com.wf.wflib.map.api.client.*;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -110,7 +111,7 @@ public final class FireMissionMapTool implements MapTool {
                     sub.item(salvo == 1 ? "1 round" : salvo + " rounds", pos -> order(unit, pos, round, salvo));
                 }
             }
-            if (loaded > 1 && java.util.Arrays.stream(SALVOS).noneMatch(salvo -> salvo == loaded)) {
+            if (loaded > 1 && Arrays.stream(SALVOS).noneMatch(salvo -> salvo == loaded)) {
                 sub.item("all " + loaded, pos -> order(unit, pos, round, loaded));
             }
         }

@@ -10,6 +10,7 @@ import com.wf.wflib.damage.api.ThreatKind;
 import com.wf.wflib.explosion.api.BlastPayload;
 import com.wf.wflib.explosion.api.ExplosionAEF;
 import com.wf.wflib.geom.api.OBB;
+import java.util.Arrays;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -79,8 +80,8 @@ public final class AddonStrike {
 
         private void add(float k, float g) {
             if (n == keep.length) {
-                keep = java.util.Arrays.copyOf(keep, n * 2);
-                gap = java.util.Arrays.copyOf(gap, n * 2);
+                keep = Arrays.copyOf(keep, n * 2);
+                gap = Arrays.copyOf(gap, n * 2);
             }
             keep[n] = k;
             gap[n++] = g;
@@ -93,8 +94,8 @@ public final class AddonStrike {
         /** A copy with {@code metres} of air after the layers. */
         public Lead withGap(double metres) {
             Lead copy = new Lead();
-            copy.keep = java.util.Arrays.copyOf(keep, Math.max(keep.length, n + 1));
-            copy.gap = java.util.Arrays.copyOf(gap, copy.keep.length);
+            copy.keep = Arrays.copyOf(keep, Math.max(keep.length, n + 1));
+            copy.gap = Arrays.copyOf(gap, copy.keep.length);
             copy.n = n;
             copy.gap(metres);
             return copy;

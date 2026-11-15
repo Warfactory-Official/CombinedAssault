@@ -4,6 +4,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.wf.combinedassault.CombinedAssault;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 
 public enum ScriptParticles {
@@ -13,10 +14,10 @@ public enum ScriptParticles {
 
     public ParticleOptionsWrapper buildParticleOptions(String particleName, String params) {
         ResourceLocation location = CombinedAssault.resourceLocation(particleName);
-        if (!net.minecraft.core.registries.BuiltInRegistries.PARTICLE_TYPE.containsKey(location)) {
+        if (!BuiltInRegistries.PARTICLE_TYPE.containsKey(location)) {
             return null;
         }
-        var type = net.minecraft.core.registries.BuiltInRegistries.PARTICLE_TYPE.get(CombinedAssault.resourceLocation(particleName));
+        var type = BuiltInRegistries.PARTICLE_TYPE.get(CombinedAssault.resourceLocation(particleName));
         if (type == null) {
             return null;
         }

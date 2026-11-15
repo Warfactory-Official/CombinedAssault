@@ -27,6 +27,7 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import net.minecraft.gametest.framework.GameTestAssertException;
 
 /**
  * What a moving deck does to things standing on it, measured in the hull's own frame.
@@ -237,7 +238,7 @@ public class DeckParentingGameTest {
                 })
                 .thenWaitUntil(() -> {
                     if (!VehicleHarness.isHarnessed(rider)) {
-                        throw new net.minecraft.gametest.framework.GameTestAssertException("not parked yet");
+                        throw new GameTestAssertException("not parked yet");
                     }
                 })
                 .thenExecuteFor(5, () -> worst[0] = Math.max(worst[0], rider.getDeltaMovement().length()))

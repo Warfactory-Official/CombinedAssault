@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Consumer;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Shipped M983/MIM-104, not invented points: most coupling bugs are pack JSON (signed kingpin offset, axle offset).
@@ -471,7 +472,7 @@ public class TowGameTest {
         force(lane.level, lane.at, false);
     }
 
-    private static void floor(ServerLevel level, BlockPos at, net.minecraft.world.level.block.state.BlockState state) {
+    private static void floor(ServerLevel level, BlockPos at, BlockState state) {
         for (int x = -HALF_WIDTH; x <= HALF_WIDTH; x++) {
             for (int z = -BACK; z <= AHEAD; z++) {
                 level.setBlockAndUpdate(at.offset(x, 0, z), state);

@@ -103,8 +103,8 @@ public class PartUnitData {
     }
 
     /** Rig frames of this part ({@code part} / {@code pitch} role nodes); either may be null. */
-    public void initFrames(@org.jetbrains.annotations.Nullable VehicleCubeGroup part,
-                           @org.jetbrains.annotations.Nullable VehicleCubeGroup pitch) {
+    public void initFrames(@Nullable VehicleCubeGroup part,
+                           @Nullable VehicleCubeGroup pitch) {
         structureGroup = part;
         partCubeOBBs = part == null ? null : part.cubeOBBs;
         pivotOffset = part == null ? Vec3.ZERO : part.globalTransform().offset();

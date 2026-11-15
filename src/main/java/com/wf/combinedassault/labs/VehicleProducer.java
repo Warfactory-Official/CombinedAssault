@@ -1,17 +1,22 @@
 package com.wf.combinedassault.labs;
 
+import com.mojang.logging.LogUtils;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.wflib.damage.api.Threat;
 import com.wf.wflib.labs.api.*;
 import com.wf.wflib.round.api.KineticPreset;
 import com.wf.wflib.round.api.KineticPresets;
 import com.wf.wflib.round.api.Rounds;
+import java.util.Comparator;
+import java.util.TreeMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.stream.DoubleStream;
+import org.slf4j.Logger;
 
 /**
  * Every vehicle x sweep launcher x range x bearing x aim point; launchers with equal (round, muzzle velocity, damage
@@ -38,7 +43,7 @@ public final class VehicleProducer implements LabProducer {
             .build();
 
     private static final int BATCH = 96;
-    private static final org.slf4j.Logger LOG = com.mojang.logging.LogUtils.getLogger();
+    private static final Logger LOG = LogUtils.getLogger();
 
     record Arrival(Vec3 velocity, Threat threat, float damage) {
     }
@@ -87,7 +92,7 @@ public final class VehicleProducer implements LabProducer {
             keyOf.put(l.id(), key);
             reps.merge(key, l, (old, next) -> next.id().startsWith("wflib:") && !old.id().startsWith("wflib:") ? next : old);
         }
-        Map<String, String> sweepOf = new java.util.TreeMap<>();
+        Map<String, String> sweepOf = new TreeMap<>();
         keyOf.forEach((id, key) -> sweepOf.put(id, reps.get(key).id()));
         return new Groups(reps, sweepOf);
     }
@@ -106,7 +111,7 @@ public final class VehicleProducer implements LabProducer {
             }
             out.add(new Launch(l, preset, byRange));
         }
-        out.sort(java.util.Comparator.comparing(x -> x.launcher().id()));
+        out.sort(Comparator.comparing(x -> x.launcher().id()));
         return new Sweep(out, g.sweepOf());
     }
 
@@ -150,7 +155,7 @@ public final class VehicleProducer implements LabProducer {
     }
 
     static double[] steps(double step, double lo, double hi) {
-        return java.util.stream.DoubleStream.iterate(lo, x -> x <= hi + 1.0e-9, x -> x + step).toArray();
+        return DoubleStream.iterate(lo, x -> x <= hi + 1.0e-9, x -> x + step).toArray();
     }
 
     static List<VehicleRig> rigs(LabContext ctx) {

@@ -8,7 +8,7 @@ const SYSTEMS = ['hull', 'engine', 'track', 'wheel', 'turret', 'barrel', 'fuel',
 	'tail_rotor', 'wing'];
 const SOCKET_FIELDS = ['seat', 'dismount', 'view', 'sight', 'sight_lens', 'bolt', 'eject', 'era', 'slat', 'mount_point', 'hitch', 'towable',
 	'axle', 'exhaust', 'vortex', 'smoke', 'afterburner', 'camera', 'camera_zoomed', 'light', 'cargo_bay',
-	'center_of_mass', 'pivot', 'track', 'propeller', 'station'];
+	'center_of_mass', 'pivot', 'track', 'propeller', 'station', 'hand', 'foot', 'belt'];
 const MESH_FIELDS = ['era', 'slat', 'track', 'sight_lens'];
 const UNTARGETED = ['towable', 'axle', 'camera', 'camera_zoomed', 'exhaust', 'vortex', 'smoke', 'afterburner', 'light',
 	'cargo_bay', 'center_of_mass', 'pivot', 'propeller'];
@@ -43,11 +43,11 @@ const DEFAULTS = {
 	role: 'none', interface: '', field: 'seat', index: -1,
 	label: '', main: false, deck: false, solid: true, world: true, hit: false, locked: false,
 	system: 'engine', side: 'none',
-	meta_system: 'auto', skip: false, swept: 'auto', health: 0,
+	meta_system: 'auto', skip: false, swept: 'auto', health: 0, rha: -1,
 	limit_pitch: false, x_rot_min: -90, x_rot_max: 90, limit_yaw: false, y_rot_min: -180, y_rot_max: 180,
 	hidden: false, follows_clips: false, unit: '', spin: 'none', road_wheel: false,
 	light_kind: 'head', light_color: '', light_range: 0, light_intensity: 0, light_inner: 0, light_outer: 0,
-	light_shadow: true, light_cookie: '',
+	light_shadow: true, light_cookie: '', hand: 'right', foot: 'right', action: '',
 };
 const LIGHT_KINDS = {head: 'Headlight (driver toggles)', search: 'Searchlight (other crew toggle)'};
 // VehicleLight.Kind defaults: color, range (blocks), inner / outer half angle (deg).
@@ -88,6 +88,10 @@ function nodeExtras(props) {
 	} else if (role === 'socket') {
 		if (s.index >= 0) meta.index = s.index;
 		if (s.field === 'light') Object.assign(meta, lightMeta(s));
+		if (s.field === 'hand' || s.field === 'foot') {
+			meta[s.field] = s[s.field];
+			if (s.action) meta.action = s.action;
+		}
 	} else {
 		if (role === 'hit') meta.system = s.system;
 		else if (s.meta_system !== 'auto') meta.system = s.meta_system;
@@ -97,6 +101,7 @@ function nodeExtras(props) {
 		if (s.unit) meta.unit = s.unit;
 		if (s.spin !== 'none') meta.spin = s.spin;
 		if (s.health > 0) meta.health = s.health;
+		if (role === 'hit' && s.rha >= 0) meta.rha = s.rha;
 		if (role === 'none' && s.road_wheel) meta.road_wheel = true;
 		if (FRAMES.includes(role) && s.follows_clips) meta.follows_clips = true;
 		if ((role === 'part' || role === 'pitch') && s.limit_pitch) {
@@ -113,9 +118,9 @@ function nodeExtras(props) {
 }
 
 // Meta keys the panel writes; every other `combinedassault` key (light kind, color, ...) passes through.
-const OWNED_META = ['main', 'deck', 'solid', 'world', 'name', 'hit', 'index', 'system', 'side', 'skip', 'swept', 'health',
+const OWNED_META = ['main', 'deck', 'solid', 'world', 'name', 'hit', 'index', 'system', 'side', 'skip', 'swept', 'health', 'rha',
 	'x_rot_min', 'x_rot_max', 'y_rot_min', 'y_rot_max', 'unit', 'spin', 'road_wheel', 'follows_clips',
-	'kind', 'color', 'range', 'intensity', 'inner', 'outer', 'shadow', 'cookie'];
+	'kind', 'color', 'range', 'intensity', 'inner', 'outer', 'shadow', 'cookie', 'hand', 'foot', 'action'];
 // Explicit default in a source file: kept verbatim while the panel leaves it at that default.
 const META_DEFAULTS = {
 	collider: {main: false, deck: false, solid: true, world: true, hit: false},
@@ -151,6 +156,10 @@ function splitExtras(extras) {
 			if (m.shadow === false) s.light_shadow = false;
 			if (m.cookie) s.light_cookie = m.cookie;
 		}
+		if (s.field === 'hand' || s.field === 'foot') {
+			if (HANDS.includes(m[s.field])) s[s.field] = m[s.field];
+			if (typeof m.action === 'string') s.action = m.action;
+		}
 	} else {
 		if (m.system !== undefined) s[s.role === 'hit' ? 'system' : 'meta_system'] = m.system;
 		if (m.side) s.side = m.side;
@@ -159,6 +168,7 @@ function splitExtras(extras) {
 		if (m.unit) s.unit = m.unit;
 		if (m.spin) s.spin = m.spin;
 		if (m.health) s.health = m.health;
+		if (typeof m.rha === 'number') s.rha = m.rha;
 		if (m.road_wheel) s.road_wheel = true;
 		if (m.follows_clips) s.follows_clips = true;
 		if ('x_rot_min' in m || 'x_rot_max' in m) Object.assign(s, {limit_pitch: true, x_rot_min: m.x_rot_min, x_rot_max: m.x_rot_max});
@@ -1148,14 +1158,18 @@ function coplanarGroups(polygons) {
 	});
 }
 
-const ARMOR = /armou?r[_ ]?(\d+(?:\.\d+)?)/i;
+// ModelDataManager.PLATE: `armor:<id>` last token (Blender `.001` ignored).
+const PLATE = /(?:^|[\s_.])armor:([A-Za-z0-9_]+)(?:\.\d+)?$/;
+const PLATE_ID = /^[A-Za-z0-9_]*$/;
+// `armor_<mm>`: no longer read; stripped on retag.
+const LEGACY_ARMOR = /armou?r[_ ]?(\d+(?:\.\d+)?)/i;
 const DECOR = /(?:^|[_ .])decor(?:$|[_ .])/i;
 const SURFACE_WORDS = {rubber: 'rubber', glass: 'glass', soft: 'soft|fabric|cloth|canvas'};
 const SURFACE = Object.fromEntries(Object.entries(SURFACE_WORDS)
 	.map(([key, words]) => [key, new RegExp(`(?:^|[_ .])(?:${words})(?:$|[_ .])`, 'gi')]));
 
 function stripTags(name) {
-	let out = name.replace(new RegExp(ARMOR.source, 'gi'), '');
+	let out = name.replace(PLATE, '').replace(new RegExp(LEGACY_ARMOR.source, 'gi'), '');
 	for (const pattern of [new RegExp(DECOR.source, 'gi'), ...Object.values(SURFACE)]) {
 		out = out.replace(pattern, '_').replace(pattern, '_');
 	}
@@ -1167,18 +1181,26 @@ function surfaceOf(name) {
 	return Object.keys(SURFACE).find(key => new RegExp(SURFACE[key].source, 'i').test(name)) || 'steel';
 }
 
-/** `<stem>_decor` or `<stem>[_<surface>][_armor_<mm>]`: the tokens the game reads from a material name. */
-function taggedName(name, armor, surface, decor) {
+/** `<stem>_decor` or `<stem>[_<surface>][_armor:<id>]`: the tokens the game reads from a material name. */
+function taggedName(name, plate, surface, decor) {
 	let stem = stripTags(name);
 	if (decor) return stem + '_decor';
 	if (surface !== 'steel') stem += '_' + surface;
-	return stem + (armor > 0 ? `_armor_${armor}` : '');
+	return stem + (plate ? `_armor:${plate}` : '');
 }
 
-/** {armor mm, surface, decor} as the game reads the name. */
+/** {plate id ('' = none), surface, decor} as the game reads the name. */
 function materialTags(name) {
-	const armor = name.match(ARMOR);
-	return {armor: armor ? parseFloat(armor[1]) : 0, surface: surfaceOf(name), decor: DECOR.test(name)};
+	const plate = name.match(PLATE);
+	return {plate: plate ? plate[1] : '', surface: surfaceOf(name), decor: DECOR.test(name)};
+}
+
+/** Material name tokens the game skips: unbound plate faces. */
+function plateProblems(name) {
+	if (PLATE.test(name)) return [];
+	if (name.includes('armor:')) return [`material ${name}: armor:<id> not the last token or id not [A-Za-z0-9_]: unbound`];
+	if (LEGACY_ARMOR.test(name)) return [`material ${name}: armor_<mm> no longer read: bind a plate (armor:<id>, armor.plates)`];
+	return [];
 }
 
 const VIEW_FIELDS = ['seat', 'view', 'sight', 'camera', 'camera_zoomed'];
@@ -1188,10 +1210,288 @@ function viewAngle(eye, forward) {
 	return {position: eye.slice(), target: eye.map((v, i) => v + forward[i] * PX), projection: 'perspective'};
 }
 
+// ---------------------------------------------------------------- hardware kits, hand contacts
+
+// ModelDataManager.KIT_ROLES
+const KIT_ROLES = ['seat', 'view', 'bolt', 'eject', 'sight', 'sight_lens', 'hit', 'hit_surface', 'hand', 'belt'];
+const HANDS = ['right', 'left'];
+// HardwareKits.STATION_KEYS
+const STATION_KEYS = ['pose', 'dismount_offset', 'protect_passenger', 'passenger_can_use_item', 'crew_roles', 'rot_info',
+	'bolts', 'ejects', 'ammo_capacity', 'firing_mode', 'operator_on_weapon_unit', 'fire_control_sensor_type',
+	'optical_sight_type', 'with_stabilizer', 'with_focus_locker', 'with_thermal_imager', 'with_night_vision', 'with_ir',
+	'loading', 'zoom_min', 'zoom_max', 'crosshair_style', 'handling', 'optic', 'rangefinder'];
+const KIT_INSTALL_TICKS = 100;
+// KitBelts: 0 feed, 1 box mouth.
+const BELT_INDICES = [0, 1];
+// Rider arm reach from the seat socket, blocks.
+const ARM_REACH = 0.586;
+const KIT_JSON = /^(.*)\/combinedassault\/([^/]+)\/hardware\/(.+)\.json$/i;
+
+// Built-in action of the other limb.
+const WRONG_ACTION = {hand: 'brake', foot: 'shift'};
+
+function limbProblems(meta, limb) {
+	const problems = HANDS.includes(meta[limb]) ? [] : [`${limb} '${meta[limb]}' not right / left`];
+	if ('action' in meta && !(typeof meta.action === 'string' && meta.action)) {
+		problems.push(`action ${JSON.stringify(meta.action)}; expected a clip name or ${limb === 'foot' ? 'brake' : 'shift'}`);
+	} else if (meta.action === WRONG_ACTION[limb]) {
+		problems.push(`action '${meta.action}' is a ${limb === 'foot' ? 'hand' : 'foot'} action`);
+	}
+	return problems;
+}
+
+/** Error for a node role (extras.combinedassaultRole; '' = untagged) in a kit model, else null. */
+function kitRoleProblem(role) {
+	return role && !KIT_ROLES.includes(role) ? `role ${role} in a kit model; kits carry ${[...KIT_ROLES].sort().join(', ')} only` : null;
+}
+
+/** {packRoot, id} of <pack>/combinedassault/<ns>/hardware/<path>.json; null elsewhere. */
+function kitOf(file) {
+	const match = slashes(file).match(KIT_JSON);
+	return match ? {packRoot: match[1], id: `${match[2]}:${match[3]}`} : null;
+}
+
+/** Belt socket indices of a model -> problems; kit: a kit model (else never drawn). */
+function beltProblems(indices, kit) {
+	if (!indices.length) return {errors: [], warnings: []};
+	const sorted = [...indices].sort((a, b) => String(a).localeCompare(String(b)));
+	return {
+		errors: JSON.stringify(sorted) === JSON.stringify(BELT_INDICES) ? []
+			: [`belt sockets index ${JSON.stringify(sorted)}; need one each of 0 (feed) and 1 (box mouth)`],
+		warnings: kit ? [] : ['belt sockets outside a kit model: drawn for a fitted kit with `belt` only'],
+	};
+}
+
+/** `belt` xor model belt sockets => no belt drawn. */
+function kitBeltProblems(kit, sockets) {
+	if (!!kit.belt === sockets) return [];
+	return [sockets ? 'model belt sockets, kit belt unset' : 'kit belt set, model has no belt sockets'];
+}
+
+/** HardwareKit.parse refusals. */
+function kitProblems(kit) {
+	const problems = [];
+	if (typeof kit.model !== 'string' || !kit.model.includes(':')) problems.push(`model ${JSON.stringify(kit.model)}: expected a glTF id ns:path`);
+	for (const key of ['weapons', 'fits']) {
+		const v = kit[key];
+		if (!Array.isArray(v) || !v.length || !v.every(x => typeof x === 'string' && x)) problems.push(`${key}: expected a non-empty list of strings`);
+	}
+	const ticks = 'install_ticks' in kit ? kit.install_ticks : KIT_INSTALL_TICKS;
+	if (!Number.isInteger(ticks) || ticks < 0) problems.push(`install_ticks ${JSON.stringify(ticks)}: expected a whole number >= 0`);
+	for (const key of ['item', 'replaces']) {
+		if (key in kit && (typeof kit[key] !== 'string' || !kit[key].includes(':'))) problems.push(`${key} ${JSON.stringify(kit[key])}: expected an id ns:path`);
+	}
+	const belt = kit.belt;
+	if (belt !== undefined && !(belt && typeof belt.link === 'string' && belt.link.includes(':') && typeof belt.pitch === 'number' && belt.pitch > 0)) {
+		problems.push(`belt ${JSON.stringify(belt)}: expected {link: ns:path, pitch > 0}`);
+	}
+	const station = 'station' in kit ? kit.station : {};
+	if (!station || typeof station !== 'object' || Array.isArray(station)) problems.push('station: expected an object');
+	else problems.push(...Object.keys(station).filter(k => !STATION_KEYS.includes(k)).sort().map(k => `station: ${k} is no station key`));
+	return problems;
+}
+
+/** Top-level members of JSON object text: {open, members: [{key, keyStart, start, end}]}, value span [start, end). */
+function topMembers(text) {
+	const open = text.indexOf('{');
+	const members = [];
+	let depth = 0;
+	let member = null;
+	for (let i = open + 1; i < text.length; i++) {
+		const c = text[i];
+		if (c === '"') {
+			let j = i + 1;
+			while (text[j] !== '"') j += text[j] === '\\' ? 2 : 1;
+			if (depth === 0 && !member) member = {key: JSON.parse(text.slice(i, j + 1)), keyStart: i, start: -1};
+			else if (depth === 0 && member.start < 0) member.start = i;
+			i = j;
+		} else if (depth === 0 && (c === ',' || c === '}')) {
+			if (member) {
+				let end = i;
+				while (/\s/.test(text[end - 1])) end--;
+				members.push(Object.assign(member, {end}));
+			}
+			member = null;
+			if (c === '}') return {open, members};
+		} else if (!/\s/.test(c) && !(depth === 0 && c === ':')) {
+			if (depth === 0 && member.start < 0) member.start = i;
+			if (c === '{' || c === '[') depth++;
+			else if (c === '}' || c === ']') depth--;
+		}
+	}
+	throw new Error('unterminated JSON object');
+}
+
+/** Python json.dumps one-liner (", " / ": "). */
+function dumps(value) {
+	if (Array.isArray(value)) return `[${value.map(dumps).join(', ')}]`;
+	if (value && typeof value === 'object') return `{${Object.entries(value).map(([k, v]) => `${JSON.stringify(k)}: ${dumps(v)}`).join(', ')}}`;
+	return JSON.stringify(value);
+}
+
+/** tools/jsonedit.py put on a top-level key. */
+function jsonPut(text, key, value) {
+	const {open, members} = topMembers(text);
+	const hit = members.find(m => m.key === key);
+	if (hit) return text.slice(0, hit.start) + dumps(value) + text.slice(hit.end);
+	const member = `${JSON.stringify(key)}: ${dumps(value)}`;
+	const close = text.indexOf('}', open);
+	if (!members.length) return text.slice(0, open + 1) + member + text.slice(close);
+	const last = members[members.length - 1];
+	const gap = members.length > 1 ? text.slice(members[members.length - 2].end, last.keyStart) : ',' + text.slice(open + 1, members[0].keyStart);
+	return text.slice(0, last.end) + gap + member + text.slice(last.end);
+}
+
+/** tools/jsonedit.py remove on a top-level key. */
+function jsonRemove(text, key) {
+	const {members} = topMembers(text);
+	const index = members.findIndex(m => m.key === key);
+	if (index < 0) throw new Error(`no key ${key}`);
+	if (members.length === 1) return text.slice(0, members[0].keyStart) + text.slice(members[0].end);
+	if (index < members.length - 1) return text.slice(0, members[index].keyStart) + text.slice(members[index + 1].keyStart);
+	return text.slice(0, members[index - 1].end) + text.slice(members[index].end);
+}
+
+/** ca_validate.edit_kit_text. */
+function editKitText(text, values) {
+	const current = JSON.parse(text);
+	for (const [key, value] of Object.entries(values)) {
+		const absent = !(key in current);
+		const defaulted = ((key === 'item' || key === 'replaces' || key === 'belt') && !value)
+			|| (key === 'install_ticks' && value === KIT_INSTALL_TICKS && absent)
+			|| (key === 'station' && !Object.keys(value || {}).length && absent);
+		if (defaulted) {
+			if (!absent) text = jsonRemove(text, key);
+		} else if (absent || JSON.stringify(current[key]) !== JSON.stringify(value)) {
+			text = jsonPut(text, key, value);
+		}
+	}
+	return text;
+}
+
+/** ca_validate.hardpoints over [{id, def}]. */
+function kitHardpoints(vehicles, kitId, fits) {
+	const out = [];
+	for (const {id, def} of vehicles) {
+		for (const part of def.parts || []) {
+			const point = part.hardpoint;
+			if (!point || !(point.accepts || []).some(c => fits.includes(c))) continue;
+			const override = point.overrides && point.overrides[kitId];
+			out.push({vehicle: id, part: part.id, node: override && override.node || point.node, def});
+		}
+	}
+	return out;
+}
+
+/** 4 x 4, row-major. */
+function mat4Mul(a, b) {
+	return a.map(row => [0, 1, 2, 3].map(j => row.reduce((sum, v, k) => sum + v * b[k][j], 0)));
+}
+
+function localMatrix(node) {
+	if (node.matrix) return [0, 1, 2, 3].map(r => [0, 1, 2, 3].map(c => node.matrix[c * 4 + r]));
+	const [x, y, z, w] = node.rotation || [0, 0, 0, 1];
+	const s = node.scale || [1, 1, 1];
+	const t = node.translation || [0, 0, 0];
+	const r = [[1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
+		[2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
+		[2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)]];
+	return [0, 1, 2].map(i => [r[i][0] * s[0], r[i][1] * s[1], r[i][2] * s[2], t[i]]).concat([[0, 0, 0, 1]]);
+}
+
+/** World matrix per node: glTF frame, blocks. */
+function nodeWorlds(gltf) {
+	const nodes = gltf.nodes || [];
+	const parent = new Map();
+	nodes.forEach((n, i) => (n.children || []).forEach(c => parent.set(c, i)));
+	const worlds = [];
+	const world = i => worlds[i] || (worlds[i] = parent.has(i) ? mat4Mul(world(parent.get(i)), localMatrix(nodes[i])) : localMatrix(nodes[i]));
+	nodes.forEach((_, i) => world(i));
+	return worlds;
+}
+
+/** ca_validate.hardpoint_world; load(location) -> glTF json or null. */
+function hardpointWorld(def, node, load) {
+	const find = (location, name) => {
+		const gltf = load(location);
+		const index = gltf ? (gltf.nodes || []).findIndex(n => n.name === name) : -1;
+		return index < 0 ? null : nodeWorlds(gltf)[index];
+	};
+	const world = find(def.model, node);
+	if (world) return world;
+	for (const part of def.parts || []) {
+		for (const mount of part.mounts || []) {
+			const inner = find(mount.model, node);
+			if (inner) {
+				const attach = find(def.model, mount.node);
+				return attach ? mat4Mul(attach, inner) : null;
+			}
+		}
+	}
+	return null;
+}
+
+/** Inverse of rotation + translation (hardpoint frames carry no scale). */
+function rigidInverse(m) {
+	const r = [0, 1, 2].map(i => [0, 1, 2].map(j => m[j][i]));
+	const t = r.map(row => -(row[0] * m[0][3] + row[1] * m[1][3] + row[2] * m[2][3]));
+	return r.map((row, i) => [...row, t[i]]).concat([[0, 0, 0, 1]]);
+}
+
+/** {positions: drawn triangles, seats: seat socket origins} of a vehicle model (+ part mounts grafted) in `frame`
+ * (row-major), px. load(location) -> {gltf, buffers}. */
+function previewTriangles(def, frame, load) {
+	const out = [];
+	const seats = [];
+	const add = (model, base) => {
+		const {gltf, buffers} = model;
+		const worlds = nodeWorlds(gltf);
+		const nodes = gltf.nodes || [];
+		const marker = [];
+		nodes.forEach((n, i) => {
+			const role = n.extras && n.extras[ROLE];
+			marker[i] = !!(role && !FRAMES.includes(role)) || !!(n.extras && n.extras[HIDDEN]);
+		});
+		const parent = new Map();
+		nodes.forEach((n, i) => (n.children || []).forEach(c => parent.set(c, i)));
+		const hidden = i => marker[i] || (parent.has(i) && hidden(parent.get(i)));
+		nodes.forEach((node, i) => {
+			const m = mat4Mul(base, worlds[i]);
+			if (node.extras && node.extras[ROLE] === 'seat') seats.push([0, 1, 2].map(r => m[r][3] * PX));
+			if (node.mesh === undefined || hidden(i)) return;
+			for (const p of gltf.meshes[node.mesh].primitives) {
+				if ((p.mode === undefined ? 4 : p.mode) !== 4) continue;
+				const points = readAccessor(gltf, buffers, p.attributes.POSITION);
+				const order = p.indices !== undefined ? readAccessor(gltf, buffers, p.indices).map(r => r[0]) : points.map((_, k) => k);
+				for (const k of order.slice(0, order.length - order.length % 3)) {
+					const v = points[k];
+					for (let r = 0; r < 3; r++) out.push((m[r][0] * v[0] + m[r][1] * v[1] + m[r][2] * v[2] + m[r][3]) * PX);
+				}
+			}
+		});
+		return worlds;
+	};
+	const main = load(def.model);
+	if (!main) throw new Error(`vehicle model ${def.model} not in this pack`);
+	const worlds = add(main, frame);
+	for (const part of def.parts || []) {
+		for (const mount of part.mounts || []) {
+			const attach = (main.gltf.nodes || []).findIndex(n => n.name === mount.node);
+			const model = load(mount.model);
+			if (attach >= 0 && model) add(model, mat4Mul(frame, worlds[attach]));
+		}
+	}
+	return {positions: out, seats};
+}
+
 const api = {
+	KIT_ROLES, HANDS, STATION_KEYS, KIT_INSTALL_TICKS, ARM_REACH, limbProblems, kitRoleProblem, kitOf, kitProblems,
+	BELT_INDICES, beltProblems, kitBeltProblems,
+	topMembers, jsonPut, jsonRemove, editKitText, kitHardpoints, nodeWorlds, hardpointWorld, rigidInverse, mat4Mul,
+	previewTriangles,
 	VIEW_FIELDS, viewAngle,
 	SYSTEMS, SOCKET_FIELDS, MESH_FIELDS, UNTARGETED, ROLES, DEFAULTS, CLIP_NAME,
-	SOCKET_SHAPES, scaleForValue, valueOfScale, convexHull, prismAround, coplanarGroups, stripTags, surfaceOf, taggedName, materialTags,
+	SOCKET_SHAPES, scaleForValue, valueOfScale, convexHull, prismAround, coplanarGroups, stripTags, surfaceOf, taggedName, materialTags, PLATE, plateProblems,
 	lightMeta, readContainer, writeGlb, nodeExtras, splitExtras, mergeExtras, quantiseCutoff, alphaModeOf, packPaths, resourceLocationOf, finishGltf, prune,
 	weld, polygonLoops, planeGroups, hullProblems, materialSource, openEdges, readAccessor, repack, quatToEuler, decompose, planImport,
 };
@@ -1311,12 +1611,14 @@ function colliderProblems(element) {
 }
 
 /** check_object(): [errors, warnings] for one exported node. rig: the model has a body frame. */
-function checkNode(node, rig) {
+function checkNode(node, rig, kit) {
 	const errors = [];
 	const warnings = [];
 	const s = caOf(node);
 	const role = s.role;
 	const kind = kindOf(node);
+	const kitProblem = kit && kitRoleProblem(nodeExtras(node[PROP])[ROLE] || '');
+	if (kitProblem) errors.push(kitProblem);
 	if (rig && role !== 'none' && role !== 'body' && !underBody(node)) {
 		errors.push(`is a ${role} but not inside the body group`);
 	}
@@ -1350,6 +1652,7 @@ function checkNode(node, rig) {
 			errors.push(`${s.field} socket must be a mesh (${{track: 'outline = path', sight_lens: 'lens mesh'}[s.field] || 'one quad'})`);
 		}
 		if (kind === 'cube') errors.push('socket must be a locator, a group or (era/slat/track/sight_lens) a mesh');
+		if (s.field === 'hand' || s.field === 'foot') errors.push(...limbProblems(nodeExtras(s)[META], s.field));
 		if (SCALED_FIELDS[s.field] && !(node[SCALE_PROP] && node[SCALE_PROP].some(v => v !== 1))) {
 			warnings.push(`${s.field} reads its size (${SCALED_FIELDS[s.field]}) from node scale: set Value in the panel (now 1)`);
 		}
@@ -1397,10 +1700,22 @@ function checkProject() {
 		frameNames.set(node.name, true);
 	}
 	for (const node of nodes) {
-		const [e, w] = checkNode(node, bodies.length > 0);
+		const [e, w] = checkNode(node, bodies.length > 0, !!Project.ca_kit_path);
 		errors.push(...e.map(m => `${node.name}: ${m}`));
 		warnings.push(...w.map(m => `${node.name}: ${m}`));
 	}
+	const belts = nodes.filter(n => roleOf(n) === 'socket' && caOf(n).field === 'belt').map(n => caOf(n).index);
+	const belt = beltProblems(belts, !!Project.ca_kit_path);
+	errors.push(...belt.errors);
+	warnings.push(...belt.warnings);
+	const kitFile = Project.ca_kit_path && kitOf(Project.ca_kit_path);
+	if (kitFile) {
+		const def = JSON.parse(kitFs(kitFile.packRoot).readFileSync(Project.ca_kit_path, 'utf8'));
+		warnings.push(...kitBeltProblems(def, belts.length > 0));
+	}
+	const materialNames = new Set([...Object.values(Project.ca_materials || {}).map(m => m && m.name).filter(Boolean),
+		...usedTextures().map(t => t.name.replace(/\.png$/i, ''))]);
+	for (const name of materialNames) warnings.push(...plateProblems(name));
 	const names = new Map();
 	for (const texture of usedTextures()) {
 		const label = `texture ${texture.name}`;
@@ -1506,6 +1821,13 @@ async function compileTagged() {
 	const polygons = {};
 	const meshes = {};
 	try {
+		const previews = [];
+		Project.model_3d.traverse(o => { if (PREVIEW_NAMES.includes(o.name)) previews.push(o); });
+		for (const object of previews) {
+			const parent = object.parent;
+			parent.remove(object);
+			restore.push(() => parent.add(object));
+		}
 		for (const node of [...Group.all, ...Outliner.elements]) {
 			const object = node.scene_object || node.mesh;
 			if (!object) continue;
@@ -1596,24 +1918,37 @@ async function writePack(packRoot, ns, modelPath, warnings) {
 		fs.writeFileSync(w.path, w.data);
 	}
 	fs.writeFileSync(out.paths.glb, writeGlb(out.gltf, out.bin));
+	const kit = Project.ca_kit_path && kitOf(Project.ca_kit_path);
+	let kitNote = '';
+	if (kit && kit.packRoot === packRoot) {
+		const text = fs.readFileSync(Project.ca_kit_path, 'utf8');
+		const edited = editKitText(text, {model: `${ns}:models/${modelPath}.glb`});
+		if (edited !== text) fs.writeFileSync(Project.ca_kit_path, edited);
+		kitNote = `<p>Kit ${escapeHtml(kit.id)}: model ${edited !== text ? 'updated' : 'unchanged'}.</p>`;
+	}
 	const rows = Object.keys(out.locations).map(name => {
 		const written = out.writes.some(w => w.path.endsWith('/' + pngName(name)));
 		return `<li>${escapeHtml(name)} -> ${escapeHtml(out.locations[name])} (${written ? 'written' : 'in place'})</li>`;
 	}).join('');
 	showReport('CombinedAssault: exported', [], warnings,
 		`<p>Wrote ${escapeHtml(out.paths.glb)}</p><p>Textures:</p><ul>${rows}</ul>`
-		+ `<p>Vehicle json: <code>"model": "${escapeHtml(ns)}:${escapeHtml(modelPath)}"</code>. In game: /reload.</p>`);
+		+ `<p>Vehicle json: <code>"model": "${escapeHtml(ns)}:${escapeHtml(modelPath)}"</code>. In game: /reload.</p>` + kitNote);
 }
 
 // ---------------------------------------------------------------- role panel
 
 const show = (...roles) => r => roles.includes(r.role);
 const isLight = r => r.role === 'socket' && r.field === 'light';
+const isHand = r => r.role === 'socket' && r.field === 'hand';
+const isFoot = r => r.role === 'socket' && r.field === 'foot';
+const isLimb = r => isHand(r) || isFoot(r);
 
 function roleForm() {
 	const systemOptions = Object.fromEntries(SYSTEMS.map(s => [s, s]));
 	return {
 		role: {label: 'Role', type: 'select', options: ROLES, value: 'none'},
+		info_kit: {type: 'info', condition: () => !!(Project && Project.ca_kit_path),
+			text: `Hardware kit model: roles ${KIT_ROLES.join(', ')} only.`},
 		info_none: {type: 'info', condition: show('none'), text: 'Drawn and hit as the vehicle surface. Rides the nearest frame above it.'},
 		info_body: {type: 'info', condition: show('body'), text: 'Top-level group at 0 0 0, unrotated. Everything else goes inside it.'},
 		info_part: {type: 'info', condition: show('part'), text: 'Group the part turns or moves (turret yaw, wheel, door). Pivot = hinge.'},
@@ -1664,6 +1999,12 @@ function roleForm() {
 		scale_value: {label: 'Value', type: 'number', min: 0, step: 0.01, value: 1,
 			condition: r => r.role === 'socket' && !!SCALED_FIELDS[r.field],
 			description: 'Node scale the game reads as a size (bolt barrel length, eject speed, station round length, propeller radius, cargo bay size)'},
+		hand: {label: 'Hand', type: 'select', condition: isHand, options: {right: 'Right', left: 'Left'},
+			description: 'Origin = wrist target (fist end); rides its parent group'},
+		foot: {label: 'Foot', type: 'select', condition: isFoot, options: {right: 'Right', left: 'Left'},
+			description: 'Origin = ankle target (sole end); rides its parent group'},
+		action: {label: 'Action', type: 'text', condition: isLimb,
+			description: 'Empty = rest while seated; hand: shift (gear lever) or a clip name (fire, reload, unjam, switchable part id); foot: brake or a clip name: held while that applies'},
 		light_kind: {label: 'Light kind', type: 'select', condition: isLight, options: LIGHT_KINDS},
 		light_color: {label: 'Colour', type: 'text', condition: isLight, description: '#rrggbb; empty = the kind\'s colour'},
 		light_range: {label: 'Range', type: 'number', min: 0, condition: isLight, description: 'Blocks; 0 = kind default'},
@@ -1684,6 +2025,8 @@ function roleForm() {
 			description: 'Hit as the disc it spins through (rotors)', options: {auto: 'Auto', on: 'On', off: 'Off'}},
 		health: {label: 'Health', type: 'number', min: 0, condition: show('none', 'body', 'part', 'pitch', 'hit', 'hit_surface'),
 			description: '0 = system default'},
+		rha: {label: 'RHA mm', type: 'number', min: -1, condition: show('hit'),
+			description: 'mm RHA a penetrator crossing the module consumes; -1 = by system'},
 	};
 }
 
@@ -2067,13 +2410,15 @@ function keyClipDialog() {
 	}).show();
 }
 
-/** assign_armor: the selected mesh faces get a copy of their material named `<stem>[_surface]_armor_<mm>`. */
+/** assign_armor: the selected mesh faces get a copy of their material named `<stem>[_surface]_armor:<plate>`. */
 function assignArmorDialog() {
 	new Dialog({
 		id: 'ca_assign_armor',
-		title: 'Assign armour to faces',
-		form: {mm: {label: 'mm RHA', type: 'number', value: 100, min: 0}},
+		title: 'Assign armour plate to faces',
+		form: {plate: {label: 'Plate', type: 'text', value: '', description: 'armor.plates id ([A-Za-z0-9_]); empty = unbind'}},
 		onConfirm(result) {
+			const plate = result.plate.trim();
+			if (!PLATE_ID.test(plate)) return Blockbench.showQuickMessage(`Plate id '${plate}': [A-Za-z0-9_] only`, 2500);
 			const mesh = Mesh.selected[0];
 			const faces = mesh ? mesh.getSelectedFaces().map(k => mesh.faces[k]) : [];
 			if (!faces.length) return Blockbench.showQuickMessage('Select mesh faces first (face select mode)', 2500);
@@ -2084,7 +2429,7 @@ function assignArmorDialog() {
 				const baseKey = face[FACE_MATERIAL];
 				const base = baseKey && Project.ca_materials[baseKey];
 				const baseName = base && base.name !== undefined ? base.name : texture instanceof Texture ? texture.name.replace(/\.png$/i, '') : 'material';
-				const name = taggedName(baseName, result.mm, surfaceOf(baseName), false);
+				const name = taggedName(baseName, plate, surfaceOf(baseName), false);
 				const key = `armor|${name}`;
 				if (!Project.ca_materials[key]) {
 					const rgba = texture instanceof Texture
@@ -2095,12 +2440,13 @@ function assignArmorDialog() {
 				face[FACE_MATERIAL] = key;
 			}
 			Undo.finishEdit('CombinedAssault assign armour', {elements: [mesh]});
-			Blockbench.showQuickMessage(`${faces.length} face(s) at ${result.mm} mm`, 2500);
+			Blockbench.showQuickMessage(`${faces.length} face(s) -> plate ${plate || 'none'}`, 2500);
 		},
 	}).show();
 }
 
-/** Armour mm / surface / decor of the selected texture, as its name (the game reads them from the material name). */
+/** Surface / decor of the selected texture, as its name (the game reads them from the material name). Plate ids: per
+ * face only (`:` is no resource path character). */
 function tagTextureDialog() {
 	const texture = Texture.selected || Texture.all[0];
 	if (!texture) return Blockbench.showQuickMessage('Load a texture first', 2000);
@@ -2109,14 +2455,13 @@ function tagTextureDialog() {
 		id: 'ca_tag_texture',
 		title: `Material tags: ${texture.name}`,
 		form: {
-			armor: {label: 'Armour mm', type: 'number', value: tags.armor, min: 0},
 			surface: {label: 'Hit effect', type: 'select', value: tags.surface,
 				options: {steel: 'Steel (sparks, holes)', rubber: 'Rubber (black bits, dust, no hole)', glass: 'Glass (shards, glint, no hole)', soft: 'Soft (dust, fibres, no hole)'}},
 			decor: {label: 'Decor', type: 'checkbox', value: tags.decor, description: 'Never hit; shots pass'},
-			info: {type: 'info', text: 'Renames the texture; the material is named after it. Whole texture: for single faces use Assign armour to faces.'},
+			info: {type: 'info', text: 'Renames the texture; the material is named after it. Armour plates: Assign armour plate to faces.'},
 		},
 		onConfirm(result) {
-			const stem = taggedName(texture.name.replace(/\.png$/i, ''), result.armor, result.surface, result.decor);
+			const stem = taggedName(texture.name.replace(/\.png$/i, ''), '', result.surface, result.decor);
 			Undo.initEdit({textures: [texture]});
 			texture.name = /\.png$/i.test(texture.name) ? stem + '.png' : stem;
 			texture.updateMaterial && texture.updateMaterial();
@@ -2394,6 +2739,250 @@ async function importPackModel(path) {
 	return plan;
 }
 
+// ---------------------------------------------------------------- hardware kits, hand contacts
+
+const KIT_PREVIEW = 'ca_kit_preview';
+const REACH = 'ca_arm_reach';
+const PREVIEW_NAMES = [PREVIEW, KIT_PREVIEW, REACH];
+
+function packFile(packRoot, location) {
+	const cut = location.indexOf(':');
+	return cut < 0 ? null : `${packRoot}/assets/${location.slice(0, cut)}/${location.slice(cut + 1)}`;
+}
+
+function kitFs(packRoot) {
+	const fs = fsModule('fs', {scope: packRoot, message: 'Read and write the hardware kit and its models in the pack folder'});
+	if (!fs) throw new Error('No permission to read the pack folder');
+	return fs;
+}
+
+function openKitDialog() {
+	Blockbench.import({resource_id: 'combinedassault_kit', extensions: ['json'], type: 'CombinedAssault hardware kit',
+		readtype: 'text'}, files => {
+		openKit(slashes(files[0].path)).catch(err => {
+			console.error(err);
+			Blockbench.showMessageBox({title: 'Open kit failed', message: String(err && err.message || err)});
+		});
+	});
+}
+
+async function openKit(file) {
+	const kit = kitOf(file);
+	if (!kit) throw new Error('Pick <pack>/combinedassault/<namespace>/hardware/<kit>.json');
+	const fs = kitFs(kit.packRoot);
+	const def = JSON.parse(fs.readFileSync(file, 'utf8'));
+	const model = typeof def.model === 'string' && packFile(kit.packRoot, def.model);
+	if (!model || !fs.existsSync(model)) throw new Error(`kit model ${def.model} is not in this pack (${kit.packRoot})`);
+	await importPackModel(model);
+	Project.ca_kit_path = file;
+	const problems = kitProblems(def);
+	if (problems.length) showReport(`CombinedAssault: kit ${kit.id}`, problems, []);
+}
+
+function kitDialog() {
+	const file = Project.ca_kit_path;
+	if (!file) return Blockbench.showQuickMessage('Open a hardware kit first', 2000);
+	const kit = kitOf(file);
+	const fs = kitFs(kit.packRoot);
+	const def = JSON.parse(fs.readFileSync(file, 'utf8'));
+	new Dialog({
+		id: 'ca_kit',
+		title: `Hardware kit ${kit.id}`,
+		width: 600,
+		form: {
+			weapons: {label: 'Weapons', type: 'text', value: (def.weapons || []).join(', '), description: 'Weapon ids, comma separated'},
+			fits: {label: 'Fits', type: 'text', value: (def.fits || []).join(', '), description: 'Hardpoint classes, comma separated'},
+			install_ticks: {label: 'Install ticks', type: 'number', min: 0, step: 1,
+				value: 'install_ticks' in def ? def.install_ticks : KIT_INSTALL_TICKS},
+			item: {label: 'Item', type: 'text', value: def.item || '', description: 'Another mod\'s item id the kit is carried as; empty = none'},
+			replaces: {label: 'Replaces', type: 'text', value: def.replaces || '', description: 'Kit id hidden while this one loads; empty = none'},
+			station: {label: 'Station', type: 'textarea', value: 'station' in def ? JSON.stringify(def.station) : '',
+				description: `JSON object; keys: ${STATION_KEYS.join(', ')}`},
+			belt_link: {label: 'Belt link', type: 'text', value: def.belt ? def.belt.link : '',
+				description: 'Drawn belt link model id (X along the belt, Z cartridge axis, m); empty = no belt. Model: belt sockets 0 feed, 1 box mouth'},
+			belt_pitch: {label: 'Belt pitch', type: 'number', min: 0, step: 0.0001, value: def.belt ? def.belt.pitch : 0,
+				description: 'Link spacing, m'},
+		},
+		onConfirm(result) {
+			const list = text => text.split(',').map(x => x.trim()).filter(Boolean);
+			const problems = [];
+			let station = {};
+			try {
+				station = result.station.trim() ? JSON.parse(result.station) : {};
+			} catch (err) {
+				problems.push(`station: not JSON (${err.message})`);
+			}
+			const values = {weapons: list(result.weapons), fits: list(result.fits), install_ticks: Number(result.install_ticks),
+				item: result.item.trim(), replaces: result.replaces.trim(), station,
+				belt: result.belt_link.trim() ? {link: result.belt_link.trim(), pitch: Number(result.belt_pitch)} : null};
+			const checked = Object.fromEntries(Object.entries(values).filter(([k, v]) => v !== '' && v !== null
+				&& !(k === 'station' && !Object.keys(v || {}).length)));
+			problems.push(...kitProblems(Object.assign({model: 'ns:path'}, checked)));
+			if (problems.length) {
+				Blockbench.showMessageBox({title: 'Kit', message: problems.join('\n')});
+				return false;
+			}
+			const text = fs.readFileSync(file, 'utf8');
+			const edited = editKitText(text, values);
+			if (edited !== text) fs.writeFileSync(file, edited);
+			Blockbench.showQuickMessage(edited !== text ? 'Kit json written' : 'Kit json unchanged', 1500);
+		},
+	}).show();
+}
+
+function vehicleDefs(fs, packRoot) {
+	const out = [];
+	const base = `${packRoot}/combinedassault`;
+	if (!fs.existsSync(base)) return out;
+	for (const ns of fs.readdirSync(base).sort()) {
+		const walk = (dir, rel) => {
+			if (!fs.existsSync(dir)) return;
+			for (const name of fs.readdirSync(dir).sort()) {
+				const path = `${dir}/${name}`;
+				if (fs.statSync(path).isDirectory()) walk(path, `${rel}${name}/`);
+				else if (name.endsWith('.json')) out.push({id: `${ns}:${rel}${name.slice(0, -5)}`, def: JSON.parse(fs.readFileSync(path, 'utf8'))});
+			}
+		};
+		walk(`${base}/${ns}/vehicles`, '');
+	}
+	return out;
+}
+
+/** Wire circles of radius r (px) about three axes, centred at c. */
+function sphereLines(c, r) {
+	const v = [];
+	for (let axis = 0; axis < 3; axis++) {
+		for (let k = 0; k < 32; k++) {
+			for (const a of [2 * Math.PI * k / 32, 2 * Math.PI * (k + 1) / 32]) {
+				const p = [Math.cos(a) * r, Math.sin(a) * r];
+				const q = axis === 0 ? [0, p[0], p[1]] : axis === 1 ? [p[0], 0, p[1]] : [p[0], p[1], 0];
+				v.push(c[0] + q[0], c[1] + q[1], c[2] + q[2]);
+			}
+		}
+	}
+	const geometry = new THREE.BufferGeometry();
+	geometry.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+	const lines = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({color: 0x44cc88}));
+	lines.name = REACH;
+	return lines;
+}
+
+function disposeTree(object) {
+	object.traverse(o => {
+		if (o.geometry) o.geometry.dispose();
+		if (o.material) o.material.dispose();
+	});
+}
+
+function clearKitPreview() {
+	const old = Project && Project.model_3d && Project.model_3d.getObjectByName(KIT_PREVIEW);
+	if (old) {
+		old.parent.remove(old);
+		disposeTree(old);
+	}
+}
+
+function previewKitDialog() {
+	const file = Project.ca_kit_path;
+	if (!file) return Blockbench.showQuickMessage('Open a hardware kit first', 2000);
+	const kit = kitOf(file);
+	const fs = kitFs(kit.packRoot);
+	const def = JSON.parse(fs.readFileSync(file, 'utf8'));
+	const points = kitHardpoints(vehicleDefs(fs, kit.packRoot), kit.id, def.fits || []);
+	if (!points.length) return Blockbench.showQuickMessage('No vehicle hardpoint accepts the kit\'s fits', 2500);
+	new Dialog({
+		id: 'ca_kit_preview',
+		title: 'Preview kit on vehicle',
+		form: {
+			hardpoint: {label: 'Hardpoint', type: 'select', options: Object.fromEntries(points.map((p, i) => [i, `${p.vehicle} ${p.part} @ ${p.node}`]))},
+			info: {type: 'info', text: 'Vehicle drawn as a wireframe with the hardpoint node at the kit origin, arm reach spheres on its seats. Never exported; Clear kit preview removes it.'},
+		},
+		onConfirm(result) {
+			try {
+				buildKitPreview(points[Number(result.hardpoint)], fs, kit.packRoot);
+			} catch (err) {
+				console.error(err);
+				Blockbench.showMessageBox({title: 'Kit preview failed', message: String(err && err.message || err)});
+			}
+		},
+	}).show();
+}
+
+function buildKitPreview(point, fs, packRoot) {
+	const cache = new Map();
+	const load = location => {
+		if (!cache.has(location)) {
+			const file = packFile(packRoot, location);
+			if (!file || !fs.existsSync(file)) cache.set(location, null);
+			else {
+				const {gltf, bin} = readContainer(fs.readFileSync(file));
+				const dir = file.slice(0, file.lastIndexOf('/'));
+				const buffers = (gltf.buffers || []).map(b => {
+					if (b.uri && b.uri.startsWith('data:')) return decodeDataUri(b.uri);
+					if (!b.uri && !(b.extras && b.extras.resourceLocation)) return bin;
+					return fs.readFileSync(b.uri ? `${dir}/${decodeURIComponent(b.uri)}` : packFile(packRoot, b.extras.resourceLocation));
+				});
+				cache.set(location, {gltf, buffers});
+			}
+		}
+		return cache.get(location);
+	};
+	const world = hardpointWorld(point.def, point.node, location => (load(location) || {}).gltf || null);
+	if (!world) throw new Error(`${point.vehicle} has no node ${point.node}`);
+	const frame = rigidInverse(world);
+	const {positions, seats} = previewTriangles(point.def, frame, load);
+	clearKitPreview();
+	const group = new THREE.Group();
+	group.name = KIT_PREVIEW;
+	const geometry = new THREE.BufferGeometry();
+	geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+	group.add(new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color: 0x7f8c99, wireframe: true, transparent: true, opacity: 0.35})));
+	seats.forEach(seat => group.add(sphereLines(seat, ARM_REACH * PX)));
+	Project.model_3d.add(group);
+	Blockbench.showQuickMessage(`${point.vehicle} ${point.part} @ ${point.node}`, 2000);
+}
+
+/** Toggle arm reach spheres on the model's seat locators. */
+function armReach() {
+	const shown = [];
+	Project.model_3d.traverse(o => { if (o.name === REACH && o.parent && o.parent.name !== KIT_PREVIEW) shown.push(o); });
+	shown.forEach(o => {
+		o.parent.remove(o);
+		disposeTree(o);
+	});
+	if (shown.length) return;
+	const seats = Locator.all.filter(l => roleOf(l) === 'socket' && l[PROP].field === 'seat' && l.scene_object);
+	seats.forEach(l => l.scene_object.add(sphereLines([0, 0, 0], ARM_REACH * PX)));
+	Blockbench.showQuickMessage(seats.length ? `${seats.length} seat(s)` : 'no seat locators', 1500);
+}
+
+function addLimbDialog(limb) {
+	new Dialog({
+		id: `ca_add_${limb}`,
+		title: `Add ${limb} contact`,
+		form: {
+			hand: {label: limb === 'foot' ? 'Foot' : 'Hand', type: 'select', options: {right: 'Right', left: 'Left'}},
+			interface: {label: 'Seat part', type: 'text', description: 'Seat part id; empty in a kit / part model = the carrying part'},
+			action: {label: 'Action', type: 'text', description: 'Empty = rest grip; hand: shift; foot: brake; or a clip name (fire, reload, unjam, part id)'},
+			info: {type: 'info', text: 'Locator at the selected group\'s pivot, inside it: rides what that group moves. Origin = ' + (limb === 'foot' ? 'ankle target (sole end).' : 'wrist target (fist end).')},
+		},
+		onConfirm(result) {
+			const parent = insertionGroup();
+			const props = {role: 'socket', field: limb, [limb]: result.hand};
+			if (result.interface) props.interface = result.interface.trim();
+			if (result.action) props.action = result.action.trim();
+			const name = [limb, result.hand, props.interface, props.action].filter(Boolean).join('_');
+			withUndo(`Add CombinedAssault ${limb} contact`, [], [], () => {
+				const node = new Locator({name, from: parent ? parent.origin.slice() : [0, 0, 0]});
+				node[PROP] = props;
+				node.addTo(parent || undefined).init();
+				node.select();
+				return [node];
+			});
+		},
+	}).show();
+}
+
 // ---------------------------------------------------------------- registration
 
 Plugin.register('combinedassault', {
@@ -2417,6 +3006,7 @@ Plugin.register('combinedassault', {
 		properties.push(new Property(ModelProject, 'string', 'ca_pack_root', {exposed: false}));
 		properties.push(new Property(ModelProject, 'string', 'ca_namespace', {exposed: false}));
 		properties.push(new Property(ModelProject, 'string', 'ca_model_path', {exposed: false}));
+		properties.push(new Property(ModelProject, 'string', 'ca_kit_path', {exposed: false}));
 		const validate = new Action('ca_validate', {
 			name: 'Validate vehicle', icon: 'fact_check', category: 'file', condition: () => !!Project,
 			click() {
@@ -2458,22 +3048,43 @@ Plugin.register('combinedassault', {
 		const hinge = tool('ca_make_hinge', 'Make hinge...', 'swap_horiz', makeHingeDialog);
 		const merge = tool('ca_merge_coplanar', 'Merge coplanar faces', 'join_full', mergeCoplanar);
 		const keyClip = tool('ca_key_clip', 'Key part clip...', 'key', keyClipDialog);
-		const armor = tool('ca_assign_armor', 'Assign armour to faces...', 'shield', assignArmorDialog);
+		const armor = tool('ca_assign_armor', 'Assign armour plate to faces...', 'shield', assignArmorDialog);
 		const tagTexture = tool('ca_tag_texture', 'Material tags (armour, hit effect, decor)...', 'sell', tagTextureDialog);
 		const hitCylinder = tool('ca_hit_cylinder', 'Make hit cylinder...', 'trip_origin', hitCylinderDialog);
 		const screen = tool('ca_add_screen', 'Add screen...', 'tv', addScreenDialog);
 		const lights = new Action('ca_preview_lights', {name: 'Preview lights', icon: 'flashlight_on', category: 'view',
 			condition: () => !!Project, click: previewLights});
+		const openKitAction = new Action('ca_open_kit', {
+			name: 'Open hardware kit...', icon: 'build', category: 'file', click: openKitDialog,
+		});
+		const kitFields = new Action('ca_kit', {
+			name: 'Hardware kit fields...', icon: 'tune', category: 'file', condition: () => !!(Project && Project.ca_kit_path),
+			click: kitDialog,
+		});
+		const kitPreview = new Action('ca_kit_preview', {
+			name: 'Preview kit on vehicle...', icon: 'directions_car', category: 'view',
+			condition: () => !!(Project && Project.ca_kit_path), click: previewKitDialog,
+		});
+		const kitPreviewClear = new Action('ca_kit_preview_clear', {
+			name: 'Clear kit preview', icon: 'layers_clear', category: 'view', condition: () => !!Project, click: clearKitPreview,
+		});
+		const hand = tool('ca_add_hand', 'Add hand contact...', 'back_hand', () => addLimbDialog('hand'));
+		const foot = tool('ca_add_foot', 'Add foot contact...', 'do_not_step', () => addLimbDialog('foot'));
+		const reach = new Action('ca_arm_reach', {name: 'Arm reach (seats)', icon: 'radio_button_unchecked', category: 'view',
+			condition: () => !!Project, click: armReach});
 		actions = [importAction, validate, exportAction, socket, player, passenger, nextView, previousView,
-			hull, hinge, merge, keyClip, armor, tagTexture, hitCylinder, screen, lights];
-		menu = new BarMenu('combinedassault', [importAction, exportAction, validate, '_', socket, hinge, screen, '_', hull, merge, hitCylinder, '_',
-			keyClip, '_', tagTexture, armor, '_', player, passenger, nextView, previousView, lights], {name: 'CombinedAssault'});
+			hull, hinge, merge, keyClip, armor, tagTexture, hitCylinder, screen, lights,
+			openKitAction, kitFields, kitPreview, kitPreviewClear, hand, foot, reach];
+		menu = new BarMenu('combinedassault', [importAction, openKitAction, exportAction, validate, '_', kitFields, kitPreview, kitPreviewClear, '_',
+			socket, hand, foot, hinge, screen, '_', hull, merge, hitCylinder, '_',
+			keyClip, '_', tagTexture, armor, '_', player, passenger, nextView, previousView, lights, reach], {name: 'CombinedAssault'});
 		MenuBar.update();
 		buildPanel();
 	},
 	onunload() {
 		Blockbench.removeListener('update_selection', selectionListener);
 		clearLightPreviews();
+		clearKitPreview();
 		if (panel) panel.delete();
 		if (menu) {
 			menu.delete();

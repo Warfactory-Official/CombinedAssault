@@ -14,6 +14,7 @@ import com.wf.combinedassault.weapon.pojo.Bolt;
 import com.wf.combinedassault.weapon.pojo.Eject;
 import com.wf.combinedassault.weapon.pojo.Station;
 import com.wf.wflib.physics.api.DeckFrame;
+import java.util.Objects;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
@@ -150,6 +151,7 @@ public final class MountDefaults {
                 }
             }
             case "bolt" -> bolt(mount, target);
+            case "belt" -> part(mount, target);
             case "eject" -> eject(mount, target);
             case "station" -> station(mount, target);
             case "era", "slat" -> addon(mount, field, target);
@@ -354,7 +356,7 @@ public final class MountDefaults {
         }
         for (Relative other : relative) {
             if (other.field.equals("bolt") && other.part.equals(part) && other.index == index
-                    && java.util.Objects.equals(other.mount.kit(), mount.kit())) {
+                    && Objects.equals(other.mount.kit(), mount.kit())) {
                 throw fail(mount, "repeats bolt " + index + " of part " + part);
             }
         }
@@ -369,7 +371,7 @@ public final class MountDefaults {
         }
         for (Relative other : relative) {
             if (other.field.equals("eject") && other.part.equals(part) && other.index == index
-                    && java.util.Objects.equals(other.mount.kit(), mount.kit())) {
+                    && Objects.equals(other.mount.kit(), mount.kit())) {
                 throw fail(mount, "repeats eject " + index + " of part " + part);
             }
         }

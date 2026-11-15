@@ -6,6 +6,7 @@ import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.wflib.recon.api.ReconNet;
 import com.wf.wflib.recon.api.ScopeFrame;
+import com.wf.wflib.recon.api.SeismicFix;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -73,7 +74,7 @@ public final class RadarScopeFeed {
         if (netId == ReconNet.UNAFFILIATED) {
             return;
         }
-        List<com.wf.wflib.recon.api.SeismicFix> events = new ArrayList<>(ReconNet.events(level, netId));
+        List<SeismicFix> events = new ArrayList<>(ReconNet.events(level, netId));
         Collections.reverse(events);
         ScopeFrame frame = ScopeFrame.of(netId, vehicle.getX(), vehicle.getY(), vehicle.getZ(), range,
                 ReconNet.picture(level, netId), events, level.getGameTime());

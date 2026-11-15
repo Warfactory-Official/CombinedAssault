@@ -2,9 +2,11 @@ package com.wf.combinedassault.labs;
 
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.CombinedAssaultSystem;
+import com.wf.combinedassault.ballistics.spall.gametest.SpallGameTest;
 import com.wf.combinedassault.labs.gametest.VehicleParityGameTest;
 import com.wf.combinedassault.labs.gametest.VehicleStageGameTest;
 import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
+import com.wf.wflib.labs.api.LabDefenders;
 import com.wf.wflib.labs.api.*;
 import com.wf.wflib.packs.api.Pack;
 import com.wf.wflib.packs.api.PackEntry;
@@ -16,6 +18,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 public final class LabsSystem implements CombinedAssaultSystem {
 
@@ -31,7 +34,7 @@ public final class LabsSystem implements CombinedAssaultSystem {
 
     @Override
     public void register(IEventBus modBus, ModContainer container) {
-        GameTestSetup.tests(modBus, VehicleParityGameTest.class, VehicleStageGameTest.class, com.wf.combinedassault.ballistics.spall.gametest.SpallGameTest.class);
+        GameTestSetup.tests(modBus, VehicleParityGameTest.class, VehicleStageGameTest.class, SpallGameTest.class);
         LabProducers.register(new VehicleProducer());
         LabProducers.register(new VehicleSummaryProducer());
         LabProducers.register(new VehicleSystemsProducer());
@@ -44,9 +47,9 @@ public final class LabsSystem implements CombinedAssaultSystem {
         ScenarioStages.register(new VehicleStage());
         LabContents.register(new Content());
         LabShelters.registerLazy(CombinedAssault.MOD_ID + ":vehicles", () -> VehicleShelter.all(
-                net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().overworld()));
-        com.wf.wflib.labs.api.LabDefenders.registerLazy(CombinedAssault.MOD_ID + ":air_defense",
-                () -> VehicleDefender.all(net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().overworld()));
+                ServerLifecycleHooks.getCurrentServer().overworld()));
+        LabDefenders.registerLazy(CombinedAssault.MOD_ID + ":air_defense",
+                () -> VehicleDefender.all(ServerLifecycleHooks.getCurrentServer().overworld()));
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, VehicleRecorder::strike);
         NeoForge.EVENT_BUS.addListener(VehicleRecorder::hit);
     }

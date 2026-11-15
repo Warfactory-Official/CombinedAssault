@@ -3,6 +3,7 @@ package com.wf.combinedassault.render.fx;
 import com.wf.gemrender.particle.ParticleEmitter;
 import com.wf.gemrender.particle.ParticlePool;
 import dev.engine_room.flywheel.api.event.EndClientResourceReloadEvent;
+import dev.engine_room.flywheel.api.model.Model;
 import dev.engine_room.flywheel.api.visual.Effect;
 import dev.engine_room.flywheel.api.visual.EffectVisual;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
@@ -40,7 +41,7 @@ final class HitFxWorld implements Effect {
     private final Vec3i origin;
     private final ParticleEmitter[] emitters = new ParticleEmitter[KINDS.length];
     /** Resolved on the client thread for the visual (built on Flywheel's executor); null = not loaded. */
-    private final dev.engine_room.flywheel.api.model.Model[] models = new dev.engine_room.flywheel.api.model.Model[KINDS.length];
+    private final Model[] models = new Model[KINDS.length];
     private boolean partial;
 
     private HitFxWorld(ClientLevel level, Vec3 at) {
@@ -175,7 +176,7 @@ final class HitFxWorld implements Effect {
         Visual(VisualizationContext ctx, HitFxWorld w, float partialTick) {
             super(ctx, (Level) w.level, partialTick);
             for (HitFxKind k : KINDS) {
-                dev.engine_room.flywheel.api.model.Model m = w.models[k.ordinal()];
+                Model m = w.models[k.ordinal()];
                 if (m != null) {
                     pools.add(new ParticlePool(ctx, w.emitters[k.ordinal()], k.type, m));
                 }

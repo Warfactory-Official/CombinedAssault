@@ -18,6 +18,10 @@ public class TrackedVehicleContext extends VehicleContext<TrackedVehicle> {
         return entity.getTurnSpeed();
     }
 
+    public DriverControls controls() {
+        return controls;
+    }
+
     @Override
     public void tick() {
         super.tick();

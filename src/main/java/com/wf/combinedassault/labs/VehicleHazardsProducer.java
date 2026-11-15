@@ -22,6 +22,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.world.level.Explosion;
 
 /**
  * Non-ballistic threats CA applies to a vehicle, each through its real entry point on a live (never ticked) vehicle:
@@ -111,8 +112,8 @@ public final class VehicleHazardsProducer implements LabProducer {
 
     private static void detonate(AbstractVehicle v, Vec3 centre, float kg) {
         float size = VehicleBlastResolver.sizeForKg(kg);
-        VehicleBlastResolver.resolve(v, new net.minecraft.world.level.Explosion(v.level(), null, centre.x, centre.y, centre.z,
-                size, false, net.minecraft.world.level.Explosion.BlockInteraction.KEEP), null, BlastPayload.blast(kg), centre);
+        VehicleBlastResolver.resolve(v, new Explosion(v.level(), null, centre.x, centre.y, centre.z,
+                size, false, Explosion.BlockInteraction.KEEP), null, BlastPayload.blast(kg), centre);
     }
 
     @Override

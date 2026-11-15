@@ -1,2 +1,4 @@
 package net.minecraft.client.renderer.texture;
-public class TextureManager { public void bindTexture(net.minecraft.util.ResourceLocation r) {} }
+
+import net.minecraft.util.ResourceLocation;
+public class TextureManager { public void bindTexture(ResourceLocation r) {} }

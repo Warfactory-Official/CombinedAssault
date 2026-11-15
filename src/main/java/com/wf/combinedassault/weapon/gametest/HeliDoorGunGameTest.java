@@ -6,8 +6,11 @@ import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.AccessActions;
+import com.wf.combinedassault.vehicle.part.LinkedHingeUnit;
+import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import com.wf.combinedassault.weapon.kit.Hardpoints;
+import com.wf.combinedassault.weapon.kit.HardwareKits;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -58,7 +61,7 @@ public class HeliDoorGunGameTest {
             boolean shuts = heli.mayClose(door, null);
             ResourceLocation gun = unit.currentWeaponId();
             heli.discard();
-            if (!CombinedAssault.modLocation(g[3]).equals(kit) || !doorOpen || !linked || shuts || gun == null) {
+            if (!HardwareKits.resolve(CombinedAssault.modLocation(g[3])).equals(kit) || !doorOpen || !linked || shuts || gun == null) {
                 helper.fail(String.join("/", g) + ": kit " + kit + ", door open " + doorOpen + ", linked " + linked
                         + ", may close " + shuts + ", gun " + gun);
                 return;
@@ -89,7 +92,7 @@ public class HeliDoorGunGameTest {
             for (int t = 0; t < 60; t++) {
                 tracks.tick();
             }
-            int kit = unit.hardpoint().indexOf(CombinedAssault.modLocation(g[3]));
+            int kit = unit.hardpoint().indexOf(HardwareKits.resolve(CombinedAssault.modLocation(g[3])));
             player.moveTo(pivot.x + out.x * 1.2, pivot.y + 0.3 - player.getEyeHeight(), pivot.z + out.z * 1.2);
             Component shut = Hardpoints.fitRefusal(player, unit, kit);
             door.setOn(true);
@@ -166,19 +169,19 @@ public class HeliDoorGunGameTest {
         doors.setOn(false);
         for (int i = 0; i < 80; i++) {
             ramp.tick();
-            ((com.wf.combinedassault.vehicle.part.LinkedHingeUnit) ramp).updateRot();
+            ((LinkedHingeUnit) ramp).updateRot();
             heli.updateOBBs();
         }
         Vec3 closed = rampCollider(heli, ramp);
         doors.setOn(true);
         for (int i = 0; i < 80; i++) {
             ramp.tick();
-            ((com.wf.combinedassault.vehicle.part.LinkedHingeUnit) ramp).updateRot();
+            ((LinkedHingeUnit) ramp).updateRot();
             heli.updateOBBs();
         }
         Vec3 open = rampCollider(heli, ramp);
         String report = "[ramp collider] closed " + closed + " open " + open + " xRot "
-                + ((com.wf.combinedassault.vehicle.part.LinkedHingeUnit) ramp).getXRot() + " tick " + heli.tickCount;
+                + ((LinkedHingeUnit) ramp).getXRot() + " tick " + heli.tickCount;
         CombinedAssault.LOGGER.info(report);
         heli.discard();
         if (closed == null || open == null || closed.distanceTo(open) < 0.3) {
@@ -188,7 +191,7 @@ public class HeliDoorGunGameTest {
     }
 
     @Nullable
-    private static Vec3 rampCollider(AbstractVehicle heli, com.wf.combinedassault.vehicle.part.PartUnit<?> ramp) {
+    private static Vec3 rampCollider(AbstractVehicle heli, PartUnit<?> ramp) {
         Vec3 sum = Vec3.ZERO;
         int n = 0;
         for (var obb : ramp.getPartCubeOBBs()) {

@@ -13,6 +13,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -103,7 +104,7 @@ final class GemRenderVehicleModel implements VehicleModel {
         }
         int[] built = new int[snapshot.size()];
         if (model == null) {
-            java.util.Arrays.fill(built, -1);
+            Arrays.fill(built, -1);
             slots = built;
             mapped = null;
             return built;

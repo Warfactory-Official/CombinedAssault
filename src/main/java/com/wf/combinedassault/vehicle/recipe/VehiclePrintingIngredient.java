@@ -2,6 +2,7 @@ package com.wf.combinedassault.vehicle.recipe;
 
 import com.google.gson.*;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -9,6 +10,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.crafting.Ingredient;
 
 import java.lang.reflect.Type;
+import net.minecraft.util.GsonHelper;
 
 public record VehiclePrintingIngredient(Ingredient ingredient, int count) {
 
@@ -32,8 +34,8 @@ public record VehiclePrintingIngredient(Ingredient ingredient, int count) {
             }
             JsonObject obj = json.getAsJsonObject();
             JsonElement ingredientElement = obj.has("ingredient") ? obj.get("ingredient") : obj;
-            Ingredient ingredient = Ingredient.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, ingredientElement).getOrThrow(JsonParseException::new);
-            int cnt = net.minecraft.util.GsonHelper.getAsInt(obj, "count", 1);
+            Ingredient ingredient = Ingredient.CODEC.parse(JsonOps.INSTANCE, ingredientElement).getOrThrow(JsonParseException::new);
+            int cnt = GsonHelper.getAsInt(obj, "count", 1);
             return new VehiclePrintingIngredient(ingredient, cnt);
         }
 

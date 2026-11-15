@@ -24,10 +24,15 @@ import java.util.Set;
  *                    {@code Shoulder}); null = kit cannot be shouldered
  * @param item        another mod's item the kit is carried as (stack kept while fitted, given back); null = {@code hardware}
  * @param replaces    kit hidden while this one loads; its id resolves to this one ({@code fitted}, saves)
+ * @param belt        drawn belt, model {@code belt_feed} -> {@code belt_spawn}; null = none
  */
 public record HardwareKit(ResourceLocation id, ResourceLocation model, JsonArray weapons, Set<String> fits,
                           int installTicks, JsonObject station, @Nullable ResourceLocation shoulderGun,
-                          @Nullable Item item, @Nullable ResourceLocation replaces) {
+                          @Nullable Item item, @Nullable ResourceLocation replaces, @Nullable Belt belt) {
+
+    /** @param link link model (link frame: X along the belt, Z cartridge axis, m) @param pitch m */
+    public record Belt(ResourceLocation link, float pitch) {
+    }
 
     /** Null: {@code item} names an item no loaded mod registers (kit absent). */
     @Nullable
@@ -56,7 +61,16 @@ public record HardwareKit(ResourceLocation id, ResourceLocation model, JsonArray
         return new HardwareKit(id, ResourceLocation.parse(GsonHelper.getAsString(json, "model")), weapons,
                 Set.copyOf(fits), GsonHelper.getAsInt(json, "install_ticks", 100), station,
                 json.has("shoulder_gun") ? ResourceLocation.parse(GsonHelper.getAsString(json, "shoulder_gun")) : null,
-                item, json.has("replaces") ? ResourceLocation.parse(GsonHelper.getAsString(json, "replaces")) : null);
+                item, json.has("replaces") ? ResourceLocation.parse(GsonHelper.getAsString(json, "replaces")) : null,
+                json.has("belt") ? belt(GsonHelper.getAsJsonObject(json, "belt")) : null);
+    }
+
+    private static Belt belt(JsonObject json) {
+        float pitch = GsonHelper.getAsFloat(json, "pitch");
+        if (!(pitch > 0)) {
+            throw new IllegalArgumentException("belt pitch " + pitch);
+        }
+        return new Belt(ResourceLocation.parse(GsonHelper.getAsString(json, "link")), pitch);
     }
 
     public String nameKey() {

@@ -20,6 +20,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.function.Predicate;
+import net.minecraft.sounds.SoundEvent;
 
 /** Install, replace, remove, repair: the server half, for the probe and for a right-click with a kit. */
 public final class AddonActions {
@@ -194,7 +195,7 @@ public final class AddonActions {
         player.displayClientMessage(why.copy().withStyle(ChatFormatting.RED), true);
     }
 
-    private static void sound(Player player, AbstractVehicle vehicle, int mount, net.minecraft.sounds.SoundEvent sound) {
+    private static void sound(Player player, AbstractVehicle vehicle, int mount, SoundEvent sound) {
         Vec3 at = vehicle.addonArmor().pose(vehicle, mount).centre();
         player.level().playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, 1.0f, 1.0f);
     }

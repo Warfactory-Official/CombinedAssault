@@ -487,7 +487,12 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
     }
 
     public float getSeatRot() {
-        return vehicle.getYRot() + seatRot + frameYaw(seatFrame());
+        return vehicle.getYRot() + seatRot + frameYaw(seatFrame(), 1.0F);
+    }
+
+    /** {@link #getSeatRot()} as drawn: hull yaw + frame traverse interpolated. */
+    public float getSeatRot(float partialTick) {
+        return vehicle.getViewYRot(partialTick) + seatRot + frameYaw(seatFrame(), partialTick);
     }
 
     /** Frame the seat position rides ({@link #worldSeatPosition}); null => hull. */
@@ -497,10 +502,10 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
     }
 
     /** {@code group}'s yaw off the hull, deg (vehicle yaw sense). */
-    protected float frameYaw(@Nullable VehicleCubeGroup group) {
+    protected float frameYaw(@Nullable VehicleCubeGroup group, float partialTick) {
         Quaternionf rot = new Quaternionf();
         for (VehicleCubeGroup at = group; at != null; at = at.parent) {
-            rot.premul(getViewGroupRotation(at, 1.0F));
+            rot.premul(getViewGroupRotation(at, partialTick));
         }
         return (float) -Math.toDegrees(rot.getEulerAnglesYXZ(new Vector3f()).y);
     }
@@ -589,7 +594,7 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
     }
 
     @Override
-    public void deserializeNBT(@org.jetbrains.annotations.NotNull HolderLookup.Provider provider, @org.jetbrains.annotations.NotNull CompoundTag nbt) {
+    public void deserializeNBT(@NotNull HolderLookup.Provider provider, @NotNull CompoundTag nbt) {
         if (nbt.contains("Detached", Tag.TAG_ANY_NUMERIC)) {
             this.detached = nbt.getBoolean("Detached");
         }

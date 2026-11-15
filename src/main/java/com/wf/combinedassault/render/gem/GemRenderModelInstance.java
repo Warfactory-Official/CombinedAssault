@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 
 import java.lang.Math;
+import java.util.Objects;
 import java.util.*;
 
 /**
@@ -396,7 +397,7 @@ final class GemRenderModelInstance implements VehicleModelInstance {
 
     @Override
     public void isolate(@Nullable String bone, Set<String> excluded) {
-        if (!java.util.Objects.equals(bone, isolateBone) || !excluded.equals(isolateExcluded)) {
+        if (!Objects.equals(bone, isolateBone) || !excluded.equals(isolateExcluded)) {
             isolateBone = bone;
             isolateExcluded = Set.copyOf(excluded);
             keepModel = null;

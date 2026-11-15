@@ -7,6 +7,7 @@ import com.wf.combinedassault.aircraft.RotaryWingVehicle;
 import com.wf.combinedassault.cargo.ParachutePackItem;
 import com.wf.combinedassault.cargo.message.ClientOpenParachute;
 import com.wf.combinedassault.radar.RadarUnit;
+import com.wf.combinedassault.radar.client.RadarExpanded;
 import com.wf.combinedassault.uav.fpv.FpvFlight;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.crew.CrewRules;
@@ -15,9 +16,11 @@ import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import com.wf.combinedassault.weapon.part.WeaponBayUnit;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.entity.GroundVehicle;
+import com.wf.combinedassault.vehicle.lock.VehicleLockMessage;
 import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
 import com.wf.combinedassault.vehicle.message.ClientVehicleChangeSeat;
 import com.wf.combinedassault.vehicle.message.ClientVehicleMoveControl;
+import com.wf.combinedassault.vehicle.screen.VehicleScreens;
 import com.wf.combinedassault.vehicle.util.VectorUtil;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.VehicleDecoyFlare;
@@ -27,9 +30,11 @@ import com.wf.combinedassault.weapon.client.StationAds;
 import com.wf.combinedassault.weapon.message.ClientVehicleSwitchWeapon;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
+import com.wf.wflib.countermeasure.api.Countermeasures;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec2;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -166,8 +171,8 @@ public class InputHandler {
                     if (weaponUnit != null) {
                         weaponUnit.independentWeapons.stream()
                                 .filter(vehicleWeapon -> vehicleWeapon instanceof VehicleGrenade grenade
-                                        && grenade.isAmmoForWeapon(new net.minecraft.world.item.ItemStack(
-                                        com.wf.wflib.countermeasure.api.Countermeasures.SMOKE_GRENADE_ITEM.get())))
+                                        && grenade.isAmmoForWeapon(new ItemStack(
+                                        Countermeasures.SMOKE_GRENADE_ITEM.get())))
                                 .forEach(AbstractVehicleWeapon::doClientShoot);
                     }
                 } else if (matchesKey(TOGGLE_SEEKER, key, scanCode)) {
@@ -294,16 +299,16 @@ public class InputHandler {
             if (!CHANGE_SEAT.isDown()) {
                 waitSwitchSeatTime = System.currentTimeMillis();
             }
-            com.wf.combinedassault.radar.client.RadarExpanded.tick(vehicle);
+            RadarExpanded.tick(vehicle);
             while (CYCLE_DISPLAY.consumeClick()) {
-                var screens = com.wf.combinedassault.vehicle.screen.VehicleScreens.of(vehicle);
+                var screens = VehicleScreens.of(vehicle);
                 if (screens != null) {
                     screens.cycleAimed();
                 }
             }
             while (CYCLE_LOCK.consumeClick()) {
-                net.neoforged.neoforge.network.PacketDistributor.sendToServer(
-                        new com.wf.combinedassault.vehicle.lock.VehicleLockMessage(vehicle.getId()));
+                PacketDistributor.sendToServer(
+                        new VehicleLockMessage(vehicle.getId()));
             }
             while (TURN_OUT.consumeClick()) {
                 AbstractVehicle.Seat partner = instance.seat == null ? null : vehicle.turnPartner(instance.seat);

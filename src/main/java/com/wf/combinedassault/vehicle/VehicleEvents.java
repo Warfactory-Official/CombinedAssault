@@ -1,5 +1,6 @@
 package com.wf.combinedassault.vehicle;
 
+import com.wf.combinedassault.ballistics.spall.Spall;
 import com.wf.combinedassault.vehicle.command.RootCommand;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.item.VehicleItem;
@@ -109,7 +110,7 @@ public final class VehicleEvents {
             Boolean protect = seat == null ? null : seat.getData().getProtectPassenger();
             if ((protect == null ? vehicle.protectPassenger : protect)
                     && !event.getSource().is(VehicleDamageTypes.BREECH_FIRE)
-                    && !com.wf.combinedassault.ballistics.spall.Spall.delivering()) {
+                    && !Spall.delivering()) {
                 event.setNewDamage(0);
             }
         }

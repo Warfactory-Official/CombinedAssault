@@ -5,6 +5,8 @@ import com.wf.combinedassault.ballistics.component.VehicleMobility;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.armor.api.hull.HullWear;
+import java.util.HashMap;
+import java.util.Map;
 
 /** Reads and restores a vehicle's systems around real damage calls; kill predicates are CA's own. */
 final class SystemsProbe {
@@ -77,7 +79,7 @@ final class SystemsProbe {
     }
 
     /** Cell label that lost the most health since {@code before}, "" if none. */
-    static String worstCell(AbstractVehicle vehicle, java.util.Map<String, Double> beforeByLabel) {
+    static String worstCell(AbstractVehicle vehicle, Map<String, Double> beforeByLabel) {
         String best = "";
         double most = 0;
         for (VehicleSystems.Cell cell : VehicleSystems.cells(vehicle)) {
@@ -94,8 +96,8 @@ final class SystemsProbe {
         return best;
     }
 
-    static java.util.Map<String, Double> byLabel(AbstractVehicle vehicle) {
-        java.util.Map<String, Double> out = new java.util.HashMap<>();
+    static Map<String, Double> byLabel(AbstractVehicle vehicle) {
+        Map<String, Double> out = new HashMap<>();
         for (VehicleSystems.Cell cell : VehicleSystems.cells(vehicle)) {
             double h = 0;
             for (VehicleSystems.Member m : cell.members()) {

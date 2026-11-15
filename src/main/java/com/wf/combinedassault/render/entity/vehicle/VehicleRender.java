@@ -21,6 +21,7 @@ import com.wf.combinedassault.props.part.DecorationUnit;
 import com.wf.combinedassault.render.animation.VehicleAnimationInstance;
 import com.wf.combinedassault.render.animation.context.EntityContext;
 import com.wf.combinedassault.render.gem.GemScreens;
+import com.wf.combinedassault.weapon.kit.client.KitBelts;
 import com.wf.combinedassault.render.model.VehicleModelInstance;
 import com.wf.combinedassault.render.part.RoundStations;
 import com.wf.combinedassault.render.particle.BulletHoleParticle;
@@ -32,6 +33,7 @@ import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.event.VehicleFireEvent;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.wflib.core.api.client.DebugGate;
 import com.wf.wflib.geom.api.OBB;
 import com.wf.wflib.geom.api.client.OBBRenderer;
 import net.minecraft.client.Minecraft;
@@ -56,6 +58,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.List;
+import java.util.WeakHashMap;
 
 import static com.wf.combinedassault.render.animation.util.PoseBlenders.BLENDER;
 
@@ -79,7 +82,7 @@ public class VehicleRender<T extends AbstractVehicle> extends EntityRenderer<T> 
         return probeMax(vehicle, LightLayer.SKY, super.getSkyLightLevel(vehicle, pos));
     }
 
-    private static int probeMax(AbstractVehicle vehicle, LightLayer layer, int centre) {
+    public static int probeMax(AbstractVehicle vehicle, LightLayer layer, int centre) {
         VehicleCubeOBB hull = vehicle.getMainCubeOBB();
         if (centre >= 15 || hull == null) {
             return centre;
@@ -133,6 +136,7 @@ public class VehicleRender<T extends AbstractVehicle> extends EntityRenderer<T> 
             }
             RoundStations.render(vehicle, modelInstance, pPoseStack, bufferSource, modelLight);
             GemScreens.draw(vehicle, modelInstance, pPoseStack.last().pose(), modelLight, pPartialTick);
+            KitBelts.draw(vehicle, pPoseStack.last().pose(), modelLight, pPartialTick);
             CargoRenderer.render(vehicle, pPoseStack, modelLight);
             VehicleCamoRenderer.enqueue(vehicle, pPoseStack, bufferSource, pPackedLight, pPartialTick);
             AddonArmorRenderer.enqueue(vehicle, pPoseStack, bufferSource, pPackedLight, pPartialTick);
@@ -180,7 +184,7 @@ public class VehicleRender<T extends AbstractVehicle> extends EntityRenderer<T> 
      */
     public static void renderHitbox(AbstractVehicle vehicle, PoseStack poseStack, MultiBufferSource bufferSource) {
         EntityRenderDispatcher dispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
-        boolean all = dispatcher.shouldRenderHitBoxes() && com.wf.wflib.core.api.client.DebugGate.allowed()
+        boolean all = dispatcher.shouldRenderHitBoxes() && DebugGate.allowed()
                 || vehicle == LocalVehiclePlayer.instance().vehicle && VehicleKeys.INSPECT_VEHICLE.isDown();
         boolean meshed = vehicle.hits() != null;
         List<PartUnit<?>> partUnits = new ArrayList<>();
@@ -311,7 +315,7 @@ public class VehicleRender<T extends AbstractVehicle> extends EntityRenderer<T> 
     }
 
     /** Per instance: the {@code view_hide} nodes it hid last frame. */
-    private static final Map<VehicleModelInstance, List<String>> VIEW_HIDDEN = new java.util.WeakHashMap<>();
+    private static final Map<VehicleModelInstance, List<String>> VIEW_HIDDEN = new WeakHashMap<>();
 
     /** Local rider's seat {@code view_hide} hidden while in first person (after {@link #applyDetachedPart}: wins). */
     public static void applyViewHide(AbstractVehicle vehicle, VehicleModelInstance modelInstance) {

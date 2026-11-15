@@ -1,5 +1,7 @@
 package com.wf.combinedassault.tow.trial;
 
+import com.wf.combinedassault.tow.TowLinks;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.physics.api.ChunkCollisionCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -12,6 +14,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 
 /** Ring course, sector-cut: one lap crosses broken ground AND a turn long enough to expose
  * off-tracking. Same point every lap => runs comparable. Heights are whole blocks: a one-block
@@ -48,7 +51,7 @@ public final class TowGround {
         CREST;
 
         public String lower() {
-            return name().toLowerCase(java.util.Locale.ROOT);
+            return name().toLowerCase(Locale.ROOT);
         }
 
     }
@@ -199,9 +202,9 @@ public final class TowGround {
     /** Hull-to-ground gap at the axle point; negative = hull inside ground. Possible because the
      * tow constraint runs after the contact solve, so a coupling can force a pose the ground
      * wouldn't otherwise allow. */
-    public static double clearance(ServerLevel level, com.wf.combinedassault.vehicle.entity.AbstractVehicle vehicle) {
+    public static double clearance(ServerLevel level, AbstractVehicle vehicle) {
         Vec3 axle = vehicle.towing.towable.axle;
-        Vec3 at = com.wf.combinedassault.tow.TowLinks.worldPoint(vehicle, new Vec3(axle.x, 0, axle.z));
+        Vec3 at = TowLinks.worldPoint(vehicle, new Vec3(axle.x, 0, axle.z));
         return at.y - groundAt(level, at.x, at.z);
     }
 

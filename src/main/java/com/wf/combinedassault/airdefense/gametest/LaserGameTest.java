@@ -9,11 +9,16 @@ import com.wf.wflib.missile.api.InterceptBattery;
 import com.wf.wflib.recon.api.Band;
 import com.wf.wflib.recon.api.Interference;
 import com.wf.wflib.recon.api.PortableJammerItem;
+import java.util.Set;
+import java.util.TreeSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -75,7 +80,7 @@ public class LaserGameTest {
     @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void aJammedMavicIsNeverEngaged(GameTestHelper helper) {
         AbstractVehicle[] target = new AbstractVehicle[1];
-        java.util.Set<String> others = new java.util.TreeSet<>();
+        Set<String> others = new TreeSet<>();
         boolean[] fired = {false};
         int[] ticks = {0};
         TestLanes.run(helper, LANE_Z + 2 * LANE_PITCH, FLOOR_X, FLOOR_Z, TRAILER, (seq, v) -> seq.thenExecute(() -> {
@@ -108,10 +113,10 @@ public class LaserGameTest {
         WeaponUnit unit = turret(helper, trailer);
         Vec3 from = unit.aimContext().from;
         Vec3 to = target.getBoundingBox().getCenter();
-        var hit = helper.getLevel().clip(new net.minecraft.world.level.ClipContext(from, to,
-                net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE,
-                (net.minecraft.world.entity.Entity) null));
-        String blocked = hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS ? "clear"
+        var hit = helper.getLevel().clip(new ClipContext(from, to,
+                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE,
+                (Entity) null));
+        String blocked = hit.getType() == HitResult.Type.MISS ? "clear"
                 : "blocked at " + hit.getBlockPos().subtract(BlockPos.containing(from)) + " by "
                 + helper.getLevel().getBlockState(hit.getBlockPos());
         double off = Math.toDegrees(Math.acos(Math.min(1, unit.worldVec().normalize().dot(to.subtract(from).normalize()))));

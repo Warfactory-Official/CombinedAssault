@@ -1,5 +1,6 @@
 """Author a combinedassault glTF vehicle in Blender: import a pack model, frames, colliders, hit modules, hit cylinders,
-sockets, lights, screens, armour / hit effect tags, hinges, part clips, texture set-up, player reference, check, export. Every role is written into the node's
+sockets, lights, screens, armour / hit effect tags, hinges, part clips, texture set-up, player reference, hardware kits,
+hand contacts, check, export. Every role is written into the node's
 glTF `extras` (docs/vehicle-pack-format.md §6); extras the panels do not show survive import -> export.
 
 Frame: 1 unit = 1 block, world origin = vehicle origin, nose toward -Y, port +X, up +Z. The glTF exporter's
@@ -44,8 +45,11 @@ META = ca_validate.META
 HIDDEN = ca_validate.HIDDEN
 RESOURCE = ca_validate.RESOURCE
 # combinedassault meta keys the panels own; any other key rides through from import (raw_extras).
-OWNED_META = ca_validate.COLLIDER_KEYS | ca_validate.HIT_KEYS | ca_validate.FRAME_KEYS | ca_validate.LIGHT_KEYS
-ARMOR = re.compile(r"(?i)armou?r[_ ]?(\d+(?:\.\d+)?)")
+OWNED_META = ca_validate.COLLIDER_KEYS | ca_validate.HIT_KEYS | ca_validate.FRAME_KEYS | ca_validate.LIGHT_KEYS \
+    | {"hand", "foot", "action"}
+PLATE = ca_validate.PLATE
+PLATE_ID = ca_validate.PLATE_ID
+LEGACY_ARMOR = ca_validate.LEGACY_ARMOR
 DECOR = re.compile(r"(?i)(?:^|[_ .])decor(?:$|[_ .])")
 SURFACE_ITEMS = [("STEEL", "Steel", "Sparks, holes"), ("RUBBER", "Rubber", "Black bits, dust, no hole"),
                  ("GLASS", "Glass", "Shards, glint, no hole"), ("SOFT", "Soft", "Dust, fibres, no hole (fabric)")]
@@ -201,11 +205,21 @@ def local_is_identity(obj):
                for r in range(4) for c in range(4))
 
 
-def check_object(obj, depsgraph=None, part_model=False):
-    """(errors, warnings) for one object as the export would write it. part_model: scene has no body (part mounts)."""
+def gltf_role(obj):
+    """extras.combinedassaultRole the export writes; "" untagged."""
+    role = role_of(obj)
+    return "" if role == "NONE" else obj.combinedassault.field if role == "SOCKET" else role.lower()
+
+
+def check_object(obj, depsgraph=None, part_model=False, kit=False):
+    """(errors, warnings) for one object as the export would write it. part_model: scene has no body (part mounts);
+    kit: hardware kit model."""
     errors, warnings = [], []
     settings = obj.combinedassault
     role = role_of(obj)
+    if kit and gltf_role(obj) and gltf_role(obj) not in ca_validate.KIT_ROLES:
+        errors.append("role %s in a kit model; kits carry %s only"
+                      % (gltf_role(obj), ", ".join(sorted(ca_validate.KIT_ROLES))))
     action = obj.animation_data.action if obj.animation_data else None
     if part_model and role in ("PART", "PITCH"):
         errors.append("is a %s frame in a part model (no body): frames live on the carrier" % role.lower())
@@ -315,8 +329,9 @@ def check_scene(scene, depsgraph=None):
     wheels = [obj.name for obj in objects if role_of(obj) == "NONE" and obj.combinedassault.meta_road_wheel]
     if wheels and not any(role_of(o) == "SOCKET" and o.combinedassault.field == "track" for o in objects):
         errors.append("road wheels %s but no track socket" % ", ".join(wheels))
+    kit = bool(scene.combinedassault_export.kit_path)
     for obj in objects:
-        e, w = check_object(obj, depsgraph, not bodies)
+        e, w = check_object(obj, depsgraph, not bodies, kit)
         errors += ["%s %s" % (obj.name, m) for m in e]
         warnings += ["%s %s" % (obj.name, m) for m in w]
     for material in used_materials(scene):
@@ -529,6 +544,14 @@ def node_extras(obj):
             meta["index"] = settings.index
         if settings.field == "light":
             meta.update(light_meta(settings))
+        if settings.field == "hand":
+            meta["hand"] = settings.hand_side.lower()
+            if settings.hand_action:
+                meta["action"] = settings.hand_action
+        if settings.field == "foot":
+            meta["foot"] = settings.foot_side.lower()
+            if settings.hand_action:
+                meta["action"] = settings.hand_action
     else:
         if role == "HIT":
             meta["system"] = settings.system
@@ -546,6 +569,8 @@ def node_extras(obj):
             meta["spin"] = settings.meta_spin.lower()
         if settings.meta_health > 0:
             meta["health"] = round(settings.meta_health, 3)
+        if role == "HIT" and settings.meta_rha >= 0:
+            meta["rha"] = round(settings.meta_rha, 3)
         if role == "NONE" and settings.meta_road_wheel:
             meta["road_wheel"] = True
         if role in ("PART", "PITCH") and settings.limit_pitch:
@@ -828,6 +853,10 @@ def apply_extras(obj, extras):
                 setattr(settings, "light_" + key, meta.get(key, 0.0))
             settings.light_shadow = meta.get("shadow", True)
             settings.light_cookie = meta.get("cookie", "")
+        if role in ("hand", "foot"):
+            if meta.get(role) in ca_validate.HANDS:
+                setattr(settings, role + "_side", meta[role].upper())
+            settings.hand_action = meta.get("action", "") if isinstance(meta.get("action"), str) else ""
         return
     if role.upper() not in {key for key, _, _ in ROLE_ITEMS}:
         settings.hidden = bool(extras.get(HIDDEN))
@@ -854,6 +883,7 @@ def apply_extras(obj, extras):
     if "swept" in meta:
         settings.meta_swept = "ON" if meta["swept"] else "OFF"
     settings.meta_health = meta.get("health", 0.0)
+    settings.meta_rha = meta.get("rha", -1.0)
     settings.meta_unit = meta.get("unit", "")
     settings.meta_spin = str(meta.get("spin", "none")).upper()
     settings.follows_clips = bool(meta.get("follows_clips"))
@@ -960,9 +990,9 @@ def base_image_node(material):
 
 def material_problems(material):
     """(errors, warnings) for how the exporter will write this material."""
-    errors, warnings = [], []
+    errors, warnings = [], [p.split(": ", 1)[1] for p in ca_validate.plate_problems(material.name)]
     if not material.use_nodes:
-        return errors, ["has no node tree: exported flat white, untextured"]
+        return errors, warnings + ["has no node tree: exported flat white, untextured"]
     images = [n for n in material.node_tree.nodes if n.type == "TEX_IMAGE"]
     bsdf = principled(material)
     if bsdf is None:
@@ -1305,6 +1335,182 @@ def look_through(context, camera):
             area.spaces.active.region_3d.view_perspective = "CAMERA"
 
 
+# ---------------------------------------------------------------- hardware kits
+
+KIT_PREVIEW = "kit_preview"
+# Rider arm reach from the seat socket (blocks).
+ARM_REACH = 0.586
+REACH_PREFIX = "reach_"
+# glTF frame -> Blender frame: (x, y, z) -> (x, -z, y).
+Y_UP = Matrix(((1, 0, 0, 0), (0, 0, -1, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
+
+
+def split_list(text):
+    return [item.strip() for item in text.split(",") if item.strip()]
+
+
+def kit_values(settings):
+    """(kit json values from the Kit panel, problems)."""
+    problems = []
+    try:
+        station = json.loads(settings.kit_station or "{}")
+    except ValueError as error:
+        station = {}
+        problems.append("station: not JSON (%s)" % error)
+    link = settings.kit_belt_link.strip()
+    values = {"weapons": split_list(settings.kit_weapons), "fits": split_list(settings.kit_fits),
+              "install_ticks": settings.kit_install_ticks, "item": settings.kit_item.strip(),
+              "replaces": settings.kit_replaces.strip(), "station": station,
+              "belt": {"link": link, "pitch": round(settings.kit_belt_pitch, 6)} if link else None}
+    checked = {k: v for k, v in values.items()
+               if v != "" and v is not None and not (k == "station" and isinstance(v, dict) and not v)}
+    problems += ca_validate.kit_problems({"model": "ns:path", **checked})
+    return values, problems
+
+
+def load_kit_fields(settings, kit):
+    settings.kit_weapons = ", ".join(kit.get("weapons", []))
+    settings.kit_fits = ", ".join(kit.get("fits", []))
+    settings.kit_install_ticks = kit.get("install_ticks", ca_validate.KIT_INSTALL_TICKS)
+    settings.kit_item = kit.get("item", "")
+    settings.kit_replaces = kit.get("replaces", "")
+    settings.kit_station = json.dumps(kit["station"]) if "station" in kit else ""
+    belt = kit.get("belt") or {}
+    settings.kit_belt_link = belt.get("link", "")
+    settings.kit_belt_pitch = belt.get("pitch", 0.0)
+
+
+def open_kit(context, json_path):
+    """Kit json -> its model imported (import_pack_model), Kit panel filled; Export writes both back. Returns (objects,
+    model path)."""
+    root, _ = ca_validate.kit_of(json_path)
+    with open(json_path, encoding="utf-8") as source:
+        kit = json.load(source)
+    model = ca_validate.resolve(root, kit.get("model", ""))
+    if model is None or not os.path.isfile(model):
+        raise ValueError("kit model %s is not in this pack (%s)" % (kit.get("model"), root))
+    objects, _ = import_pack_model(context, model)
+    _hardpoints.clear()
+    settings = context.scene.combinedassault_export
+    settings.kit_path = json_path
+    load_kit_fields(settings, kit)
+    return objects, model
+
+
+def write_kit(settings, model=None):
+    """Kit panel -> kit json, in place (ca_validate.edit_kit_text); model: new `model` id. True when bytes changed."""
+    values, problems = kit_values(settings)
+    if problems:
+        raise ValueError("; ".join(problems))
+    if model is not None:
+        values["model"] = model
+    with open(settings.kit_path, encoding="utf-8") as source:
+        text = source.read()
+    edited = ca_validate.edit_kit_text(text, values)
+    if edited != text:
+        with open(settings.kit_path, "w", encoding="utf-8") as out:
+            out.write(edited)
+    return edited != text
+
+
+_hardpoint_items = []
+_hardpoints = {}
+
+
+def kit_hardpoints(settings):
+    """(pack root, ca_validate.hardpoints); cached per (kit, fits): panel draws call it."""
+    key = settings.kit_path, tuple(split_list(settings.kit_fits))
+    if key not in _hardpoints:
+        root, kit_id = ca_validate.kit_of(settings.kit_path)
+        _hardpoints[key] = root, ca_validate.hardpoints(root, kit_id, key[1])
+    return _hardpoints[key]
+
+
+def hardpoint_items(self, context):
+    # Blender keeps no reference to callback strings: hold them module-wide.
+    _hardpoint_items.clear()
+    settings = context.scene.combinedassault_export
+    if settings.kit_path:
+        try:
+            _hardpoint_items.extend((str(i), "%s %s @ %s" % (p["vehicle"], p["part"], p["node"]), "")
+                                    for i, p in enumerate(kit_hardpoints(settings)[1]))
+        except (OSError, ValueError):
+            pass
+    return _hardpoint_items or [("NONE", "no hardpoint fits", "")]
+
+
+def clear_kit_preview():
+    root = bpy.data.objects.get(KIT_PREVIEW)
+    if root is not None:
+        for obj in [root] + list(root.children_recursive):
+            bpy.data.objects.remove(obj, do_unlink=True)
+
+
+def preview_kit(context, index):
+    """Vehicle (+ part mounts) of hardpoint `index` as a reference, moved so the hardpoint node's rest frame = origin
+    (the kit root). Rebuilt per call; never exported or checked."""
+    scene = context.scene
+    settings = scene.combinedassault_export
+    root_dir, points = kit_hardpoints(settings)
+    point = points[index]
+    world = ca_validate.hardpoint_world(root_dir, point["def"], point["node"])
+    if world is None:
+        raise ValueError("%s has no node %s" % (point["vehicle"], point["node"]))
+    clear_kit_preview()
+    saved = settings.pack_root, settings.namespace, settings.model_path
+    root = bpy.data.objects.new(KIT_PREVIEW, None)
+    root.combinedassault.reference = True
+    reference_collection(scene).objects.link(root)
+    root.matrix_world = (Y_UP @ Matrix(world) @ Y_UP.inverted()).inverted()
+    made = []
+    try:
+        before = set(bpy.data.objects)
+        objects, _ = import_pack_model(context, ca_validate.resolve(root_dir, point["def"]["model"]))
+        made += objects
+        named = {re.sub(r"\.\d{3}$", "", obj.name): obj for obj in objects}
+        for part in point["def"].get("parts", []):
+            for mount in part.get("mounts", []):
+                attach = named.get(mount["node"])
+                path = ca_validate.resolve(root_dir, mount["model"])
+                if attach is None or path is None or not os.path.isfile(path):
+                    continue
+                grafted, _ = import_pack_model(context, path)
+                for obj in grafted:
+                    if obj.parent is None:
+                        obj.parent = attach
+                made += grafted
+    finally:
+        settings.pack_root, settings.namespace, settings.model_path = saved
+        # Failed import: whatever landed stays a reference, never exported.
+        for obj in set(bpy.data.objects) - before - {root}:
+            obj.combinedassault.reference = True
+            obj.hide_select = True
+            if obj.parent is None:
+                obj.parent = root
+    return point, made
+
+
+def arm_reach(scene):
+    """Rebuild one ARM_REACH sphere per seat socket (vehicle preview included); never exported or checked."""
+    for old in [o for o in scene.objects if o.name.startswith(REACH_PREFIX) and o.combinedassault.reference]:
+        bpy.data.objects.remove(old, do_unlink=True)
+    collection = reference_collection(scene)
+    made = []
+    for seat in sorted(scene.objects, key=lambda o: o.name):
+        if role_of(seat) != "SOCKET" or seat.combinedassault.field != "seat" or seat.name.startswith(REACH_PREFIX):
+            continue
+        sphere = bpy.data.objects.new(REACH_PREFIX + seat.name, None)
+        sphere.empty_display_type = "SPHERE"
+        sphere.empty_display_size = ARM_REACH
+        sphere.combinedassault.reference = True
+        sphere.hide_select = True
+        collection.objects.link(sphere)
+        sphere.parent = seat
+        sphere.matrix_world = Matrix.Translation(seat.matrix_world.translation)
+        made.append(sphere)
+    return made
+
+
 # ---------------------------------------------------------------- properties
 
 
@@ -1371,6 +1577,8 @@ class CombinedAssaultObjectSettings(PropertyGroup):
         items=[("AUTO", "Auto", "Rotor systems spin"), ("ON", "On", ""), ("OFF", "Off", "")],
         default="AUTO")
     meta_health: FloatProperty(name="Health", description="0 = system default", default=0.0, min=0.0)
+    meta_rha: FloatProperty(name="RHA mm", description="mm RHA a penetrator crossing the module consumes; "
+                                                       "-1 = by system", default=-1.0, min=-1.0)
     meta_unit: StringProperty(name="Unit", description="Pool split by name (FL, R1); inherited; HUD ROTR FL",
                               default="")
     meta_spin: EnumProperty(
@@ -1397,14 +1605,22 @@ class CombinedAssaultObjectSettings(PropertyGroup):
     meta_road_wheel: BoolProperty(
         name="Road wheel", description="Rides the nearest track: own spring probe under it, lower run follows",
         default=False)
+    hand_side: EnumProperty(name="Hand", items=[("RIGHT", "Right", ""), ("LEFT", "Left", "")], default="RIGHT")
+    foot_side: EnumProperty(name="Foot", items=[("RIGHT", "Right", ""), ("LEFT", "Left", "")], default="RIGHT")
+    # Shared by hand and foot.
+    hand_action: StringProperty(
+        name="Action", description="Empty = rest while seated; hand: shift (gear lever) or a clip name (fire, reload, "
+                                   "unjam, switchable part id); foot: brake or a clip name: held while that applies",
+        default="")
 
 
 class CombinedAssaultMaterialSettings(PropertyGroup):
     # Views of the material name (the game reads its tokens); setting one renames the material.
-    armor_mm: FloatProperty(name="Armour (mm RHA)", min=0.0, soft_max=1500.0,
-                            description="Plate thickness on these faces; 0 = the vehicle's aspect value",
-                            get=lambda self: material_tags(self.id_data.name)[0],
-                            set=lambda self, value: retag(self, armor=value))
+    armor_plate: StringProperty(name="Armour plate",
+                                description="armor.plates id these faces belong to ([A-Za-z0-9_]); empty = the "
+                                            "vehicle's aspect value",
+                                get=lambda self: material_tags(self.id_data.name)[0],
+                                set=lambda self, value: retag(self, armor=value.strip()))
     decor: BoolProperty(name="Decor", description="Drawn only: never hit, never in generated colliders",
                         get=lambda self: material_tags(self.id_data.name)[2],
                         set=lambda self, value: retag(self, decor=value))
@@ -1440,6 +1656,24 @@ class CombinedAssaultExportSettings(PropertyGroup):
                                             "materials with a _paint mask; removed while exporting")
     live_reload: BoolProperty(name="Live reload", default=True, update=lambda s, c: toggle_watch(s.live_reload),
                               description="Reload textures edited outside Blender (0.5 s poll)")
+    kit_path: StringProperty(name="Kit json", subtype="FILE_PATH", default="",
+                             description="Hardware kit def this model belongs to; Export writes it too")
+    kit_weapons: StringProperty(name="Weapons", description="Weapon ids, comma separated", default="")
+    kit_fits: StringProperty(name="Fits", description="Hardpoint classes, comma separated", default="")
+    kit_install_ticks: IntProperty(name="Install ticks", default=ca_validate.KIT_INSTALL_TICKS, min=0)
+    kit_item: StringProperty(name="Item", description="Another mod's item id the kit is carried as; empty = none",
+                             default="")
+    kit_replaces: StringProperty(name="Replaces", description="Kit id hidden while this one loads; empty = none",
+                                 default="")
+    kit_station: StringProperty(name="Station", description="JSON object of station keys (HardwareKits.STATION_KEYS)",
+                                default="")
+    kit_belt_link: StringProperty(name="Belt link", default="",
+                                  description="Drawn belt link model id (X along the belt, Z cartridge axis, m); "
+                                              "empty = no belt. Model: belt sockets 0 feed, 1 box mouth")
+    kit_belt_pitch: FloatProperty(name="Belt pitch", default=0.0, min=0.0, precision=5,
+                                  description="Link spacing, m")
+    kit_hardpoint: EnumProperty(name="Hardpoint", items=hardpoint_items,
+                                description="Vehicle hardpoint accepting one of the kit's fits")
 
 
 # ---------------------------------------------------------------- operators
@@ -1675,13 +1909,13 @@ def rotation_path(obj):
 
 
 class COMBINEDASSAULT_OT_assign_armor(Operator):
-    """Give the selected faces a copy of their material tagged armor_<mm> (edit mode)"""
+    """Give the selected faces a copy of their material tagged armor:<plate id> (edit mode)"""
 
     bl_idname = "combinedassault.assign_armor"
     bl_label = "Assign armour to faces"
     bl_options = {"REGISTER", "UNDO"}
 
-    mm: FloatProperty(name="mm RHA", default=100.0, min=0.0)
+    plate: StringProperty(name="Plate", default="", description="armor.plates id; empty = unbind")
 
     @classmethod
     def poll(cls, context):
@@ -1689,6 +1923,10 @@ class COMBINEDASSAULT_OT_assign_armor(Operator):
 
     def execute(self, context):
         obj = context.object
+        plate = self.plate.strip()
+        if not PLATE_ID.match(plate):
+            self.report({"ERROR"}, "plate id '%s': [A-Za-z0-9_] only" % plate)
+            return {"CANCELLED"}
         mesh = bmesh.from_edit_mesh(obj.data)
         selected = [face for face in mesh.faces if face.select]
         if not selected:
@@ -1699,10 +1937,10 @@ class COMBINEDASSAULT_OT_assign_armor(Operator):
             base = obj.material_slots[face.material_index].material if obj.material_slots else None
             key = base.name if base else ""
             if key not in slots:
-                slots[key] = slot_for(obj, armor_material(base, self.mm))
+                slots[key] = slot_for(obj, armor_material(base, plate))
             face.material_index = slots[key]
         bmesh.update_edit_mesh(obj.data)
-        self.report({"INFO"}, "%d face(s) at %g mm" % (len(selected), self.mm))
+        self.report({"INFO"}, "%d face(s) -> plate %s" % (len(selected), plate or "none"))
         return {"FINISHED"}
 
     def invoke(self, context, event):
@@ -1710,7 +1948,7 @@ class COMBINEDASSAULT_OT_assign_armor(Operator):
 
 
 def strip_tags(name):
-    name = ARMOR.sub("", name)
+    name = LEGACY_ARMOR.sub("", PLATE.sub("", name))
     for pattern in [DECOR] + list(SURFACE.values()):
         # Overlapping delimiters: `a_rubber_glass` needs a second pass per token.
         name = pattern.sub("_", pattern.sub("_", name))
@@ -1723,19 +1961,19 @@ def surface_of(name):
 
 
 def tagged_name(name, armor, surface, decor):
-    """`<stem>_decor` or `<stem>[_<surface>][_armor_<mm>]`: the tokens the game reads from a material name."""
+    """`<stem>_decor` or `<stem>[_<surface>][_armor:<id>]`: the tokens the game reads from a material name."""
     stem = strip_tags(name)
     if decor:
         return stem + "_decor"
     if surface != "STEEL":
         stem += "_" + surface.lower()
-    return stem + ("_armor_%g" % armor if armor > 0 else "")
+    return stem + ("_armor:" + armor if armor else "")
 
 
 def material_tags(name):
-    """(armor mm, surface, decor) as the game reads the name."""
-    armor = ARMOR.search(name)
-    return float(armor.group(1)) if armor else 0.0, surface_of(name), bool(DECOR.search(name))
+    """(plate id, surface, decor) as the game reads the name."""
+    armor = PLATE.search(name)
+    return armor.group(1) if armor else "", surface_of(name), bool(DECOR.search(name))
 
 
 def retag(settings, armor=None, surface=None, decor=None):
@@ -1748,9 +1986,9 @@ def retag(settings, armor=None, surface=None, decor=None):
                                 old_surface if surface is None else surface, decor)
 
 
-def armor_material(base, mm):
-    """Copy of base (look unchanged) named with plate mm (0 = none), base's hit effect kept, decor dropped."""
-    name = tagged_name(base.name if base else "material", mm, surface_of(base.name) if base else "STEEL", False)
+def armor_material(base, plate):
+    """Copy of base (look unchanged) named with plate id ("" = none), base's hit effect kept, decor dropped."""
+    name = tagged_name(base.name if base else "material", plate, surface_of(base.name) if base else "STEEL", False)
     existing = bpy.data.materials.get(name)
     if existing is not None:
         return existing
@@ -1801,6 +2039,13 @@ class COMBINEDASSAULT_OT_export(Operator):
                 self.report({"ERROR"}, message)
             self.report({"ERROR"}, "nothing written: %d error(s)" % len(errors))
             return {"CANCELLED"}
+        if settings.kit_path:
+            _, problems = kit_values(settings)
+            if problems:
+                for message in problems:
+                    self.report({"ERROR"}, "kit: " + message)
+                self.report({"ERROR"}, "nothing written: kit json")
+                return {"CANCELLED"}
         gltf_path, texture_dir, ns, assets = pack_paths(scene)
         made = []  # folders this export creates for textures, innermost first
         folder = texture_dir
@@ -1821,7 +2066,14 @@ class COMBINEDASSAULT_OT_export(Operator):
             if os.listdir(folder):
                 break
             os.rmdir(folder)
-        errors, warnings, _ = ca_validate.validate(gltf_path)
+        if settings.kit_path:
+            kit_root, _ = ca_validate.kit_of(settings.kit_path)
+            model = resource_location(ns, os.path.join(kit_root, "assets", ns), gltf_path) \
+                if os.path.realpath(bpy.path.abspath(settings.pack_root)) == os.path.realpath(kit_root) else None
+            write_kit(settings, model)
+        errors, warnings, _ = ca_validate.validate(gltf_path, bool(settings.kit_path))
+        if settings.kit_path:
+            warnings += ca_validate.kit_belt_problems(kit_values(settings)[0], gltf_path)
         for message in warnings:
             self.report({"WARNING"}, "written file: " + message)
         for message in errors:
@@ -1892,6 +2144,7 @@ class COMBINEDASSAULT_OT_import(Operator, ImportHelper):
         except ValueError as e:
             self.report({"ERROR"}, str(e))
             return {"CANCELLED"}
+        context.scene.combinedassault_export.kit_path = ""
         errors, warnings, _ = ca_validate.validate(self.filepath)
         for message in errors:
             self.report({"WARNING"}, "file already had: " + message)
@@ -2167,8 +2420,146 @@ class COMBINEDASSAULT_OT_preview_lights(Operator):
         return {"FINISHED"}
 
 
+class COMBINEDASSAULT_OT_open_kit(Operator, ImportHelper):
+    """Open a hardware kit (<pack>/combinedassault/<ns>/hardware/*.json): its model imported, kit fields on the Scene
+    tab; Export writes model + kit json"""
+
+    bl_idname = "combinedassault.open_kit"
+    bl_label = "Open hardware kit"
+    bl_options = {"REGISTER", "UNDO"}
+
+    filename_ext = ".json"
+    filter_glob: StringProperty(default="*.json", options={"HIDDEN"})
+
+    def execute(self, context):
+        try:
+            objects, model = open_kit(context, self.filepath)
+        except (OSError, ValueError) as e:
+            self.report({"ERROR"}, str(e))
+            return {"CANCELLED"}
+        errors, _, _ = ca_validate.validate(model, True)
+        for message in errors:
+            self.report({"WARNING"}, "file already had: " + message)
+        self.report({"INFO"}, "kit %s: %d objects" % (ca_validate.kit_of(self.filepath)[1], len(objects)))
+        return {"FINISHED"}
+
+
+class COMBINEDASSAULT_OT_save_kit(Operator):
+    """Write the Kit fields into the kit json (unchanged keys keep their bytes)"""
+
+    bl_idname = "combinedassault.save_kit"
+    bl_label = "Save kit json"
+
+    @classmethod
+    def poll(cls, context):
+        return bool(context.scene.combinedassault_export.kit_path)
+
+    def execute(self, context):
+        try:
+            changed = write_kit(context.scene.combinedassault_export)
+        except (OSError, ValueError) as e:
+            self.report({"ERROR"}, str(e))
+            return {"CANCELLED"}
+        self.report({"INFO"}, "kit json %s" % ("written" if changed else "unchanged"))
+        return {"FINISHED"}
+
+
+class COMBINEDASSAULT_OT_preview_kit(Operator):
+    """Vehicle of the chosen hardpoint as a reference, kit root at the hardpoint node (rest). Rebuilt per call; never
+    exported"""
+
+    bl_idname = "combinedassault.preview_kit"
+    bl_label = "Preview on vehicle"
+    bl_options = {"REGISTER", "UNDO"}
+
+    clear: BoolProperty(name="Clear", default=False)
+
+    @classmethod
+    def poll(cls, context):
+        return bool(context.scene.combinedassault_export.kit_path)
+
+    def execute(self, context):
+        if self.clear:
+            clear_kit_preview()
+            return {"FINISHED"}
+        choice = context.scene.combinedassault_export.kit_hardpoint
+        if choice == "NONE":
+            self.report({"ERROR"}, "no vehicle hardpoint accepts the kit's fits")
+            return {"CANCELLED"}
+        try:
+            point, made = preview_kit(context, int(choice))
+        except (OSError, ValueError) as e:
+            self.report({"ERROR"}, str(e))
+            return {"CANCELLED"}
+        self.report({"INFO"}, "%s %s @ %s: %d objects" % (point["vehicle"], point["part"], point["node"], len(made)))
+        return {"FINISHED"}
+
+
+class AddLimb(Operator):
+    # Unregistered base: a registered subclass would unregister its registered parent's class.
+    bl_options = {"REGISTER", "UNDO"}
+
+    hand: EnumProperty(name="Hand", items=[("RIGHT", "Right", ""), ("LEFT", "Left", "")], default="RIGHT")
+    target: StringProperty(name="Seat part", default="",
+                           description="Seat part id; empty in a kit / part model = the carrying part")
+    action: StringProperty(name="Action", default="",
+                           description="Empty = rest grip; hand: shift; foot: brake; or a clip name (fire, reload, unjam, part id)")
+
+    def execute(self, context):
+        name = "_".join(x for x in (self.limb, self.hand.lower(), self.target, self.action) if x)
+        obj = bpy.data.objects.new(name, None)
+        obj.empty_display_type, obj.empty_display_size = "PLAIN_AXES", 0.05
+        context.collection.objects.link(obj)
+        settings = obj.combinedassault
+        settings.role = "SOCKET"
+        settings.field = self.limb
+        settings.target = self.target
+        setattr(settings, self.limb + "_side", self.hand)
+        settings.hand_action = self.action
+        obj.parent = context.active_object
+        obj.matrix_world = context.scene.cursor.matrix
+        for other in context.selected_objects:
+            other.select_set(False)
+        obj.select_set(True)
+        context.view_layer.objects.active = obj
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+
+class COMBINEDASSAULT_OT_add_hand(AddLimb):
+    """Hand contact (wrist target, fist end) at the 3D cursor, parented to the active object: rides what it moves"""
+
+    bl_idname = "combinedassault.add_hand"
+    bl_label = "Add hand contact"
+    limb = "hand"
+
+
+class COMBINEDASSAULT_OT_add_foot(AddLimb):
+    """Foot contact (ankle target, sole end) at the 3D cursor, parented to the active object: rides what it moves"""
+
+    bl_idname = "combinedassault.add_foot"
+    bl_label = "Add foot contact"
+    limb = "foot"
+
+
+class COMBINEDASSAULT_OT_arm_reach(Operator):
+    """Sphere of arm reach (0.586) on every seat socket; rebuilt per call, never exported"""
+
+    bl_idname = "combinedassault.arm_reach"
+    bl_label = "Arm reach"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+        made = arm_reach(context.scene)
+        self.report({"INFO"}, "%d seat(s)" % len(made))
+        return {"FINISHED"} if made else {"CANCELLED"}
+
+
 def menu_import(self, context):
     self.layout.operator(COMBINEDASSAULT_OT_import.bl_idname, text="combinedassault pack model (.glb / .gltf)")
+    self.layout.operator(COMBINEDASSAULT_OT_open_kit.bl_idname, text="combinedassault hardware kit (.json)")
 
 
 # ---------------------------------------------------------------- panels
@@ -2203,6 +2594,10 @@ class COMBINEDASSAULT_PT_object(Panel):
             layout.label(text="Size reference: not exported", icon="INFO")
             return
         layout.prop(settings, "role")
+        kit = bool(context.scene.combinedassault_export.kit_path)
+        if kit:
+            for line in wrap("kit model: roles " + ", ".join(sorted(ca_validate.KIT_ROLES)) + " only"):
+                layout.label(text=line)
         role = settings.role
         if role in ("PART", "PITCH"):
             layout.prop(settings, "target")
@@ -2255,6 +2650,12 @@ class COMBINEDASSAULT_PT_object(Panel):
                 row.prop(settings, "light_outer")
                 box.prop(settings, "light_shadow")
                 box.prop(settings, "light_cookie")
+            if settings.field in ("hand", "foot"):
+                box = layout.box()
+                box.label(text="Origin = %s; rides its parent" % ("wrist target (fist end)" if settings.field == "hand"
+                                                                  else "ankle target (sole)"))
+                box.prop(settings, settings.field + "_side")
+                box.prop(settings, "hand_action")
         if role in ("NONE", "BODY", "PART", "PITCH"):
             layout.prop(settings, "hidden")
         if role == "NONE" and obj.type == "MESH":
@@ -2277,11 +2678,13 @@ class COMBINEDASSAULT_PT_object(Panel):
             row.prop(settings, "meta_skip")
             row.prop(settings, "meta_swept")
             box.prop(settings, "meta_health")
+            if role == "HIT":
+                box.prop(settings, "meta_rha")
             row = box.row()
             row.prop(settings, "meta_unit")
             row.prop(settings, "meta_spin", text="")
         errors, warnings = check_object(obj, context.evaluated_depsgraph_get(),
-                                        not any(role_of(o) == "BODY" for o in context.scene.objects))
+                                        not any(role_of(o) == "BODY" for o in context.scene.objects), kit)
         if errors or warnings:
             box = layout.box()
             for message, icon in [(m, "ERROR") for m in errors] + [(m, "INFO") for m in warnings]:
@@ -2328,7 +2731,7 @@ class COMBINEDASSAULT_PT_material(Panel):
         layout.prop(material.combinedassault, "texture_slot")
         box = layout.box()
         box.label(text="Read from the name; editing renames")
-        box.prop(material.combinedassault, "armor_mm")
+        box.prop(material.combinedassault, "armor_plate")
         row = box.row()
         row.prop(material.combinedassault, "surface")
         row.prop(material.combinedassault, "decor")
@@ -2344,8 +2747,27 @@ class COMBINEDASSAULT_PT_scene(Panel):
     def draw(self, context):
         layout = self.layout
         settings = context.scene.combinedassault_export
-        layout.operator("combinedassault.import_model", icon="IMPORT")
+        row = layout.row()
+        row.operator("combinedassault.import_model", icon="IMPORT")
+        row.operator("combinedassault.open_kit", icon="TOOL_SETTINGS")
         layout.label(text="1 unit = 1 block, nose -Y, port +X, up +Z")
+        if settings.kit_path:
+            box = layout.box()
+            try:
+                box.label(text="kit " + ca_validate.kit_of(settings.kit_path)[1], icon="TOOL_SETTINGS")
+            except ValueError as e:
+                box.label(text=str(e), icon="ERROR")
+            for key in ("kit_weapons", "kit_fits", "kit_install_ticks", "kit_item", "kit_replaces", "kit_station",
+                        "kit_belt_link", "kit_belt_pitch"):
+                box.prop(settings, key)
+            for message in kit_values(settings)[1]:
+                for i, line in enumerate(wrap(message)):
+                    box.label(text=line, icon="ERROR" if i == 0 else "NONE")
+            box.operator("combinedassault.save_kit", icon="FILE_TICK")
+            row = box.row(align=True)
+            row.prop(settings, "kit_hardpoint", text="")
+            row.operator("combinedassault.preview_kit", text="Preview", icon="AUTO").clear = False
+            row.operator("combinedassault.preview_kit", text="", icon="X").clear = True
         for key in ("pack_root", "namespace", "model_path"):
             layout.prop(settings, key)
         counts = {}
@@ -2368,6 +2790,10 @@ class COMBINEDASSAULT_PT_scene(Panel):
         row = layout.row()
         row.operator("combinedassault.add_screen", icon="WINDOW")
         row.operator("combinedassault.preview_lights", icon="LIGHT_SPOT")
+        row = layout.row()
+        row.operator("combinedassault.add_hand", icon="VIEW_PAN")
+        row.operator("combinedassault.add_foot", icon="VIEW_PAN")
+        row.operator("combinedassault.arm_reach", icon="SPHERE")
         row = layout.row()
         row.operator("combinedassault.player_reference", text="Player standing", icon="ARMATURE_DATA").seated = False
         row.operator("combinedassault.player_reference", text="Player seated", icon="ARMATURE_DATA").seated = True
@@ -2409,6 +2835,12 @@ CLASSES = (
     COMBINEDASSAULT_OT_hit_cylinder,
     COMBINEDASSAULT_OT_add_screen,
     COMBINEDASSAULT_OT_preview_lights,
+    COMBINEDASSAULT_OT_open_kit,
+    COMBINEDASSAULT_OT_save_kit,
+    COMBINEDASSAULT_OT_preview_kit,
+    COMBINEDASSAULT_OT_add_hand,
+    COMBINEDASSAULT_OT_add_foot,
+    COMBINEDASSAULT_OT_arm_reach,
     COMBINEDASSAULT_PT_object,
     COMBINEDASSAULT_PT_material,
     COMBINEDASSAULT_PT_scene,

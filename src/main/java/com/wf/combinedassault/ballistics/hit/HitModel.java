@@ -9,6 +9,7 @@ import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * A {@link HitMesh} bound to one vehicle type's structure: each node rides a structure group (so the server's part
@@ -117,7 +118,7 @@ public final class HitModel {
             for (int at = i; at >= 0; at = mesh.nodes().get(at).parent()) {
                 String s = mesh.nodes().get(at).side();
                 if (!s.isEmpty()) {
-                    side = VehicleSystems.Side.valueOf(s.toUpperCase(java.util.Locale.ROOT));
+                    side = VehicleSystems.Side.valueOf(s.toUpperCase(Locale.ROOT));
                     break;
                 }
             }

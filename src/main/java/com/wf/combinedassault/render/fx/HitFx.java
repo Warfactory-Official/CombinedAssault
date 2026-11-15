@@ -5,6 +5,7 @@ import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.ballistics.component.ComponentState;
 import com.wf.combinedassault.ballistics.component.HullComponents;
 import com.wf.combinedassault.ballistics.hit.HitModel;
+import com.wf.combinedassault.ballistics.hit.SurfaceMaterial;
 import com.wf.combinedassault.ballistics.hit.VehicleHits;
 import com.wf.combinedassault.ballistics.message.ServerHitEffect;
 import com.wf.combinedassault.render.particle.BulletHoleOption;
@@ -18,6 +19,7 @@ import com.wf.gemrender.particle.ParticleEmitter;
 import com.wf.gemrender.particle.ParticleLook;
 import com.wf.wflib.armor.api.hull.HullOutcome;
 import com.wf.wflib.damage.api.ThreatKind;
+import dev.engine_room.flywheel.api.event.EndClientResourceReloadEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
@@ -88,7 +90,7 @@ public final class HitFx {
         });
     }
 
-    public static void onReload(dev.engine_room.flywheel.api.event.EndClientResourceReloadEvent e) {
+    public static void onReload(EndClientResourceReloadEvent e) {
         HitFxWorld.onReload(e);
     }
 
@@ -200,7 +202,7 @@ public final class HitFx {
 
     /** Hole decal pinned to the struck bone (all viewers; was indicator-only). */
     private static void hole(ClientLevel level, AbstractVehicle vehicle, ServerHitEffect hit) {
-        if (hit.material() != com.wf.combinedassault.ballistics.hit.SurfaceMaterial.STEEL
+        if (hit.material() != SurfaceMaterial.STEEL
                 || hit.outcome() == HullOutcome.RICOCHET) {
             return;
         }

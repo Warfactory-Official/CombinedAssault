@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import net.minecraft.world.phys.AABB;
 
 /**
  * Vehicles stowed in a carrier's hold: entity NBT inside the carrier while stowed (saved, unloaded, moved and
@@ -165,7 +166,7 @@ public final class CargoHold {
         double reach = info.baySize.length();
         List<AbstractVehicle> found = new ArrayList<>();
         for (AbstractVehicle vehicle : carrier.level().getEntitiesOfClass(AbstractVehicle.class,
-                new net.minecraft.world.phys.AABB(lo, hi).inflate(reach * 0.5))) {
+                new AABB(lo, hi).inflate(reach * 0.5))) {
             if (vehicle == carrier || vehicle.isRemoved() || VehicleHarness.isMounted(vehicle)
                     || !inside(toLocal(vehicle.position()), 0)) {
                 continue;

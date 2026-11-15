@@ -911,6 +911,9 @@ Role nodes read at load (rest pose, vehicle frame). Each fills a vehicle def key
 | `center_of_mass` | — | `physics_info.center` | origin |
 | `pivot` | — | `center_offset` | origin |
 | `track` | part (`track` type) | part `tracks` (by `index`) | mesh outline = path (edges of one triangle), winding order from the first triangle's outline edge; a face or fan |
+| `hand` | part (seat) | node-only | origin = rider wrist target (fist end); rides its parent (wheel, lever, gun). `combinedassault.hand` `right` \| `left` (required), `action` (absent = rest grip) |
+| `foot` | part (seat) | node-only | origin = rider sole target (leg cube end); rides its parent (pedal). `combinedassault.foot` `right` \| `left` (required), `action` (absent = rest) |
+| `belt` | part | node-only | kit `belt` end, client draw only: `index` 0 feed (X belt leaving, Z cartridge axis), 1 box mouth (-X entering) |
 | frame keys | — | part `rot_info` `x_rot_min/max` (`pitch` frame, none: `part`), `y_rot_min/max` (`part` frame); `suspension` part `render_bone` = its `part` frame name | `combinedassault.*` on the frame node |
 
 - `combinedassault.index`: position in a list field; absent => file order.
@@ -918,6 +921,8 @@ Role nodes read at load (rest pose, vehicle frame). Each fills a vehicle def key
 - Addon `bone` = the socket's frame name.
 - `light` keys (`combinedassault.*`): `kind` `head` (default) \| `search`, `color` `#rrggbb`, `range`, `intensity` (E ~1 at `sqrt(intensity)` blocks), `inner`/`outer` half-angle deg (`0 < inner <= outer < 89`), `shadow`, `cookie`. Defaults per kind: `VehicleLight.Kind`. Toggle key (default `\`): driver -> `head`, other crew -> `search`; vehicle with one kind => that kind. Destroyed => off.
 - Part `mounts` model: its part-target sockets with no interface => the carrying part. Kit mount `seat` / `view` / `bolt` / `eject` / `sight` / `sight_lens` replace the part's while that kit is fitted.
+- `hand`: client only. Drawn riders: AHF `ArmSolver` on the body. Own rider in OPERATOR view (SCOPE on `operator` sights): wflib `PlayerArms` drawn in the level (world light, hull depth), `ArmViewPose` shoulders on the torso = eye + drawn seat yaw (traverse included), not the look; vanilla hands cancelled. Drawn rider body yaw = seat yaw per frame. `operator_on_weapon_unit: false` + rest `hand` under the traverse node => seat yaw follows traverse (pintle gunner faces gun). Side without rest grip => seat pose arm (first person: lap); actions blend from its wrist. Action live => rest -> action 0.12 s, back 0.16 s (smoothstep). `action`: `shift` = gear change (driver lever held 0.12 s for the reach, then travels; hand stays while it moves + 0.05 s); else clip track name ([§6.4](#64-part-clips); bare `fire` / `reload` / `unjam` = seat part's), live while `0 < p < 1`. Action contact position: mount clips posed too (kit `reload` hand goals). Kit `hand` (interface absent => carrying part) replaces the part's on that side while fitted; on a non-seat part => ignored. Unknown key, non-seat interface => load error.
+- `foot`: as `hand` on the legs (AHF leg override; knee up-forward). Leg short of the target => stretched along the leg, <= 1.3x vanilla. `action` `brake` = brake pedal off its stop (`shift` on a foot, `brake` on a hand => load error). Own rider in first person: own body drawn sans head / arms (armour layer only), neck 0.06 m over the `ArmViewPose` shoulders (body 0.13 m behind its third-person place).
 - Mount model state nodes (posable, by name; carrying part's current weapon): `ammo_can` shown while rounds remain or reloading; `round@<k>` while remaining > k; `barrel@<variant>` (`standard` = no variant, weapon `barrel.variants`) while that barrel is on and not being changed. Drawn only; hits use the rest pose.
 - Station sockets (gunner seat, view) belong in a mount, not the shared hull model: an unarmed sibling then loads.
 - Model shared by two vehicles: its sockets apply to both; a part one lacks fails that one's load => per-vehicle offsets in the def.
@@ -1633,13 +1638,14 @@ Gun = kit def; vehicle part = typed `hardpoint`. Fitted / taken off in the field
 
 | kit field | notes |
 | --- | --- |
-| `model` | mount glTF, grafted under the hardpoint `node`; role nodes `bolt`, `eject`, `sight`, `sight_lens`, `hit`, `hit_surface` only; clips `fire` / `reload` / `unjam` ([§6.4](#64-part-clips)); state nodes (below) |
+| `model` | mount glTF, grafted under the hardpoint `node`; role nodes `seat`, `view`, `bolt`, `eject`, `sight`, `sight_lens`, `hit`, `hit_surface`, `hand`, `belt` only; clips `fire` / `reload` / `unjam` ([§6.4](#64-part-clips)); state nodes (below) |
 | `weapons` | [§4.5](#45-the-weapons-list) entries; each gets `kit` + `save_id` `<kit>/<weapon>` |
 | `fits` | hardpoint classes (free strings) |
 | `install_ticks` | fit / take off duration, default 100 |
 | `station` | weapon part keys over the hardpoint part's own |
 | `item` | another mod's item id the kit is carried as, instead of `hardware`: fit takes that stack (data kept on the part, NBT `KitItem`), take off gives it back; unregistered => kit absent (no error; overrides naming it skipped) |
 | `replaces` | kit id hidden while this kit loads; that id resolves here (`fitted`, overrides, saved `Kit`) |
+| `belt` | `{link, pitch}`: wflib `BeltChain` links (link glTF, pitch m) `belt` 0 -> 1, MA `BeltView` boxed: box mouth > 3 mm off rest => 4-link stub; links = remaining rounds; shots advance it |
 
 | hardpoint field | notes |
 | --- | --- |
@@ -1656,4 +1662,4 @@ Gun = kit def; vehicle part = typed `hardpoint`. Fitted / taken off in the field
 - Item `combinedassault:hardware`, component `combinedassault:hardware_kit` = kit id; name lang `hardware.<ns>.<path>`; drawn from the kit model. Recipes: result `{"id": "combinedassault:hardware", "components": {"combinedassault:hardware_kit": "<kit>"}}`.
 - Probe node `hardpoint:<part index>`: empty => one timed `hardpoint_fit` row per kit (arg = part << 8 | kit index), item consumed; fitted => timed `hardpoint_take_off`, item back. Refused: wreck, part detached, kit already on, eye > 4 blocks from pivot, pivot > 1.5 m behind hull surface from the eye, a seat of the part occupied, item missing (creative exempt).
 - NBT `Kit` (id, "" = empty) per hardpoint part.
-- Shipped kits: `m2`, `kord` (`pintle`, `tripod`, `door`), `mk19` (`pintle`, `tripod`), `spg9` (`tripod`), `m134`, `pkm` (`door`), `ma_pkm` (`door`; MineAssault `ma_lmgs:pkm` item + model, replaces `pkm`), `spray_pod` (`door`; weapon type `combinedassault:spray_pod`: `max_capacity` = tank mB, `mb_per_shot`, `radius`; no reload; filled through the vehicle `FluidHandler.ENTITY` tank 1+; fuel-spec fluids go to the fuel tank only; model procedural `tools/internal/stage_spray_pod.py`). Hardpoints: `humvee` roof (`pintle`, empty), `riverine` bows / stern (`pintle`, M2 / M2 / Mk 19), `spg9` weapon tripod (`tripod`, empty, `kneel`); `door`, `door` key: `mh60l` door guns (M134, `gun_window_*`), `w3` door gun (PKM, `cabin_door_r`), `ch47` door guns (M134, `gun_window_*`) + ramp gun (M2, `cargo_doors`).
+- Shipped kits: `m2`, `kord` (`pintle`, `tripod`, `door`), `mk19` (`pintle`, `tripod`), `spg9` (`tripod`), `m134`, `pkm` (`door`), `ma_pkm` (replaces `pkm`), `ma_m240b`, `ma_m249` (MineAssault item; `door`, `pintle`; model + weapon from `tools/internal/stage_ma_kits.py`: MA glb + belt box `ammo_can`, `reload` = MA empty belt reload: parts + `action: reload` hand goals; `belt` = MA belt link), `spray_pod` (`door`; weapon type `combinedassault:spray_pod`: `max_capacity` = tank mB, `mb_per_shot`, `radius`; no reload; filled through the vehicle `FluidHandler.ENTITY` tank 1+; fuel-spec fluids go to the fuel tank only; model procedural `tools/internal/stage_spray_pod.py`). Hardpoints: `humvee` roof (`pintle`, empty), `riverine` bows / stern (`pintle`, M2 / M2 / Mk 19), `spg9` weapon tripod (`tripod`, empty, `kneel`); `door`, `door` key: `mh60l` door guns (M134, `gun_window_*`), `w3` door gun (PKM, `cabin_door_r`), `ch47` door guns (M134, `gun_window_*`) + ramp gun (M2, `cargo_doors`).

@@ -4,8 +4,10 @@ import com.wf.combinedassault.indirect.*;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.VehicleMissile;
 import com.wf.combinedassault.weapon.message.ClientSelectRound;
+import com.wf.combinedassault.weapon.ordnance.Ordnance;
 import com.wf.combinedassault.weapon.part.MissileHolderUnit;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
+import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -100,11 +102,11 @@ public final class FireMissions {
     }
 
     /** Round kinds an operator can order (not interceptors), or {AIR} for a station with no rack. */
-    public static java.util.List<Item> orderable(WeaponUnit unit) {
+    public static List<Item> orderable(WeaponUnit unit) {
         AbstractVehicleWeapon<?> weapon = unit.getCurrentWeapon().orElse(null);
         MissileHolderUnit rack = weapon == null ? null : rack(weapon);
-        return rack == null ? java.util.List.of(Items.AIR) : rack.kinds().stream()
-                .filter(kind -> !com.wf.combinedassault.weapon.ordnance.Ordnance.isInterceptor(kind.getDefaultInstance()))
+        return rack == null ? List.of(Items.AIR) : rack.kinds().stream()
+                .filter(kind -> !Ordnance.isInterceptor(kind.getDefaultInstance()))
                 .toList();
     }
 

@@ -9,6 +9,7 @@ import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.gametest.TestLanes;
 import com.wf.combinedassault.weapon.kit.Loadouts;
 import com.wf.wflib.ammo.api.AmmoItems;
+import com.wf.wflib.drone.api.DroneTask;
 import com.wf.wflib.round.api.Rounds;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -181,9 +182,9 @@ public class LoadoutGameTest {
     public static void strikeNeedsAPayload(GameTestHelper helper) {
         AbstractVehicle drone = mavic(helper);
         helper.runAfterDelay(2, () -> {
-            boolean empty = drone.drone.supports(com.wf.wflib.drone.api.DroneTask.Kind.STRIKE);
+            boolean empty = drone.drone.supports(DroneTask.Kind.STRIKE);
             KamikazeKit.strap(drone);
-            boolean armed = drone.drone.supports(com.wf.wflib.drone.api.DroneTask.Kind.STRIKE);
+            boolean armed = drone.drone.supports(DroneTask.Kind.STRIKE);
             drone.discard();
             helper.assertTrue(!empty && armed, "strike empty " + empty + ", strapped " + armed);
             helper.succeed();

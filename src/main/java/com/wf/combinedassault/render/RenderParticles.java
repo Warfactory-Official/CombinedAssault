@@ -10,6 +10,7 @@ import com.wf.combinedassault.render.particle.TrackDustOption;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.neoforged.bus.api.IEventBus;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class RenderParticles {
 
-    public static final DeferredRegister<ParticleType<?>> PARTICLE_TYPES = DeferredRegister.create(net.minecraft.core.registries.Registries.PARTICLE_TYPE, CombinedAssault.MOD_ID);
+    public static final DeferredRegister<ParticleType<?>> PARTICLE_TYPES = DeferredRegister.create(Registries.PARTICLE_TYPE, CombinedAssault.MOD_ID);
 
     public static final DeferredHolder<ParticleType<?>, ParticleType<DustSmokeOption>> DUST_SMOKE = PARTICLE_TYPES.register("dust_smoke",
             () -> createOptions(DustSmokeOption.CODEC, DustSmokeOption.STREAM_CODEC)

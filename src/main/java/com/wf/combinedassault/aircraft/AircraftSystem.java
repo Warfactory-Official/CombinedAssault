@@ -18,6 +18,7 @@ import com.wf.combinedassault.pack.client.vehicle.VehicleDisplayPojo;
 import com.wf.combinedassault.pack.serialize.GsonUtil;
 import com.wf.combinedassault.render.animation.context.AnimationContextFactory;
 import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
+import java.util.Set;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
@@ -32,7 +33,7 @@ public final class AircraftSystem implements CombinedAssaultSystem {
 
     @Override
     public void register(IEventBus modBus, ModContainer container) {
-        GameTestSetup.testsNeeding(modBus, java.util.Set.of("uav"), FlapsGameTest.class, WingLossGameTest.class);
+        GameTestSetup.testsNeeding(modBus, Set.of("uav"), FlapsGameTest.class, WingLossGameTest.class);
         GameTestSetup.tests(modBus, AircraftPartsGameTest.class);
         BuiltinPartUnits.add(AircraftPartTypes.THRUST);
         BuiltinPartUnits.add(AircraftPartTypes.VARIABLE_SWEEP);

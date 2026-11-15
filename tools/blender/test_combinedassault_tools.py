@@ -46,8 +46,12 @@ def vocabulary():
     roles = re.findall(r'^\s*([A-Z_]+)\(Kind\.SOCKET\)', java("ballistics/hit/NodeRole.java"), re.M)
     fields = {r.lower() for r in roles}
     check("socket fields == NodeRole sockets", fields == set(T.SOCKET_FIELDS), str(fields ^ set(T.SOCKET_FIELDS)))
-    armor = re.search(r'ARMOR = Pattern.compile\("(.*?)"\)', java("ballistics/hit/ModelDataManager.java")).group(1)
-    check("armour pattern == ModelDataManager.ARMOR", armor.replace("\\\\", "\\") == T.ARMOR.pattern, armor)
+    plate = re.search(r'PLATE = Pattern.compile\("(.*?)"\)', java("ballistics/hit/ModelDataManager.java")).group(1)
+    check("plate pattern == ModelDataManager.PLATE", plate.replace("\\\\", "\\") == T.PLATE.pattern, plate)
+    kit_roles = re.search(r"KIT_ROLES = EnumSet\.of\((.*?)\);", java("ballistics/hit/ModelDataManager.java"), re.S).group(1)
+    kit_roles = {r.lower() for r in re.findall(r"NodeRole\.([A-Z_]+)", kit_roles)}
+    check("kit roles == ModelDataManager.KIT_ROLES", kit_roles == T.ca_validate.KIT_ROLES,
+          str(kit_roles ^ T.ca_validate.KIT_ROLES))
 
     def strings(source, name):
         body = re.search(name + r"\s*=\s*Set\.of\((.*?)\);", source, re.S).group(1)
@@ -58,6 +62,8 @@ def vocabulary():
     check("frame keys == ModelDataManager.FRAME_KEYS", strings(manager, "FRAME_KEYS") == V.FRAME_KEYS)
     check("collider keys == ModelRig.COLLIDER_KEYS",
           strings(java("ballistics/hit/ModelRig.java"), "COLLIDER_KEYS") == V.COLLIDER_KEYS)
+    check("station keys == HardwareKits.STATION_KEYS",
+          strings(java("weapon/kit/HardwareKits.java"), "STATION_KEYS") == V.STATION_KEYS)
     light = java("vehicle/light/VehicleLight.java")
     check("light keys == VehicleLight.KEYS", strings(light, "KEYS") == V.LIGHT_KEYS)
     kinds = {k.lower(): (int(c, 16), float(r), float(i), float(a.rstrip("F")), float(b))
@@ -103,7 +109,7 @@ def build(textures):
     texture.image = image
     paint.node_tree.links.new(texture.outputs["Color"], paint.node_tree.nodes["Principled BSDF"].inputs["Base Color"])
     body.data.materials.append(paint)
-    front = T.armor_material(paint, 80)
+    front = T.armor_material(paint, "ufp")
     body.data.polygons[0].material_index = T.slot_for(body, front)
     body.combinedassault.meta_system = "none"
 
@@ -298,7 +304,7 @@ def run():
               str((times[0], times[-1])))
         check("end key = +30 deg about hinge X", max(abs(a - b) for a, b in zip(end, want)) < 1e-4, str(end))
     materials = [m["name"] for m in gltf["materials"]]
-    check("armour material exported", "paint_armor_80" in materials, str(materials))
+    check("plate material exported", "paint_armor:ufp" in materials, str(materials))
 
     roundtrip("ground/humvee/humvee")
     roundtrip("aircraft/c5/c5")
@@ -316,6 +322,8 @@ def run():
     merge_coplanar()
     make_hull()
     part_model()
+    hardware_kit()
+    validator_hand_and_kit()
 
     print("SUMMARY %d failure(s)" % len(FAILURES))
     return 1 if FAILURES else 0
@@ -747,17 +755,28 @@ def material_tags():
     settings = material.combinedassault
     settings.surface = "RUBBER"
     check("surface renames", material.name == "tyre_rubber", material.name)
-    settings.armor_mm = 20
-    check("armour renames, keeps surface", material.name == "tyre_rubber_armor_20", material.name)
-    check("fields read the name", (settings.armor_mm, settings.surface, settings.decor) == (20.0, "RUBBER", False))
+    settings.armor_plate = "side_1"
+    check("plate renames, keeps surface", material.name == "tyre_rubber_armor:side_1", material.name)
+    check("fields read the name", (settings.armor_plate, settings.surface, settings.decor) == ("side_1", "RUBBER", False))
+    material.name = "tyre_rubber_armor:side_1.001"
+    check("Blender duplicate suffix ignored", settings.armor_plate == "side_1", settings.armor_plate)
+    material.name = "tyre_armor_20"
+    check("legacy armor_<mm> reads no plate", settings.armor_plate == "", settings.armor_plate)
+    check("legacy armor_<mm> flagged", any("no longer read" in w for w in T.material_problems(material)[1]),
+          str(T.material_problems(material)))
+    settings.armor_plate = "rear"
+    check("retag drops the legacy token", material.name == "tyre_armor:rear", material.name)
+    settings.armor_plate = ""
+    check("empty plate unbinds", material.name == "tyre", material.name)
+    settings.surface = "RUBBER"
     settings.decor = True
     check("decor drops plate and effect", material.name == "tyre_decor", material.name)
     settings.surface = "GLASS"
     check("effect clears decor", material.name == "tyre_glass", material.name)
     material.name = "visor_fabric"
     check("name typed by hand is read", settings.surface == "SOFT", settings.surface)
-    copy = T.armor_material(material, 5)
-    check("armour copy keeps the base's effect", copy.name == "visor_soft_armor_5", copy.name)
+    copy = T.armor_material(material, "visor")
+    check("plate copy keeps the base's effect", copy.name == "visor_soft_armor:visor", copy.name)
 
 
 def validator_refuses_new():
@@ -795,6 +814,212 @@ def validator_refuses_new():
         g["nodes"][pitch]["extras"].update({T.ROLE: "pitch"})
         g["nodes"][pitch]["extras"].setdefault(T.META, {}).update(y_rot_min=-10)
     broken("yaw limits on a pitch frame", yaw_on_pitch, "yaw limits")
+
+
+SCRATCH = os.path.join(REPO, "build", "test_combinedassault_kit")
+
+
+def copy_into(pack, model):
+    """Pack model `ns:models/...` + its textures (and _damaged / _wrecked / _paint siblings) copied into `pack`."""
+    source = T.ca_validate.resolve(PACK, model)
+    files = [source] + [T.ca_validate.resolve(PACK, i["extras"][T.RESOURCE][:-4] + suffix + ".png")
+                        for i in T.ca_validate.read_container(source)[0].get("images", [])
+                        for suffix in ("", "_damaged", "_wrecked", "_paint")]
+    for path in files:
+        if os.path.isfile(path):
+            target = os.path.join(pack, os.path.relpath(path, PACK))
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            shutil.copy(path, target)
+
+
+def hardware_kit():
+    """m2 kit copied under build/: open, hand contact, kit role refusal, humvee preview, edit, export, compare."""
+    shutil.rmtree(SCRATCH, ignore_errors=True)
+    pack = os.path.join(SCRATCH, "pack")
+    defs = os.path.join(pack, "combinedassault/combinedassault")
+    os.makedirs(os.path.join(defs, "hardware"))
+    os.makedirs(os.path.join(defs, "vehicles"))
+    kit_json = os.path.join(defs, "hardware/m2.json")
+    shutil.copy(os.path.join(PACK, "combinedassault/combinedassault/hardware/m2.json"), kit_json)
+    shutil.copy(os.path.join(PACK, "combinedassault/combinedassault/vehicles/humvee.json"), os.path.join(defs, "vehicles"))
+    with open(kit_json, encoding="utf-8") as source:
+        original_text = source.read()
+    humvee = json.loads(open(os.path.join(defs, "vehicles/humvee.json"), encoding="utf-8").read())
+    for model in [json.loads(original_text)["model"], humvee["model"]] + [
+            m["model"] for p in humvee["parts"] for m in p.get("mounts", [])]:
+        copy_into(pack, model)
+    glb = T.ca_validate.resolve(pack, json.loads(original_text)["model"])
+    original, _ = T.ca_validate.read_container(glb)
+
+    fresh_scene()
+    scene = bpy.context.scene
+    settings = scene.combinedassault_export
+    result = bpy.ops.combinedassault.open_kit(filepath=kit_json)
+    check("kit opened", result == {"FINISHED"}, str(result))
+    check("kit fields read", (settings.kit_weapons, settings.kit_fits, settings.kit_install_ticks, settings.kit_item)
+          == ("combinedassault:gun_12.7mm", "pintle, tripod, door", 120, ""), str(
+        (settings.kit_weapons, settings.kit_fits, settings.kit_install_ticks)))
+    check("kit export target = its model", T.pack_paths(scene)[0] == glb, T.pack_paths(scene)[0])
+    errors, _ = T.check_scene(scene)
+    check("opened kit passes the check", not errors, str(errors))
+
+    gun = scene.objects["m2"]
+    collider = box("kit_collider", (0, 0, 0), (0.1, 0.1, 0.1))
+    collider.parent = gun
+    collider.combinedassault.role = "COLLIDER"
+    errors, _ = T.check_scene(scene)
+    check("collider refused in a kit", any("kit_collider" in e and "kit model" in e for e in errors), str(errors))
+    bpy.data.objects.remove(collider, do_unlink=True)
+
+    select(gun)
+    scene.cursor.location = (0.1, -0.3, 0.05)
+    result = bpy.ops.combinedassault.add_hand(hand="LEFT", action="fire")
+    hand = bpy.context.active_object
+    check("hand contact added under the active object", result == {"FINISHED"} and hand.parent == gun
+          and (hand.matrix_world.translation - Vector((0.1, -0.3, 0.05))).length < 1e-6, hand.name)
+    errors, _ = T.check_scene(scene)
+    check("kit with hand passes the check", not errors, str(errors))
+    select(gun)
+    result = bpy.ops.combinedassault.add_foot(hand="LEFT", action="brake")
+    foot = bpy.context.active_object
+    check("foot contact added", result == {"FINISHED"} and foot.parent == gun and foot.name == "foot_left_brake"
+          and foot.combinedassault.field == "foot" and foot.combinedassault.foot_side == "LEFT", foot.name)
+    bpy.data.objects.remove(foot)
+
+    _, points = T.kit_hardpoints(settings)
+    index = next(i for i, p in enumerate(points) if p["vehicle"] == "combinedassault:humvee")
+    settings.kit_hardpoint = str(index)
+    result = bpy.ops.combinedassault.preview_kit(clear=False)
+    check("vehicle preview built", result == {"FINISHED"} and T.KIT_PREVIEW in scene.objects, str(result))
+    bpy.context.view_layer.update()
+    node = next((o for o in scene.objects if o.combinedassault.reference and o.name.startswith("roof_mount_pitch")), None)
+    check("hardpoint node at the kit root", node is not None and node.matrix_world.translation.length < 1e-4,
+          str(node and node.matrix_world.translation))
+    turret = next((o for o in scene.objects if o.combinedassault.reference and o.name.startswith("humvee_turret")), None)
+    check("part mounts grafted into the preview", turret is not None and turret.parent is not None, str(turret))
+    result = bpy.ops.combinedassault.arm_reach()
+    reach = [o for o in scene.objects if o.name.startswith(T.REACH_PREFIX)]
+    check("arm reach sphere per seat", result == {"FINISHED"} and reach
+          and all(abs(o.empty_display_size - T.ARM_REACH) < 1e-6 for o in reach), str([o.name for o in reach]))
+    errors, _ = T.check_scene(scene)
+    check("preview never checked", not errors, str(errors[:3]))
+
+    settings.kit_install_ticks = 90
+    result = bpy.ops.combinedassault.export()
+    check("kit exported", result == {"FINISHED"}, str(result))
+    with open(kit_json, encoding="utf-8") as source:
+        written = source.read()
+    check("kit json edited in place", written == original_text.replace('"install_ticks": 120', '"install_ticks": 90'),
+          written)
+    out, _ = T.ca_validate.read_container(glb)
+    names = {n["name"]: n for n in out["nodes"]}
+    check("kit nodes kept", {n["name"] for n in original["nodes"]} <= set(names),
+          str({n["name"] for n in original["nodes"]} - set(names)))
+    check("preview never exported", not any(n.startswith(("roof_mount", "humvee", T.REACH_PREFIX, T.KIT_PREVIEW))
+                                            for n in names), str(sorted(names)))
+    check("hand extras exported", names.get(hand.name, {}).get("extras") == {
+        T.ROLE: "hand", T.HIDDEN: True, T.META: {"hand": "left", "action": "fire"}},
+          str(names.get(hand.name, {}).get("extras")))
+    errors, _, _ = T.ca_validate.validate(glb, True)
+    check("validator (kit) passes the export", not errors, str(errors))
+
+    settings.kit_station = '{"zoom_max": 2, "laser": true}'
+    check("unknown station key refused", any("laser" in p for p in T.kit_values(settings)[1]),
+          str(T.kit_values(settings)[1]))
+    settings.kit_station = "{oops"
+    check("station not JSON refused", any("not JSON" in p for p in T.kit_values(settings)[1]))
+
+    spg9 = open(os.path.join(PACK, "combinedassault/combinedassault/hardware/spg9.json"), encoding="utf-8").read()
+    kit = json.loads(spg9)
+    same = T.ca_validate.edit_kit_text(spg9, {"station": kit["station"], "fits": kit["fits"], "item": ""})
+    check("unchanged kit fields keep their bytes (multi-line station)", same == spg9)
+    added = T.ca_validate.edit_kit_text(spg9, {"replaces": "combinedassault:old"})
+    at = spg9.rindex("}", 0, spg9.rindex("}")) + 1
+    check("new kit key appended after the last, same separator",
+          added == spg9[:at] + ',\n  "replaces": "combinedassault:old"' + spg9[at:], added)
+    shutil.rmtree(SCRATCH)
+
+
+def validator_hand_and_kit():
+    good = os.path.join(PACK, "assets/combinedassault/models/weapon/m2/m2.glb")
+    base, binary = T.ca_validate.read_container(good)
+    os.makedirs(SCRATCH, exist_ok=True)
+
+    def run(edit, kit):
+        gltf = json.loads(json.dumps(base))
+        edit(gltf)
+        path = os.path.join(SCRATCH, "case.glb")
+        T.ca_validate.write_glb(path, gltf, binary)
+        return T.ca_validate.validate(path, kit)[0]
+
+    def hand(meta):
+        def edit(g):
+            g["nodes"].append({"name": "hand_r", "extras": {T.ROLE: "hand", T.HIDDEN: True, T.META: meta}})
+            g["nodes"][0]["children"].append(len(g["nodes"]) - 1)
+        return edit
+    check("validator passes a right hand", not run(hand({"hand": "right", "action": "shift"}), True))
+    errors = run(hand({}), True)
+    check("validator refuses a hand without `hand`", any("hand_r" in e and "right / left" in e for e in errors), str(errors))
+    errors = run(hand({"hand": "middle"}), True)
+    check("validator refuses hand 'middle'", any("middle" in e for e in errors), str(errors))
+    errors = run(hand({"hand": "left", "action": 3}), True)
+    check("validator refuses a non-string action", any("action" in e for e in errors), str(errors))
+    errors = run(hand({"hand": "left", "action": "brake"}), True)
+    check("validator refuses hand action brake", any("brake" in e for e in errors), str(errors))
+
+    def foot(meta):
+        def edit(g):
+            g["nodes"].append({"name": "foot_r", "extras": {T.ROLE: "foot", T.HIDDEN: True, T.META: meta}})
+            g["nodes"][0]["children"].append(len(g["nodes"]) - 1)
+        return edit
+    check("plain validator passes a foot", not run(foot({"foot": "right", "action": "brake"}), False))
+    errors = run(foot({}), False)
+    check("validator refuses a foot without `foot`", any("foot_r" in e and "right / left" in e for e in errors), str(errors))
+    errors = run(foot({"foot": "middle"}), False)
+    check("validator refuses foot 'middle'", any("middle" in e for e in errors), str(errors))
+    errors = run(foot({"foot": "left", "action": 3}), False)
+    check("validator refuses a non-string foot action", any("action" in e for e in errors), str(errors))
+    errors = run(foot({"foot": "left", "action": "shift"}), False)
+    check("validator refuses foot action shift", any("shift" in e for e in errors), str(errors))
+    check("kit validator refuses a foot", any("foot_r" in e and "kit" in e for e in run(foot({"foot": "left"}), True)))
+
+    def light(g):
+        g["nodes"].append({"name": "lamp", "extras": {T.ROLE: "light", T.HIDDEN: True}})
+        g["nodes"][0]["children"].append(len(g["nodes"]) - 1)
+    check("kit validator refuses a light", any("lamp" in e and "kit" in e for e in run(light, True)))
+    check("plain validator accepts the light", not run(light, False))
+
+    def belts(*indices):
+        def edit(g):
+            for i in indices:
+                g["nodes"].append({"name": "belt_%s" % i, "extras": {T.ROLE: "belt", T.HIDDEN: True, T.META: {"index": i}}})
+                g["nodes"][0]["children"].append(len(g["nodes"]) - 1)
+        return edit
+    check("kit validator passes belt 0 + 1", not run(belts(0, 1), True))
+    for case in ((0,), (0, 0), (0, 2)):
+        errors = run(belts(*case), True)
+        check("validator refuses belt indices %s" % (case,), any("belt sockets" in e for e in errors), str(errors))
+    gltf = json.loads(json.dumps(base))
+    belts(0, 1)(gltf)
+    path = os.path.join(SCRATCH, "belt.glb")
+    T.ca_validate.write_glb(path, gltf, binary)
+    _, warnings, _ = T.ca_validate.validate(path, False)
+    check("plain validator warns belt sockets outside a kit", any("belt" in w for w in warnings), str(warnings))
+    link = {"link": "ma_lmgs:models/link.glb", "pitch": 0.012}
+    check("kit belt + belt sockets agree", not T.ca_validate.kit_belt_problems({"belt": link}, path))
+    check("belt sockets without kit belt flagged", T.ca_validate.kit_belt_problems({}, path))
+    check("kit belt without belt sockets flagged", T.ca_validate.kit_belt_problems({"belt": link}, good))
+    check("kit belt pitch 0 refused", any("belt" in p for p in T.ca_validate.kit_problems(
+        {"model": "a:b", "weapons": ["a:b"], "fits": ["door"], "belt": dict(link, pitch=0)})))
+    text = '{\n  "model": "a:b",\n  "belt": {"link": "a:l", "pitch": 0.01}\n}\n'
+    check("empty kit belt removes the key", "belt" not in json.loads(T.ca_validate.edit_kit_text(text, {"belt": None})))
+    for name in ("ma_pkm", "ma_m240b", "ma_m249"):
+        ma = os.path.join(PACK, "assets/combinedassault/models/weapon/ma/%s.glb" % name)
+        with open(os.path.join(PACK, "combinedassault/combinedassault/hardware/%s.json" % name), encoding="utf-8") as f:
+            kit = json.load(f)
+        errors = T.ca_validate.validate(ma, True)[0] + T.ca_validate.kit_problems(kit) + T.ca_validate.kit_belt_problems(kit, ma)
+        check("shipped %s kit + model pass" % name, not errors, str(errors))
+    shutil.rmtree(SCRATCH)
 
 
 if __name__ == "__main__":

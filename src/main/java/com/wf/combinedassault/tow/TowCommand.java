@@ -5,6 +5,9 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.tow.trial.TowTrials;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -19,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Locale;
+import net.minecraft.util.Mth;
 
 /** Console coupling for testing: exact hitch + mode (the dashboard key can't), plus a per-coupling strain report when a trial run ends wrong. */
 public final class TowCommand {
@@ -55,7 +59,7 @@ public final class TowCommand {
                                 .executes(context -> report(context.getSource())))
                         .then(Commands.literal("stop")
                                 .executes(context -> {
-                                    com.wf.combinedassault.tow.trial.TowTrials.abandon();
+                                    TowTrials.abandon();
                                     context.getSource().sendSuccess(
                                             () -> Component.literal("trial abandoned"), true);
                                     return 1;
@@ -102,7 +106,7 @@ public final class TowCommand {
         if (entity instanceof AbstractVehicle vehicle) {
             return vehicle;
         }
-        throw new com.mojang.brigadier.exceptions.SimpleCommandExceptionType(
+        throw new SimpleCommandExceptionType(
                 Component.literal(entity.getName().getString() + " is not a vehicle")).create();
     }
 
@@ -170,13 +174,13 @@ public final class TowCommand {
         boolean solo = "solo".equals(modeName);
         TowMode mode = TowMode.CABLE.lowerName().equals(modeName) ? TowMode.CABLE : TowMode.HITCH;
         ResourceLocation tractorId = solo && vehicleId != null
-                ? vehicleId : com.wf.combinedassault.CombinedAssault.modLocation("m983");
-        String failure = com.wf.combinedassault.tow.trial.TowTrials.start(source.getLevel(),
+                ? vehicleId : CombinedAssault.modLocation("m983");
+        String failure = TowTrials.start(source.getLevel(),
                 source.getPosition(), course, radius, laps, speed, tractorId,
                 solo ? null
                         : mode == TowMode.CABLE
-                                ? com.wf.combinedassault.CombinedAssault.modLocation("m983")
-                                : com.wf.combinedassault.CombinedAssault.modLocation("mim104"),
+                                ? CombinedAssault.modLocation("m983")
+                                : CombinedAssault.modLocation("mim104"),
                 mode);
         if (failure != null) {
             source.sendFailure(Component.literal(failure));
@@ -189,7 +193,7 @@ public final class TowCommand {
 
     /** Running trial's progress, or the last one's verdict. */
     private static int report(CommandSourceStack source) {
-        for (String line : com.wf.combinedassault.tow.trial.TowTrials.report()) {
+        for (String line : TowTrials.report()) {
             source.sendSuccess(() -> Component.literal(line).withStyle(ChatFormatting.GRAY), false);
         }
         return 1;
@@ -216,7 +220,7 @@ public final class TowCommand {
                         "  %s: on %s by %s, gap %.2f, strain %.2f for %d ticks, articulation %.1f",
                         member.getVehicleId().getPath(), link.hitchId(), link.mode().lowerName(),
                         gap, link.strain(), link.strainTicks(),
-                        net.minecraft.util.Mth.wrapDegrees(member.getYRot() - link.tractor().getYRot()));
+                        Mth.wrapDegrees(member.getYRot() - link.tractor().getYRot()));
             }
             String rendered = line;
             source.sendSuccess(() -> Component.literal(rendered).withStyle(ChatFormatting.GRAY), false);

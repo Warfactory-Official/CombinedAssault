@@ -12,6 +12,7 @@ import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.wflib.countermeasure.api.Countermeasures;
 import com.wf.wflib.countermeasure.api.FlareEntity;
 import com.wf.wflib.countermeasure.api.SmokeGrenadeEntity;
+import com.wf.wflib.missile.api.MissileContent;
 import com.wf.wflib.missile.api.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.world.item.ItemStack;
 
 /** Vehicle missiles: seeker mapping, countermeasures, glide, beam riding. */
 @PrefixGameTestTemplate(false)
@@ -211,8 +213,8 @@ public class MissileRoundsGameTest {
         for (PartUnit<?> part : vehicle.getPartUnits()) {
             if (part instanceof WeaponUnit w) {
                 for (AbstractVehicleWeapon<?> weapon : w.getIndexedWeapons()) {
-                    if (weapon instanceof VehicleMissile vm && vm.isAmmoForWeapon(new net.minecraft.world.item.ItemStack(
-                            com.wf.wflib.missile.api.MissileContent.missileItem(agm.id()).orElseThrow().get()))) {
+                    if (weapon instanceof VehicleMissile vm && vm.isAmmoForWeapon(new ItemStack(
+                            MissileContent.missileItem(agm.id()).orElseThrow().get()))) {
                         unit = w;
                     }
                 }

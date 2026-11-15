@@ -27,6 +27,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.List;
 import java.util.Optional;
+import net.minecraft.world.level.GameType;
 
 /** Spray pod kit on the MH-60L door hardpoint: tank via the vehicle fluid handler, liquid curtain, gas puff. */
 @GameTestHolder(CombinedAssault.MOD_ID)
@@ -131,10 +132,10 @@ public class SprayPodGameTest {
         Fluid fuel = receiver.fuelSpec().defaultFuel();
         pod.fill(new FluidStack(fuel, 2000), IFluidHandler.FluidAction.EXECUTE);
         receiver.fuelTank().drain(Integer.MAX_VALUE, IFluidHandler.FluidAction.EXECUTE);
-        var player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        var player = helper.makeMockPlayer(GameType.SURVIVAL);
         helper.onEachTick(() -> {
             player.setPos(receiver.position().add(2, 0, 0));
-            player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+            player.setDeltaMovement(Vec3.ZERO);
             FuelTransfer.tick(receiver);
         });
         helper.assertTrue(FuelTransfer.providers(receiver).contains(source), "source not offered");

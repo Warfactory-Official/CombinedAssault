@@ -19,6 +19,7 @@ import com.wf.wflib.explosion.api.ExplosionAEF;
 import com.wf.wflib.explosion.api.PlayerProcessorStandard;
 import com.wf.wflib.geom.api.OBB;
 import com.wf.wflib.testkit.api.ForcedChunks;
+import java.util.Arrays;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -47,6 +48,8 @@ import org.joml.Vector3f;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Consumer;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.Cow;
 
 /** ERA and slat: the mechanism in isolation, then through a real hull, a real round, a save and the probe actions. */
 @GameTestHolder(CombinedAssault.MOD_ID)
@@ -320,7 +323,7 @@ public class AddonArmorGameTest {
             AddonArmorLayer.Pose pose = vehicle.addonArmor().pose(vehicle, skirt);
             Vec3 beside = pose.toWorld((float) vehicle.addonArmor().mounts().get(skirt).cellCentre(5).x,
                     (float) vehicle.addonArmor().mounts().get(skirt).cellCentre(5).y, 0.7f);
-            net.minecraft.world.entity.animal.Cow cow = net.minecraft.world.entity.EntityType.COW.create(vehicle.level());
+            Cow cow = EntityType.COW.create(vehicle.level());
             cow.moveTo(beside.x, beside.y - 0.5, beside.z);
             vehicle.level().addFreshEntity(cow);
             float before = cow.getHealth();
@@ -423,7 +426,7 @@ public class AddonArmorGameTest {
                 return;
             }
             if (rearCopy.fit != AddonFit.SLAT || Math.abs(rearCopy.bars[0] - 0.5f) > 1.0f / 255 || rearCopy.bars[3] != 0) {
-                helper.fail("rear slat reloaded as " + rearCopy.fit + " bars " + java.util.Arrays.toString(rearCopy.bars));
+                helper.fail("rear slat reloaded as " + rearCopy.fit + " bars " + Arrays.toString(rearCopy.bars));
                 return;
             }
             copy.discard();
@@ -541,7 +544,7 @@ public class AddonArmorGameTest {
                 return;
             }
             if (far.bentBars() + far.bars.length - far.intactBars() != 0) {
-                helper.fail("the starboard cage bent through the hull: " + java.util.Arrays.toString(far.bars));
+                helper.fail("the starboard cage bent through the hull: " + Arrays.toString(far.bars));
                 return;
             }
             if (!(caged < bare * 0.9f)) {

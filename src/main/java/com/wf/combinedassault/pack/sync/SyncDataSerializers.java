@@ -2,6 +2,7 @@ package com.wf.combinedassault.pack.sync;
 
 import com.wf.combinedassault.weapon.RoundCount;
 import com.wf.wflib.ammo.api.AmmoCodecs;
+import com.wf.wflib.ammo.api.AmmoItems;
 import com.wf.wflib.barrel.api.BarrelState;
 import com.wf.wflib.magazine.api.MagContents;
 import com.wf.wflib.magazine.api.MagazineItems;
@@ -15,6 +16,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.world.item.Items;
 
 public class SyncDataSerializers {
 
@@ -65,7 +67,7 @@ public class SyncDataSerializers {
     public static final SyncDataSerializer<ItemStack> ROUND = SyncDataSerializer.create(
             (buf, stack) -> {
                 buf.writeVarInt(BuiltInRegistries.ITEM.getId(stack.getItem()));
-                ResourceLocation variant = stack.get(com.wf.wflib.ammo.api.AmmoItems.VARIANT.get());
+                ResourceLocation variant = stack.get(AmmoItems.VARIANT.get());
                 buf.writeBoolean(variant != null);
                 if (variant != null) {
                     buf.writeResourceLocation(variant);
@@ -83,11 +85,11 @@ public class SyncDataSerializers {
             },
             buf -> {
                 Item item = BuiltInRegistries.ITEM.byId(buf.readVarInt());
-                ItemStack stack = item == net.minecraft.world.item.Items.AIR ? ItemStack.EMPTY : new ItemStack(item);
+                ItemStack stack = item == Items.AIR ? ItemStack.EMPTY : new ItemStack(item);
                 if (buf.readBoolean()) {
                     ResourceLocation variant = buf.readResourceLocation();
                     if (!stack.isEmpty()) {
-                        stack.set(com.wf.wflib.ammo.api.AmmoItems.VARIANT.get(), variant);
+                        stack.set(AmmoItems.VARIANT.get(), variant);
                     }
                 }
                 if (buf.readBoolean()) {

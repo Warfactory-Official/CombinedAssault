@@ -106,8 +106,8 @@ repositories {
     flatDir {
         dir 'libs'
     }
-    // A local WFLib (`publishToMavenLocal` in its checkout) wins over the published snapshot of the same version.
-    mavenLocal { content { includeGroup 'com.wf.wflib'; includeGroup 'warfactory.ultimateweight' } }
+    // A local WFLib / GemRender / AHF (`publishToMavenLocal` in its checkout) wins over the published snapshot of the same version.
+    mavenLocal { content { includeGroup 'com.wf.wflib'; includeGroup 'com.wf.gemrender'; includeGroup 'com.norwood'; includeGroup 'warfactory.ultimateweight' } }
     maven {
         name = 'Warfactory Snapshots'
         url = 'https://repo.warfactory.co/snapshots'
@@ -210,7 +210,9 @@ dependencies {
     // client runs, a server run needs neither.
     implementation "com.wf.wflib:wflib:${wflib_version}-SNAPSHOT"
     // wfweight: no API use; on dev runs so wflib compat.wfweight bridges load.
-    localRuntime "warfactory.ultimateweight:wfweight-1.21.1-neoforge:1.0.0-SNAPSHOT@jar" // shaded (snakeyaml); module runtime variant = -dev jar without it
+    if (!project.hasProperty('maJar')) {
+        localRuntime "warfactory.ultimateweight:wfweight-1.21.1-neoforge:1.0.0-SNAPSHOT@jar" // shaded (snakeyaml); module runtime variant = -dev jar without it
+    }
     // AHF: seat pose sets (rig = drawn pose) + vehicle-tilt stance. PlayerAnimator: client-only mod, draws seat poses.
     implementation "com.norwood:ahf-1.21.1-neoforge:${ahf_version}-SNAPSHOT"
     implementation "dev.kosmx.player-anim:player-animation-lib-forge:${project.playeranimator_version}"
@@ -219,6 +221,19 @@ dependencies {
     compileOnly "com.wf.gemrender:gemrender-1.21.1:[${gemrender_version}-SNAPSHOT,1)"
     gemRenderRuntimeJar "com.wf.gemrender:gemrender-1.21.1:[${gemrender_version}-SNAPSHOT,1)"
     compileOnly "dev.engine-room.flywheel:flywheel-neoforge-1.21.1:1.0.6"
+
+    // -PmaJar=<MineAssault checkout>/build/libs/<jar> => MA + GemRender (MA: required both sides) on the run classpath
+    // (MaKitGameTest runs), wfweight = checkout libs/ (MA [1.0.0,) refuses 1.0.0-SNAPSHOT). Server / GT runs only: a
+    // client run would get GemRender twice.
+    if (project.hasProperty('maJar')) {
+        File maJar = file(project.findProperty('maJar'))
+        def wfweight = new File(maJar.parentFile.parentFile.parentFile, 'libs').listFiles()?.findAll { it.name.startsWith('wfweight-') }
+        if (!maJar.isFile() || wfweight?.size() != 1) {
+            throw new GradleException("-PmaJar: no jar ${maJar} or not one libs/wfweight-*.jar beside its checkout")
+        }
+        localRuntime files(maJar, wfweight[0])
+        localRuntime "com.wf.gemrender:gemrender-1.21.1:[${gemrender_version}-SNAPSHOT,1)"
+    }
 
     // Immersive Railroading, so a vehicle can be strapped to a flatcar. compileOnly only:
     // com.wf.combinedassault.deck.rail is the only package that names an IR type and every entry point is

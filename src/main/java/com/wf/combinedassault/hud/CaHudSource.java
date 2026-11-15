@@ -3,10 +3,13 @@ package com.wf.combinedassault.hud;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.aircraft.FixedWingVehicle;
 import com.wf.combinedassault.aircraft.RotaryWingVehicle;
+import com.wf.combinedassault.indirect.client.GunComputer;
 import com.wf.combinedassault.indirect.client.IndirectView;
 import com.wf.combinedassault.naval.ShipVehicle;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.screen.DashView;
+import com.wf.combinedassault.vehicle.screen.MfdView;
 import com.wf.wflib.core.api.WFSystems;
 import com.wf.wflib.ui.api.UiHud;
 import com.wf.wflib.ui.api.UiInstance;
@@ -33,9 +36,9 @@ public final class CaHudSource {
     public static void register() {
         HudSignals.register();
         IndirectView.register();
-        com.wf.combinedassault.indirect.client.GunComputer.register();
-        com.wf.combinedassault.vehicle.screen.DashView.register();
-        com.wf.combinedassault.vehicle.screen.MfdView.register();
+        GunComputer.register();
+        DashView.register();
+        MfdView.register();
         CaHudPresets.registerWidgets();
         UiHud.addSource(UiHud.Layer.MAIN, CombinedAssault.modLocation("main"), 0, CaHudSource::main);
         UiHud.addSource(UiHud.Layer.BACK, CombinedAssault.modLocation("back"), 0, CaHudSource::back);

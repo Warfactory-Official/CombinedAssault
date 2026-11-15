@@ -26,9 +26,9 @@ public final class DeckSystem implements CombinedAssaultSystem {
 
     @Override
     public void register(IEventBus modBus, ModContainer container) {
-        GameTestSetup.testsNeeding(modBus, java.util.Set.of("naval"), DeckParentingGameTest.class);
+        GameTestSetup.testsNeeding(modBus, Set.of("naval"), DeckParentingGameTest.class);
         GameTestSetup.tests(modBus, FlatcarCarryGameTest.class, NonVehicleCarrierGameTest.class);
-        GameTestSetup.testsNeeding(modBus, java.util.Set.of("energy"), VehicleMountGameTest.class);
+        GameTestSetup.testsNeeding(modBus, Set.of("energy"), VehicleMountGameTest.class);
         RailCompat.init();
     }
 }

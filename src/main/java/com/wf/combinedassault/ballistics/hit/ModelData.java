@@ -1,5 +1,6 @@
 package com.wf.combinedassault.ballistics.hit;
 
+import com.wf.combinedassault.vehicle.hands.RiderHand;
 import com.wf.combinedassault.vehicle.light.VehicleLight;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +14,7 @@ import java.util.List;
  * @param grafts part {@code mounts}, def order
  */
 public record ModelData(String source, ModelRig rig, @Nullable HitMesh hits, ModelMounts mounts, @Nullable ClipRig clips,
-                        List<VehicleLight> lights, List<Graft> grafts) {
+                        List<VehicleLight> lights, List<RiderHand> hands, List<Graft> grafts) {
 
     /** @param kit kit-scoped mount's kit, else null */
     public record Graft(String part, ResourceLocation model, String node, @Nullable String kit) {

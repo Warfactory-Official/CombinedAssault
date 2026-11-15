@@ -32,7 +32,7 @@ public final class DynamicsSystem implements CombinedAssaultSystem {
 
     @Override
     public void register(IEventBus modBus, ModContainer container) {
-        GameTestSetup.testsNeeding(modBus, java.util.Set.of("naval"), StepDeterminismGameTest.class);
+        GameTestSetup.testsNeeding(modBus, Set.of("naval"), StepDeterminismGameTest.class);
         container.registerConfig(ModConfig.Type.COMMON, DynamicsConfig.SPEC, "combinedassault-dynamics.toml");
         modBus.addListener(ModConfigEvent.Loading.class, DynamicsConfig::onLoad);
         modBus.addListener(ModConfigEvent.Reloading.class, DynamicsConfig::onLoad);

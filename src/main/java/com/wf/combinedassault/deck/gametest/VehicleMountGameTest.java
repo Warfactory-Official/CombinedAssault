@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
+import net.minecraft.util.Mth;
 
 /**
  * Mount (emplacement) != park: park releases on engine start, controls taken, or hit; mount must survive all three.
@@ -81,7 +82,7 @@ public class VehicleMountGameTest {
             return;
         }
         float expectedYaw = carrier.getYRot() + point.yaw;
-        if (Math.abs(net.minecraft.util.Mth.degreesDifference(mounted.getYRot(), expectedYaw)) > 0.1f) {
+        if (Math.abs(Mth.degreesDifference(mounted.getYRot(), expectedYaw)) > 0.1f) {
             helper.fail("the mount should face " + expectedYaw + ", faces " + mounted.getYRot());
             return;
         }

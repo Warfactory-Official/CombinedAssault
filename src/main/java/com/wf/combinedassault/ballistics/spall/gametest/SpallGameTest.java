@@ -1,13 +1,16 @@
 package com.wf.combinedassault.ballistics.spall.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.spall.Spall;
 import com.wf.combinedassault.labs.VehicleLab;
+import com.wf.combinedassault.vehicle.VehicleDamageTypes;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.gametest.TestLanes;
 import com.wf.wflib.damage.api.Threat;
 import com.wf.wflib.damage.api.event.ProjectileStrikeEvent;
 import com.wf.wflib.round.api.KineticPreset;
 import com.wf.wflib.round.api.KineticPresets;
+import com.wf.wflib.round.api.RocketEntity;
 import com.wf.wflib.round.api.Rounds;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -61,7 +64,7 @@ public class SpallGameTest {
                         helper.assertTrue(crew[0].getHealth() == crew[0].getMaxHealth(),
                                 "occupant of an intact vehicle took " + (crew[0].getMaxHealth() - crew[0].getHealth()));
                         before[0] = crew[0].getHealth();
-                        v.get().hurt(com.wf.combinedassault.vehicle.VehicleDamageTypes.Sources.explosion(helper.getLevel().registryAccess(),
+                        v.get().hurt(VehicleDamageTypes.Sources.explosion(helper.getLevel().registryAccess(),
                                 null, null, v.get().position().add(0, 1, 0)), v.get().getMaxHealth() * 10);
                     })
                     .thenIdle(40)
@@ -94,7 +97,7 @@ public class SpallGameTest {
                     crew.discard();
                     helper.assertTrue(ns < 2.0e6, "spall " + ns + " ns per penetration");
                     CombinedAssault.LOGGER.info("[spall] {} us per penetration, 1 occupant, cap {}", ns / 1000.0,
-                            com.wf.combinedassault.ballistics.spall.Spall.MAX_FRAGMENTS);
+                            Spall.MAX_FRAGMENTS);
                 }), at -> { });
     }
 
@@ -127,7 +130,7 @@ public class SpallGameTest {
                     level.addFreshEntity(shooter);
                     SHOOTERS.add(shooter);
                     if (preset.motorAccel() > 0) {
-                        com.wf.wflib.round.api.RocketEntity.fire(level, preset, shot.start(), shot.dir(), 0, Vec3.ZERO, shooter, null, null);
+                        RocketEntity.fire(level, preset, shot.start(), shot.dir(), 0, Vec3.ZERO, shooter, null, null);
                     } else {
                         Rounds.launch(level, preset, shot.start(), shot.dir().scale(shot.speed()), shooter, null, 1.0f, 0, 0);
                     }

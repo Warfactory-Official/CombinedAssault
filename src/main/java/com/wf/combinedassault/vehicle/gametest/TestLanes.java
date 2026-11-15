@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * A vehicle on a stone floor far from the 3x3 arena grid: arenas share one world, and a vehicle (or what it fires)
@@ -121,7 +122,7 @@ public final class TestLanes {
     }
 
     private static void floor(ServerLevel level, BlockPos at, int floorX, int floorZ,
-                              net.minecraft.world.level.block.state.BlockState state) {
+                              BlockState state) {
         for (int x = -floorX; x <= floorX; x++) {
             for (int z = -floorZ; z <= floorZ; z++) {
                 level.setBlockAndUpdate(at.offset(x, 0, z), state);

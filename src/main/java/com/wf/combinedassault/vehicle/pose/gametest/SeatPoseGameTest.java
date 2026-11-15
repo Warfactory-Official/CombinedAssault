@@ -3,6 +3,9 @@ package com.wf.combinedassault.vehicle.pose.gametest;
 import com.mojang.authlib.GameProfile;
 import com.norwood.ahf.rig.HumanoidRig;
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.ballistics.hit.ModelData;
+import com.wf.combinedassault.ballistics.hit.ModelMounts;
+import com.wf.combinedassault.vehicle.hands.RiderHand;
 import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.pose.SeatPoses;
@@ -18,6 +21,8 @@ import java.util.UUID;
 import org.joml.Vector3f;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import com.norwood.ahf.geometry.Obb;
+import java.util.Arrays;
+import java.util.Objects;
 
 /** Server rig (AHF {@code computeServer}) of a riverine rider: seat pose set per seat, hull pitch carried. */
 @PrefixGameTestTemplate(false)
@@ -250,6 +255,48 @@ public class SeatPoseGameTest {
             CombinedAssault.LOGGER.info("m113 cabin: {}", log);
             helper.assertTrue(ok, log.toString());
         }).thenSucceed();
+    }
+
+    /**
+     * Shipped hand contacts: Humvee driver wheel grips + lever, M2 kit spade grips onto the roof seat; wrist targets
+     * within reach (vanilla arm 0.586 m) of the seat eye's shoulders.
+     */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 20)
+    public static void humveeHandContactsLoadWithinReach(GameTestHelper helper) {
+        ModelData model = CommonAssetsManager.modelData(CombinedAssault.modLocation("humvee")).orElseThrow();
+        StringBuilder log = new StringBuilder();
+        boolean ok = true;
+        String[][] want = {{"driver", "right", null, null}, {"driver", "left", null, null},
+                {"driver", "right", RiderHand.SHIFT, null}, {"roof_mount", "right", null, "combinedassault:m2"},
+                {"roof_mount", "left", null, "combinedassault:m2"}};
+        for (String[] w : want) {
+            RiderHand found = null;
+            for (RiderHand hand : model.hands()) {
+                if (hand.part().equals(w[0]) && hand.left() == w[1].equals("left")
+                        && Objects.equals(hand.action(), w[2]) && Objects.equals(hand.kit(), w[3])) {
+                    found = hand;
+                }
+            }
+            if (found == null) {
+                ok = false;
+                log.append("missing ").append(String.join("/", Arrays.stream(w).map(String::valueOf).toList())).append("; ");
+                continue;
+            }
+            String eyeNode = w[0].equals("driver") ? "socket_seat_driver" : "socket_seat";
+            Vector3f eye = null;
+            for (ModelMounts.Link link : model.mounts().links()) {
+                if (link.name().equals(eyeNode)) {
+                    eye = link.origin();
+                }
+            }
+            Vector3f at = model.mounts().links().get(found.node()).origin();
+            Vector3f shoulder = new Vector3f(eye).add(found.left() ? 0.3125f : -0.3125f, -0.245f, 0);
+            float reach = shoulder.distance(at);
+            ok &= reach < 0.586f * 0.97f;
+            log.append(String.format("%s %.3f; ", found.name(), reach));
+        }
+        helper.assertTrue(ok, log.toString());
+        helper.succeed();
     }
 
     /** Rig-local point (x right, y up, z front, feet origin, body yaw) -> vehicle frame. */

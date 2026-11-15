@@ -4,12 +4,16 @@ import com.mojang.math.Axis;
 import com.wf.combinedassault.airdefense.AirDefense;
 import com.wf.combinedassault.ballistics.component.ComponentDamage;
 import com.wf.combinedassault.ballistics.component.ComponentState;
+import com.wf.combinedassault.ballistics.hit.ModelData;
 import com.wf.combinedassault.ballistics.message.ServerVehicleWarn;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
 import com.wf.combinedassault.indirect.BallisticSolver;
+import com.wf.combinedassault.indirect.FireMission;
 import com.wf.combinedassault.indirect.GunLaying;
 import com.wf.combinedassault.indirect.IndirectFire;
+import com.wf.combinedassault.indirect.IndirectFireSpec;
 import com.wf.combinedassault.indirect.RoundSpec;
+import com.wf.combinedassault.indirect.client.FireMissions;
 import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.pack.sync.SyncDataHolder;
 import com.wf.combinedassault.pack.sync.SyncDataSerializers;
@@ -22,6 +26,7 @@ import com.wf.combinedassault.vehicle.audio.VehicleSounds;
 import com.wf.combinedassault.vehicle.crew.WeaponLoading;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.event.VehicleFireEvent;
+import com.wf.combinedassault.vehicle.hands.RiderHand;
 import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
@@ -49,6 +54,7 @@ import com.wf.wflib.audio.api.AudioCategory;
 import com.wf.wflib.audio.api.SoundSpec;
 import com.wf.wflib.audio.api.WfAudio;
 import com.wf.wflib.cam.api.CameraMode;
+import com.wf.wflib.missile.api.SeekerMode;
 import com.wf.wflib.missile.api.client.SimGhostEntities;
 import com.wf.wflib.round.api.KineticPreset;
 import com.wf.wflib.sim.api.SimTargets;
@@ -161,7 +167,7 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     private SwitchableUnit<?> hardpointDoor;
     /** Client: operator's standing fire mission. */
     @Nullable
-    private com.wf.combinedassault.indirect.FireMission fireMission;
+    private FireMission fireMission;
 
     public WeaponUnit(int index, AbstractVehicle vehicle, WeaponUnitData data) {
         super(index, vehicle, data);
@@ -628,7 +634,7 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         }
         if (indirectFire.isIndirect()) {
             IndirectFire.lay(this);
-            com.wf.combinedassault.indirect.client.FireMissions.tick(this);
+            FireMissions.tick(this);
             return;
         }
         if (withFocusLocker && focusLockPos != null) {
@@ -654,7 +660,7 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
                 case IR -> checkEntity = Infrared.checkTarget(this, lockedEntity);
                 case EO -> checkEntity = ElectroOptical.checkTarget(this, lockedEntity);
                 case RF -> {
-                    if (missileWeapon != null && missileWeapon.seekerMode() == com.wf.wflib.missile.api.SeekerMode.SEMI_ACTIVE_RADAR) {
+                    if (missileWeapon != null && missileWeapon.seekerMode() == SeekerMode.SEMI_ACTIVE_RADAR) {
                         checkEntity = getMainRadarUnit().getLockedEntity();
                     } else {
                         checkEntity = Radar.checkTarget(vehicle, getRadarDetectedEntities().stream()
@@ -698,10 +704,10 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
                         entity = Infrared.findTarget(missileWeapon.getWeaponUnit(), missileWeapon.seekerFov());
                     }
                     else if (getFireControlSensorType() == WeaponUnitData.FireControlSensorType.RF) {
-                        if (missileWeapon.seekerMode() == com.wf.wflib.missile.api.SeekerMode.ACTIVE_RADAR) {
+                        if (missileWeapon.seekerMode() == SeekerMode.ACTIVE_RADAR) {
                             entity = Radar.findTarget(getMainRadarUnit(), missileWeapon.seekerFov(), this);
                         }
-                        else if (missileWeapon.seekerMode() == com.wf.wflib.missile.api.SeekerMode.SEMI_ACTIVE_RADAR) {
+                        else if (missileWeapon.seekerMode() == SeekerMode.SEMI_ACTIVE_RADAR) {
                             entity = getMainRadarUnit().getLockedEntity();
                             if (entity != null) {
                                 Vec3 vLock = entity.getBoundingBox().getCenter().subtract(worldPivotPosition());
@@ -899,16 +905,16 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
 
     /** Null: direct fire only. */
     @Nullable
-    public com.wf.combinedassault.indirect.IndirectFireSpec getIndirectFireSpec() {
+    public IndirectFireSpec getIndirectFireSpec() {
         return data.getIndirectFire();
     }
 
     @Nullable
-    public com.wf.combinedassault.indirect.FireMission fireMission() {
+    public FireMission fireMission() {
         return fireMission;
     }
 
-    public void setFireMission(@Nullable com.wf.combinedassault.indirect.FireMission fireMission) {
+    public void setFireMission(@Nullable FireMission fireMission) {
         this.fireMission = fireMission;
     }
 
@@ -1216,7 +1222,16 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
     @Override
     @Nullable
     protected VehicleCubeGroup seatFrame() {
-        return operatorOnWeaponUnit || structureGroup == null ? structureGroup : structureGroup.parent;
+        return operatorOnWeaponUnit || structureGroup == null || gripsTraverse() ? structureGroup
+                : structureGroup.parent;
+    }
+
+    /** Rest hand on the traverse frame (pintle spades) => rider faces it, though seated off it. */
+    private boolean gripsTraverse() {
+        ModelData model = CommonAssetsManager.modelData(vehicle.getVehicleId()).orElse(null);
+        ResourceLocation fitted = kit();
+        return model != null && RiderHand.restOn(model, getId(), fitted == null ? null : fitted.toString(),
+                structureGroup.name);
     }
 
     @Override

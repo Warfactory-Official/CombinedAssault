@@ -20,6 +20,7 @@ import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.util.VectorUtil;
 import com.wf.combinedassault.weapon.data.BaseVehicleWeaponData;
+import com.wf.combinedassault.weapon.ordnance.Munitions;
 import com.wf.wflib.ammo.api.Ammo;
 import com.wf.wflib.ammo.api.AmmoVariant;
 import com.wf.wflib.armor.api.hull.HullProfile;
@@ -43,6 +44,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Debug readout for the armour model on the looked-at vehicle.
@@ -194,7 +197,7 @@ public final class BallisticsCommand {
             return 0;
         }
         var round = data.getReload() == null ? null
-                : com.wf.combinedassault.weapon.ordnance.Munitions.kinetic(data.getReload().defaultRound());
+                : Munitions.kinetic(data.getReload().defaultRound());
         if (round == null) {
             source.sendFailure(Component.literal(weaponId + ": default round is not a WFLib kinetic round"));
             return 0;
@@ -316,7 +319,7 @@ public final class BallisticsCommand {
 
     /** {@code , plates a, b} of the plate ids on the node's faces. */
     private static String plates(VehicleHits hits, TriangleBvh bvh) {
-        java.util.Set<String> ids = new java.util.TreeSet<>();
+        Set<String> ids = new TreeSet<>();
         for (int t = 0; t < bvh.triangleCount(); t++) {
             String id = hits.model().mesh().plateId(bvh.plate(t));
             if (id != null) {

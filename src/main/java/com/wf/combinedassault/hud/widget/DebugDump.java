@@ -22,6 +22,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import net.minecraft.resources.ResourceLocation;
 
 /** {@code /combinedassault debug}: server-side vehicle and weapon state, singleplayer only. Allocates; debug. */
 public record DebugDump() implements WidgetDef {
@@ -164,7 +165,7 @@ public record DebugDump() implements WidgetDef {
             || value instanceof Number
             || value instanceof Boolean
             || value instanceof Enum<?>
-            || value instanceof net.minecraft.resources.ResourceLocation
+            || value instanceof ResourceLocation
             || value.getClass().isEnum();
     }
 

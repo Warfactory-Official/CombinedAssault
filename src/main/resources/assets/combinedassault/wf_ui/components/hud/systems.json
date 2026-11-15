@@ -2,6 +2,8 @@
   "use": ["combinedassault:hud"],
   "root": {"type": "anchor", "at": "bottom", "margin": 6, "dx": "-(ui.width % 2) / 2",
     "child": {"type": "column", "children": [
+      {"type": "combinedassault:hud/readouts"},
+      {"type": "sized", "w": 150, "h": 2},
       {"type": "when", "if": "vehicle.payload_shown",
         "then": {"type": "text",
           "text": "{tr:ui.vehicle_load(vehicle.payload_t|.1, vehicle.payload_max_t|.1, vehicle.payload_pct|.0)}",
@@ -18,7 +20,8 @@
             "background": "system.state == 0 ? #ffe6e6e6 : system.state == 1 ? #ffe8d060 : system.state == 2 ? #ffe08830 : #ffb82820",
             "child": {"type": "text", "text": "{system.label}", "color": "system.state == 3 ? #ffffffff : #ff202020", "scale": 0.6}}},
         {"type": "place", "x": 150, "y": 0, "pivot": "top_right",
-          "child": {"type": "text", "text": "{vehicle.speed} km/h", "color": "#ffffffff", "shadow": true}},
+          "child": {"type": "text", "text": "{vehicle.speed} km/h",
+            "color": "local.driver && fixed_wing.present && fixed_wing.can_lift_off ? $green : #ffffffff", "shadow": true}},
         {"type": "place", "x": 150, "y": 10, "pivot": "top_right",
           "child": {"type": "text", "text": "{vehicle.fuel_label} {vehicle.fuel|.1}%", "color": "vehicle.fuel < 5 ? $red : $white",
             "shadow": true, "scale": 0.5}},

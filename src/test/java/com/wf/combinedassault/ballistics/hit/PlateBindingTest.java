@@ -3,6 +3,8 @@ package com.wf.combinedassault.ballistics.hit;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.wf.wflib.armor.api.hull.HullProfile;
+import java.util.Arrays;
+import java.util.BitSet;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -167,9 +169,9 @@ class PlateBindingTest {
         GltfReader.Node node = new GltfReader.Node("hull", -1, new Matrix4f(), new Matrix4f(),
                 triangle(new Quaternionf(), 0), new int[]{0}, new int[]{0}, "body", "", new JsonObject());
         GltfReader.Model model = new GltfReader.Model(List.of(node), List.of(material), List.of(), List.of(),
-                new java.util.BitSet());
+                new BitSet());
         ModelRig rig = ModelRig.of("test", model.nodes());
-        HitMesh mesh = ModelDataManager.hitMesh("test", model, rig, java.util.Arrays.asList((String) null));
+        HitMesh mesh = ModelDataManager.hitMesh("test", model, rig, Arrays.asList((String) null));
         return mesh.plateId(mesh.nodes().get(0).mesh().plate(0));
     }
 }

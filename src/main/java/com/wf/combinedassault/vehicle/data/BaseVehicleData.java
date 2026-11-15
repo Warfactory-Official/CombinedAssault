@@ -18,6 +18,8 @@ import com.wf.combinedassault.tow.TowInfo;
 import com.wf.combinedassault.vehicle.VehicleContent;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.entity.NoneVehicle;
+import com.wf.combinedassault.vehicle.interact.Interaction;
+import com.wf.combinedassault.vehicle.interact.InteractionTypes;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.pojo.AutonomyInfo;
 import com.wf.combinedassault.vehicle.pojo.MountableInfo;
@@ -73,7 +75,7 @@ public class BaseVehicleData<T extends AbstractVehicle> {
     protected boolean withWarningReceiver;
     protected boolean protectPassenger;
     protected List<String> entry;
-    protected List<com.wf.combinedassault.vehicle.interact.Interaction> interactions = List.of();
+    protected List<Interaction> interactions = List.of();
     /** Part ids whose generated door node an interaction replaces. */
     protected Set<String> interactionClaims = Set.of();
     protected boolean experimental;
@@ -81,7 +83,7 @@ public class BaseVehicleData<T extends AbstractVehicle> {
     /** Set by the data manager around {@link VehicleDataType#parse}: data types build inside Gson parsing. */
     public static final ThreadLocal<ModelData> MODEL = new ThreadLocal<>();
     protected ModelData model;
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     protected HitModel hitModel;
     protected ClipRig clipRig;
     private final Map<String, VehicleCubeGroup> groupsByName = new HashMap<>();
@@ -198,8 +200,8 @@ public class BaseVehicleData<T extends AbstractVehicle> {
             for (var entry : this.parts) {
                 partIds.add(entry.data().getId());
             }
-            this.interactions = com.wf.combinedassault.vehicle.interact.InteractionTypes.parse(pojo.interactions,
-                    model.mounts(), new com.wf.combinedassault.vehicle.interact.InteractionTypes.Def() {
+            this.interactions = InteractionTypes.parse(pojo.interactions,
+                    model.mounts(), new InteractionTypes.Def() {
                         @Override
                         public Set<String> partIds() {
                             return partIds;
@@ -398,13 +400,13 @@ public class BaseVehicleData<T extends AbstractVehicle> {
     }
 
     /** Null: no clips. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public ClipRig getClipRig() {
         return clipRig;
     }
 
     /** Null: {@code "hitbox": false}, colliders are the hit surface. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public HitModel getHitModel() {
         return hitModel;
     }
@@ -585,7 +587,7 @@ public class BaseVehicleData<T extends AbstractVehicle> {
         return entry;
     }
 
-    public List<com.wf.combinedassault.vehicle.interact.Interaction> getInteractions() {
+    public List<Interaction> getInteractions() {
         return interactions;
     }
 

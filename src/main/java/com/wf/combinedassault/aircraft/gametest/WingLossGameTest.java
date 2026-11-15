@@ -25,6 +25,7 @@ import org.joml.Vector3f;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 /** MQ-9 ({@code Rebuilt LEFT/RIGHT main wing}, sided wing pools). */
 @PrefixGameTestTemplate(false)
@@ -175,7 +176,7 @@ public class WingLossGameTest {
 
     @Nullable
     private static FixedWingVehicle spawn(GameTestHelper helper, BlockPos at) {
-        java.util.Optional<BaseVehicleData> data = CommonAssetsManager.vehicleDataManager().getVehicleData(MQ9);
+        Optional<BaseVehicleData> data = CommonAssetsManager.vehicleDataManager().getVehicleData(MQ9);
         if (data.isEmpty()) {
             helper.fail(MQ9 + " is not in the roster");
             return null;

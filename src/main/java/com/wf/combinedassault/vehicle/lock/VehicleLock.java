@@ -2,6 +2,7 @@ package com.wf.combinedassault.vehicle.lock;
 
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.compat.api.WarforgeCompat;
+import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -107,7 +108,7 @@ public enum VehicleLock {
         data.set(AbstractVehicle.LOCK_FACTION, Optional.ofNullable(faction));
         Component name = mode == FACTION ? Component.literal(String.valueOf(WarforgeCompat.factionName(faction)))
                 : Component.empty();
-        player.displayClientMessage(Component.translatable(KEY + mode.name().toLowerCase(java.util.Locale.ROOT), name), true);
+        player.displayClientMessage(Component.translatable(KEY + mode.name().toLowerCase(Locale.ROOT), name), true);
         return true;
     }
 }

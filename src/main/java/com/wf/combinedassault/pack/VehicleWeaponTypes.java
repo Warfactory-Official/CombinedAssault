@@ -3,6 +3,8 @@ package com.wf.combinedassault.pack;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.pack.serialize.GsonUtil;
 import com.wf.combinedassault.pack.weapon.VehicleWeaponType;
+import com.wf.combinedassault.weapon.VehicleLaser;
+import com.wf.combinedassault.weapon.data.VehicleLaserWeaponData;
 import com.wf.combinedassault.weapon.*;
 import com.wf.combinedassault.weapon.data.*;
 
@@ -30,8 +32,8 @@ public class VehicleWeaponTypes {
         );
 
         register(
-                "laser", json -> GsonUtil.GSON.fromJson(json, com.wf.combinedassault.weapon.data.VehicleLaserWeaponData.class),
-                com.wf.combinedassault.weapon.VehicleLaser::new
+                "laser", json -> GsonUtil.GSON.fromJson(json, VehicleLaserWeaponData.class),
+                VehicleLaser::new
         );
 
         register(

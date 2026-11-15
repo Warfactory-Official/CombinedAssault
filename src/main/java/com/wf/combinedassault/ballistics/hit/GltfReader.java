@@ -10,9 +10,11 @@ import org.joml.Vector3f;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -148,7 +150,7 @@ public final class GltfReader {
         }
         Map<Integer, Mesh> meshes = new HashMap<>();
         int[] outIndex = new int[nodes.size()];
-        java.util.Arrays.fill(outIndex, -1);
+        Arrays.fill(outIndex, -1);
         BitSet undrawn = new BitSet();
         for (JsonElement root : roots) {
             visit(glb, nodes, root.getAsInt(), -1, new Matrix4f(), out, meshes, outIndex, undrawn);
@@ -224,7 +226,7 @@ public final class GltfReader {
         String role = extras != null && extras.has(ROLE) ? extras.get(ROLE).getAsString() : "";
         String iface = extras != null && extras.has(INTERFACE) ? extras.get(INTERFACE).getAsString() : "";
         out.add(new Node(name, parent, world, local, mesh.triangles, mesh.materials, mesh.primitives, role, iface, meta));
-        String lower = name.toLowerCase(java.util.Locale.ROOT);
+        String lower = name.toLowerCase(Locale.ROOT);
         if (parent >= 0 && undrawn.get(parent) || UNDRAWN_PREFIXES.stream().anyMatch(lower::startsWith)
                 || extras != null && extras.has(UNDRAWN) && extras.get(UNDRAWN).getAsBoolean()) {
             undrawn.set(self);
@@ -280,7 +282,7 @@ public final class GltfReader {
             float[] part = parts.get(p);
             starts[p] = at / 9;
             System.arraycopy(part, 0, out, at, part.length);
-            java.util.Arrays.fill(materials, at / 9, (at + part.length) / 9, partMaterials.get(p));
+            Arrays.fill(materials, at / 9, (at + part.length) / 9, partMaterials.get(p));
             at += part.length;
         }
         return new Mesh(out, materials, starts);

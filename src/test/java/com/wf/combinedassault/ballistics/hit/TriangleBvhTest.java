@@ -1,5 +1,6 @@
 package com.wf.combinedassault.ballistics.hit;
 
+import com.sun.management.ThreadMXBean;
 import org.junit.jupiter.api.Test;
 
 import java.lang.management.ManagementFactory;
@@ -77,7 +78,7 @@ class TriangleBvhTest {
         float[] ts = new float[16];
         int[] tris = new int[16];
         int[] stack = new int[TriangleBvh.STACK];
-        com.sun.management.ThreadMXBean mx = (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
+        ThreadMXBean mx = (ThreadMXBean) ManagementFactory.getThreadMXBean();
         long thread = Thread.currentThread().getId();
         int sink = 0;
         for (int i = 0; i < 20000; i++) {

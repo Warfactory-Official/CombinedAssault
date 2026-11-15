@@ -16,6 +16,7 @@ import com.wf.combinedassault.vehicle.entity.WheeledVehicle;
 import com.wf.combinedassault.vehicle.light.IrSightMessage;
 import com.wf.combinedassault.vehicle.message.ClientVehicleAction;
 import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.vehicle.screen.ScreenInfo;
 import com.wf.combinedassault.vehicle.util.VectorUtil;
 import com.wf.combinedassault.weapon.client.CoordinateInputScreen;
 import com.wf.combinedassault.weapon.client.StationAds;
@@ -583,7 +584,7 @@ public class LocalVehiclePlayer {
     public boolean sightScreenSeat() {
         WeaponUnit sight = sightUnit();
         return sight != null && vehicle != null && vehicle.screens.values().stream().flatMap(s -> s.pages().stream())
-                .anyMatch(s -> s.kind == com.wf.combinedassault.vehicle.screen.ScreenInfo.Kind.SIGHT && s.scopeToggle
+                .anyMatch(s -> s.kind == ScreenInfo.Kind.SIGHT && s.scopeToggle
                         && sight.getId().equals(s.part));
     }
 

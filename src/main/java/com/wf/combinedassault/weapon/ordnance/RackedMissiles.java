@@ -13,6 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 
 /** A racked WFLib round drawn as its own airframe at true size, centred on the pose, nose +Z. */
 @OnlyIn(Dist.CLIENT)
@@ -22,7 +23,7 @@ public final class RackedMissiles {
     }
 
     /** Baked airframe of a WFLib round; null otherwise. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     static ResourceLocation baked(ItemStack round) {
         return round.getItem() instanceof ModelledItem modelled && ModModels.baked(modelled.modelId())
                 ? modelled.modelId() : null;

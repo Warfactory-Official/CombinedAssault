@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import net.minecraft.gametest.framework.GameTestSequence;
+import net.minecraft.world.phys.AABB;
 
 /**
  * Holds (C-5, CH-47): stow on close, persistence, unload, close veto; airdrop by parachute, hard landing, sling.
@@ -396,7 +398,7 @@ public class CargoGameTest {
             pad(Blocks.STONE.defaultBlockState(), true);
         }
 
-        net.minecraft.gametest.framework.GameTestSequence ready() {
+        GameTestSequence ready() {
             return helper.startSequence().thenWaitUntil(() -> helper.assertTrue(level.isPositionEntityTicking(centre), "lane not ticking yet"));
         }
 
@@ -429,7 +431,7 @@ public class CargoGameTest {
                 }
             }
             for (AbstractVehicle vehicle : level.getEntitiesOfClass(AbstractVehicle.class,
-                    new net.minecraft.world.phys.AABB(centre).inflate(PAD_BACK, 80, PAD_BACK))) {
+                    new AABB(centre).inflate(PAD_BACK, 80, PAD_BACK))) {
                 vehicle.discard();
             }
             pad(Blocks.AIR.defaultBlockState(), false);

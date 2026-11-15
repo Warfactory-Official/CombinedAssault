@@ -38,7 +38,7 @@ public final class BallisticsSystem implements CombinedAssaultSystem {
 
     @Override
     public void register(IEventBus modBus, ModContainer container) {
-        GameTestSetup.testsNeeding(modBus, java.util.Set.of("aircraft"), RotorSystemsGameTest.class);
+        GameTestSetup.testsNeeding(modBus, Set.of("aircraft"), RotorSystemsGameTest.class);
         BallisticsContent.ITEMS.register(modBus);
         VehicleTabs.addMisc(BallisticsContent.REPAIR_TOOL);
         VehicleTabs.addMisc(BallisticsContent.ERA_BRICK);

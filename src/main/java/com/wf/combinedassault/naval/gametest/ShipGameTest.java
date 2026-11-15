@@ -2,6 +2,7 @@ package com.wf.combinedassault.naval.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.deck.VehicleHarness;
+import com.wf.combinedassault.naval.ShipHydrodynamics;
 import com.wf.combinedassault.naval.ShipVehicle;
 import com.wf.combinedassault.naval.trial.TrialCrew;
 import com.wf.combinedassault.pack.CommonAssetsManager;
@@ -288,8 +289,8 @@ public class ShipGameTest {
                 .thenIdle(40)
                 .thenExecute(() -> {
                     sub.setDepthSetting(200);
-                    sub.model().step(sub.params(), new com.wf.combinedassault.naval.ShipHydrodynamics.Pose(),
-                            new com.wf.combinedassault.naval.ShipHydrodynamics.Controls(), sub.environment(),
+                    sub.model().step(sub.params(), new ShipHydrodynamics.Pose(),
+                            new ShipHydrodynamics.Controls(), sub.environment(),
                             1, 1, 71, 30, d -> d);
                     double deepest = sub.environment().waterDepth - sub.params().draft - sub.params().minKeelClearance;
                     if (sub.model().depthSetting > deepest + 1.0e-6) {

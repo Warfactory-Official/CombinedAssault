@@ -10,6 +10,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -76,8 +77,8 @@ public record SightMesh(List<String> names, int[] parents, @Nullable float[][] t
             if (kept == 0) {
                 continue;
             }
-            tris[i] = java.util.Arrays.copyOf(out, kept * 9);
-            culled[i] = java.util.Arrays.copyOf(cull, kept);
+            tris[i] = Arrays.copyOf(out, kept * 9);
+            culled[i] = Arrays.copyOf(cull, kept);
             sphere[i] = spheres(tris[i]);
         }
         return new SightMesh(List.of(names), parents, tris, culled, sphere, world, grafted.kitOf(), List.of(frames));

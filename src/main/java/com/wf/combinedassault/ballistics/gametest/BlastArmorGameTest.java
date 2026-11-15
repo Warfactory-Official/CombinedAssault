@@ -2,10 +2,13 @@ package com.wf.combinedassault.ballistics.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.ballistics.BlastRays;
+import com.wf.combinedassault.ballistics.ThermalAttacks;
 import com.wf.combinedassault.ballistics.VehicleBlastResolver;
 import com.wf.combinedassault.ballistics.gametest.SmallArmsArmorGameTest.Aim;
 import com.wf.combinedassault.ballistics.hit.VehicleHits;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.SwitchableUnit;
+import com.wf.wflib.damage.api.event.ThermalAttackEvent;
 import com.wf.wflib.explosion.api.BlastPayload;
 import com.wf.wflib.explosion.api.EntityProcessorCross;
 import com.wf.wflib.explosion.api.ExplosionAEF;
@@ -24,6 +27,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import net.minecraft.world.level.Explosion;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 /**
  * Warhead payloads on real vehicles through the AEF ({@code BlastTarget}): HE per face, jet from the detonation point,
@@ -67,7 +73,7 @@ public class BlastArmorGameTest {
                               double height) {
         SmallArmsArmorGameTest.fresh(vehicle);
         Vec3 centre = vehicle.position().add(0, height, 0);
-        Vec3 out = new Vec3(new org.joml.Quaternionf(vehicle.rotYXZ()).transform(new org.joml.Vector3f(1, 0, 0)));
+        Vec3 out = new Vec3(new Quaternionf(vehicle.rotYXZ()).transform(new Vector3f(1, 0, 0)));
         VehicleHits.Hit hit = vehicle.hits().surface(centre.add(out.scale(8)), centre);
         helper.assertTrue(hit != null, "no hull along the side at height " + height);
         Vec3 at = hit.point().add(new Vec3(hit.normal()).scale(distance));
@@ -264,7 +270,7 @@ public class BlastArmorGameTest {
         Husk[] crew = new Husk[1];
         float[] before = new float[1];
         AbstractVehicle.Seat[] seat = new AbstractVehicle.Seat[1];
-        com.wf.combinedassault.vehicle.part.SwitchableUnit<?>[] hatch = new com.wf.combinedassault.vehicle.part.SwitchableUnit<?>[1];
+        SwitchableUnit<?>[] hatch = new SwitchableUnit<?>[1];
         SmallArmsArmorGameTest.onLane(helper, LANE + 11, M1A2, (seq, v) -> seq
                 .thenExecute(() -> {
                     AbstractVehicle vehicle = v.get();
@@ -286,7 +292,7 @@ public class BlastArmorGameTest {
                 .thenExecute(() -> {
                     helper.assertFalse(v.get().hatchOpen(seat[0]), "the hatch is open after being closed");
                     before[0] = crew[0].getHealth();
-                    com.wf.combinedassault.ballistics.ThermalAttacks.onThermal(new com.wf.wflib.damage.api.event.ThermalAttackEvent(
+                    ThermalAttacks.onThermal(new ThermalAttackEvent(
                             v.get(), crew[0].getEyePosition(), 100.0f, true, 0, null, v.get()));
                     helper.assertTrue(crew[0].getHealth() == before[0] && !crew[0].isOnFire(),
                             "heat reached an occupant under a closed hatch: " + before[0] + " -> " + crew[0].getHealth()
@@ -297,7 +303,7 @@ public class BlastArmorGameTest {
                 .thenExecute(() -> {
                     helper.assertTrue(v.get().hatchOpen(seat[0]), "the hatch did not open");
                     before[0] = crew[0].getHealth();
-                    com.wf.combinedassault.ballistics.ThermalAttacks.onThermal(new com.wf.wflib.damage.api.event.ThermalAttackEvent(
+                    ThermalAttacks.onThermal(new ThermalAttackEvent(
                             v.get(), crew[0].getEyePosition(), 100.0f, true, 0, null, v.get()));
                     helper.assertTrue(crew[0].getHealth() < before[0] && crew[0].isOnFire(),
                             "an occupant under an open hatch took nothing: " + crew[0].getHealth());
@@ -322,8 +328,8 @@ public class BlastArmorGameTest {
                         BlastRays.cast(vehicle, centre, SHELL_SIZE, null);
                         long t1 = System.nanoTime();
                         SmallArmsArmorGameTest.fresh(vehicle);
-                        net.minecraft.world.level.Explosion explosion = new net.minecraft.world.level.Explosion(level, null,
-                                centre.x, centre.y, centre.z, SHELL_SIZE, false, net.minecraft.world.level.Explosion.BlockInteraction.KEEP);
+                        Explosion explosion = new Explosion(level, null,
+                                centre.x, centre.y, centre.z, SHELL_SIZE, false, Explosion.BlockInteraction.KEEP);
                         long t2 = System.nanoTime();
                         VehicleBlastResolver.resolve(vehicle, explosion, null, payload, centre);
                         long t3 = System.nanoTime();

@@ -2,6 +2,8 @@ package com.wf.combinedassault.ballistics.hit;
 
 import com.google.gson.JsonObject;
 import com.wf.wflib.physics.api.ConvexHull;
+import java.util.Arrays;
+import java.util.Comparator;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -235,7 +237,7 @@ public record ModelRig(List<Frame> frames, int[] nodeFrame, List<Collider> colli
         Vector3f u = new Vector3f(points.get(vertices.get(0))).sub(centre).normalize();
         Vector3f w = new Vector3f(normal).cross(u);
         Integer[] order = vertices.toArray(Integer[]::new);
-        java.util.Arrays.sort(order, java.util.Comparator.comparingDouble(i -> {
+        Arrays.sort(order, Comparator.comparingDouble(i -> {
             Vector3f d = new Vector3f(points.get(i)).sub(centre);
             return Math.atan2(d.dot(w), d.dot(u));
         }));

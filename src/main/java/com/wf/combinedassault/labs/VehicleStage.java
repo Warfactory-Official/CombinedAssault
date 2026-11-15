@@ -10,6 +10,7 @@ import com.wf.wflib.labs.api.LabContext;
 import com.wf.wflib.labs.api.ScenarioStage;
 import com.wf.wflib.labs.api.ScenarioState;
 import com.wf.wflib.round.api.Rounds;
+import java.util.TreeSet;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 
@@ -33,7 +34,7 @@ public final class VehicleStage implements ScenarioStage {
     public Result apply(LabContext ctx, ScenarioState in, JsonObject spec) {
         for (String key : spec.keySet()) {
             if (!KEYS.contains(key)) {
-                throw new IllegalArgumentException("unknown key '" + key + "', valid: " + new java.util.TreeSet<>(KEYS));
+                throw new IllegalArgumentException("unknown key '" + key + "', valid: " + new TreeSet<>(KEYS));
             }
         }
         Map<ResourceLocation, BaseVehicleData> armoured = new TreeMap<>();

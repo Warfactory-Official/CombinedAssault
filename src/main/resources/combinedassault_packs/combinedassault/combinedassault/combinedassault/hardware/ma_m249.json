@@ -1,0 +1,9 @@
+{
+  "model": "combinedassault:models/weapon/ma/ma_m249.glb",
+  "item": "ma_lmgs:m249",
+  "weapons": ["combinedassault:ma_m249"],
+  "fits": ["door", "pintle"],
+  "install_ticks": 80,
+  "belt": {"link": "ma_lmgs:models/mag_5.56x45_200_belt_link.glb", "pitch": 0.01218},
+  "station": {"optical_sight_type": "operator", "zoom_max": 2}
+}

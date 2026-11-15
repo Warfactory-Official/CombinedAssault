@@ -38,7 +38,13 @@ public enum NodeRole {
     PIVOT(Kind.SOCKET),
     TRACK(Kind.SOCKET),
     PROPELLER(Kind.SOCKET),
-    STATION(Kind.SOCKET);
+    STATION(Kind.SOCKET),
+    /** Rider hand contact: client arm solve only. */
+    HAND(Kind.SOCKET),
+    /** Rider foot contact: client leg solve only. */
+    FOOT(Kind.SOCKET),
+    /** Kit belt end, {@code index} 0 feed (X belt leaving, Z cartridge axis), 1 box mouth (-X entering): client draw only. */
+    BELT(Kind.SOCKET);
 
     public enum Kind {
         FRAME, SHAPE, SOCKET

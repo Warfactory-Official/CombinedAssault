@@ -1,8 +1,10 @@
 package com.wf.combinedassault.weapon.part.data;
 
 import com.google.gson.annotations.SerializedName;
+import com.wf.combinedassault.airdefense.AirDefenseSpec;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.combinedassault.indirect.IndirectFireSpec;
 import com.wf.combinedassault.vehicle.crew.WeaponLoading;
 import com.wf.combinedassault.vehicle.part.data.RotatableUnitData;
 import com.wf.combinedassault.weapon.kit.HardwareKits;
@@ -61,10 +63,10 @@ public class WeaponUnitData extends RotatableUnitData {
     @Nullable
     private Rangefinder rangefinder;
     private List<WeaponInfo> weapons;
-    @org.jetbrains.annotations.Nullable
-    private com.wf.combinedassault.indirect.IndirectFireSpec indirectFire;
-    @org.jetbrains.annotations.Nullable
-    private com.wf.combinedassault.airdefense.AirDefenseSpec airDefense;
+    @Nullable
+    private IndirectFireSpec indirectFire;
+    @Nullable
+    private AirDefenseSpec airDefense;
     private VehicleCubeGroup xTurnGroup;
 
     public WeaponUnitData(String id) {
@@ -117,10 +119,10 @@ public class WeaponUnitData extends RotatableUnitData {
         this.weapons = pojo.weapons;
         this.hardpoint = pojo.hardpoint == null ? null : HardwareKits.Hardpoint.parse(pojo.hardpoint);
         this.indirectFire = pojo.indirectFire == null ? null
-                : new com.wf.combinedassault.indirect.IndirectFireSpec(pojo.indirectFire.map,
+                : new IndirectFireSpec(pojo.indirectFire.map,
                 pojo.indirectFire.launchElevation);
         this.airDefense = pojo.airDefense == null ? null
-                : com.wf.combinedassault.airdefense.AirDefenseSpec.of(pojo.airDefense);
+                : AirDefenseSpec.of(pojo.airDefense);
     }
 
     /** glTF sockets for keys the json left out; null = keep. */
@@ -239,13 +241,13 @@ public class WeaponUnitData extends RotatableUnitData {
     }
 
     /** Null: direct fire only. */
-    @org.jetbrains.annotations.Nullable
-    public com.wf.combinedassault.indirect.IndirectFireSpec getIndirectFire() {
+    @Nullable
+    public IndirectFireSpec getIndirectFire() {
         return indirectFire;
     }
 
-    @org.jetbrains.annotations.Nullable
-    public com.wf.combinedassault.airdefense.AirDefenseSpec getAirDefense() {
+    @Nullable
+    public AirDefenseSpec getAirDefense() {
         return airDefense;
     }
 
@@ -320,8 +322,8 @@ public class WeaponUnitData extends RotatableUnitData {
     }
 
     @Override
-    public void initFrames(@org.jetbrains.annotations.Nullable VehicleCubeGroup part,
-                           @org.jetbrains.annotations.Nullable VehicleCubeGroup pitch) {
+    public void initFrames(@Nullable VehicleCubeGroup part,
+                           @Nullable VehicleCubeGroup pitch) {
         super.initFrames(part, pitch);
         this.xTurnGroup = pitch != null ? pitch : part;
         List<VehicleCubeOBB> yTurnUnitOBBs = part == null ? List.of() : part.cubeOBBs;

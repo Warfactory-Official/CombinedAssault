@@ -1,7 +1,9 @@
 package com.wf.combinedassault.weapon.client;
 
+import com.wf.combinedassault.indirect.IndirectFire;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.weapon.VehicleMissile;
+import com.wf.combinedassault.weapon.ordnance.Munitions;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -94,7 +96,7 @@ public class CoordinateInputScreen extends Screen {
                 }
                 if (weaponUnit.indirectFire().isIndirect()) {
                     // Indirect: coordinate = fire mission target, not an aim point.
-                    com.wf.combinedassault.indirect.IndirectFire.solveTo(weaponUnit, targetPosition);
+                    IndirectFire.solveTo(weaponUnit, targetPosition);
                 } else {
                     weaponUnit.aim(aimPosition);
                 }
@@ -121,7 +123,7 @@ public class CoordinateInputScreen extends Screen {
         }
         return new Vec3(
                 launchPosition.x + forward.x * ascentDistance,
-                com.wf.combinedassault.weapon.ordnance.Munitions.missile(vehicleMissile.currentRound()).altitudeParam(),
+                Munitions.missile(vehicleMissile.currentRound()).altitudeParam(),
                 launchPosition.z + forward.z * ascentDistance
         );
     }

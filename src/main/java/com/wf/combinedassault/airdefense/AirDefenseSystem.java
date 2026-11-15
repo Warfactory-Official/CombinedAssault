@@ -23,7 +23,7 @@ public final class AirDefenseSystem implements CombinedAssaultSystem {
 
     @Override
     public void register(IEventBus modBus, ModContainer container) {
-        GameTestSetup.testsNeeding(modBus, java.util.Set.of("aircraft", "uav"), AirDefenseGameTest.class, LaserGameTest.class);
+        GameTestSetup.testsNeeding(modBus, Set.of("aircraft", "uav"), AirDefenseGameTest.class, LaserGameTest.class);
         AirDefenseActions.register();
     }
 }

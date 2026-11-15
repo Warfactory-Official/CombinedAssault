@@ -10,6 +10,7 @@ import com.wf.wflib.labs.api.LabContext;
 import com.wf.wflib.labs.api.LabProducer;
 import com.wf.wflib.labs.api.LabSink;
 import com.wf.wflib.labs.api.LabTable;
+import java.io.ByteArrayOutputStream;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -22,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.HexFormat;
 
 /**
@@ -79,7 +81,7 @@ public final class VehicleMeshProducer implements LabProducer {
 
     private static byte[] glb(VehicleRig rig, int[] stats) {
         JsonArray nodes = new JsonArray(), meshes = new JsonArray(), accessors = new JsonArray(), views = new JsonArray();
-        java.io.ByteArrayOutputStream bin = new java.io.ByteArrayOutputStream();
+        ByteArrayOutputStream bin = new ByteArrayOutputStream();
         int tris = 0;
         for (int i = 0; i < rig.hits.model().nodes().size(); i++) {
             HitModel.Node n = rig.hits.model().nodes().get(i);
@@ -180,7 +182,7 @@ public final class VehicleMeshProducer implements LabProducer {
         return out.array();
     }
 
-    private static int view(JsonArray views, java.io.ByteArrayOutputStream bin, byte[] bytes) {
+    private static int view(JsonArray views, ByteArrayOutputStream bin, byte[] bytes) {
         while (bin.size() % 4 != 0) {
             bin.write(0);
         }
@@ -214,8 +216,8 @@ public final class VehicleMeshProducer implements LabProducer {
 
     private static byte[] pad(byte[] in, byte fill) {
         int n = (in.length + 3) & ~3;
-        byte[] out = java.util.Arrays.copyOf(in, n);
-        java.util.Arrays.fill(out, in.length, n, fill);
+        byte[] out = Arrays.copyOf(in, n);
+        Arrays.fill(out, in.length, n, fill);
         return out;
     }
 

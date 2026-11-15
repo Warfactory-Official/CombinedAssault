@@ -5,6 +5,7 @@ import com.wf.combinedassault.indirect.IndirectFire;
 import com.wf.combinedassault.indirect.LayingMode;
 import com.wf.combinedassault.indirect.RoundSpec;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.client.VehicleKeys;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
 import net.minecraft.client.KeyMapping;
@@ -125,13 +126,13 @@ public final class IndirectFireInput {
         switch (next) {
             case MANUAL -> say(player, "tips.indirect.indirect");
             case AUTO -> player.displayClientMessage(Component.translatable("tips.indirect.auto",
-                    com.wf.combinedassault.vehicle.client.VehicleKeys.PRESET_COORDINATE_INPUT.getTranslatedKeyMessage()), true);
+                    VehicleKeys.PRESET_COORDINATE_INPUT.getTranslatedKeyMessage()), true);
             case DIRECT -> {
                 laying.clearTarget();
                 FireMissions.cancel(unit);
                 unit.getCurrentWeapon().ifPresent(weapon -> {
                     if (unit.getFireControlSensorType()
-                            != com.wf.combinedassault.weapon.part.data.WeaponUnitData.FireControlSensorType.LOC) {
+                            != WeaponUnitData.FireControlSensorType.LOC) {
                         weapon.setTargetLocation(null);
                     }
                 });

@@ -7,6 +7,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -100,8 +101,8 @@ public class ParagliderCanopy extends Entity {
             return;
         }
         if (requireOpenPack && owner instanceof LivingEntity living
-                && (!living.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST).is(CargoContent.PARACHUTE_PACK.get())
-                || !ParachutePackItem.isOpen(living.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST)))) {
+                && (!living.getItemBySlot(EquipmentSlot.CHEST).is(CargoContent.PARACHUTE_PACK.get())
+                || !ParachutePackItem.isOpen(living.getItemBySlot(EquipmentSlot.CHEST)))) {
             fallThenDiscard();
         }
     }

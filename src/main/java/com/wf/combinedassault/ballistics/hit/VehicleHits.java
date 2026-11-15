@@ -1,5 +1,6 @@
 package com.wf.combinedassault.ballistics.hit;
 
+import com.wf.combinedassault.dynamics.part.ClipFrames;
 import com.wf.combinedassault.dynamics.part.PartClipTracks;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
@@ -69,7 +70,7 @@ public final class VehicleHits implements HullMesh {
 
     public VehicleHits(AbstractVehicle vehicle, HitModel model, Map<VehicleCubeGroup, VehicleCubeGroup> copies,
                        Map<String, PartUnit<?>> partsById, @Nullable PartClipTracks clips,
-                       @Nullable com.wf.combinedassault.dynamics.part.ClipFrames clipFrames) {
+                       @Nullable ClipFrames clipFrames) {
         this.vehicle = vehicle;
         this.model = model;
         List<VehicleCubeGroup> typeGroups = model.groups();

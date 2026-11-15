@@ -1,7 +1,7 @@
 # Asset tools
 
 Model format: `vehicle-pack-format.md` §6. Shipped models are `.glb` (BIN chunk = buffer; `.gltf` + `.bin` also loads). Game reads
-only `extras.resourceLocation` for textures; a plain glTF export (`uri`) => untextured in game.
+only `extras.resourceLocation` for textures (`uri` ignored); `uri` alone => untextured in game.
 
 ## Blender add-on (`tools/blender/`)
 
@@ -12,9 +12,9 @@ Install: `python3 tools/blender/build_addon.py` -> `build/combinedassault_tools.
 | task | where |
 |---|---|
 | open a pack model | File > Import > combinedassault pack model, or Scene tab > Import pack model. Pick `assets/<ns>/models/**.glb` (or `.gltf`) inside the pack; Export writes `<model>.glb` (staging `.gltf` / `.bin` removed) |
-| roles (body, part, collider, seat...) | Object tab > combinedassault: every §6 node key (frame limits, `follows_clips`; hit `system` / `side` / `unit` / `spin` / `health` / `swept` / `skip` / `road_wheel`; collider flags; socket `index`, light keys; scale-valued sockets show their value field) |
+| roles (body, part, collider, seat...) | Object tab > combinedassault: every §6 node key (frame limits, `follows_clips`; hit `system` / `side` / `unit` / `spin` / `health` / `rha` (`hit` only) / `swept` / `skip` / `road_wheel`; collider flags; socket `index`, light keys; scale-valued sockets show their value field) |
 | texture | Material tab > Set up texture (PNG): Image Texture -> Base Color, pixel-sharp; Transparency Solid / Cut-out / See-through; damage / paint siblings listed |
-| armour, hit effect, decor | Material tab: Armour mm / Hit effect / Decor = views of the material name (editing renames). Assign armour to faces (edit mode): per-face copy |
+| armour, hit effect, decor | Material tab: Armour plate (`armor:<id>`) / Hit effect / Decor = views of the material name (editing renames; drops a legacy `armor_<mm>`). Assign armour to faces (edit mode, plate id): per-face copy. Legacy / malformed plate token => check warning |
 | socket | Scene tab > Add socket (3D cursor): `era` / `slat` quad, `sight_lens` quad, `track` loop as starter meshes; `cargo_bay` cube / `propeller` circle drawn at the value size |
 | tyre hit surface | Scene tab > Make hit cylinder: circumscribed prism `hit_surface` child per selected node (= `gen_hulls.py --hit-cylinder`, regenerable by it) |
 | screen | Scene tab > Add screen: `screen_<id>` quad (UV 0..1, faces the rider) + material `textureSlot`; bind in vehicle `screens` |
@@ -24,6 +24,11 @@ Install: `python3 tools/blender/build_addon.py` -> `build/combinedassault_tools.
 | passenger views | Scene tab > Create passenger cameras: one camera per `seat` / `view` / `sight` / `camera` / `camera_zoomed` socket (eye = origin, -Y at yaw 0, 70 deg vertical); Previous / Next / per-socket buttons look through. Rebuilt per call; never exported |
 | check | Scene tab > Check vehicle; red lines in Object / Material tabs |
 | export | Scene tab > Export vehicle: check, write `.glb` + textures, then the validator on the written file |
+| hardware kit | File > Import > combinedassault hardware kit, or Scene tab > Open hardware kit: pick `<pack>/combinedassault/<ns>/hardware/*.json`; its `model` imported as a pack model. Kit box: `weapons` / `fits` (comma lists), `install_ticks`, `item`, `replaces`, `station` (JSON object), belt link + pitch (empty link = no `belt`); Save kit json. Export also writes the kit json (`model` = export target when same pack); `belt` xor model `belt` sockets => warning |
+| kit roles | kit open => role outside `ModelDataManager.KIT_ROLES` = check error, Object tab note |
+| kit on a vehicle | Kit box: hardpoint dropdown (vehicle defs whose `hardpoint.accepts` meets `fits`; `overrides[kit].node` wins) > Preview: vehicle + part mounts imported as reference, hardpoint node rest frame = origin. Rebuilt per call; X clears; never exported |
+| hand contact | Scene tab > Add hand contact: `hand` empty at the 3D cursor, child of the active object; Object tab: Hand right / left, Action (empty / `shift` / clip name) |
+| arm reach | Scene tab > Arm reach: 0.586 sphere per seat socket (vehicle preview included). Rebuilt per call; never exported |
 
 - Frame: 1 unit = 1 block, nose -Y, port +X, up +Z.
 - Texture already in a pack => referenced in place (shared atlases, `_damaged` / `_wrecked` / `_paint` siblings keep
@@ -38,9 +43,10 @@ Install: `python3 tools/blender/build_addon.py` -> `build/combinedassault_tools.
 - Object tab: mount state node names (`ammo_can`, `round@<k>`, `barrel@<variant>`) labelled.
 - Material problems the exporter would hide: texture not on Base Color, Base Color through Mix nodes, second UV map,
   Mapping node, never-saved image, Alpha linked with Transparency Auto.
+- Kit json edits in place (`tools/jsonedit.py put` / `remove`): unchanged keys keep their bytes, new keys appended.
 - Test: `blender -b --factory-startup --python "$PWD/tools/blender/test_combinedassault_tools.py"` (Flatpak:
-  absolute path; its `/tmp` is private). Round-trips Humvee, C-5, T-90, Mavic, M777, M142; vocabularies parsed from the
-Java sources.
+  absolute path; its `/tmp` is private). Round-trips Humvee, C-5, T-90, Mavic, M777, M142, m2 kit (copy under
+  `build/`); vocabularies parsed from the Java sources.
 
 ## Plates (`tools/def_sockets.py plates`)
 
@@ -69,13 +75,18 @@ Install: Blockbench 5.1 desktop > File > Plugins > Load Plugin from File. Menu a
 | collider from geometry | Make convex hull (selected cubes / meshes, first one's frame); Merge coplanar faces (shared face tag per plane) |
 | tyre hit surface | Make hit cylinder: `hit_surface` prism per selected group (`genHulls` extras, regenerable by `gen_hulls.py --hit-cylinder`) |
 | screen | Add screen: `screen_<id>` quad (UV 0..1, faces the rider) + material `textureSlot` |
-| armour, hit effect, decor | Material tags: renames the texture (= material name). Gap: Armour mm / Assign armour still write `armor_<mm>`, which the game no longer reads; bind plates by naming the material `<stem>_armor:<id>` (pack doc §3.7) or `def_sockets.py plates` |
+| armour, hit effect, decor | Material tags: hit effect / decor, renames the texture (= material name). Plates: Assign armour plate to faces (per-face material `<stem>_armor:<id>`; `:` never in a texture name = resource path). Legacy / malformed plate token => Validate warning |
 | part clip | Key part clip: start / end key (offsets from rest) on selected groups / locators, clip `<part id>[.<suffix>]` |
 | lights | Preview lights: cone outline per `light` socket (kind defaults resolved). Rebuilt per call; never exported |
 | player size | CombinedAssault > Add player reference (standing / seated, 15/16 model; seat locator selected => eye on it). Never exported |
 | passenger views | CombinedAssault > View as passenger... (socket list), Next / Previous passenger view (Ctrl+PgDn / Ctrl+PgUp): preview camera to the socket eye, +Z local, FOV 70. Orbit leaves |
 | check | CombinedAssault > Validate vehicle |
-| export | CombinedAssault > Export to pack: check, write `.glb` + new textures |
+| export | CombinedAssault > Export to pack: check, write `.glb` + new textures; kit open => kit `model` synced |
+| hardware kit | CombinedAssault > Open hardware kit: pick `<pack>/combinedassault/<ns>/hardware/*.json`; its `model` imported as a pack model. Hardware kit fields: `weapons`, `fits`, `install_ticks`, `item`, `replaces`, `station` (JSON), belt link + pitch (empty link = no `belt`); written in place. Validate: `belt` xor model `belt` sockets => warning |
+| kit roles | kit open => panel note; roles outside `KIT_ROLES` = Validate error |
+| kit on a vehicle | Preview kit on vehicle (hardpoint list as Blender): wireframe vehicle + part mounts, hardpoint node at the origin, arm reach spheres on its seats. Clear kit preview; never exported |
+| hand contact | Add hand contact: `hand` locator at the selected group's pivot, inside it; panel Hand / Action |
+| arm reach | Arm reach (seats): toggles a 0.586 wire sphere on each seat locator; never exported |
 
 - Frame: 16 px = 1 block, nose south (+Z), port east (+X), up +Y.
 - Frames = groups; collider / `hit` / `hit_surface` = cube or mesh; socket = locator (`era` / `slat` / `track` / `sight_lens`: mesh). `export` off => skipped.
@@ -90,15 +101,16 @@ Install: Blockbench 5.1 desktop > File > Plugins > Load Plugin from File. Menu a
 - Blockbench holds one texture per file: materials sharing an image share it in the texture list.
 - Flatpak sandbox: pack outside Documents / Desktop / Downloads => `flatpak override --user --filesystem=<pack> net.blockbench.Blockbench`.
 - Test: `node tools/blockbench/test_combinedassault.mjs`. Live round trip: `node tools/blockbench/compare_roundtrip.mjs <source.glb> <exported.glb>`.
-- Gaps vs Blender: Blender-only `posed` check, mount state node labels, material-node problems (N/A: Blockbench has no node trees). Gap: hinge axis = `<name>_mount` rotation (no cursor orientation), hit cylinder built in model axes (rotated ancestors => wrong). Gap: tools untested live in Blockbench (node tests cover the pure parts: panel keys, hull, prism, coplanar planes, tags, `.glb`).
+- Gaps vs Blender: Blender-only `posed` check, mount state node labels, material-node problems (N/A: Blockbench has no node trees). Gap: hinge axis = `<name>_mount` rotation (no cursor orientation), hit cylinder built in model axes (rotated ancestors => wrong). Gap: tools untested live in Blockbench (node tests cover the pure parts: panel keys, hull, prism, coplanar planes, tags, `.glb`, kit json edit, hardpoints, hand keys, belt sockets).
 
 ## Validator (`tools/blender/ca_validate.py`)
 
-`python3 tools/blender/ca_validate.py <model.gltf>...`; exit 1 on any error. No Blender needed. Mirrors `ModelRig`
-(roles, body, frames, collider keys, hulls), `ModelDataManager` (node keys, `system`, `spin`, no yaw on `pitch`),
-`VehicleLight.read`, GemRender materials (resourceLocation, PNG, TEXCOORD_0 only, cutoff 0 / 0.1 / 0.5, `textureSlot`
-mesh UVs) and clip names. `sight_lens` mesh: drawn, UV not required. No body node => part / display model: rig rules
-skipped. Shipped pack: 67 models, 0 errors.
+`python3 tools/blender/ca_validate.py [--kit] <model.gltf>...`; exit 1 on any error; `--kit`: `KIT_ROLES` only. No Blender needed. Mirrors `ModelRig`
+(roles, body, frames, collider keys, hulls), `ModelDataManager` (node keys, `system`, `spin`, `rha` on `hit` only, no yaw on `pitch`; material `armor:<id>` = last token, legacy `armor_<mm>` => warning),
+`VehicleLight.read`, `hand` (`hand` right / left, `action` non-empty string), `belt` (`index` 0 + 1 once each; outside a
+kit => warning), GemRender materials (resourceLocation, PNG, TEXCOORD_0 only, cutoff 0 / 0.1 / 0.5, `textureSlot`
+mesh UVs; image namespace without `assets/<ns>` in the pack = another mod's, unchecked) and clip names. `sight_lens` mesh: drawn, UV not required. No body node => part / display model: rig rules
+skipped. Shipped pack: 75 models, 0 errors.
 
 ## Player reference
 

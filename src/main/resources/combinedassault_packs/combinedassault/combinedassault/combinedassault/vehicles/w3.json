@@ -157,8 +157,7 @@
                 "node": "door_gun_up",
                 "accepts": ["door"],
                 "fitted": "combinedassault:pkm",
-                "door": "cabin_door_r",
-                "overrides": {"combinedassault:ma_pkm": {"node": "door_gun_ma"}}
+                "door": "cabin_door_r"
             }
         },
         {

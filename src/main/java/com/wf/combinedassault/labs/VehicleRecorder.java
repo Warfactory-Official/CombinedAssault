@@ -7,6 +7,7 @@ import com.wf.wflib.labs.api.LabRecorder;
 import com.wf.wflib.labs.api.LabTable;
 import com.wf.wflib.round.api.KineticPreset;
 import com.wf.wflib.round.api.Rounds;
+import java.util.Locale;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.server.level.ServerLevel;
 import org.joml.Quaternionf;
@@ -58,7 +59,7 @@ final class VehicleRecorder {
                         (float) (e.hitPosition.z - v.getZ())));
         String key = e.message.getContents() instanceof TranslatableContents t ? t.getKey() : "";
         String verdict = key.startsWith("message.vehicle.ballistics.")
-                ? key.substring(key.lastIndexOf('.') + 1).toUpperCase(java.util.Locale.ROOT) : "NO_MODEL";
+                ? key.substring(key.lastIndexOf('.') + 1).toUpperCase(Locale.ROOT) : "NO_MODEL";
         LabRecorder.record(TABLE.name(), TABLE, v.getDisplayId().toString(), s.round, azimuth, elevation, verdict,
                 s.penetration, e.damage, s.speed, local.x, local.y, local.z);
     }

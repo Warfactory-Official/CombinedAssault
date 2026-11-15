@@ -10,6 +10,7 @@ import com.sighs.apricityui.render.Drawer;
 import com.sighs.apricityui.screen.ApricityScreen;
 import com.wf.combinedassault.pack.client.ClientAssetsManager;
 import com.wf.combinedassault.pack.client.vehicle.BaseDisplay;
+import com.wf.combinedassault.render.util.RenderHelper;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
@@ -286,7 +287,7 @@ public class VehicleWeaponSelectScreen extends ApricityScreen {
         Vec3 arrowPosition = selection.weaponUnit.aimContext().from.subtract(vehicle.position());
         poseStack.pushPose();
         poseStack.translate(arrowPosition.x, arrowPosition.y, arrowPosition.z);
-        com.wf.combinedassault.render.util.RenderHelper.renderArrow3D(
+        RenderHelper.renderArrow3D(
                 poseStack, graphics.bufferSource(), 0.15f, 0.3f, 0, 255, 0, 255);
         poseStack.popPose();
     }

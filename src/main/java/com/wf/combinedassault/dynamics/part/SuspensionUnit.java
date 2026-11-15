@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class SuspensionUnit<T extends SuspensionUnitData> extends PartUnit<T> {
 
@@ -562,7 +563,7 @@ public class SuspensionUnit<T extends SuspensionUnitData> extends PartUnit<T> {
     }
 
     /** World probe bottoms at the drawn compression, rear first ({@code rearOnly}: rearmost probe only). */
-    public void probeBottoms(float partialTick, boolean rearOnly, java.util.function.Consumer<Vec3> sink) {
+    public void probeBottoms(float partialTick, boolean rearOnly, Consumer<Vec3> sink) {
         if (!isActive()) {
             return;
         }

@@ -1,5 +1,6 @@
 package com.wf.combinedassault.vehicle.data;
 
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import com.wf.combinedassault.ballistics.addon.AddonMountInfo;
 import com.wf.combinedassault.ballistics.pojo.DefenseStats;
@@ -16,6 +17,7 @@ import com.wf.combinedassault.vehicle.pojo.ViewInfo;
 import com.wf.combinedassault.vehicle.screen.ScreenInfo;
 import com.wf.combinedassault.weapon.pojo.LoadoutInfo;
 import com.wf.wflib.armor.api.hull.HullProfile;
+import java.util.LinkedHashMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 
@@ -99,7 +101,7 @@ public class BaseVehicleDataPojo {
 
     /** Interaction id -> {node, name?, actions}; parsed by {@code InteractionTypes}. */
     @SerializedName("interactions")
-    public java.util.LinkedHashMap<String, com.google.gson.JsonObject> interactions = new java.util.LinkedHashMap<>();
+    public LinkedHashMap<String, JsonObject> interactions = new LinkedHashMap<>();
 
     @SerializedName("experimental")
     public boolean experimental = false;

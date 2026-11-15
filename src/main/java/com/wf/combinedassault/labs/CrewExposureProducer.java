@@ -18,6 +18,8 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
+import net.minecraft.world.level.Explosion;
 
 /**
  * What reaches a seated occupant (a mob: vanilla health; players' wounds and armour run in WFMedical in game), through
@@ -129,7 +131,7 @@ public final class CrewExposureProducer implements LabProducer {
     }
 
     private static void direct(LabContext ctx, ResourceLocation id, BaseVehicleData data, String threat, double amount, LabSink sink,
-                               java.util.function.BiFunction<AbstractVehicle, Zombie, DamageSource> source) {
+                               BiFunction<AbstractVehicle, Zombie, DamageSource> source) {
         VehicleRig rig = VehicleRig.spawnLive(ctx.level(), id, data, false);
         try {
             Zombie z = seat(rig.vehicle, rig.vehicle.position().add(0, 1.2, 0));
@@ -166,8 +168,8 @@ public final class CrewExposureProducer implements LabProducer {
                 VehicleBlastResolver.interior(rig.vehicle, null, payload, centre);
             } else {
                 float size = VehicleBlastResolver.sizeForKg((float) kg);
-                VehicleBlastResolver.resolve(rig.vehicle, new net.minecraft.world.level.Explosion(rig.vehicle.level(), null,
-                        centre.x, centre.y, centre.z, size, false, net.minecraft.world.level.Explosion.BlockInteraction.KEEP),
+                VehicleBlastResolver.resolve(rig.vehicle, new Explosion(rig.vehicle.level(), null,
+                        centre.x, centre.y, centre.z, size, false, Explosion.BlockInteraction.KEEP),
                         null, payload, centre);
             }
             double loss = z.getMaxHealth() - z.getHealth();

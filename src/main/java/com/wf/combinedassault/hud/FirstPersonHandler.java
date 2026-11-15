@@ -3,6 +3,7 @@ package com.wf.combinedassault.hud;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.VehicleConfig;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.hands.client.RiderHands;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -17,6 +18,7 @@ import org.joml.Vector3f;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
 public class FirstPersonHandler {
 
@@ -37,6 +39,9 @@ public class FirstPersonHandler {
             return;
         }
         if (instance.onVehicle()) {
+            if (RiderHands.firstPerson(event)) {
+                return;
+            }
             if (instance.viewType == LocalVehiclePlayer.ViewType.THIRD_PERSON) {
                 event.setCanceled(true);
             } else {
@@ -46,6 +51,11 @@ public class FirstPersonHandler {
                 }
             }
         }
+    }
+
+    @SubscribeEvent
+    public static void onRenderLevel(RenderLevelStageEvent event) {
+        RiderHands.level(event);
     }
 
     @SubscribeEvent

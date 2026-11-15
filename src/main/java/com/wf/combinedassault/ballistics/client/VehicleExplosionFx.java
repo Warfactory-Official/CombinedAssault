@@ -8,6 +8,7 @@ import com.wf.wflib.audio.api.Blasts;
 import com.wf.wflib.audio.api.client.Sounds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -211,7 +212,7 @@ public final class VehicleExplosionFx {
         ).normalize();
     }
 
-    private static void addParticles(Level level, net.minecraft.core.particles.ParticleOptions particle,
+    private static void addParticles(Level level, ParticleOptions particle,
                                      double x, double y, double z,
                                      int count, double xSpread, double ySpread, double zSpread, double speed) {
         for (int i = 0; i < count; i++) {
@@ -222,7 +223,7 @@ public final class VehicleExplosionFx {
         }
     }
 
-    private static void addParticlesOnSolid(Level level, net.minecraft.core.particles.ParticleOptions particle,
+    private static void addParticlesOnSolid(Level level, ParticleOptions particle,
                                             double x, double y, double z,
                                             int count, double xSpread, double ySpread, double zSpread, double speed) {
         for (int i = 0; i < count; i++) {

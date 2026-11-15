@@ -31,6 +31,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -41,6 +42,7 @@ import org.joml.Vector4f;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.renderer.LightTexture;
 
 /**
  * Draws a vehicle whose display was read by {@link GemRenderModelLoader}: one Flywheel instance for the
@@ -66,7 +68,7 @@ public class VehicleGemVisual<T extends AbstractVehicle> extends AbstractEntityV
     /** {@link DamageSkin#slotKeys} of {@link #bound}; null when it has no damage variants. */
     private int[] damageKeys;
     private float[] damageUv;
-    private org.joml.Matrix4f[] restPalette;
+    private Matrix4f[] restPalette;
     private boolean damaged;
     /** Last refresh; -REFRESH = due. MIN_VALUE FORBIDDEN: tickCount - MIN_VALUE overflows negative, never due. */
     private int damageTick = -DAMAGE_REFRESH_TICKS;
@@ -274,12 +276,17 @@ public class VehicleGemVisual<T extends AbstractVehicle> extends AbstractEntityV
     private int light(float partialTick) {
         lightPos.set(Mth.floor(entity.getX()), Mth.floor(entity.getY() + entity.getBbHeight() * 0.5), Mth.floor(entity.getZ()));
         int packed = LevelRenderer.getLightColor(entity.level(), lightPos);
+        int blockCentre = LightTexture.block(packed);
+        int skyCentre = LightTexture.sky(packed);
+        packed = LightTexture.pack(
+                VehicleRender.probeMax(entity, LightLayer.BLOCK, blockCentre),
+                VehicleRender.probeMax(entity, LightLayer.SKY, skyCentre));
         if (!entity.isDestroyed()) {
             return packed;
         }
-        int block = (int) (net.minecraft.client.renderer.LightTexture.block(packed) / 1.5f);
-        int sky = (int) (net.minecraft.client.renderer.LightTexture.sky(packed) / 1.5f);
-        return net.minecraft.client.renderer.LightTexture.pack(block, sky);
+        int block = (int) (LightTexture.block(packed) / 1.5f);
+        int sky = (int) (LightTexture.sky(packed) / 1.5f);
+        return LightTexture.pack(block, sky);
     }
 
     private void hide() {

@@ -31,7 +31,7 @@ public final class CargoSystem implements CombinedAssaultSystem {
 
     @Override
     public void register(IEventBus modBus, ModContainer container) {
-        GameTestSetup.testsNeeding(modBus, java.util.Set.of("aircraft", "tow"), CargoGameTest.class, CargoLoadGameTest.class);
+        GameTestSetup.testsNeeding(modBus, Set.of("aircraft", "tow"), CargoGameTest.class, CargoLoadGameTest.class);
         GameTestSetup.tests(modBus, VehicleStorageGameTest.class);
         CargoContent.ITEMS.register(modBus);
         CargoContent.ENTITIES.register(modBus);

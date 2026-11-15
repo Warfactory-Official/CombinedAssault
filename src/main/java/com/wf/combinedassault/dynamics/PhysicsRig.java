@@ -56,7 +56,7 @@ public final class PhysicsRig {
     /** Velocity change (blocks/tick) the contacts cost, when it crossed the damage threshold. Applied at flush. */
     public double impactVelocityDiff;
     /** World contact centroid of that impact. */
-    public net.minecraft.world.phys.Vec3 impactPos;
+    public Vec3 impactPos;
     /** Set when the solve needs world data outside its pinned view; barrier re-solves synchronously. */
     public boolean needsLiveWorld;
 

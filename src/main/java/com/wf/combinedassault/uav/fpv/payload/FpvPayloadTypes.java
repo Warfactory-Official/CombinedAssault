@@ -1,5 +1,6 @@
 package com.wf.combinedassault.uav.fpv.payload;
 
+import com.google.gson.JsonObject;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.wflib.core.api.WFRegistry;
 import net.minecraft.resources.ResourceLocation;
@@ -14,19 +15,19 @@ public final class FpvPayloadTypes {
     public static final FpvPayloadType WARHEAD = new FpvPayloadType(
             CombinedAssault.modLocation("warhead"),
             WarheadPayload::new,
-            type -> new WarheadPayload(type, new com.google.gson.JsonObject())
+            type -> new WarheadPayload(type, new JsonObject())
     );
 
     public static final FpvPayloadType GRENADE_RACK = new FpvPayloadType(
             CombinedAssault.modLocation("grenade_rack"),
             GrenadeRackPayload::new,
-            type -> new GrenadeRackPayload(type, new com.google.gson.JsonObject())
+            type -> new GrenadeRackPayload(type, new JsonObject())
     );
 
     public static final FpvPayloadType SPEAKER = new FpvPayloadType(
             CombinedAssault.modLocation("speaker"),
             SpeakerPayload::new,
-            type -> new SpeakerPayload(type, new com.google.gson.JsonObject())
+            type -> new SpeakerPayload(type, new JsonObject())
     );
 
     private FpvPayloadTypes() {

@@ -2,6 +2,7 @@ package com.wf.combinedassault.ballistics.addon.client;
 
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.mojang.blaze3d.vertex.*;
 import com.wf.combinedassault.ballistics.addon.*;
 import com.wf.combinedassault.camo.client.CamoMesh;
@@ -221,7 +222,7 @@ public final class AddonArmorRenderer {
         }
         ItemStack held = player.getMainHandItem();
         AddonFit kit = held.getItem() instanceof AddonArmorItem item ? item.fit() : null;
-        boolean welder = held.is(com.wf.combinedassault.ballistics.component.ComponentKind.HULL.toolTag);
+        boolean welder = held.is(ComponentKind.HULL.toolTag);
         if (kit == null && !welder) {
             return;
         }

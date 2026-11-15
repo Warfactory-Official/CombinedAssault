@@ -1,8 +1,11 @@
 package com.wf.combinedassault.weapon;
 
+import com.wf.combinedassault.indirect.IndirectFire;
+import com.wf.combinedassault.indirect.LayingMode;
 import com.wf.combinedassault.pack.sync.PartUnitSyncData;
 import com.wf.combinedassault.pack.sync.SyncDataHolder;
 import com.wf.combinedassault.pack.sync.SyncDataSerializers;
+import com.wf.combinedassault.render.fx.CasingFx;
 import com.wf.combinedassault.render.particle.SmokeCloudOption;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.audio.WeaponSounds;
@@ -48,6 +51,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> implements INBTSerializable<CompoundTag> {
     /** Muzzle light peak per mm calibre (120 mm => 720: E ~1 at 27 blocks). */
@@ -309,7 +314,7 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
     /** Coordinates are taken by a {@code loc} station, or any station laid {@code AUTO}. */
     public boolean takesCoordinates() {
         return weaponUnit.getFireControlSensorType() == WeaponUnitData.FireControlSensorType.LOC
-                || weaponUnit.indirectFire().mode() == com.wf.combinedassault.indirect.LayingMode.AUTO;
+                || weaponUnit.indirectFire().mode() == LayingMode.AUTO;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -338,8 +343,8 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
             }
         }
         if (targetLocation == null && (weaponUnit.getFireControlSensorType() == WeaponUnitData.FireControlSensorType.LOC
-                || weaponUnit.indirectFire().mode() == com.wf.combinedassault.indirect.LayingMode.AUTO
-                && com.wf.combinedassault.indirect.IndirectFire.selfGuided(weaponUnit))) {
+                || weaponUnit.indirectFire().mode() == LayingMode.AUTO
+                && IndirectFire.selfGuided(weaponUnit))) {
             if (minecraft.player != null) {
                 Component tips = Component.translatable("tips.preset_coordinate_required", VehicleKeys.PRESET_COORDINATE_INPUT.getTranslatedKeyMessage());
                 minecraft.player.displayClientMessage(tips, true);
@@ -420,12 +425,12 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
             weaponUnit.countFire(1);
         } else if (weaponUnit.getFiringMode() == WeaponUnitData.FiringMode.SALVO) {
             aimContexts = weaponUnit.aimContexts();
-            bolts = java.util.stream.IntStream.range(0, aimContexts.size()).toArray();
+            bolts = IntStream.range(0, aimContexts.size()).toArray();
             weaponUnit.countFire(aimContexts.size());
         } else {
             return;
         }
-        com.wf.combinedassault.render.fx.CasingFx.shot(weaponUnit, bolts, solutionRound(), data.getCasingDelay());
+        CasingFx.shot(weaponUnit, bolts, solutionRound(), data.getCasingDelay());
         float recoil = data.getRecoil();
         float caliber = Math.max(Munitions.caliber(loadedRound), DEFAULT_FLASH_CALIBER);
         float scaleDivisor = 20f + 30f * caliber / 1000f;
@@ -849,7 +854,7 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
     }
 
     @Override
-    public void deserializeNBT(@org.jetbrains.annotations.NotNull HolderLookup.Provider provider, @org.jetbrains.annotations.NotNull CompoundTag nbt) {
+    public void deserializeNBT(@NotNull HolderLookup.Provider provider, @NotNull CompoundTag nbt) {
         this.remainAmmo = nbt.getInt("RemainAmmo");
         this.loadedRound = nbt.contains("LoadedRound")
                 ? ItemStack.parse(provider, nbt.get("LoadedRound")).orElse(ItemStack.EMPTY)

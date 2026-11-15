@@ -29,6 +29,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Server re-traces the ray against hull collision cubes itself; client aim is advisory.
@@ -126,7 +127,7 @@ public class CamoKitItem extends VehicleItem {
         BlockState state = getBlock(itemStack, context.registries());
         tooltip.add(Component.translatable("ui.camo_kit.material", state.getBlock().getName())
                 .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("ui.camo_kit.kind." + getKind(itemStack).name().toLowerCase(java.util.Locale.ROOT))
+        tooltip.add(Component.translatable("ui.camo_kit.kind." + getKind(itemStack).name().toLowerCase(Locale.ROOT))
                 .withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("ui.camo_kit.hint").withStyle(ChatFormatting.DARK_GRAY));
     }

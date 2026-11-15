@@ -7,6 +7,8 @@ import com.wf.combinedassault.vehicle.VehicleContent;
 import com.wf.combinedassault.vehicle.VehicleTabs;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
+import com.wf.wflib.mist.spray.SprayPayload;
+import com.wf.wflib.mist.spray.SprayPayloads;
 import net.minecraft.world.entity.EntityType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -36,8 +38,8 @@ public final class EnergySystem implements CombinedAssaultSystem {
         EnergyContent.ITEMS.register(modBus);
         EnergyContent.DATA_COMPONENTS.register(modBus);
         EnergyFluids.register(modBus);
-        com.wf.wflib.mist.spray.SprayPayloads.register(EnergyFluids.FUEL_SOURCE.getId(),
-                com.wf.wflib.mist.spray.SprayPayload.INERT);
+        SprayPayloads.register(EnergyFluids.FUEL_SOURCE.getId(),
+                SprayPayload.INERT);
         VehicleTabs.addMisc(EnergyContent.FUEL_TANK);
         container.registerConfig(ModConfig.Type.COMMON, EnergyConfig.SPEC, "combinedassault-energy.toml");
         modBus.addListener(ModConfigEvent.Loading.class, EnergyConfig::onLoad);

@@ -5,7 +5,6 @@
     {"type": "combinedassault:scope_sight", "color": "$white"},
     {"type": "place", "x": "floor(ui.width / 2)", "y": "floor(ui.height / 2)",
       "child": {"type": "combinedassault:engagement_envelope", "color": "$white"}},
-    {"type": "combinedassault:lock_markers"},
-    {"type": "place", "x": "ui.width / 2 - 80", "y": "ui.height / 2 + 80", "child": {"type": "combinedassault:vehicle_schematic"}}
+    {"type": "combinedassault:lock_markers"}
   ]}}
 }

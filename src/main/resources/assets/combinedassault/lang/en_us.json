@@ -145,6 +145,8 @@
   "ui.vehicle_rotary_wing.speed": "SPD:  %d",
   "ui.vehicle_rotary_wing.fuel": "FUEL: %s",
   "ui.vehicle_rotary_wing.altitude": "ALT: %d",
+  "ui.vehicle_rotary_wing.vspeed": "V/S: %s",
+  "hud.combinedassault.gear": "GEAR %s",
   "ui.war_emergency_power": "WEP",
   "ui.brake": "BRK",
   "ui.out_of_launch_limits": "OUT OF LAUNCH LIMITS",

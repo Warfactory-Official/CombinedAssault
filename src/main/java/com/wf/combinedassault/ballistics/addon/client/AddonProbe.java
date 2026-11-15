@@ -9,6 +9,7 @@ import com.wf.wflib.probe.api.ProbeAction;
 import com.wf.wflib.probe.api.ProbeContext;
 import com.wf.wflib.probe.api.ProbeElement;
 import com.wf.wflib.probe.api.ProbeInfo;
+import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -36,7 +37,7 @@ public final class AddonProbe {
         AddonMountState state = vehicle.addonArmor().state(index);
         Component place = Component.literal(mount.info.id.replace('_', ' '));
         if (state.isEmpty()) {
-            info.title(Component.translatable(KEY + "empty." + mount.info.kind.name().toLowerCase(java.util.Locale.ROOT)));
+            info.title(Component.translatable(KEY + "empty." + mount.info.kind.name().toLowerCase(Locale.ROOT)));
             info.entry(Component.translatable(KEY + "place"), place);
             if (mount.info.kind == AddonKind.ERA) {
                 offerInstall(info, ctx.player(), mount, AddonFit.ERA_LIGHT);

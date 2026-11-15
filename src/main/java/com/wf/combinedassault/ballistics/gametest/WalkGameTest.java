@@ -1,10 +1,13 @@
 package com.wf.combinedassault.ballistics.gametest;
 
 import com.google.gson.Gson;
+import com.sun.management.ThreadMXBean;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.ballistics.gametest.SmallArmsArmorGameTest.Aim;
+import com.wf.combinedassault.ballistics.hit.VehicleHits;
 import com.wf.combinedassault.labs.VehicleLab;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.armor.api.hull.HullMesh;
 import com.wf.wflib.armor.api.hull.HullProfile;
 import com.wf.wflib.armor.api.hull.PlateSpec;
 import com.wf.wflib.damage.api.Threat;
@@ -25,6 +28,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -178,7 +182,7 @@ public class WalkGameTest {
                             Vec3 velocity = shot.dir().scale(shot.speed());
                             Threat threat = Rounds.threat(preset, velocity);
                             float damage = Rounds.impactDamage(preset, velocity);
-                            com.sun.management.ThreadMXBean mx = (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
+                            ThreadMXBean mx = (ThreadMXBean) ManagementFactory.getThreadMXBean();
                             long before = mx.getThreadAllocatedBytes(Thread.currentThread().getId());
                             double[] ns = VehicleLab.strikeNanos(level, shot, velocity, threat, damage, 4000);
                             long bytes = mx.getThreadAllocatedBytes(Thread.currentThread().getId()) - before;
@@ -192,9 +196,9 @@ public class WalkGameTest {
                     int n = 20000;
                     Vec3 from = v.get().position().add(8, 1.0, 0.0);
                     Vec3 to = v.get().position().add(-8, 1.0, 0.0);
-                    List<com.wf.wflib.armor.api.hull.HullMesh.Crossing> out = new java.util.ArrayList<>();
+                    List<HullMesh.Crossing> out = new ArrayList<>();
                     int count = 0;
-                    List<com.wf.combinedassault.ballistics.hit.VehicleHits.Hit> modules = new java.util.ArrayList<>();
+                    List<VehicleHits.Hit> modules = new ArrayList<>();
                     for (int i = 0; i < n / 4; i++) {
                         out.clear();
                         count = v.get().hits().surfaces(from, to, out);
@@ -205,7 +209,7 @@ public class WalkGameTest {
                         count = v.get().hits().surfaces(from, to, out);
                     }
                     double us = (System.nanoTime() - t0) / (double) n / 1000.0;
-                    com.sun.management.ThreadMXBean mx = (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
+                    ThreadMXBean mx = (ThreadMXBean) ManagementFactory.getThreadMXBean();
                     long b0 = mx.getThreadAllocatedBytes(Thread.currentThread().getId());
                     for (int i = 0; i < 1000; i++) {
                         out.clear();

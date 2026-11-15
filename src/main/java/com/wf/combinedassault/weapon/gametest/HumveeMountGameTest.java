@@ -12,6 +12,7 @@ import com.wf.combinedassault.weapon.VehicleGrenade;
 import com.wf.combinedassault.weapon.kit.Hardpoints;
 import com.wf.combinedassault.weapon.kit.HardwareItem;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.wflib.ammo.api.AmmoItems;
 import com.wf.wflib.round.api.KineticPreset;
 import com.wf.wflib.round.api.Rounds;
 import net.minecraft.core.BlockPos;
@@ -135,7 +136,7 @@ public class HumveeMountGameTest {
             return;
         }
         grenade.setRemainAmmo(4);
-        grenade.setLoadedRound(com.wf.wflib.ammo.api.AmmoItems.stack(M430, 1));
+        grenade.setLoadedRound(AmmoItems.stack(M430, 1));
         var preset = fired(helper, unit, grenade.shoot(new ArrayList<>(List.of(unit.aimContext())), null));
         if (preset == null) {
             return;
@@ -159,7 +160,7 @@ public class HumveeMountGameTest {
             return;
         }
         gun.setRemainAmmo(4);
-        gun.setLoadedRound(com.wf.wflib.ammo.api.AmmoItems.stack(BMG, 1));
+        gun.setLoadedRound(AmmoItems.stack(BMG, 1));
         var preset = fired(helper, unit, gun.shoot(new ArrayList<>(List.of(unit.aimContext())), null));
         if (preset == null) {
             return;
@@ -183,7 +184,7 @@ public class HumveeMountGameTest {
             return;
         }
         gun.setRemainAmmo(4);
-        gun.setLoadedRound(com.wf.wflib.ammo.api.AmmoItems.stack(B32, 1));
+        gun.setLoadedRound(AmmoItems.stack(B32, 1));
         var preset = fired(helper, unit, gun.shoot(new ArrayList<>(List.of(unit.aimContext())), null));
         if (preset == null) {
             return;

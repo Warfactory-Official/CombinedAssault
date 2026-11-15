@@ -161,7 +161,7 @@ public final class VehicleRighting {
         }
         Vec3 look = player.getLookAngle();
         return (look.x * dx + look.y * dy + look.z * dz)
-                / java.lang.Math.sqrt(distanceSq) >= FACING;
+                / Math.sqrt(distanceSq) >= FACING;
     }
 
     /** How many survival players it takes to right this vehicle, or 0 if hand righting is switched off. */
@@ -172,9 +172,9 @@ public final class VehicleRighting {
         }
         VehicleCubeOBB cube = vehicle.getMainCubeOBB();
         double volume = cube.getWidth() * cube.getHeight() * cube.getDepth();
-        double effort = java.lang.Math.max(0, vehicle.physicsEngine.mass) * volume;
+        double effort = Math.max(0, vehicle.physicsEngine.mass) * volume;
         // min 1: even a hull below the per-player budget still needs someone pushing.
-        return (int) java.lang.Math.max(1, java.lang.Math.ceil(effort / perPlayer));
+        return (int) Math.max(1, Math.ceil(effort / perPlayer));
     }
 
     private static void right(AbstractVehicle vehicle) {

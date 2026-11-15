@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -269,7 +270,7 @@ public class AirDefenseGameTest {
             player.getInventory().clearContent();
             helper.assertFalse(pod, "canister 2 took a GMLRS pod round");
             helper.assertTrue(!loaded[0] && !loaded[1] && loaded[2] && !loaded[3] && carried == 1,
-                    "load: canisters " + java.util.Arrays.toString(loaded) + ", carried " + carried);
+                    "load: canisters " + Arrays.toString(loaded) + ", carried " + carried);
             helper.assertTrue(emptied && back == 2, "unload: emptied " + emptied + ", carried " + back);
         }));
     }

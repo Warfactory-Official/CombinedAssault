@@ -1,6 +1,7 @@
 package com.wf.combinedassault.labs;
 
 import com.wf.combinedassault.ballistics.DamageSystem;
+import com.wf.combinedassault.ballistics.component.VehicleMobility;
 import com.wf.wflib.labs.api.LabContext;
 import com.wf.wflib.labs.api.LabProducer;
 import com.wf.wflib.labs.api.LabSink;
@@ -93,7 +94,7 @@ public final class VehicleSystemsProducer implements LabProducer {
             if (shot == 1) {
                 lost = SystemsProbe.lost(before, SystemsProbe.totals(rig.vehicle));
                 struck = SystemsProbe.worstCell(rig.vehicle, labels);
-                mobility = com.wf.combinedassault.ballistics.component.VehicleMobility.of(rig.vehicle).speedScale();
+                mobility = VehicleMobility.of(rig.vehicle).speedScale();
                 hull = health - rig.vehicle.getHealth();
             }
             if (mob == 0 && SystemsProbe.mobilityKilled(rig.vehicle)) {

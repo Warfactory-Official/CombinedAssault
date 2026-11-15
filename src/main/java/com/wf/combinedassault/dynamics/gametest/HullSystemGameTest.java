@@ -25,6 +25,7 @@ import org.joml.Vector3f;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 /**
  * Systems that are hull geometry rather than parts.
@@ -52,7 +53,7 @@ public class HullSystemGameTest {
             int at = systems.indexOf(wanted);
             if (at < 0 || systems.isImplicit(at)) {
                 helper.fail("m1a2 hit model should give a declared " + wanted + " pool; pools "
-                        + java.util.stream.IntStream.range(0, systems.size()).mapToObj(systems::id).toList());
+                        + IntStream.range(0, systems.size()).mapToObj(systems::id).toList());
                 return;
             }
         }

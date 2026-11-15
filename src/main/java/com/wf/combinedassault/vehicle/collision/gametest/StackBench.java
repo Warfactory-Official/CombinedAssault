@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * Resting-contact scenes, {@code [stack]} rows every {@link #ROW} ticks + one {@code SUMMARY} per case, {@code STATS}
@@ -90,7 +91,7 @@ public class StackBench {
         return tests;
     }
 
-    private static TestFunction test(String name, int ticks, java.util.function.Consumer<GameTestHelper> body) {
+    private static TestFunction test(String name, int ticks, Consumer<GameTestHelper> body) {
         // Own batch => cases run one at a time => STATS per case.
         return new TestFunction("stackbench_" + name, name, ClimbBench.NAMESPACE + ":empty", ticks + 100, 0, false, helper -> {
             current = name;

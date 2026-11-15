@@ -27,6 +27,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -286,7 +287,7 @@ public class OptionalAircraftGameTest {
                         level.addFreshEntity(planes[i]);
                     }
                 })
-                .thenWaitUntil(() -> helper.assertTrue(java.util.Arrays.stream(planes)
+                .thenWaitUntil(() -> helper.assertTrue(Arrays.stream(planes)
                         .allMatch(v -> v.hits() != null && v.hullComponents().indexOf("left wing") >= 0), "hit models not built"))
                 .thenIdle(80)
                 .thenExecute(() -> {
