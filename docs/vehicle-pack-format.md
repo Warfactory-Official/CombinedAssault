@@ -247,9 +247,14 @@ Zone: `name`, `min` / `max` (glTF model coords, part at rest), `ke` (> 0), `ce` 
 - Unarmoured vehicles: weighted blast damage through the old path (`damage_threshold`, core-line falloff).
 - Estimates: HE pen constants, fragment pen / decay, jet damage per mm, interior shares.
 
-Shipped plate sets (`humvee`, `m113`, `m1a2`, `t90`; others = coarse tier): Humvee rha 12 grille, laminated 30 windshield + door `window` (= 10.5 RHAe; stops 7.62x51, not .50), 4 hood, 6 roof, 8 floor / rear, 10 side. M113 aluminium 38 glacis / nose / side / rear, 25 roof / belly (x 0.35 = coarse values). M1A2 / T-90 hull + turret `los` = the coarse figures at the mesh slope (T-90 `ufp`, `turret_front`, cheeks: minus the Kontakt-5 share, [§16.4](#164-integral-arrays)); hull glacis slope 75 / UFP 68 from the mesh (real ~82 / 68). Estimates: Humvee hood 4 mm, M1A2 `hull_nose` 300 / 450, T-90 `lfp` 115 mm (= 230 LOS at its 60 deg mesh slope; CE falls 280 -> 230), barrel 60 mm curved, M113 25 mm roof / belly. Superseded zones deleted: M1A2 `skirt_front`, `barrel`, `bustle_side`; T-90 `lower_front_plate`, `skirt_front`, `barrel`, `turret_rear_side`. Kept (no plate covers them): ring, mantlet, sight block.
+Shipped plate sets: `humvee`, `m113`, `m1129`, `centauro`, `bob_semple`, `m1a2`, `t90`, `t84`, `merkava`; every outer hull / turret face bound, residual clutter = soft `*_fittings` / `curved` plate (`hull` 0.15, rha 4). Unbound by design: tracks, wheels, `*_back`, `interior_*`, `hit_*`, enclosed faces.
+- Soft skin (doors, glass, hatches, ramps, fenders, skirts, thin sheet) `hull` 0.15; structural shell 1.
+- Slope: mesh value declared (M1A2 glacis 75 / T-90 UFP 63 / T-84 glacis 78.5 vs real ~82 / 68 / ~68); lower front plates negative.
+- Estimates (no public figure): Humvee hood / fender / roof / rear / floor, M1A2 `hull_nose` / `turret_side` / `turret_roof` / `turret_bustle` / `turret_rear`, T-90 `lfp` 115 / hull roof / belly, M1129 + Centauro plate mm (tuned to the coarse tier), Bob Semple roof / belly / turret, Merkava 4 all plates (public turret front 600-1030 / 750-1340 disagrees with 250-300 / 450-500), T-84 base los = published totals x ~0.7 KE / 0.5 CE.
+- T-84 ERA = `kontakt_5` stand-in for Nozh / Duplet. Humvee glass laminated 40 (EN 1063 BR6), `window` panes in the 4 door nodes. M113 aluminium KE x 0.35: 44 side, 38 front / rear, 28 roof / belly / ramp / hatch.
+- Zones deleted (plates cover them); no shipped vehicle uses `zones`.
 
-Shipped values: open-source estimates (fprado armorsite M1A2 SEP KE 940 / CE 1320-1620 turret, hull 560-650 / 510-1050; Wikipedia T-90 / T-90A with Kontakt-5 800-910 / 1150-1450; Stryker 14.5 mm front, 7.62 mm all round; Centauro 25 mm front, 14.5 mm all round; M1151 armour kit vs 7.62 mm). Merkava 4 and T-84 Oplot: extrapolated, no consistent public figures.
+Sources: theworldwars.net protection table (M1A2 SEP turret 940-960 / 1320-1620, glacis 560-590, LFP 580-650), Wikipedia T-90 / T-72 / T-80 / T-84 / Stryker / Centauro / M113, armorsite T-80U (T-84 row), inetres M113.
 
 - Wear per region (6 faces of the main collider x 3x3 cells, `HullWear`); thickness `nominal x lerp(1 - wear, wear_floor, 1)`. Hull health no longer thins armour.
 - Region durability `4 x nominal mm` points; every positioned hit adds `damage x share`: rounds 0.3, blasts 0.2 (+50% to same-face neighbours), thermite 1.2 (+35%), collisions 0.05 (+50%), other 0.2.
@@ -1549,7 +1554,7 @@ Factory-fitted bricks of an `armor.plates` plate: first layer `{"era": "<ns>:<ty
 - Walk: entering crossing only; live brick the threat sets off (`EraType.strike`) => `PlateWalk.era` cuts the budget and lists `WalkResult.eraHits`. `resolve` reads state through `HullBody.eraLive` and never spends: `IntegralEra.commit` spends once the shot is final (`DamageSystem` after the round's resolve, the warhead's jet in `VehicleBlastResolver`). Strike-event resolve + `DamageSystem` resolve see the same bricks.
 - Direct hit by `he` / `hesh` (no penetration to walk): `IntegralEra.strike` spends the brick under it when the calibre reaches `he_initiation_mm`.
 - State: `AddonArmorLayer` (plate id -> spent bit mask), NBT `AddonArmor.Arrays`, rides `ServerAddonArmorSync`. `/combinedassault ballistics addon stats` lists arrays; `fill arrays` refills.
-- Shipped: T-90 `ufp` (28 cells), `turret_front` (4), `turret_cheek_a` (5), `turret_cheek_b` (2), `kontakt_5`. Face figure = the old published one / keep at the reference incidence (`ufp`: 68 deg full effect; others straight-on, minimum effect). T-84: no plates (no bound hit mesh), Kontakt share stays in its face figures.
+- Shipped (`kontakt_5`): T-90 `ufp` 28 cells, `turret_front` 5, `turret_cheek_a` / `_b` 12 each; T-84 `ufp` 64, `turret_front` 12, `turret_cheek` 7, `turret_side` 26. Cells = bound area / 0.1 m2 (cap 64).
 - Gaps: two rounds in one tick (TACZ split hurt) resolve the second against the spent brick; fragments and blast do not set arrays off.
 
 ## 17. Cargo holds and parachutes

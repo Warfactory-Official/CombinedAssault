@@ -58,7 +58,8 @@ Install: `python3 tools/blender/build_addon.py` -> `build/combinedassault_tools.
 | unbind | `--assign -` |
 
 - Material = copy of the face's material named `<base>_armor:ID`, so texture / paint / surface tokens survive; primitive split in place (index accessor shrunk, one primitive + accessor appended); every other byte of the glTF kept. `.gltf` keeps compact JSON.
-- Node whose mesh other nodes share => refused. Mirroring world matrix => winding reversed for the normal.
+- Node whose mesh other nodes share => refused. TRAP: meshes sharing one index accessor => `--assign` on one silently deletes triangles from the other (m113 cargo hatches, centauro hatch lids); un-share accessors first; compare per-node triangle counts before / after.
+- `--assign` rebinds faces already carrying another plate. Mirroring world matrix => winding reversed for the normal.
 - Deviation is two-sided: meshes carry coincident back-face duplicates, so a plate binds both copies (a hit reads whichever the BVH meets first).
 - Box selects by centroid: thick volumes catch inner faces; check the report's coherence / deviation.
 
