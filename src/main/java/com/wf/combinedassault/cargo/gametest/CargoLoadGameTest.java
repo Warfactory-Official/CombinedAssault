@@ -31,6 +31,7 @@ public class CargoLoadGameTest {
     private static final String TEMPLATE = "empty";
     /** > CargoMass recount throttle. */
     private static final int RECOUNT = 25;
+    private static final int LANDED = 80;
 
     private static AbstractVehicle spawn(GameTestHelper helper, String id, int x) {
         ResourceLocation rl = CombinedAssault.modLocation(id);
@@ -99,12 +100,13 @@ public class CargoLoadGameTest {
     }
 
     /** One tick from rest: tracked FORWARD_SPEED = forward_acceleration / load. */
-    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 200)
     public static void aLoadedTankAcceleratesSlower(GameTestHelper helper) {
         TrackedVehicle empty = (TrackedVehicle) spawn(helper, "m1a2", 1);
         TrackedVehicle loaded = (TrackedVehicle) spawn(helper, "m1a2", 14);
         fill(loaded, new ItemStack(Items.IRON_BLOCK, 64), 54);
-        helper.runAfterDelay(RECOUNT, () -> {
+        // Spawned 20 blocks up: tracks grip only once landed (track_slip budget ~ wheel load share).
+        helper.runAfterDelay(RECOUNT + LANDED, () -> {
             for (TrackedVehicle tank : new TrackedVehicle[]{empty, loaded}) {
                 tank.autopilotControl = true;
                 tank.controlUnit.forward = true;

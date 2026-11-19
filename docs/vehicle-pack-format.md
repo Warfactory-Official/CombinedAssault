@@ -212,14 +212,17 @@ Zone: `name`, `min` / `max` (glTF model coords, part at rest), `ke` (> 0), `ce` 
 | key | meaning |
 | --- | --- |
 | `facing` | `front` / `side` / `rear` / `top` / `bottom` or azimuth deg (0 = front, 90 = -x); frame = owning part at rest; `side` mirrors by sign of the struck point's rest x |
-| `slope` | deg from vertical, default 0 with `facing`; ignored for top / bottom; without `facing` => load error |
+| `slope` | deg from vertical, default 0 with `facing`; negative = normal tilted down (lower front plate); ignored for top / bottom; without `facing` => load error |
 | `curved` | normal = mesh normal; excludes `facing` / `slope` / `los` |
+| `hull` | `0..1`, default 1: x hull-pool damage of a shot entering here; struck system, spall ramp, crew and modules unscaled (doors, roof, glass) |
 | `layers` | outermost first: solid `{mm, mat}` (real thickness along the normal) or air `{gap}` (m); a gap sits between solids (first / last / doubled / mixed with `mm` => load error). Walked as one budget (wflib `PlateWalk`). First layer may be an integral ERA array `{era, cells}` ([§16.4](#164-integral-arrays)), with `los` or solids behind it |
 | `los` | published line-of-sight RHAe `ke` (+ `ce`, 0 => `ke`) at the declared slope => normal thickness `los x cos(slope)`; needs `facing`, excludes solid `layers` (an `era` layer is fine) |
 
 - `los` converts with `cos(slope)` only; azimuth-angled plate => `los` = published x `cos(az)` so a straight-on shot reads the published figure (M1A2 cheek az 35: 940 / 1400 -> 770 / 1150; T-90 az 50: 850 / 1350 -> 545 / 865).
-- Downward normals (lower front plates) not expressible by `facing` + `slope` => `curved` + `layers`.
-- `mat` (`PlateMaterials`): `rha` 1.0, `hha`, `cast`, `aluminium`, `nera`, `spall_liner`; KE / CE multiply `mm`.
+- Lower front plates: negative `slope`. `curved` only for real curvature (barrels): incidence from each triangle's own normal => absorb / ricochet varies across the plate.
+- `mat` (`PlateMaterials`): `rha` 1.0, `hha`, `cast`, `aluminium`, `nera`, `spall_liner`, `glass` (ke 0.12, spall 3), `laminated` (ke 0.35, ce 0.4, spall 0.8); KE / CE multiply `mm`.
+- Brittle plate (any `glass` / `laminated` layer): wear + chips per plate id (`PlateWear`, NBT `PlateWear`, entity data `PLATE_WEAR`), not hull region; thickness x `lerp(1 - wear, 0.2, 1)`; hit wear `max(1/6, damage / (nominal x 4))`; <= 8 chips, oldest drops; every brittle plate on the line chips (exit pane too); ricochet => no chip; hull region under a glass entry not worn. Chips drawn by `GlassChips` (rest-frame point + declared normal; curved => none). Material token `glass` on the face (`paint_glass_armor:<id>`) => shard FX.
+- Gap: blasts do not chip; no repair path; no full-pane crack overlay (stars spread x1.6 at wear >= 0.66).
 - Walk: solid costs `mm x ke|ce x wear / cos^slopeExp` (round-owned exponent; shaped charges read `ce`); defeated iff budget > cost. Gap: shaped charge x `1 / (1 + 0.6 gap)`, tandem exempt; small arms x yaw loss once a solid was defeated; other kinds none. Overmatch reads the outer layer. Later mesh crossings count only when plate-bound; two faces of one plate within 0.1 m = one sheet. Profile without `plates` = entry crossing only.
 - Result: verdict + hull damage ramp from the entry plate alone; crew and modules only when `interiorPen > 0` (PARTIAL = ramp, nothing behind); `residualPen` after every plate = the exit. Outcomes (entity-less wflib rounds, KINETIC / SMALL_ARMS only; HEAT, HE, missiles, rockets, TACZ rounds => PROCEED): `exits` => THROUGH at `speed x (residual / pen)^(1 / penExponent)`, else STOP. `post_pen` round (`fillerKg > 0`): entry plate defeated => THROUGH, goes off 0.3 m behind it (<= half the gap to the next crossing; speed floor 0.1 x), else STOP = lost.
 - Spall (`Spall`): penetrator line (entry plate inner face -> where the round dies / leaves) hits occupants for `damage x residual / pen`; fan per defeated inward crossing (<= 4): energy `damage x ramp x residual / pen x layer spall`, cone 30 deg (jet 8), <= 12 fragments, occupants + modules. Stopped / PARTIAL / ricochet => none.
@@ -244,7 +247,7 @@ Zone: `name`, `min` / `max` (glTF model coords, part at rest), `ke` (> 0), `ce` 
 - Unarmoured vehicles: weighted blast damage through the old path (`damage_threshold`, core-line falloff).
 - Estimates: HE pen constants, fragment pen / decay, jet damage per mm, interior shares.
 
-Shipped plate sets (`humvee`, `m113`, `m1a2`, `t90`; others = coarse tier): Humvee rha 12 grille / windshield, 4 hood, 6 roof, 8 floor / rear, 10 side. M113 aluminium 38 glacis / nose / side / rear, 25 roof / belly (x 0.35 = coarse values). M1A2 / T-90 hull + turret `los` = the coarse figures at the mesh slope (T-90 `ufp`, `turret_front`, cheeks: minus the Kontakt-5 share, [§16.4](#164-integral-arrays)); hull glacis slope 75 / UFP 68 from the mesh (real ~82 / 68). Estimates: Humvee hood 4 mm, M1A2 `hull_nose` 300 / 450, T-90 `lfp` 115 mm (= 230 LOS at its 60 deg mesh slope; CE falls 280 -> 230), barrel 60 mm curved, M113 25 mm roof / belly. Superseded zones deleted: M1A2 `skirt_front`, `barrel`, `bustle_side`; T-90 `lower_front_plate`, `skirt_front`, `barrel`, `turret_rear_side`. Kept (no plate covers them): ring, mantlet, sight block.
+Shipped plate sets (`humvee`, `m113`, `m1a2`, `t90`; others = coarse tier): Humvee rha 12 grille, laminated 30 windshield + door `window` (= 10.5 RHAe; stops 7.62x51, not .50), 4 hood, 6 roof, 8 floor / rear, 10 side. M113 aluminium 38 glacis / nose / side / rear, 25 roof / belly (x 0.35 = coarse values). M1A2 / T-90 hull + turret `los` = the coarse figures at the mesh slope (T-90 `ufp`, `turret_front`, cheeks: minus the Kontakt-5 share, [§16.4](#164-integral-arrays)); hull glacis slope 75 / UFP 68 from the mesh (real ~82 / 68). Estimates: Humvee hood 4 mm, M1A2 `hull_nose` 300 / 450, T-90 `lfp` 115 mm (= 230 LOS at its 60 deg mesh slope; CE falls 280 -> 230), barrel 60 mm curved, M113 25 mm roof / belly. Superseded zones deleted: M1A2 `skirt_front`, `barrel`, `bustle_side`; T-90 `lower_front_plate`, `skirt_front`, `barrel`, `turret_rear_side`. Kept (no plate covers them): ring, mantlet, sight block.
 
 Shipped values: open-source estimates (fprado armorsite M1A2 SEP KE 940 / CE 1320-1620 turret, hull 560-650 / 510-1050; Wikipedia T-90 / T-90A with Kontakt-5 800-910 / 1150-1450; Stryker 14.5 mm front, 7.62 mm all round; Centauro 25 mm front, 14.5 mm all round; M1151 armour kit vs 7.62 mm). Merkava 4 and T-84 Oplot: extrapolated, no consistent public figures.
 
@@ -358,6 +361,30 @@ Both ground types also take a top-level `landing_gear_part_id` where applicable.
 - Gear g: top speed = `max_speed_forward * gears[last] / gears[g-1]`; drive = forward force / acceleration x `gears[g-1] / gears[0]`. R = `max_speed_backward`, backward force / acceleration. rpm = idle..max over 0..gear top; rev limiter at top.
 - Automatic: W / S = throttle / brake by travel; stopped, the other pedal selects R / 1; upshift > 0.9 gear top, downshift < 0.8 lower gear top. Manual: W throttle (in R: backward), S brake; `shift_up` / `shift_down` (default `]` / `[`); R only while stopped. Throttle off in gear => engine braking 5 % of brake. Handbrake (`up`, Space): wheeled only.
 - Synced: gear, pedals (throttle / brake / handbrake), rpm (as engine speed, audio `RPM`).
+
+**`track_slip`** (tracked, in `attributes`; absent => tracks never slip)
+
+| field | type | notes |
+| --- | --- | --- |
+| `drive_grip` | float > 0 | mu: static drive budget `drive_grip * G * share` (blocks/tick per tick; share = wheel-borne weight fraction, 1 afloat) |
+| `kinetic_ratio` | float, 0 < r < 1 | budget while slipping = r x static |
+
+- Per-tick drive gain above the budget => slipping on r x static; ends when gain < 0.9 x static. Belly-borne drive (`0.5 * drive_grip * G * bellyShare`) adds outside the cap. Braking uncapped.
+- Slipping: yaw x `sqrt(1 - r^2)`. Synced `TRACK_SLIP` (0..1 lost drive fraction); slipping flag + `TRACK_SLIP` in the prediction snapshot.
+
+**`wheelspin`** (wheeled, in `attributes`; absent => drive never limited by grip)
+
+| field | type | default | notes |
+| --- | --- | --- | --- |
+| `drive_grip` | float | `0.8` | drive budget = `drive_grip * G * wheel load share * driven-wheel load fraction`. Lateral grip x 0.3 under handbrake |
+| `kinetic_ratio` | float | `0.7` | spinning: delivered = ratio x budget; ends when demand <= ratio x budget |
+| `handbrake_hold` | float | `0.8` | handbrake decel, G x wheel share x locked-wheel load fraction, never reverses. Present => replaces the legacy 2 %/tick handbrake drag |
+
+- Wheels = `suspension` parts: `driven` (propels; none true => all) and `handbrake` (locked; none true => all), load fraction = spring force (`spring_stiffness * compression`, grounded + alive wheels; no load => unit count). Destroyed wheel => no drive / hold.
+- Half-track: `track` parts take the same flags (steering wheels `driven: false`, belt `driven: true`). Tracked vehicles: no flags; `track_slip` budget = whole-vehicle track contact share, no handbrake.
+- Load estimate: flat Humvee sum(k*c) ~ 0.9 m g, 1-block pad under the front axle shifts rear fraction 0.49 -> 0.40. Gap: 2-wheelers have no lean/balance model, so a motorcycle needs that separately.
+- Handbrake: drive through locked wheels lost; locked wheel turns only if its drive share > `handbrake_hold * G * share` per unit load => 4 driven + 4 locked stands, rear-only driven + locked spins in place.
+- Spinning: lateral grip + yaw cap scaled `sqrt(1 - (drive / lateral budget)^2)`; belly drive outside the cap. Synced `WHEEL_SPIN` (+-1), `driven_wheel_rotation` binding source (as `wheel_rotation`, param = radius) runs +0.4 b/t past ground speed while spinning. Tyre squeal: spinning, handbrake while moving, or sideways slide > 1.5 x grip.
 
 **`rotary_wing_vehicle`** — plus top-level `landing_gear_part_id`
 
@@ -569,6 +596,7 @@ Entry: string (one weapon id) or object. Array form REMOVED: ammo kinds = one we
 | | `max_compression` | float | `0.1` | raised to cover static deflection if smaller |
 | | `max_extension` | float | `0.025` | |
 | | `max_droop` | float | none | droop below bind pose; none => `max_extension` alone limits |
+| `suspension` | `driven`, `handbrake` | bool | none | `wheelspin` roles, see there; chosen wheels only |
 | | `stow_when_towed` | bool | `false` | landing leg: towed => reach 0, drawn at bind (modelled stowed); else reaches the ground; 2 s stroke |
 | `track` | `tracks` | Vec3[][] | `track` sockets — each inner list is one closed track path |
 | | `track_width` | float | `0.5` | collision box width per track |
@@ -701,7 +729,8 @@ Vehicle def `display` block; client only.
 | `paint` | paint id ([paint variants](#paint-variants)) |
 | `track` | `{"model": glTF id, "module_length": blocks}`: one link per pitch along each `track` part loop |
 | `cabin_model` | glTF drawn instead of `model` from the operator view |
-| `variants` | `{"<id>": {"paint": …, "tab_index": …}}`: extra spawn items, same model, own paint |
+| `reskin` | `{"<glTF texture location>": "<png>"}`: replacement textures, same size as the original; damage tiles `<png minus .png>_damaged.png` / `_wrecked.png`, absent => undamaged look |
+| `variants` | `{"<id>": {"paint": …, "reskin": …, "tab_index": …}}`: extra spawn items, same model, own paint / reskin |
 
 
 Ship script context: `getShaft()` (telegraph summed per powered tick, lerped), `getThrottle()`, `getRudder()`.

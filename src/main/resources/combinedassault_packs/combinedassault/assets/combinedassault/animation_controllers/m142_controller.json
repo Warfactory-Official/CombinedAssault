@@ -13,7 +13,7 @@
                     "wheel_2_l",
                     "wheel_2_r"
                 ],
-                "source": "wheel_rotation",
+                "source": "driven_wheel_rotation",
                 "axis": "x",
                 "param": 0.52
             },

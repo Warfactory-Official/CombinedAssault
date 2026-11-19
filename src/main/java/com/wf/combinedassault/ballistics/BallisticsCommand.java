@@ -181,11 +181,11 @@ public final class BallisticsCommand {
                 " | plate %s (%s): declared %.1f deg, mesh %.1f deg", plate.plateId(),
                 PlateBinding.describe(profile.plates.get(plate.plateId())), plate.incidence(), plate.meshIncidence());
         source.sendSuccess(() -> Component.empty().append(vehicle.getDisplayName()).append(String.format(Locale.ROOT,
-                " @ %s | %.0f mm at %.0f deg = %.0f mm effective%s | pen %.0f -> ratio %.2f | %s | %.0f of %.0f damage",
+                " @ %s | %.0f mm at %.0f deg = %.0f mm effective%s | pen %.0f -> ratio %.2f | %s | %.0f of %.0f damage (hull x%.2f)",
                 partName,
                 result.nominalThickness(), incidence, result.effectiveThickness(), plateText,
                 result.penetration(), result.ratio(), result.outcome().name(),
-                result.hullDamage(), PROBE_DAMAGE)), false);
+                result.hullDamage() * result.hullShare(), PROBE_DAMAGE, result.hullShare())), false);
         return 1;
     }
 

@@ -8,7 +8,11 @@
         "max_speed_forward": 0.5,
         "max_speed_backward": 0.2,
         "turn_acceleration": 1.2,
-        "max_turn": 2.5
+        "max_turn": 2.5,
+        "track_slip": {
+            "drive_grip": 0.8,
+            "kinetic_ratio": 0.7
+        }
     },
     "physics_info": {
         "mass": 12300,
@@ -18,11 +22,11 @@
     },
     "max_health": 600,
     "armor": {
-        "front": 20,
-        "side": 14,
-        "rear": 12,
-        "top": 8,
-        "bottom": 8,
+        "front": 17,
+        "side": 15,
+        "rear": 13,
+        "top": 10,
+        "bottom": 10,
         "parts": {
             "mg": {
                 "front": 10,
@@ -33,12 +37,16 @@
             }
         },
         "plates": {
-            "glacis": {"facing": "front", "slope": 45, "layers": [{"mm": 38, "mat": "aluminium"}]},
+            "glacis": {"facing": "front", "slope": 41, "layers": [{"mm": 38, "mat": "aluminium"}]},
             "nose": {"facing": "front", "layers": [{"mm": 38, "mat": "aluminium"}]},
-            "side": {"facing": "side", "layers": [{"mm": 38, "mat": "aluminium"}]},
+            "side": {"facing": "side", "layers": [{"mm": 44, "mat": "aluminium"}]},
             "rear": {"facing": "rear", "layers": [{"mm": 38, "mat": "aluminium"}]},
-            "roof": {"facing": "top", "layers": [{"mm": 25, "mat": "aluminium"}]},
-            "belly": {"facing": "bottom", "layers": [{"mm": 25, "mat": "aluminium"}]}
+            "roof": {"facing": "top", "layers": [{"mm": 28, "mat": "aluminium"}]},
+            "belly": {"facing": "bottom", "layers": [{"mm": 28, "mat": "aluminium"}]},
+            "belly_front": {"facing": "front", "slope": -56, "layers": [{"mm": 28, "mat": "aluminium"}]},
+            "belly_rear": {"facing": "rear", "slope": -35, "layers": [{"mm": 28, "mat": "aluminium"}]},
+            "ramp": {"facing": "rear", "hull": 0.15, "layers": [{"mm": 28, "mat": "aluminium"}]},
+            "hatch": {"facing": "top", "hull": 0.15, "layers": [{"mm": 28, "mat": "aluminium"}]}
         }
     },
     "view_info": {

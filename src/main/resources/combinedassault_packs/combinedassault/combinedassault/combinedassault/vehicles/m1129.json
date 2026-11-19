@@ -8,7 +8,11 @@
         "max_speed_forward": 0.6,
         "max_speed_backward": 0.2,
         "turn_step": 0.2,
-        "max_turn": 2
+        "max_turn": 2,
+        "wheelspin": {
+            "drive_grip": 0.7,
+            "kinetic_ratio": 0.7
+        }
     },
     "max_health": 700,
     "armor": {
@@ -23,6 +27,18 @@
             "rear": 12,
             "top": 8,
             "bottom": 10
+        },
+        "plates": {
+            "lower_front": {"facing": "front", "slope": -55, "layers": [{"mm": 14, "mat": "hha"}]},
+            "deck": {"facing": "front", "slope": 77, "layers": [{"mm": 6, "mat": "hha"}]},
+            "front": {"facing": "front", "hull": 0.15, "layers": [{"mm": 8, "mat": "hha"}]},
+            "side": {"facing": "side", "slope": 4, "layers": [{"mm": 12, "mat": "hha"}]},
+            "rear": {"facing": "rear", "slope": -13, "layers": [{"mm": 10, "mat": "hha"}]},
+            "roof": {"facing": "top", "layers": [{"mm": 6, "mat": "hha"}]},
+            "belly": {"facing": "bottom", "layers": [{"mm": 8, "mat": "hha"}]},
+            "belly_rear": {"facing": "rear", "slope": -30, "layers": [{"mm": 8, "mat": "hha"}]},
+            "hatch": {"facing": "top", "hull": 0.15, "layers": [{"mm": 6, "mat": "hha"}]},
+            "ramp": {"facing": "rear", "slope": -6, "hull": 0.15, "layers": [{"mm": 8, "mat": "hha"}]}
         }
     },
     "view_info": {

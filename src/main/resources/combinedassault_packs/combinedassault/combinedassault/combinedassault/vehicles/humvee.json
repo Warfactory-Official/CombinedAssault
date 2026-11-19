@@ -17,6 +17,11 @@
             "max_rpm": 3400,
             "shift_ticks": 6,
             "lever": [[12, -16], [0, 0], [12, -8], [-12, -8], [12, 8], [-12, 8]]
+        },
+        "wheelspin": {
+            "drive_grip": 0.65,
+            "kinetic_ratio": 0.7,
+            "handbrake_hold": 0.9
         }
     },
     "screens": {
@@ -31,10 +36,20 @@
         "bottom": 8,
         "plates": {
             "grille": {"facing": "front", "layers": [{"mm": 12, "mat": "rha"}]},
-            "windshield": {"facing": "front", "slope": 10, "layers": [{"mm": 12, "mat": "rha"}]},
-            "hood": {"facing": "front", "slope": 75, "layers": [{"mm": 4, "mat": "rha"}]},
-            "roof": {"facing": "top", "layers": [{"mm": 6, "mat": "rha"}]},
+            "windshield": {"facing": "front", "slope": 10, "hull": 0.15, "layers": [{"mm": 40, "mat": "laminated"}]},
+            "window": {"facing": "side", "hull": 0.15, "layers": [{"mm": 40, "mat": "laminated"}]},
+            "hood": {"facing": "front", "slope": 75, "hull": 0.15, "layers": [{"mm": 4, "mat": "aluminium"}]},
+            "roof": {"facing": "top", "hull": 0.15, "layers": [{"mm": 6, "mat": "rha"}]},
+            "roof_rear": {"facing": "rear", "slope": 74, "hull": 0.15, "layers": [{"mm": 6, "mat": "rha"}]},
+            "roof_rail": {"facing": "side", "slope": 38, "hull": 0.15, "layers": [{"mm": 6, "mat": "rha"}]},
+            "roof_chamfer": {"facing": "side", "slope": 71, "hull": 0.15, "layers": [{"mm": 6, "mat": "rha"}]},
+            "fender": {"facing": "top", "hull": 0.15, "layers": [{"mm": 4, "mat": "aluminium"}]},
             "floor": {"facing": "bottom", "layers": [{"mm": 8, "mat": "rha"}]},
+            "floor_rear": {"facing": "rear", "slope": -77, "layers": [{"mm": 8, "mat": "rha"}]},
+            "floor_kick": {"facing": "rear", "slope": -47, "layers": [{"mm": 8, "mat": "rha"}]},
+            "floor_front": {"facing": "front", "slope": -66, "layers": [{"mm": 8, "mat": "rha"}]},
+            "floor_nose": {"facing": "front", "slope": -25, "layers": [{"mm": 8, "mat": "rha"}]},
+            "door": {"facing": "side", "hull": 0.15, "layers": [{"mm": 10, "mat": "rha"}]},
             "side": {"facing": "side", "layers": [{"mm": 10, "mat": "rha"}]},
             "rear": {"facing": "rear", "layers": [{"mm": 8, "mat": "rha"}]}
         }

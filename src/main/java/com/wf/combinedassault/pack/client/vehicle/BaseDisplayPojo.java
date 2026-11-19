@@ -4,6 +4,8 @@ import com.google.gson.annotations.SerializedName;
 import com.wf.wflib.audio.api.EngineSound;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.Map;
+
 public class BaseDisplayPojo {
 
     /** glTF asset path. */
@@ -13,6 +15,10 @@ public class BaseDisplayPojo {
     /** Paint id ({@code assets/<ns>/paints/<name>.json}); glTF with a {@code _paint} mask only. */
     @SerializedName("paint")
     public ResourceLocation paint;
+
+    /** glTF texture location -> replacement png of the same size; absent => authored textures. */
+    @SerializedName("reskin")
+    public Map<ResourceLocation, ResourceLocation> reskin;
 
     @SerializedName("slot_texture")
     public ResourceLocation slotTexture;

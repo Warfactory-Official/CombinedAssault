@@ -7,6 +7,8 @@ import com.wf.wflib.audio.api.EngineSound;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 
 /** Client half of a pack def: model, icon, controller, engine audio. Built during resource reload. */
 public class BaseDisplay {
@@ -27,7 +29,7 @@ public class BaseDisplay {
 
     public BaseDisplay(BaseDisplayPojo pojo) {
         this.modelPath = pojo.model;
-        this.vehicleModel = pojo.model == null ? null : GemRenderModelLoader.load(pojo.model);
+        this.vehicleModel = pojo.model == null ? null : GemRenderModelLoader.load(pojo.model, pojo.reskin == null ? Map.of() : pojo.reskin);
         this.slotTexture = pojo.slotTexture;
         this.paint = pojo.paint;
         this.animationControllerPath = pojo.animationController;

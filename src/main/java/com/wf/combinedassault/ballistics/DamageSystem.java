@@ -166,7 +166,11 @@ public class DamageSystem {
                     : thermal ? HullWear.Kind.THERMAL
                     : damageSource.is(VehicleDamageTypes.VEHICLE_COLLISION) ? HullWear.Kind.COLLISION
                     : HullWear.Kind.OTHER;
-            wearArmor(vehicle, hitPos, ballistic == null ? null : ballistic.faceNormal().toVector3f(), incoming, kind);
+            if (ballistic != null && !ballistic.walk().glassHits().isEmpty()) {
+                chipGlass(vehicle, ballistic.walk(), incoming);
+            } else {
+                wearArmor(vehicle, hitPos, ballistic == null ? null : ballistic.faceNormal().toVector3f(), incoming, kind);
+            }
         }
         // Core-line falloff applies to hull only; struck system takes the hit whole.
         float systemAmount = amount;
@@ -176,6 +180,9 @@ public class DamageSystem {
             systemAmount *= Spall.DIRECT_SHARE;
         }
         amount *= (float) scale;
+        if (ballistic != null) {
+            amount *= ballistic.hullShare();
+        }
         if (hitPos != null) {
             MutableComponent message;
             float damageScale = amount / vehicle.getMaxHealth();
@@ -266,6 +273,13 @@ public class DamageSystem {
         vehicle.setHealth(Math.max(0, hull));
         if (hull < 0 && !vehicle.isDestroyed()) {
             VehicleSystems.overflow(vehicle, -hull);
+        }
+    }
+
+    /** Chips every brittle plate the shot line met; the hull region under the entry is not worn. */
+    private static void chipGlass(AbstractVehicle vehicle, WalkResult walk, float damage) {
+        for (WalkResult.GlassHit hit : walk.glassHits()) {
+            vehicle.plateWear().hit(hit.plate(), hit.node(), hit.rest(), damage, hit.nominal());
         }
     }
 

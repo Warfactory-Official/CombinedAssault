@@ -1,6 +1,7 @@
 package com.wf.combinedassault.vehicle.data;
 
 import com.wf.combinedassault.vehicle.VehicleContent;
+import com.wf.combinedassault.vehicle.drive.TrackSlip;
 import com.wf.combinedassault.vehicle.drive.Transmission;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.entity.TrackedVehicle;
@@ -19,6 +20,7 @@ public class TrackedVehicleData extends BaseVehicleData<TrackedVehicle> {
     public float maxTurn;
     public float trackSize;
     public Transmission transmission;
+    public TrackSlip trackSlip;
 
     @Override
     public AbstractVehicle fromCustom(Level level) {
@@ -40,6 +42,10 @@ public class TrackedVehicleData extends BaseVehicleData<TrackedVehicle> {
         if (transmission != null) {
             transmission.validate();
         }
+        this.trackSlip = pojo.attributes.trackSlip;
+        if (trackSlip != null) {
+            trackSlip.validate();
+        }
     }
 
     public void inject(TrackedVehicle vehicle) {
@@ -53,6 +59,7 @@ public class TrackedVehicleData extends BaseVehicleData<TrackedVehicle> {
         vehicle.maxTurn = this.maxTurn;
         vehicle.trackSize = this.trackSize;
         vehicle.transmission = this.transmission;
+        vehicle.trackSlip = this.trackSlip;
     }
 
 }

@@ -64,6 +64,7 @@ public class DisplayManager extends SimplePreparableReloadListener<Map<ResourceL
                 copy(display, "tab_index", base, "tab_index");
                 copy(display, "description", base, "description");
                 copy(display, "paint", base, "paint");
+                copy(display, "reskin", base, "reskin");
                 copy(display, "track", base, "track_config");
                 out.put(id, base);
                 if (display.has("variants")) {

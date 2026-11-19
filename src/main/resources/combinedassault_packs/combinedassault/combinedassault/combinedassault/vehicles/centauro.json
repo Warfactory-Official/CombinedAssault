@@ -13,6 +13,10 @@
             "gears": [3.43, 2.01, 1.42, 1.0, 0.83],
             "idle_rpm": 600,
             "max_rpm": 2300
+        },
+        "wheelspin": {
+            "drive_grip": 0.7,
+            "kinetic_ratio": 0.7
         }
     },
     "screens": {
@@ -34,13 +38,13 @@
         },
         "parts": {
             "turret": {
-                "front": 60,
+                "front": 45,
                 "side": 25,
                 "rear": 20,
                 "top": 12,
                 "bottom": 12,
                 "ce": {
-                    "front": 70,
+                    "front": 55,
                     "side": 30,
                     "rear": 20,
                     "top": 12,
@@ -48,9 +52,30 @@
                 }
             }
         },
-        "zones": [
-            {"name": "barrel", "part": "turret", "min": [-0.3, 2.05, 2.15], "max": [0.3, 2.45, 5.8], "ke": 40}
-        ]
+        "plates": {
+            "belly": {"facing": "bottom", "layers": [{"mm": 10, "mat": "rha"}]},
+            "belly_nose": {"facing": "front", "slope": -72, "layers": [{"mm": 10, "mat": "rha"}]},
+            "lower_front": {"facing": "front", "slope": -45, "layers": [{"mm": 40, "mat": "rha"}]},
+            "glacis": {"facing": "front", "slope": 79, "layers": [{"mm": 12, "mat": "rha"}]},
+            "side": {"facing": "side", "layers": [{"mm": 24, "mat": "rha"}]},
+            "side_upper": {"facing": "side", "slope": 32, "layers": [{"mm": 20, "mat": "rha"}]},
+            "roof": {"facing": "top", "layers": [{"mm": 12, "mat": "rha"}]},
+            "rear": {"facing": "rear", "layers": [{"mm": 20, "mat": "rha"}]},
+            "rear_lower": {"facing": "rear", "slope": -24, "layers": [{"mm": 14, "mat": "rha"}]},
+            "door": {"facing": "rear", "slope": -20, "hull": 0.15, "layers": [{"mm": 10, "mat": "rha"}]},
+            "hatch": {"facing": "top", "hull": 0.15, "layers": [{"mm": 8, "mat": "rha"}]},
+            "turret_top": {"facing": "top", "layers": [{"mm": 12, "mat": "rha"}]},
+            "turret_side": {"facing": "side", "slope": 10, "layers": [{"mm": 25, "mat": "rha"}]},
+            "turret_front": {"facing": "front", "slope": 8, "layers": [{"mm": 40, "mat": "rha"}]},
+            "turret_cheek_l": {"facing": 45, "slope": 10, "layers": [{"mm": 30, "mat": "rha"}]},
+            "turret_cheek_r": {"facing": 315, "slope": 10, "layers": [{"mm": 30, "mat": "rha"}]},
+            "turret_quarter_l": {"facing": 102, "slope": 8, "layers": [{"mm": 25, "mat": "rha"}]},
+            "turret_quarter_r": {"facing": 258, "slope": 8, "layers": [{"mm": 25, "mat": "rha"}]},
+            "turret_bottom": {"facing": "bottom", "layers": [{"mm": 12, "mat": "rha"}]},
+            "turret_rear": {"facing": "rear", "layers": [{"mm": 20, "mat": "rha"}]},
+            "mantlet": {"curved": true, "layers": [{"mm": 40, "mat": "rha"}]},
+            "barrel": {"curved": true, "layers": [{"mm": 40, "mat": "rha"}]}
+        }
     },
     "view_info": {
         "third_person_distance": 9,

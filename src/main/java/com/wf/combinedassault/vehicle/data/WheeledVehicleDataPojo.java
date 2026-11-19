@@ -2,6 +2,7 @@ package com.wf.combinedassault.vehicle.data;
 
 import com.google.gson.annotations.SerializedName;
 import com.wf.combinedassault.vehicle.drive.Transmission;
+import com.wf.combinedassault.vehicle.drive.WheelSpin;
 
 public class WheeledVehicleDataPojo extends BaseVehicleDataPojo {
 
@@ -45,6 +46,10 @@ public class WheeledVehicleDataPojo extends BaseVehicleDataPojo {
         /** Null => direct drive. */
         @SerializedName("transmission")
         public Transmission transmission;
+
+        /** Null => drive never limited by grip. */
+        @SerializedName("wheelspin")
+        public WheelSpin wheelspin;
 
     }
 

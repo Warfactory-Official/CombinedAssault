@@ -11,6 +11,8 @@ public class SuspensionUnitData extends PartUnitData {
     private final float maxExtension;
     private final float maxDroop;
     private final boolean stowWhenTowed;
+    private final Boolean driven;
+    private final Boolean handbrake;
 
     public SuspensionUnitData(SuspensionUnitPojo pojo) {
         super(pojo);
@@ -22,6 +24,8 @@ public class SuspensionUnitData extends PartUnitData {
         maxExtension = pojo.maxExtension;
         maxDroop = pojo.maxDroop == null ? Float.POSITIVE_INFINITY : Math.max(0, pojo.maxDroop);
         stowWhenTowed = pojo.stowWhenTowed;
+        driven = pojo.driven;
+        handbrake = pojo.handbrake;
     }
 
     public float getSpringStiffness() {
@@ -46,6 +50,14 @@ public class SuspensionUnitData extends PartUnitData {
 
     public float getMaxDroop() {
         return maxDroop;
+    }
+
+    public Boolean driven() {
+        return driven;
+    }
+
+    public Boolean handbrake() {
+        return handbrake;
     }
 
     public boolean stowWhenTowed() {

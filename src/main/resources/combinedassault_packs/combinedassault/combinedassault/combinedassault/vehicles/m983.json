@@ -8,7 +8,11 @@
         "max_speed_forward": 0.55,
         "max_speed_backward": 0.18,
         "turn_step": 0.2,
-        "max_turn": 2
+        "max_turn": 2,
+        "wheelspin": {
+            "drive_grip": 0.7,
+            "kinetic_ratio": 0.7
+        }
     },
     "max_health": 400,
     "view_info": {

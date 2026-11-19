@@ -15,7 +15,7 @@
                     "02_WHEEL_03_L",
                     "02_WHEEL_03_R"
                 ],
-                "source": "wheel_rotation",
+                "source": "driven_wheel_rotation",
                 "axis": "x",
                 "param": 0.653
             },

@@ -2,6 +2,7 @@ package com.wf.combinedassault.vehicle.data;
 
 import com.wf.combinedassault.vehicle.VehicleContent;
 import com.wf.combinedassault.vehicle.drive.Transmission;
+import com.wf.combinedassault.vehicle.drive.WheelSpin;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.entity.WheeledVehicle;
 import net.minecraft.world.level.Level;
@@ -20,6 +21,7 @@ public class WheeledVehicleData extends BaseVehicleData<WheeledVehicle> {
     public float maxTurn;
     public float trackSize;
     public Transmission transmission;
+    public WheelSpin wheelspin;
 
     @Override
     public AbstractVehicle fromCustom(Level level) {
@@ -42,6 +44,10 @@ public class WheeledVehicleData extends BaseVehicleData<WheeledVehicle> {
         if (transmission != null) {
             transmission.validate();
         }
+        this.wheelspin = pojo.attributes.wheelspin;
+        if (wheelspin != null) {
+            wheelspin.validate();
+        }
     }
 
     public void inject(WheeledVehicle vehicle) {
@@ -56,6 +62,7 @@ public class WheeledVehicleData extends BaseVehicleData<WheeledVehicle> {
         vehicle.maxTurn = this.maxTurn;
         vehicle.trackSize = this.trackSize;
         vehicle.transmission = this.transmission;
+        vehicle.wheelspin = this.wheelspin;
     }
 
 }

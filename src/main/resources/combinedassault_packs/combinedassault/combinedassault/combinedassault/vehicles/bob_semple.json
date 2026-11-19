@@ -8,7 +8,11 @@
         "max_speed_forward": 0.2,
         "max_speed_backward": 0.1,
         "turn_acceleration": 0.6,
-        "max_turn": 1.5
+        "max_turn": 1.5,
+        "track_slip": {
+            "drive_grip": 0.8,
+            "kinetic_ratio": 0.7
+        }
     },
     "physics_info": {
         "mass": 8000,
@@ -18,18 +22,60 @@
     },
     "max_health": 420,
     "armor": {
-        "front": 8,
-        "side": 8,
-        "rear": 6,
-        "top": 4,
+        "front": 20,
+        "side": 20,
+        "rear": 8,
+        "top": 8,
         "bottom": 4,
         "parts": {
             "turret": {
-                "front": 10,
-                "side": 10,
+                "front": 8,
+                "side": 8,
                 "rear": 8,
-                "top": 4,
+                "top": 8,
                 "bottom": 4
+            }
+        },
+        "plates": {
+            "corrugated": {
+                "curved": true,
+                "hull": 0.15,
+                "layers": [
+                    {"mm": 12.7, "mat": "rha"},
+                    {"mm": 8, "mat": "rha"}
+                ]
+            },
+            "skirt": {
+                "facing": "side",
+                "hull": 0.15,
+                "layers": [{"mm": 8, "mat": "rha"}]
+            },
+            "rear": {
+                "facing": "rear",
+                "layers": [{"mm": 8, "mat": "rha"}]
+            },
+            "hatch": {
+                "facing": "rear",
+                "hull": 0.15,
+                "layers": [{"mm": 8, "mat": "rha"}]
+            },
+            "roof": {
+                "facing": "top",
+                "layers": [{"mm": 8, "mat": "rha"}]
+            },
+            "belly": {
+                "facing": "bottom",
+                "layers": [{"mm": 4, "mat": "rha"}]
+            },
+            "turret": {
+                "curved": true,
+                "hull": 0.15,
+                "layers": [{"mm": 8, "mat": "rha"}]
+            },
+            "turret_top": {
+                "facing": "top",
+                "hull": 0.15,
+                "layers": [{"mm": 8, "mat": "rha"}]
             }
         }
     },

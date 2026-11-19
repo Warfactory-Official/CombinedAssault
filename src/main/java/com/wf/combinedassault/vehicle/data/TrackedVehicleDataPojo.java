@@ -1,6 +1,7 @@
 package com.wf.combinedassault.vehicle.data;
 
 import com.google.gson.annotations.SerializedName;
+import com.wf.combinedassault.vehicle.drive.TrackSlip;
 import com.wf.combinedassault.vehicle.drive.Transmission;
 
 public class TrackedVehicleDataPojo extends BaseVehicleDataPojo {
@@ -41,6 +42,10 @@ public class TrackedVehicleDataPojo extends BaseVehicleDataPojo {
         /** Null => direct drive. */
         @SerializedName("transmission")
         public Transmission transmission;
+
+        /** Null => tracks never slip. */
+        @SerializedName("track_slip")
+        public TrackSlip trackSlip;
 
     }
 

@@ -8,7 +8,11 @@
         "max_speed_forward": 0.5,
         "max_speed_backward": 0.2,
         "turn_acceleration": 1,
-        "max_turn": 2
+        "max_turn": 2,
+        "track_slip": {
+            "drive_grip": 0.8,
+            "kinetic_ratio": 0.7
+        }
     },
     "physics_info": {
         "mass": 61000,
@@ -18,17 +22,17 @@
     },
     "max_health": 3000,
     "armor": {
-        "front": 600,
-        "side": 60,
+        "front": 590,
+        "side": 70,
         "rear": 40,
-        "top": 40,
-        "bottom": 30,
+        "top": 30,
+        "bottom": 25,
         "ce": {
             "front": 880,
-            "side": 80,
+            "side": 90,
             "rear": 40,
-            "top": 40,
-            "bottom": 30
+            "top": 30,
+            "bottom": 25
         },
         "parts": {
             "turret": {
@@ -46,28 +50,39 @@
                 }
             }
         },
-        "zones": [
-            {"name": "turret_ring", "face": "front", "min": [-1.3, 1.25, 1.3], "max": [1.3, 1.7, 2.2], "ke": 150, "ce": 200},
-            {"name": "mantlet", "part": "turret", "face": "front", "min": [-0.4, 1.5, 1.3], "max": [0.4, 2.15, 2.45], "ke": 450, "ce": 700},
-            {"name": "sight_block", "part": "turret", "face": "front", "min": [-1.8, 2.15, 0.0], "max": [1.8, 2.9, 1.1], "ke": 250, "ce": 350}
-        ],
+        "zones": [],
         "plates": {
-            "hull_glacis": {"facing": "front", "slope": 75, "los": {"ke": 600, "ce": 880}},
+            "hull_glacis": {"facing": "front", "slope": 75, "los": {"ke": 590, "ce": 880}},
             "hull_nose": {"facing": "front", "slope": 40, "los": {"ke": 300, "ce": 450}},
-            "hull_side": {"facing": "side", "los": {"ke": 60, "ce": 80}},
-            "skirt_front": {"facing": "side", "los": {"ke": 130, "ce": 300}},
-            "hull_lfp": {"curved": true, "layers": [{"mm": 150, "mat": "rha"}]},
-            "hull_roof": {"facing": "top", "layers": [{"mm": 40, "mat": "rha"}]},
-            "hull_belly": {"facing": "bottom", "layers": [{"mm": 30, "mat": "rha"}]},
+            "hull_lfp": {"facing": "front", "slope": -48.2, "los": {"ke": 580, "ce": 800}},
+            "hull_side": {"facing": "side", "los": {"ke": 70, "ce": 90}},
+            "skirt_front": {"facing": "side", "los": {"ke": 70, "ce": 200}, "hull": 0.5},
+            "skirt_rear": {"facing": "side", "layers": [{"mm": 12, "mat": "rha"}], "hull": 0.15},
+            "hull_fender": {"facing": "top", "layers": [{"mm": 12, "mat": "aluminium"}], "hull": 0.15},
+            "hull_stowage": {"curved": true, "layers": [{"mm": 10, "mat": "aluminium"}], "hull": 0.15},
+            "hull_roof": {"facing": "top", "layers": [{"mm": 30, "mat": "rha"}]},
+            "engine_deck": {"facing": "top", "layers": [{"mm": 13, "mat": "rha"}], "hull": 0.15},
+            "hull_belly": {"facing": "bottom", "layers": [{"mm": 25, "mat": "rha"}]},
             "hull_rear": {"facing": "rear", "layers": [{"mm": 40, "mat": "rha"}]},
+            "hull_rear_slope": {"facing": "rear", "slope": 45, "layers": [{"mm": 40, "mat": "rha"}]},
+            "hull_rear_lower": {"facing": "rear", "slope": -40, "layers": [{"mm": 30, "mat": "rha"}]},
             "turret_cheek_a": {"facing": "35", "slope": 35, "los": {"ke": 770, "ce": 1150}},
             "turret_cheek_b": {"facing": "-35", "slope": 35, "los": {"ke": 770, "ce": 1150}},
-            "turret_side": {"facing": "side", "los": {"ke": 300, "ce": 450}},
             "turret_flank": {"facing": "side", "slope": 32, "los": {"ke": 300, "ce": 450}},
+            "turret_side": {"facing": "side", "los": {"ke": 300, "ce": 450}},
             "turret_bustle": {"facing": "side", "los": {"ke": 60, "ce": 80}},
             "turret_roof": {"facing": "top", "layers": [{"mm": 40, "mat": "rha"}]},
             "turret_rear": {"facing": "rear", "layers": [{"mm": 50, "mat": "rha"}]},
-            "barrel": {"curved": true, "layers": [{"mm": 60, "mat": "rha"}]}
+            "turret_rear_slope": {"facing": "rear", "slope": 47, "layers": [{"mm": 40, "mat": "rha"}]},
+            "turret_belly_slope": {"facing": "rear", "slope": -45, "layers": [{"mm": 25, "mat": "rha"}], "hull": 0.15},
+            "turret_underside": {"curved": true, "layers": [{"mm": 25, "mat": "rha"}], "hull": 0.15},
+            "turret_fixture": {"curved": true, "layers": [{"mm": 12, "mat": "aluminium"}], "hull": 0.15},
+            "mantlet": {"curved": true, "layers": [{"mm": 490, "mat": "cast"}]},
+            "barrel": {"curved": true, "layers": [{"mm": 60, "mat": "rha"}]},
+            "hatch_driver": {"curved": true, "layers": [{"mm": 25, "mat": "rha"}], "hull": 0.15},
+            "hatch_loader": {"curved": true, "layers": [{"mm": 25, "mat": "rha"}], "hull": 0.15},
+            "hatch_commander": {"curved": true, "layers": [{"mm": 25, "mat": "rha"}], "hull": 0.15},
+            "mg_gun": {"curved": true, "layers": [{"mm": 10, "mat": "rha"}], "hull": 0.15}
         }
     },
     "view_info": {

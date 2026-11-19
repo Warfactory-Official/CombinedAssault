@@ -24,6 +24,7 @@ import com.wf.combinedassault.render.gem.GemScreens;
 import com.wf.combinedassault.weapon.kit.client.KitBelts;
 import com.wf.combinedassault.render.model.VehicleModelInstance;
 import com.wf.combinedassault.render.part.RoundStations;
+import com.wf.combinedassault.render.fx.GlassChips;
 import com.wf.combinedassault.render.particle.BulletHoleParticle;
 import com.wf.combinedassault.render.util.DebugRenderTypes;
 import com.wf.combinedassault.render.util.HullRenderer;
@@ -143,6 +144,7 @@ public class VehicleRender<T extends AbstractVehicle> extends EntityRenderer<T> 
             for (BulletHoleParticle bulletHoleParticle : vehicle.getBulletHoleParticles()) {
                 bulletHoleParticle.renderOnVehicle(pPartialTick, pPoseStack, bufferSource, modelInstance);
             }
+            GlassChips.render(vehicle, pPoseStack, bufferSource, modelLight, pPartialTick);
             vehicle.lastRenderTime = System.currentTimeMillis();
         } finally {
             pPoseStack.popPose();

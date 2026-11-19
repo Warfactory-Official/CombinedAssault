@@ -7,6 +7,8 @@ public class WheeledVehicleContext extends VehicleContext<WheeledVehicle> {
 
     /** {@code distance*360}, pre-circumference; {@link #getWheelDegrees} divides by {@code 2*pi*radius}. */
     private float wheelRotation = 0f;
+    /** Same, driven wheels: runs past the ground while they spin. */
+    private float drivenRotation = 0f;
     private static final float STEER_SMOOTH_SECONDS = 0.05f;
     private float steeringAngle = 0f;
     private final DriverControls controls = new DriverControls();
@@ -41,10 +43,8 @@ public class WheeledVehicleContext extends VehicleContext<WheeledVehicle> {
 
     private void advanceWheelRotation() {
         float deltaTime = this.frameSeconds();
-        float forwardSpeed = this.getForwardSpeed();
-
-        float distance = forwardSpeed * deltaTime * 20;
-        wheelRotation += distance * 360f;
+        wheelRotation += entity.getForwardSpeed() * deltaTime * 20 * 360f;
+        drivenRotation += entity.getWheelSpeed() * deltaTime * 20 * 360f;
     }
 
     private void updateSteeringAngle() {
@@ -56,6 +56,11 @@ public class WheeledVehicleContext extends VehicleContext<WheeledVehicle> {
     public float getWheelDegrees(float radius) {
         float circumference = (float) (2 * Math.PI * radius);
         return (wheelRotation / circumference) % 360f;
+    }
+
+    /** {@code radius} in blocks. */
+    public float getDrivenWheelDegrees(float radius) {
+        return (drivenRotation / (float) (2 * Math.PI * radius)) % 360f;
     }
 
     public float getWheelRotation() {
@@ -75,6 +80,7 @@ public class WheeledVehicleContext extends VehicleContext<WheeledVehicle> {
         float paramValue = param != null ? param : 0f;
         return switch (source) {
             case "wheel_rotation" -> getWheelDegrees(paramValue);
+            case "driven_wheel_rotation" -> getDrivenWheelDegrees(paramValue);
             case "steering_angle" -> getSteeringAngle();
             case "left_wheel_rotation", "right_wheel_rotation" -> trackWheels.binding(source, paramValue);
             default -> {

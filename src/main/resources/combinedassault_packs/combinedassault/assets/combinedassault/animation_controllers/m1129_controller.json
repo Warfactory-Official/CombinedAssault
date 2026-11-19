@@ -23,7 +23,7 @@
                             "wheel_3_r",
                             "wheel_3_l"
                         ],
-                        "source": "wheel_rotation",
+                        "source": "driven_wheel_rotation",
                         "axis": "x",
                         "param": 0.533
                     },

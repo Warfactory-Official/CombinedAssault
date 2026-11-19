@@ -800,6 +800,21 @@ public final class VehicleHits implements HullMesh {
         return model.fromGroup(slot, v, true);
     }
 
+    /** This vehicle's group owning {@code node}. */
+    public VehicleCubeGroup groupOf(int node) {
+        return groups[model.nodes().get(node).group()];
+    }
+
+    /** Rest-frame point (as {@link #restPoint}) -> {@link #groupOf} frame, in place. */
+    public Vector3f toGroupPoint(int node, Vector3f rest) {
+        return model.toGroupPoint(model.nodes().get(node).group(), rest);
+    }
+
+    /** Rest-frame direction -> {@link #groupOf} frame, in place. */
+    public Vector3f toGroupDirection(int node, Vector3f rest) {
+        return model.toGroupDirection(model.nodes().get(node).group(), rest);
+    }
+
     /** World direction -> model frame with {@code node}'s group at rest. */
     @Override
     public Vector3f restDirection(int node, Vector3f world) {

@@ -4,6 +4,8 @@ import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.combinedassault.vehicle.drive.Transmission;
+import com.wf.combinedassault.dynamics.part.SuspensionUnit;
+import com.wf.combinedassault.vehicle.drive.WheelSpin;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.entity.WheeledVehicle;
 import com.wf.wflib.testkit.api.ForcedChunks;
@@ -173,6 +175,178 @@ public class TransmissionGameTest {
                     spawned[0].discard();
                     lane(level, start, SPRINT_LENGTH, false);
                     if (reached[0] < 0) {
+                        helper.fail(report);
+                    }
+                })
+                .thenSucceed();
+    }
+
+    private static final int HOLD_LANE_X = LANE_X - 100;
+    private static final int HOLD_LENGTH = 160;
+
+    /**
+     * Spring-load estimate: flat ground ~ weight, and a 1-block pad under the front wheels moves load between the axles
+     * (rear-only driven fraction follows). Fractions finite, in [0, 1].
+     */
+    @GameTest(template = TEMPLATE, timeoutTicks = 300)
+    public static void wheelLoadFractionsFollowTheTerrain(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos start = helper.absolutePos(BlockPos.ZERO).offset(HOLD_LANE_X - 80, 0, 0);
+        lane(level, start, HOLD_LENGTH, true);
+        WheeledVehicle[] cars = new WheeledVehicle[3];
+        double[] ratio = new double[2];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(level.isPositionEntityTicking(start.offset(0, 1, 8)), "lane not ticking"))
+                .thenExecute(() -> {
+                    cars[0] = spawnHumvee(level, start, true);
+                    // pad under the front wheels of the second car (x offset), z 10..14
+                    for (int x = HALF_WIDTH - 3; x <= HALF_WIDTH; x++) {
+                        for (int z = 10; z <= 14; z++) {
+                            level.setBlockAndUpdate(start.offset(x, 1, z), Blocks.STONE.defaultBlockState());
+                        }
+                    }
+                    cars[1] = spawnHumvee(level, start.offset(HALF_WIDTH - 1, 0, 0), true);
+                    // Airborne: no spring load anywhere => unit-count fractions (deck / provider ground reads no wheel load).
+                    cars[2] = spawnHumvee(level, start.offset(-HALF_WIDTH + 1, 0, 0), true);
+                    cars[2].setPos(cars[2].getX(), cars[2].getY() + 80, cars[2].getZ());
+                })
+                .thenIdle(20)
+                .thenExecute(() -> {
+                    double[] air = cars[2].wheelLoads();
+                    if (Math.abs(air[0] - 0.5) > 1e-9 || Math.abs(air[1] - 0.5) > 1e-9 || Math.abs(air[2] - 0.5) > 1e-9) {
+                        helper.fail("airborne fractions " + java.util.Arrays.toString(air));
+                    }
+                })
+                .thenIdle(60)
+                .thenExecute(() -> {
+                    double[] a = cars[0].wheelLoads();
+                    double[] b = cars[1].wheelLoads();
+                    double sum = 0;
+                    for (var unit : cars[0].getSuspensionUnits()) {
+                        sum += unit.load();
+                    }
+                    ratio[0] = sum / (cars[0].physicsEngine.mass * 9.8);
+                    String report = String.format(Locale.ROOT, "flat: rear %.2f (Sum k*c / m g = %.2f); padded: rear %.2f pitch %.1f",
+                            a[0], ratio[0], b[0], cars[1].getXRot());
+                    CombinedAssault.LOGGER.info("[wheelload] {}", report);
+                    for (WheeledVehicle car : cars) {
+                        car.discard();
+                    }
+                    for (int x = HALF_WIDTH - 3; x <= HALF_WIDTH; x++) {
+                        for (int z = 10; z <= 14; z++) {
+                            level.setBlockAndUpdate(start.offset(x, 1, z), Blocks.AIR.defaultBlockState());
+                        }
+                    }
+                    lane(level, start, HOLD_LENGTH, false);
+                    boolean finite = a[0] >= 0 && a[0] <= 1 && b[0] >= 0 && b[0] <= 1;
+                    if (!finite || Math.abs(a[0] - 0.5) > 0.2 || ratio[0] < 0.5 || ratio[0] > 1.5) {
+                        helper.fail(report);
+                    }
+                })
+                .thenSucceed();
+    }
+
+    /** Humvee on a flat lane, engine on, autopilot; {@code rearOnly}: only the rear wheels are driven and locked. */
+    private static WheeledVehicle spawnHumvee(ServerLevel level, BlockPos start, boolean rearOnly) {
+        AbstractVehicle vehicle = CommonAssetsManager.vehicleDataManager().getVehicleData(HUMVEE).orElseThrow()
+                .construct(level, new Vec3(start.getX() + 0.5, start.getY() + 1.5, start.getZ() + 8.5), 0, 0);
+        vehicle.setDisplayId(HUMVEE);
+        level.addFreshEntity(vehicle);
+        WheeledVehicle humvee = (WheeledVehicle) vehicle;
+        if (rearOnly) {
+            // Humvee engine cannot break a locked 0.9 G hold; a weak brake lets the locked rears turn. Copy: pack data shared.
+            WheelSpin weak = new WheelSpin();
+            weak.driveGrip = humvee.wheelspin.driveGrip;
+            weak.kineticRatio = humvee.wheelspin.kineticRatio;
+            weak.handbrakeHold = 0.3f;
+            humvee.wheelspin = weak;
+            for (SuspensionUnit<?> unit : humvee.getSuspensionUnits()) {
+                boolean rear = unit.getId().startsWith("wheel_r");
+                unit.setDrive(rear, rear);
+            }
+        }
+        humvee.setEnergy(humvee.energyInfo.capacityUnits());
+        humvee.autopilotControl = true;
+        humvee.toggleEngine(true);
+        return humvee;
+    }
+
+    /** Handbrake + full throttle: a all-wheel-drive stands (no spin), rear-driven stands with the driven wheels spinning. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    public static void handbrakeHoldsAgainstThrottle(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos start = helper.absolutePos(BlockPos.ZERO).offset(HOLD_LANE_X, 0, 0);
+        lane(level, start, HOLD_LENGTH, true);
+        WheeledVehicle[] cars = new WheeledVehicle[2];
+        Vec3[] at = new Vec3[2];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(level.isPositionEntityTicking(start.offset(0, 1, 8)), "lane not ticking"))
+                .thenExecute(() -> {
+                    cars[0] = spawnHumvee(level, start, false);
+                    cars[1] = spawnHumvee(level, start.offset(HALF_WIDTH - 1, 0, 0), true);
+                })
+                .thenIdle(40)
+                .thenExecute(() -> {
+                    for (int i = 0; i < 2; i++) {
+                        at[i] = cars[i].position();
+                    }
+                })
+                .thenExecuteFor(100, () -> {
+                    for (WheeledVehicle car : cars) {
+                        car.controlUnit.forward = true;
+                        car.controlUnit.up = true;
+                    }
+                })
+                .thenExecute(() -> {
+                    double moved4 = cars[0].position().subtract(at[0]).horizontalDistance();
+                    double moved2 = cars[1].position().subtract(at[1]).horizontalDistance();
+                    float spin4 = cars[0].getEntityData().get(WheeledVehicle.WHEEL_SPIN);
+                    float spin2 = cars[1].getEntityData().get(WheeledVehicle.WHEEL_SPIN);
+                    String report = String.format(Locale.ROOT, "4x4 moved %.2f spin %.0f; 2wd moved %.2f spin %.0f", moved4, spin4, moved2, spin2);
+                    CombinedAssault.LOGGER.info("[handbrake] {}", report);
+                    for (WheeledVehicle car : cars) {
+                        car.discard();
+                    }
+                    lane(level, start, HOLD_LENGTH, false);
+                    if (moved4 > 0.3 || moved2 > 0.3 || spin4 != 0 || spin2 == 0) {
+                        helper.fail(report);
+                    }
+                })
+                .thenSucceed();
+    }
+
+    /** Held handbrake from ~40 km/h: stops within 4 s (legacy drag took > 8 s). */
+    @GameTest(template = TEMPLATE, timeoutTicks = 500)
+    public static void handbrakeStopsFromSpeed(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos start = helper.absolutePos(BlockPos.ZERO).offset(HOLD_LANE_X - 40, 0, 0);
+        lane(level, start, HOLD_LENGTH, true);
+        WheeledVehicle[] car = new WheeledVehicle[1];
+        double[] peak = {0};
+        int[] stoppedAt = {-1};
+        int[] tick = {0};
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(level.isPositionEntityTicking(start.offset(0, 1, 8)), "lane not ticking"))
+                .thenExecute(() -> car[0] = spawnHumvee(level, start, false))
+                .thenIdle(40)
+                .thenExecuteFor(60, () -> {
+                    car[0].controlUnit.forward = true;
+                    peak[0] = Math.max(peak[0], car[0].getForwardSpeed());
+                })
+                .thenExecuteFor(120, () -> {
+                    car[0].controlUnit.forward = false;
+                    car[0].controlUnit.up = true;
+                    if (stoppedAt[0] < 0 && car[0].getForwardSpeed() < 0.01) {
+                        stoppedAt[0] = tick[0];
+                    }
+                    tick[0]++;
+                })
+                .thenExecute(() -> {
+                    String report = String.format(Locale.ROOT, "peak %.1f km/h, stopped after %d ticks", peak[0] * 72, stoppedAt[0]);
+                    CombinedAssault.LOGGER.info("[handbrake] {}", report);
+                    car[0].discard();
+                    lane(level, start, HOLD_LENGTH, false);
+                    if (peak[0] < 0.3 || stoppedAt[0] < 0 || stoppedAt[0] > 80) {
                         helper.fail(report);
                     }
                 })

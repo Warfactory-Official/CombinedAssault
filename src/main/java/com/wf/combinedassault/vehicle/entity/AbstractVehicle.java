@@ -100,6 +100,7 @@ import com.wf.wflib.armor.api.hull.HullBody;
 import com.wf.wflib.armor.api.hull.HullFace;
 import com.wf.wflib.armor.api.hull.HullProfile;
 import com.wf.wflib.armor.api.hull.HullWear;
+import com.wf.wflib.armor.api.hull.PlateWear;
 import com.wf.wflib.audio.api.EngineSound;
 import com.wf.wflib.cam.api.Datalink;
 import com.wf.wflib.compat.api.WarforgeCompat;
@@ -220,6 +221,7 @@ public abstract class AbstractVehicle extends ContainerCraft
     /** {@link HullComponents#toSync()}: pool health by id, for the HUD and probe. */
     public static final EntityDataAccessor<CompoundTag> SYSTEMS = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.COMPOUND_TAG);
     public static final EntityDataAccessor<CompoundTag> ARMOR_WEAR = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.COMPOUND_TAG);
+    public static final EntityDataAccessor<CompoundTag> PLATE_WEAR = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.COMPOUND_TAG);
     public static final EntityDataAccessor<CompoundTag> DETACHED_ANCHORS = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.COMPOUND_TAG);
     /** Stowed cargo as drawn: {@code v} = [{m: model, p: local pos, q: local rotation}]. */
     public static final EntityDataAccessor<CompoundTag> CARGO_VIEW = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.COMPOUND_TAG);
@@ -274,6 +276,7 @@ public abstract class AbstractVehicle extends ContainerCraft
     public DefenseStats defenseStats;
     public HullProfile armorProfile;
     private final HullWear hullWear = new HullWear();
+    private final PlateWear plateWear = new PlateWear();
     public Vec3 centerOffset;
     public float curbWeight;
     /** Chassis mass added per kilogram of cargo; see StorageInfo#cargoMassPerKg. */
@@ -541,6 +544,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         builder.define(IR_SIGHTS, 0);
         builder.define(SYSTEMS, new CompoundTag());
         builder.define(ARMOR_WEAR, new CompoundTag());
+        builder.define(PLATE_WEAR, new CompoundTag());
         builder.define(DETACHED_ANCHORS, new CompoundTag());
         builder.define(CARGO_VIEW, new CompoundTag());
         builder.define(PARACHUTE_DEPLOYED, false);
@@ -571,6 +575,9 @@ public abstract class AbstractVehicle extends ContainerCraft
         }
         if (level().isClientSide() && dataValues.stream().anyMatch(value -> value.id() == ARMOR_WEAR.id())) {
             hullWear.fromSync(entityData.get(ARMOR_WEAR));
+        }
+        if (level().isClientSide() && dataValues.stream().anyMatch(value -> value.id() == PLATE_WEAR.id())) {
+            plateWear.fromSync(entityData.get(PLATE_WEAR));
         }
         if (dataValues.stream().anyMatch(value -> value.id() == X_ROT.id() || value.id() == Y_ROT.id() || value.id() == Z_ROT.id())) {
             float targetXRot = entityData.get(X_ROT);
@@ -611,6 +618,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             compound.merge(hullComponentSave);
         }
         hullWear.save(compound);
+        plateWear.save(compound);
         CompoundTag camoTag = camoLayer.save();
         if (!camoTag.isEmpty()) {
             compound.put("Camo", camoTag);
@@ -663,6 +671,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         hullComponentSave = compound.copy();
         hullComponents = null;
         hullWear.load(compound);
+        plateWear.load(compound);
         if (compound.contains("Engine")) {
             // Raw: toggleEngine's system gate would build the pools before their pieces exist.
             entityData.set(ENGINE_ON, compound.getBoolean("Engine"));
@@ -1129,6 +1138,9 @@ public abstract class AbstractVehicle extends ContainerCraft
             }
             if (hullWear.dirty()) {
                 entityData.set(ARMOR_WEAR, hullWear.toSync());
+            }
+            if (plateWear.dirty()) {
+                entityData.set(PLATE_WEAR, plateWear.toSync());
             }
             if (isEngineOn() && !VehicleSystems.engineWorks(this)) {
                 toggleEngine(false);
@@ -3897,6 +3909,11 @@ public abstract class AbstractVehicle extends ContainerCraft
     @Override
     public HullWear hullWear() {
         return hullWear;
+    }
+
+    @Override
+    public PlateWear plateWear() {
+        return plateWear;
     }
 
     @Override

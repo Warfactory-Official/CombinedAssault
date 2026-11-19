@@ -56,6 +56,7 @@ public class SmallArmsArmorGameTest {
     /** Grazed rounds leave along z, ~45 blocks/tick: pitch > 2 ticks' reach. */
     private static final int LANE_Z = -700, LANE_PITCH = -128;
     private static final int FLOOR_X = 5, FLOOR_Z = 8;
+    private static final double WINDSHIELD_HEIGHT = 1.55;
     /** Ricochet exit scatter ({@code AddonStrikes.glance}) is drawn from the vehicle's random. */
     private static final long RICOCHET_SEED = 1L;
     private static final List<HitVehicleEvent> HITS = new ArrayList<>();
@@ -74,6 +75,25 @@ public class SmallArmsArmorGameTest {
                 .thenIdle(3).thenExecute(() -> expect(helper, v.get(), "partial", "penetration"))
                 .thenExecute(() -> fire(helper, v.get(), R50, 1, 0, HullFace.SIDE, 1.0))
                 .thenIdle(3).thenExecute(() -> expect(helper, v.get(), "overmatch")));
+    }
+
+    /** Humvee windshield, 30 mm laminated = 10.5 RHAe: 7.62 (8) stopped + chipped, .50 (20) through. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 240)
+    public static void laminatedWindshieldChipsAndStops762(GameTestHelper helper) {
+        onLane(helper, 11, HUMVEE, (seq, v) -> seq
+                .thenExecute(() -> fire(helper, v.get(), R762, 1, 0, HullFace.FRONT, WINDSHIELD_HEIGHT))
+                .thenIdle(3).thenExecute(() -> {
+                    expect(helper, v.get(), "absorbed", "partial");
+                    var state = v.get().plateWear().state("windshield");
+                    helper.assertTrue(state != null && state.count() == 1, "windshield chips after 7.62: " + state);
+                    helper.assertTrue(v.get().plateWear().thicknessScale("windshield") < 1, "windshield not thinned");
+                })
+                .thenExecute(() -> fire(helper, v.get(), R50, 1, 0, HullFace.FRONT, WINDSHIELD_HEIGHT))
+                .thenIdle(3).thenExecute(() -> {
+                    expect(helper, v.get(), "overmatch", "penetration");
+                    var state = v.get().plateWear().state("windshield");
+                    helper.assertTrue(state != null && state.count() == 1, ".50 chips the fresh pane: " + state);
+                }));
     }
 
     /** Pen x |v|^2 / v0^2: .50 ball 20 mm at f = 1 / 0.75 / 0.65 / 0.5 vs 10 mm; damage falls with it. */
@@ -259,6 +279,9 @@ public class SmallArmsArmorGameTest {
         vehicle.setHealth(vehicle.getMaxHealth());
         for (HullWear.Face f : HullWear.Face.VALUES) {
             vehicle.hullWear().repair(f, 1);
+        }
+        for (String plate : List.copyOf(vehicle.plateWear().plates())) {
+            vehicle.plateWear().repair(plate);
         }
         HITS.removeIf(h -> h.entityId == vehicle.getId());
     }

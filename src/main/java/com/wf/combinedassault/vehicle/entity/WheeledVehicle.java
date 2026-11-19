@@ -10,6 +10,8 @@ import com.wf.combinedassault.pack.client.vehicle.WheeledVehicleDisplay;
 import com.wf.combinedassault.render.animation.context.WheeledVehicleContext;
 import com.wf.combinedassault.vehicle.audio.HullLoop;
 import com.wf.combinedassault.vehicle.audio.VehicleSounds;
+import com.wf.combinedassault.vehicle.drive.WheelSpin;
+import com.wf.combinedassault.dynamics.part.SuspensionUnit;
 import com.wf.combinedassault.vehicle.util.ParticleUtil;
 import com.wf.combinedassault.vehicle.util.VectorUtil;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
@@ -34,6 +36,13 @@ import java.util.List;
 public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<WheeledVehicle, WheeledVehicleContext> {
 
     public static final EntityDataAccessor<Float> FORWARD_SPEED = SynchedEntityData.defineId(WheeledVehicle.class, EntityDataSerializers.FLOAT);
+    /** +-1 while spinning (sign = drive direction along the heading), else 0. */
+    public static final EntityDataAccessor<Float> WHEEL_SPIN = SynchedEntityData.defineId(WheeledVehicle.class, EntityDataSerializers.FLOAT);
+    /** Sliding well past the grip limit (cornering at the limit does not count): tyre squeal. */
+    public static final EntityDataAccessor<Boolean> SLIDE = SynchedEntityData.defineId(WheeledVehicle.class, EntityDataSerializers.BOOLEAN);
+    private static final double SLIDE_MARGIN = 1.5;
+    /** Blocks/tick the wheel surface runs past the ground while spinning. */
+    private static final float SPIN_SPEED = 0.4F;
     public static final EntityDataAccessor<Float> TURN_ANGLE = SynchedEntityData.defineId(WheeledVehicle.class, EntityDataSerializers.FLOAT);
     @OnlyIn(Dist.CLIENT)
     private HullLoop tireSqueal;
@@ -48,6 +57,10 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
     public float trackSize = 0.1f;
     /** Sliding sideways past tyre grip this tick. */
     public boolean loseTraction;
+    @Nullable
+    public WheelSpin wheelspin;
+    /** Drive past grip; hysteresis state, in the prediction snapshot. */
+    private boolean spinning;
     /** Mouse wheel: lock slew in {@link #turnStep}s per tick; the client already ramps keyed input at 1. */
     private static final float WHEEL_SLEW = 4;
     /** Grip fraction with the handbrake on. */
@@ -82,6 +95,8 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(FORWARD_SPEED, 0f);
+        builder.define(WHEEL_SPIN, 0f);
+        builder.define(SLIDE, false);
         builder.define(TURN_ANGLE, 0f);
     }
 
@@ -132,7 +147,7 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
         VehicleMobility mobility = VehicleMobility.of(this);
 
         boolean handbrake = controlUnit.up;
-        if (handbrake) {
+        if (handbrake && wheelspin == null) {
             velocity = velocity.scale(0.98);
             motion = velocity.length();
         }
@@ -188,19 +203,54 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
         // Tyre force ~ wheels down: steering and drive through 1 of 8 wheels rolled an M983 over (terrain WEAVE).
         float share = isInWater() && canWade ? 1 : physicsEngine.tractionShare();
         // High-centred (belly on a 1-block summit / stair ridge, one wheel loaded): belly share drives too, else stuck.
-        propulsiveForce = propulsiveForce.scale(Math.min(1, share + BELLY_DRIVE * physicsEngine.bellyShare()));
+        double driveScale = Math.min(1, share + BELLY_DRIVE * physicsEngine.bellyShare());
+        double circle = 1;
+        float spinDir = 0;
+        double lockedLoad = 0;
+        if (wheelspin != null) {
+            // Wheel-borne part capped at the grip budget of the driven wheels' load; belly part outside it.
+            double[] loads = wheelLoads();
+            lockedLoad = loads[1];
+            double wheelScale = Math.min(1, share);
+            double demand = propulsiveForce.length() * PhysicsHelper.accelerationPerTick(1, physicsEngine.mass) * wheelScale;
+            // Handbrake: drive through locked wheels is lost, only the free driven wheels push.
+            double free = handbrake ? loads[0] - loads[2] : loads[0];
+            double through = loads[0] > 0 ? free / loads[0] : 0;
+            double budget = wheelspin.driveGrip * PhysicsEngine.G * share * free;
+            double along = velocity.dot(vehicleDirection);
+            // Braking against the motion is not wheelspin.
+            boolean driving = propulsiveForce.dot(vehicleDirection) * along >= 0;
+            spinning = wheelspin.spins(spinning, demand * through, budget) && driving;
+            double delivered = wheelspin.delivered(spinning, demand * through, budget);
+            // Locked wheel turns only when its share of the drive beats the brake's hold per unit load.
+            boolean lockedSpin = handbrake && loads[2] > 0 && driving
+                    && demand / loads[0] > wheelspin.handbrakeHold * PhysicsEngine.G * share;
+            if (spinning || lockedSpin) {
+                spinDir = (float) Math.signum(propulsiveForce.dot(vehicleDirection));
+                double lateralBudget = PhysicsEngine.TYRE_GRIP * PhysicsEngine.G * share * (handbrake ? HANDBRAKE_GRIP : 1);
+                double used = lateralBudget > 0 ? delivered / lateralBudget : 1;
+                circle = Math.sqrt(Math.max(0, 1 - used * used));
+            }
+            if (demand > 0 && (spinning || handbrake)) {
+                driveScale -= wheelScale * (1 - delivered / demand);
+            }
+        }
+        entityData.set(WHEEL_SPIN, spinDir);
+        propulsiveForce = propulsiveForce.scale(driveScale);
         if (!hasTraction() && !(isInWater() && canWade)) {
             motion *= 0.33f;
             propulsiveForce = Vec3.ZERO;
+            spinning = false;
+            entityData.set(WHEEL_SPIN, 0f);
         }
 
         float turnStep = (float) Math.toDegrees(Math.atan2(motion * share
                 * (turnAngle / maxTurn)
                 * (1 - Math.min(motion / steerFadeSpeed, 1) * 0.5)
-                * (loseTraction ? 0.8 : 1), bodyDepth));
+                * (loseTraction ? 0.8 : 1) * circle, bodyDepth));
         // Yaw <= grip / speed (v*w <= grip*g); uncapped: m1129 at full lock ~1 g lateral, wheel friction rolled it.
         if (!handbrake && motion > 1.0e-3) {
-            float limit = (float) Math.toDegrees(PhysicsEngine.TYRE_GRIP * PhysicsEngine.G * share / motion);
+            float limit = (float) Math.toDegrees(PhysicsEngine.TYRE_GRIP * PhysicsEngine.G * share * circle / motion);
             turnStep = Mth.clamp(turnStep, -limit, limit);
         }
         turnStep = this.turnBy(turnStep);
@@ -212,14 +262,24 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
         // Tyre grip: sideways speed (vs heading) bleeds off at <= grip per tick, the rest slides; forward kept.
         // Upstream redirects all of it into the heading => a side shove became forward speed, a ram only spun the hull.
         // Towed: the step's axle row grips at the axle; grip at the COM here bled off every turn the hitch asked for.
+        boolean slid = false;
         if (hasTraction() && vehicleDirection.lengthSqr() > 1.0E-6 && !towedOnWheels()) {
             Vec3 heading = vehicleDirection.normalize();
             double along = velocity.dot(heading);
             Vec3 sideways = velocity.subtract(heading.scale(along));
             double slide = sideways.length();
-            double grip = PhysicsEngine.TYRE_GRIP * PhysicsEngine.G * share * (handbrake ? HANDBRAKE_GRIP : 1);
+            double grip = PhysicsEngine.TYRE_GRIP * PhysicsEngine.G * share * circle * (handbrake ? HANDBRAKE_GRIP : 1);
             loseTraction = slide > grip;
+            slid = slide > grip * SLIDE_MARGIN;
             velocity = heading.scale(along).add(loseTraction ? sideways.scale((slide - grip) / slide) : Vec3.ZERO);
+        }
+
+        entityData.set(SLIDE, slid);
+        if (handbrake && wheelspin != null) {
+            // Locked wheels: friction along the motion, held wheels never push back.
+            double hold = wheelspin.handbrakeHold * PhysicsEngine.G * share * lockedLoad;
+            double speed = velocity.length();
+            velocity = speed > hold ? velocity.scale((speed - hold) / speed) : Vec3.ZERO;
         }
 
         motion = velocity.length();
@@ -228,6 +288,45 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
 
         this.setDeltaMovement(new Vec3(velocity.x, velocity.y + gVelocity, velocity.z));
         return Vec3.ZERO;
+    }
+
+    /**
+     * Spring-load fractions {driven, locked, driven and locked}; wheels with no flag set true on any wheel all count.
+     * Load = spring force; no load at all => unit counts.
+     */
+    public double[] wheelLoads() {
+        boolean anyDriven = false;
+        boolean anyLocked = false;
+        for (SuspensionUnit<?> unit : suspensionUnits) {
+            if (unit.isLeg()) {
+                continue;
+            }
+            anyDriven |= Boolean.TRUE.equals(unit.driven());
+            anyLocked |= Boolean.TRUE.equals(unit.locked());
+        }
+        double total = 0;
+        double[] sum = new double[3];
+        for (int pass = 0; pass < 2; pass++) {
+            for (SuspensionUnit<?> unit : suspensionUnits) {
+                if (unit.isLeg() || !unit.isActive()) {
+                    continue;
+                }
+                double weight = pass == 0 ? unit.load() : 1;
+                boolean driven = !anyDriven || Boolean.TRUE.equals(unit.driven());
+                boolean locked = !anyLocked || Boolean.TRUE.equals(unit.locked());
+                total += weight;
+                sum[0] += driven ? weight : 0;
+                sum[1] += locked ? weight : 0;
+                sum[2] += driven && locked ? weight : 0;
+            }
+            if (total > 0) {
+                break;
+            }
+        }
+        for (int i = 0; i < 3; i++) {
+            sum[i] = total > 0 ? sum[i] / total : 0;
+        }
+        return sum;
     }
 
     /** {@link #drivetrain}'s command as force along the heading. */
@@ -283,8 +382,9 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
             tireSqueal = new HullLoop(VehicleSounds.TIRE_SQUEAL, AudioCategory.VEHICLES, 0.05F);
         }
         Vec3 velocity = new Vec3(getDeltaMovement().x, 0, getDeltaMovement().z);
-        tireSqueal.tick(this, Vec3.ZERO, velocity.length() > 0.1
-                && Math.sin(VectorUtil.angleBetween(velocity, getLookAngle())) > Math.sin(Math.PI / 10), 1);
+        boolean locked = (getPedals() & HANDBRAKE) != 0 && wheelspin != null;
+        tireSqueal.tick(this, Vec3.ZERO, entityData.get(WHEEL_SPIN) != 0
+                || velocity.length() > 0.1 && (entityData.get(SLIDE) || locked), 1);
     }
 
     @Override
@@ -335,6 +435,8 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
         buf.writeFloat(entityData.get(TURN_ANGLE));
         buf.writeFloat(entityData.get(FORWARD_SPEED));
         buf.writeBoolean(loseTraction);
+        buf.writeBoolean(spinning);
+        buf.writeFloat(entityData.get(WHEEL_SPIN));
     }
 
     @Override
@@ -343,6 +445,13 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
         setTurnAngle(buf.readFloat());
         entityData.set(FORWARD_SPEED, buf.readFloat());
         loseTraction = buf.readBoolean();
+        spinning = buf.readBoolean();
+        entityData.set(WHEEL_SPIN, buf.readFloat());
+    }
+
+    /** Blocks/tick of the wheel surface; exceeds ground speed while spinning. */
+    public float getWheelSpeed() {
+        return getForwardSpeed() + entityData.get(WHEEL_SPIN) * SPIN_SPEED;
     }
 
     @Override

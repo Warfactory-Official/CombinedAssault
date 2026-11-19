@@ -28,6 +28,14 @@ public class SuspensionUnitPojo extends PartUnitPojo {
     @SerializedName("stow_when_towed")
     public boolean stowWhenTowed;
 
+    /** Wheel propels the vehicle ({@code wheelspin}); no wheel true => every wheel does. */
+    @SerializedName("driven")
+    public Boolean driven;
+
+    /** Handbrake locks the wheel; no wheel true => every wheel is. */
+    @SerializedName("handbrake")
+    public Boolean handbrake;
+
     public SuspensionUnitPojo() {
         this.isSeat = false;
     }

@@ -63,6 +63,11 @@ public final class HitModel {
         return point ? v.add(groupRestOffset[slot]) : v;
     }
 
+    /** Model-frame point at rest -> group slot {@code slot}'s frame. */
+    public Vector3f toGroupPoint(int slot, Vector3f v) {
+        return groupRestInverse[slot].transform(v.sub(groupRestOffset[slot]));
+    }
+
     /** Model-frame direction -> group slot {@code slot}'s frame. */
     public Vector3f toGroupDirection(int slot, Vector3f v) {
         return groupRestInverse[slot].transform(v);

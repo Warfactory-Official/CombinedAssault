@@ -1,5 +1,6 @@
 package com.wf.combinedassault.vehicle.entity;
 
+import com.wf.combinedassault.vehicle.drive.TrackSlip;
 import com.wf.combinedassault.vehicle.drive.Transmission;
 import com.wf.combinedassault.ballistics.component.VehicleMobility;
 import com.wf.combinedassault.dynamics.PhysicsEngine;
@@ -34,6 +35,14 @@ public class TrackedVehicle extends GroundVehicle
 
     public static final EntityDataAccessor<Float> FORWARD_SPEED = SynchedEntityData.defineId(TrackedVehicle.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Float> TURN_SPEED = SynchedEntityData.defineId(TrackedVehicle.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Float> TRACK_SLIP = SynchedEntityData.defineId(TrackedVehicle.class, EntityDataSerializers.FLOAT);
+    /** Drive force per unit belly share (frictionless belly), as a fraction of {@code drive_grip * G}. */
+    private static final double BELLY_DRIVE = 0.5;
+    @Nullable
+    public TrackSlip trackSlip;
+    /** Drive on the kinetic budget ({@link TrackSlip#slipping}). */
+    private boolean slipping;
+    private boolean gripApplied;
     public float brakeAcceleration = 0.025f;
     public float forwardAcceleration = 0.01f;
     public float backwardAcceleration = 0.01f;
@@ -72,6 +81,8 @@ public class TrackedVehicle extends GroundVehicle
         super.writePrediction(buf);
         buf.writeFloat(entityData.get(FORWARD_SPEED));
         buf.writeFloat(entityData.get(TURN_SPEED));
+        buf.writeFloat(entityData.get(TRACK_SLIP));
+        buf.writeBoolean(slipping);
     }
 
     @Override
@@ -79,6 +90,28 @@ public class TrackedVehicle extends GroundVehicle
         super.readPrediction(buf);
         entityData.set(FORWARD_SPEED, buf.readFloat());
         entityData.set(TURN_SPEED, buf.readFloat());
+        entityData.set(TRACK_SLIP, buf.readFloat());
+        slipping = buf.readBoolean();
+    }
+
+    /** 0..1: fraction of the commanded drive lost to slip this tick. */
+    public float getTrackSlip() {
+        return entityData.get(TRACK_SLIP);
+    }
+
+    /** Drive gain (blocks/tick) after the grip cap; identity without {@code track_slip}. */
+    private double gripped(double gain) {
+        if (trackSlip == null) {
+            return gain;
+        }
+        float share = isInWater() && canWade ? 1 : physicsEngine.tractionShare();
+        double mu = trackSlip.driveGrip * PhysicsEngine.G;
+        double budget = mu * share;
+        gripApplied = true;
+        slipping = trackSlip.slipping(slipping, gain, budget);
+        double delivered = trackSlip.delivered(gain, budget, mu * BELLY_DRIVE * physicsEngine.bellyShare(), slipping);
+        entityData.set(TRACK_SLIP, TrackSlip.slip(gain, delivered));
+        return delivered;
     }
 
     @Override
@@ -105,6 +138,7 @@ public class TrackedVehicle extends GroundVehicle
         super.defineSynchedData(builder);
         builder.define(FORWARD_SPEED, 0f);
         builder.define(TURN_SPEED, 0f);
+        builder.define(TRACK_SLIP, 0f);
     }
 
     @Override
@@ -154,15 +188,16 @@ public class TrackedVehicle extends GroundVehicle
         float brake = brakeAcceleration / load;
         float turn = turnAcceleration / load;
 
+        gripApplied = false;
         if (transmission != null) {
             drivetrain(transmission, vf, maxSpeedForward, maxSpeedBackward, false);
             if (braking || engineBraking) {
                 float stop = braking ? brake : brake * ENGINE_BRAKE;
                 vf = vf > 0 ? Math.max(0, vf - stop) : Math.min(0, vf + stop);
             } else if (push > 0) {
-                vf = Math.max(vf, Math.min(pushCap, vf + (float) powerLimited(forwardAcceleration * pushScale * strain / load, vf, load)));
+                vf = Math.max(vf, Math.min(pushCap, vf + (float) gripped(powerLimited(forwardAcceleration * pushScale * strain / load, vf, load))));
             } else if (push < 0) {
-                vf = Math.min(vf, Math.max(-pushCap, vf - (float) powerLimited(backwardAcceleration * strain / load, vf, load)));
+                vf = Math.min(vf, Math.max(-pushCap, vf - (float) gripped(powerLimited(backwardAcceleration * strain / load, vf, load))));
             }
         } else if (controlUnit.forward || controlUnit.backward) {
             setPedals((controlUnit.forward ? THROTTLE : 0) | (controlUnit.backward ? BRAKE : 0));
@@ -170,13 +205,13 @@ public class TrackedVehicle extends GroundVehicle
                 if (vf < 0) {
                     vf += brake;
                 } else {
-                    vf += (float) powerLimited(forwardAcceleration * strain / load, vf, load);
+                    vf += (float) gripped(powerLimited(forwardAcceleration * strain / load, vf, load));
                 }
             } else {
                 if (vf > 0) {
                     vf -= brake;
                 } else {
-                    vf -= (float) powerLimited(backwardAcceleration * strain / load, vf, load);
+                    vf -= (float) gripped(powerLimited(backwardAcceleration * strain / load, vf, load));
                 }
             }
         }
@@ -184,6 +219,10 @@ public class TrackedVehicle extends GroundVehicle
             if (vf < 0 && !controlUnit.backward) {
                 vf += brake;
             }
+        }
+        if (trackSlip != null && !gripApplied) {
+            slipping = false;
+            entityData.set(TRACK_SLIP, 0f);
         }
         vf = Mth.clamp(vf, -maxSpeedBackward * mobility.speedScale() * strain,
                 maxSpeedForward * mobility.speedScale() * strain);
@@ -210,7 +249,8 @@ public class TrackedVehicle extends GroundVehicle
             if (transmission != null ? getGear() == Transmission.REVERSE : controlUnit.backward) {
                 vt *= -1;
             }
-            this.turnBy(vt + Math.abs(vf) / maxSpeedForward * vt / 5);
+            float yaw = vt + Math.abs(vf) / maxSpeedForward * vt / 5;
+            this.turnBy(trackSlip == null ? yaw : (float) (yaw * trackSlip.turnScale(slipping)));
             if (Math.abs(vt) > 0) {
                 vf *= 0.98f;
             }

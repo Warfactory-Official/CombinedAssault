@@ -68,6 +68,9 @@ public class SuspensionUnit<T extends SuspensionUnitData> extends PartUnit<T> {
     private final Quaternionf frameLocal = new Quaternionf();
     /** isActive() at capture; damage lands on the tick thread mid-solve. */
     private boolean frameActive;
+    /** Null: unspecified, see {@code SuspensionUnitPojo.driven}. */
+    private Boolean driven;
+    private Boolean locked;
 
     private record CalibrationPoint(SuspensionUnit<?> unit, int index, Vec3 bottom, Vector3d arm) {}
 
@@ -75,6 +78,8 @@ public class SuspensionUnit<T extends SuspensionUnitData> extends PartUnit<T> {
         super(index, vehicle, data);
         restLength = data.getRestLength();
         maxCompression = data.getMaxCompression();
+        driven = data.driven();
+        locked = data.handbrake();
         supportRestLengths[0] = restLength;
         supportMaxCompressions[0] = maxCompression;
         compression = remoteCompression = getMinCompression();
@@ -551,6 +556,29 @@ public class SuspensionUnit<T extends SuspensionUnitData> extends PartUnit<T> {
 
     protected int supportCount() {
         return supportOffsets.length;
+    }
+
+    /** Landing leg, not a wheel. */
+    public boolean isLeg() {
+        return data.stowWhenTowed();
+    }
+
+    public Boolean driven() {
+        return driven;
+    }
+
+    public Boolean locked() {
+        return locked;
+    }
+
+    public void setDrive(Boolean driven, Boolean locked) {
+        this.driven = driven;
+        this.locked = locked;
+    }
+
+    /** Spring force on the ground, N: 0 airborne or wrecked. */
+    public double load() {
+        return grounded && isActive() ? data.getSpringStiffness() * Math.max(0, compression) : 0;
     }
 
     public boolean isGrounded() {
