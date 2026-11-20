@@ -5,6 +5,9 @@ import com.wf.combinedassault.ballistics.component.HullComponents;
 import com.wf.combinedassault.ballistics.hit.HitModel;
 import com.wf.combinedassault.ballistics.hit.VehicleHits;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.weapon.part.MissileHolderUnit;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -29,7 +32,8 @@ import java.util.Map;
 /**
  * Per-side wing pools ({@code left wing}, {@code right wing}). A pool reaching 0 (fire, or a live wing cutting a block
  * collision box at {@link #STRIKE_SPEED}+) throws its topmost drawn wing nodes off as {@link RotorDebris}; the subtree
- * is hidden while the pool is 0 ({@code VehicleRender}) and that side gives no lift ({@link #intact}).
+ * is hidden while the pool is 0 ({@code VehicleRender}) and that side gives no lift ({@link #intact}). Pools of hit
+ * nodes under that subtree (wing-mounted engines, tanks) drop to 0 with it.
  */
 public final class WingLoss {
 
@@ -69,6 +73,8 @@ public final class WingLoss {
             boolean gone = current.health(i) <= 0;
             if (gone && !shed[i]) {
                 throwOff(vehicle, hits, current.id(i));
+                carried(hits.model().nodes(), current, current.id(i));
+                strip(vehicle);
             }
             shed[i] = gone;
         }
@@ -329,6 +335,55 @@ public final class WingLoss {
                             (float) random.nextGaussian() * 0.1f);
             level.addFreshEntity(new RotorDebris(level, at.add(mid.x, mid.y, mid.z), vehicle.getDisplayId(),
                     node.mesh().name(), pivot, up, model, velocity, spin));
+        }
+    }
+
+    /** Rounds on missile stations that hang on a spent wing are lost. */
+    private static void strip(FixedWingVehicle vehicle) {
+        for (PartUnit<?> part : vehicle.getPartUnits()) {
+            if (part instanceof MissileHolderUnit holder) {
+                for (int slot = 0; slot < holder.getCapacity(); slot++) {
+                    if (!holder.round(slot).isEmpty() && holder.onSpentWing(slot)) {
+                        holder.take(slot);
+                    }
+                }
+            }
+        }
+    }
+
+    /** World point on or within {@link #STORES_UNDER} below a spent wing's drawn node box. */
+    public static boolean onSpentWing(AbstractVehicle vehicle, Vec3 point) {
+        VehicleHits hits = vehicle.hits();
+        HullComponents pools = vehicle.hullComponents();
+        if (hits == null || pools.isEmpty()) {
+            return false;
+        }
+        List<HitModel.Node> nodes = hits.model().nodes();
+        Vec3 at = vehicle.position();
+        Matrix4f pose = new Matrix4f();
+        Vector3f p = new Vector3f();
+        for (int i = 0; i < nodes.size(); i++) {
+            if (spent(nodes.get(i), pools)
+                    && within(nodes.get(i).bounds(), hits.pose(i, at, pose).invert().transformPosition(
+                    p.set((float) (point.x - at.x), (float) (point.y - at.y), (float) (point.z - at.z))),
+                    SURFACE_REACH, STORES_UNDER)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Pools of nodes under a drawn node of the spent wing pool (engines on a wing) go with it. */
+    private static void carried(List<HitModel.Node> nodes, HullComponents pools, String wing) {
+        for (int i = 0; i < nodes.size(); i++) {
+            HitModel.Node node = nodes.get(i);
+            if (node.kind() == null || wing.equals(node.systemId()) || !underShed(nodes, i, wing)) {
+                continue;
+            }
+            int pool = pools.indexOf(node.systemId());
+            if (pool >= 0) {
+                pools.setHealth(pool, 0);
+            }
         }
     }
 

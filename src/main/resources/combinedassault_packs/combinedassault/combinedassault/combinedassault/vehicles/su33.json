@@ -1,18 +1,5 @@
 {
-    "armor": {
-        "plates": {
-            "canopy": {
-                "curved": true,
-                "hull": 0.15,
-                "layers": [
-                    {
-                        "mm": 20,
-                        "mat": "laminated"
-                    }
-                ]
-            }
-        }
-    },
+    "armor": {"front": 2, "side": 2, "rear": 2, "top": 2, "bottom": 2, "plates": {"canopy": {"curved": true, "hull": 0.15, "layers": [{"mm": 20, "mat": "laminated"}]}}},
     "type": "combinedassault:fixed_wing_vehicle",
     "attributes": {
         "thrust": 170000,
@@ -93,7 +80,13 @@
                 },
                 {
                     "id": "combinedassault:r_73",
-                    "part_unit_id": "ir_missile"
+                    "part_unit_id": "ir_missile_l",
+                    "salvo": "ir_missile"
+                },
+                {
+                    "id": "combinedassault:r_73",
+                    "part_unit_id": "ir_missile_r",
+                    "salvo": "ir_missile"
                 },
                 {
                     "id": "combinedassault:decoy_flare",
@@ -141,11 +134,27 @@
             }
         },
         {
-            "id": "ir_missile",
-            "name": "ir_missile",
+            "id": "ir_missile_l",
+            "name": "ir_missile_l",
             "type": "combinedassault:weapon",
+            "on_system": "left wing",
             "is_seat": false,
-            "ammo_capacity": 2,
+            "ammo_capacity": 1,
+            "fire_control_sensor_type": "ir",
+            "parent_weapon_unit_aim": true,
+            "crosshair_style": "none",
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "ir_missile_r",
+            "name": "ir_missile_r",
+            "type": "combinedassault:weapon",
+            "on_system": "right wing",
+            "is_seat": false,
+            "ammo_capacity": 1,
             "fire_control_sensor_type": "ir",
             "parent_weapon_unit_aim": true,
             "crosshair_style": "none",

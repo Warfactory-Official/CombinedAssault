@@ -123,5 +123,6 @@
             ]
         },
         "tab_index": 510
-    }
+    },
+    "armor": {"front": 1, "side": 1, "rear": 1, "top": 1, "bottom": 1, "plates": {}}
 }

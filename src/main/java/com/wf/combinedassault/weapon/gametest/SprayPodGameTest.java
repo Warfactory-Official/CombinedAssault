@@ -9,7 +9,7 @@ import com.wf.combinedassault.weapon.VehicleSprayPod;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.wflib.mist.api.MistEntity;
 import com.wf.wflib.mist.api.WFFluids;
-import com.wf.wflib.mist.spray.SprayCurtainEntity;
+import com.wf.wflib.mist.api.spray.SprayCurtainEntity;
 import com.wf.wflib.warhead.api.AgentOrangeWarhead;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;

@@ -285,8 +285,8 @@ public class RotaryWingVehicle extends AbstractVehicle
         // Wreck: rigid body only; airborne spin as upstream.
         // Sling load: rope pull at the hook would swing the airframe; controller holds rates, not attitude.
         physicsEngine.lockCenterRot = !isDestroyed() && !coupledBehind().isEmpty();
-        // Skids down: level ease (below) owns pitch / roll.
-        physicsEngine.yawRotOnly = !isDestroyed() && onGround();
+        physicsEngine.yawRotOnly = false;
+        float restPitch = getXRot(), restRoll = getZRot();
         if (isDestroyed()) {
             if (!onGround()) {
                 setYRot(getYRot() + 10);
@@ -481,17 +481,14 @@ public class RotaryWingVehicle extends AbstractVehicle
         zRotSpeed = Math.signum(zRotSpeed) * (Math.max(0, Math.abs(zRotSpeed) - ROT_FRICTION));
 
         if (onGround()) {
-            // yawRotOnly => contacts never pitch / roll the hull: CH-47 dropped 50 deg nose-down rested on its nose
-            // corner indefinitely. Eased level, released as rotor lift reaches weight. TODO: ease toward the ground slope.
-            float keep = GROUND_LEVEL_EASE + (1 - GROUND_LEVEL_EASE)
-                    * Mth.clamp((float) (force.y / (physicsEngine.mass * PhysicsHelper.GRAVITY)), 0, 1);
-            setXRot(getXRot() * keep);
-            setZRot(getZRot() * keep);
+            // Contacts own pitch / roll (terrain slope); cyclic authority = rotor lift / weight.
+            float authority = Mth.clamp((float) (force.y / (physicsEngine.mass * PhysicsHelper.GRAVITY)), 0, 1);
+            setXRot(restPitch + Mth.wrapDegrees(getXRot() - restPitch) * authority);
+            setZRot(restRoll + Mth.wrapDegrees(getZRot() - restRoll) * authority);
         }
         return force;
     }
 
-    private static final float GROUND_LEVEL_EASE = 0.7f;
     /** Rotor disc damping of contact spin in flight. TODO estimate. */
     private static final float LIVE_SPIN_RETENTION = 0.85f;
 

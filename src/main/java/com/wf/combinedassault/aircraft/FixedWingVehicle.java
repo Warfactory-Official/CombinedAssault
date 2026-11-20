@@ -14,6 +14,7 @@ import com.wf.combinedassault.aircraft.part.ThrustUnit;
 import com.wf.combinedassault.aircraft.part.data.FlapUnitData;
 import com.wf.combinedassault.aircraft.pojo.Exhaust;
 import com.wf.combinedassault.ballistics.component.VehicleRotors;
+import com.wf.combinedassault.ballistics.component.VehicleSystems;
 import com.wf.combinedassault.dynamics.PhysicsHelper;
 import com.wf.combinedassault.dynamics.part.LandingGearUnit;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
@@ -396,7 +397,7 @@ public class FixedWingVehicle extends AbstractVehicle
         }
         float power = (float) (throttleLevel / 100 * getPower() / 100 * strain());
         // Props / proprotors (rotor systems) carry the thrust.
-        float thrust = this.thrust * power * VehicleRotors.of(this).lift();
+        float thrust = this.thrust * power * VehicleRotors.of(this).lift() * VehicleSystems.engineScale(this);
         double a = PhysicsHelper.accelerationPerTick(thrust, mass);
         Vec3 thrustDirection = onGround ? new Vec3(forwardDirection.x, 0, forwardDirection.z).normalize() : forwardDirection;
         if (thrustUnit != null) {
@@ -450,8 +451,12 @@ public class FixedWingVehicle extends AbstractVehicle
                 : vtolTurnRate * power * Math.abs(Math.sin(Math.toRadians(thrustUnit.getXRot())));
         // Commanded rates are unladen: cargo inertia divides them.
         double inertia = 1 / load();
+        // Weight on the ground resists the surfaces: authority = stall-angle lift / weight (current lift: see stance below).
+        double stallLift = lift(f, angleOfAttackMax - flaps(Flap.STALL_SHIFT), liftToDragK, scaleAir) * wingLift;
+        float unloaded = onGround ? Mth.clamp((float) (stallLift / (mass * PhysicsHelper.GRAVITY)), 0, 1) : 1;
         if (zRotInput != 0) {
-            double d = Math.max(Math.min(zTurnRate, ke * zTurnRate), rcs * zTurnRate);
+            // Aileron moment ~ lift share; gear righting moment ~ the rest.
+            double d = Math.max(Math.min(zTurnRate, ke * zTurnRate) * Math.max(0, 2 * unloaded - 1), rcs * zTurnRate);
             q.rotateZ((float) Math.toRadians(zRotInput * d * inertia));
         }
         // Past the stall angle (signed, deg); 0 on the ground and hovering on vectored thrust.
@@ -463,7 +468,8 @@ public class FixedWingVehicle extends AbstractVehicle
         pressure = Math.min(1, pressure * pressure);
         if (xRotInput != 0) {
             // Stalled elevator: authority falls with the excess.
-            double d = Math.max(Math.min(xTurnRate, ke * xTurnRate) * Math.cos(Math.toRadians(stalled)), rcs * xTurnRate);
+            double d = Math.max(Math.min(xTurnRate, ke * xTurnRate) * Math.cos(Math.toRadians(stalled)) * (stance ? 1 : unloaded),
+                    rcs * xTurnRate);
             q.rotateX((float) Math.toRadians(xRotInput * d * inertia));
         }
         if (yRotInput != 0) {
@@ -500,8 +506,7 @@ public class FixedWingVehicle extends AbstractVehicle
             // yawRotOnly => contacts never pitch / roll the hull: look-up 10 deg sat an A-10 on its tail at 0.07 b/t,
             // landed one parked at -10. Gear stance eases to ground_pitch (pre-rewrite AUTO_LEVEL_EASE), released as lift at
             // the stall angle reaches weight (current lift: ease held AoA down, never flew). TODO: ease toward the ground slope.
-            double stallLift = lift(f, angleOfAttackMax - flaps(Flap.STALL_SHIFT), liftToDragK, scaleAir) * wingLift;
-            float keep = GEAR_LEVEL_EASE + (1 - GEAR_LEVEL_EASE) * Mth.clamp((float) (stallLift / (mass * PhysicsHelper.GRAVITY)), 0, 1);
+            float keep = GEAR_LEVEL_EASE + (1 - GEAR_LEVEL_EASE) * unloaded;
             float rest = (float) Math.toRadians(-groundPitch);
             rot.x = rest + (rot.x - rest) * keep;
             rot.z *= keep;

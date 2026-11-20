@@ -1,18 +1,5 @@
 {
-    "armor": {
-        "plates": {
-            "canopy": {
-                "curved": true,
-                "hull": 0.15,
-                "layers": [
-                    {
-                        "mm": 20,
-                        "mat": "laminated"
-                    }
-                ]
-            }
-        }
-    },
+    "armor": {"front": 2, "side": 2, "rear": 2, "top": 2, "bottom": 2, "plates": {"canopy": {"curved": true, "hull": 0.15, "layers": [{"mm": 20, "mat": "laminated"}]}}},
     "type": "combinedassault:fixed_wing_vehicle",
     "attributes": {
         "thrust": 110000,
@@ -88,18 +75,39 @@
                 },
                 {
                     "id": "combinedassault:aim_9",
-                    "part_unit_id": "ir_missile",
-                    "round_bones": ["store_ir_missile_0", "store_ir_missile_1"]
+                    "part_unit_id": "ir_missile_l",
+                    "salvo": "ir_missile",
+                    "round_bones": ["store_ir_missile_l_0"]
+                },
+                {
+                    "id": "combinedassault:aim_9",
+                    "part_unit_id": "ir_missile_r",
+                    "salvo": "ir_missile",
+                    "round_bones": ["store_ir_missile_r_0"]
                 },
                 {
                     "id": "combinedassault:agm_65",
-                    "part_unit_id": "ag_missile",
-                    "round_bones": ["store_ag_missile_0", "store_ag_missile_1"]
+                    "part_unit_id": "ag_missile_l",
+                    "salvo": "ag_missile",
+                    "round_bones": ["store_ag_missile_l_0"]
+                },
+                {
+                    "id": "combinedassault:agm_65",
+                    "part_unit_id": "ag_missile_r",
+                    "salvo": "ag_missile",
+                    "round_bones": ["store_ag_missile_r_0"]
                 },
                 {
                     "id": "combinedassault:mk_82",
-                    "part_unit_id": "bomb",
-                    "round_bones": ["store_bomb_0", "store_bomb_1", "store_bomb_2", "store_bomb_3"]
+                    "part_unit_id": "bomb_l",
+                    "salvo": "bomb",
+                    "round_bones": ["store_bomb_l_0", "store_bomb_l_1"]
+                },
+                {
+                    "id": "combinedassault:mk_82",
+                    "part_unit_id": "bomb_r",
+                    "salvo": "bomb",
+                    "round_bones": ["store_bomb_r_0", "store_bomb_r_1"]
                 },
                 {
                     "id": "combinedassault:decoy_flare",
@@ -120,11 +128,12 @@
             }
         },
         {
-            "id": "ir_missile",
-            "name": "ir_missile",
+            "id": "ir_missile_l",
+            "name": "ir_missile_l",
             "type": "combinedassault:weapon",
+            "on_system": "left wing",
             "is_seat": false,
-            "ammo_capacity": 2,
+            "ammo_capacity": 1,
             "fire_control_sensor_type": "ir",
             "parent_weapon_unit_aim": true,
             "crosshair_style": "none",
@@ -134,11 +143,27 @@
             }
         },
         {
-            "id": "ag_missile",
-            "name": "ag_missile",
+            "id": "ir_missile_r",
+            "name": "ir_missile_r",
             "type": "combinedassault:weapon",
+            "on_system": "right wing",
             "is_seat": false,
-            "ammo_capacity": 2,
+            "ammo_capacity": 1,
+            "fire_control_sensor_type": "ir",
+            "parent_weapon_unit_aim": true,
+            "crosshair_style": "none",
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "ag_missile_l",
+            "name": "ag_missile_l",
+            "type": "combinedassault:weapon",
+            "on_system": "left wing",
+            "is_seat": false,
+            "ammo_capacity": 1,
             "fire_control_sensor_type": "eo",
             "parent_weapon_unit_aim": true,
             "rot_info": {
@@ -147,11 +172,39 @@
             }
         },
         {
-            "id": "bomb",
-            "name": "bomb",
+            "id": "ag_missile_r",
+            "name": "ag_missile_r",
             "type": "combinedassault:weapon",
+            "on_system": "right wing",
             "is_seat": false,
-            "ammo_capacity": 4,
+            "ammo_capacity": 1,
+            "fire_control_sensor_type": "eo",
+            "parent_weapon_unit_aim": true,
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "bomb_l",
+            "name": "bomb_l",
+            "type": "combinedassault:weapon",
+            "on_system": "left wing",
+            "is_seat": false,
+            "ammo_capacity": 2,
+            "parent_weapon_unit_aim": true,
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "bomb_r",
+            "name": "bomb_r",
+            "type": "combinedassault:weapon",
+            "on_system": "right wing",
+            "is_seat": false,
+            "ammo_capacity": 2,
             "parent_weapon_unit_aim": true,
             "rot_info": {
                 "x_rot_speed": 0,

@@ -9,6 +9,7 @@ import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.weapon.part.data.MissileHolderUnitData;
 import com.wf.combinedassault.weapon.pojo.AimContext;
 import com.wf.combinedassault.weapon.pojo.MissileSize;
+import com.wf.combinedassault.aircraft.WingLoss;
 import com.wf.combinedassault.weapon.pojo.Station;
 import com.wf.wflib.magazine.api.MagazineItems;
 import com.wf.wflib.magazine.api.PodItem;
@@ -186,9 +187,15 @@ public class MissileHolderUnit extends PartUnit<MissileHolderUnitData> {
         return firstEmpty() >= 0 && fits(stack);
     }
 
-    /** Slot {@code slot} empty and {@code stack} fits. */
+    /** Slot {@code slot} empty, its station not on a spent wing, and {@code stack} fits. */
     public boolean canLoad(int slot, ItemStack stack) {
-        return slot < getCapacity() && slots[slot].isEmpty() && fits(stack);
+        return slot < getCapacity() && slots[slot].isEmpty() && fits(stack) && !onSpentWing(slot);
+    }
+
+    /** Station {@code slot} hangs on a spent wing pool. */
+    public boolean onSpentWing(int slot) {
+        StationPose pose = station(slot);
+        return pose != null && WingLoss.onSpentWing(getVehicle(), pose.origin());
     }
 
     /** Pods: the seated pod's tube tag. Else size accepted. */
@@ -269,7 +276,7 @@ public class MissileHolderUnit extends PartUnit<MissileHolderUnitData> {
 
     private int firstEmpty() {
         for (int i = 0; i < getCapacity(); i++) {
-            if (slots[i].isEmpty()) {
+            if (slots[i].isEmpty() && !onSpentWing(i)) {
                 return i;
             }
         }

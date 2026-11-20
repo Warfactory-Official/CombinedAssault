@@ -355,9 +355,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     /** Damage to systems that are hull geometry rather than parts; see {@link #hullComponents()}. */
     @Nullable
     private HullComponents hullComponents;
-    /** {@link VehicleSystems#engineWorks}: engine cell (null: none) of {@link #engineCellPools}. */
-    @Nullable
-    public VehicleSystems.Cell engineCell;
+    /** {@link VehicleSystems#engineWorks}: engine cells (empty: none) of {@link #engineCellPools}. */
+    public final List<VehicleSystems.Cell> engineCells = new ArrayList<>();
     @Nullable
     public HullComponents engineCellPools;
     @Nullable

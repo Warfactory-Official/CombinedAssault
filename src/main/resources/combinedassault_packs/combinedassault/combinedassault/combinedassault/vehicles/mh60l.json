@@ -1,28 +1,5 @@
 {
-    "armor": {
-        "plates": {
-            "windshield": {
-                "curved": true,
-                "hull": 0.15,
-                "layers": [
-                    {
-                        "mm": 12,
-                        "mat": "laminated"
-                    }
-                ]
-            },
-            "window": {
-                "facing": "side",
-                "hull": 0.15,
-                "layers": [
-                    {
-                        "mm": 6,
-                        "mat": "glass"
-                    }
-                ]
-            }
-        }
-    },
+    "armor": {"front": 2, "side": 2, "rear": 2, "top": 2, "bottom": 2, "plates": {"windshield": {"curved": true, "hull": 0.15, "layers": [{"mm": 12, "mat": "laminated"}]}, "window": {"facing": "side", "hull": 0.15, "layers": [{"mm": 6, "mat": "glass"}]}, "crew_seat": {"curved": true, "layers": [{"mm": 15, "mat": "nera"}]}}},
     "type": "combinedassault:rotary_wing_vehicle",
     "attributes": {
         "main_rotor_force": 138600,

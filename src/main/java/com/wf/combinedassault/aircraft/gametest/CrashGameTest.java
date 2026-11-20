@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 import java.util.Optional;
 
-/** Vehicles into an obsidian post (off-centre hit) and into a dirt pad (dive, skid, drop); wreck fall, rollover, coast-down, stall, settle. */
+/** Vehicles into an obsidian post (off-centre hit) and into a dirt pad (dive, skid, drop); wreck fall, rollover, coast-down, stall, settle, ground attitude. */
 @PrefixGameTestTemplate(false)
 public class CrashGameTest {
 
@@ -32,6 +32,8 @@ public class CrashGameTest {
     private static final ResourceLocation MQ9 = CombinedAssault.modLocation("mq9");
     private static final ResourceLocation HUMVEE = CombinedAssault.modLocation("humvee");
     private static final ResourceLocation KA52 = CombinedAssault.modLocation("ka52");
+    private static final ResourceLocation MH60L = CombinedAssault.modLocation("mh60l");
+    private static final ResourceLocation MI24 = CombinedAssault.modLocation("mi24");
     private static final ResourceLocation M1A2 = CombinedAssault.modLocation("m1a2");
     /** Clear of WingLossGameTest (-2100 + 96 i). */
     private static final int LANE_X = -2700;
@@ -186,6 +188,64 @@ public class CrashGameTest {
         }, v -> !landed[0] || moving[0] > 40 || Math.abs(v.getZRot()) > 1 || Math.abs(v.getXRot()) > 1
                 ? String.format(Locale.ROOT, "landed %s, still moving at tick %d, roll %.1f pitch %.1f", landed[0], moving[0], v.getZRot(),
                 v.getXRot()) : null);
+    }
+
+    /** Before: grounded helicopter held level, tail hanging a block over the low side. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
+    public static void aHelicopterWithoutGearSettlesOnAStep(GameTestHelper helper) {
+        step(helper, -7, MH60L);
+    }
+
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
+    public static void aHelicopterOnGearSettlesOnAStep(GameTestHelper helper) {
+        step(helper, -8, MI24);
+    }
+
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
+    public static void aHelicopterDroppedNoseDownLevelsOut(GameTestHelper helper) {
+        loose(helper, -9, MH60L, 2, 0, 160, v -> {
+            v.setXRot(30);
+            v.setDeltaMovement(0, 0, 0);
+        }, (v, y) -> {
+        }, v -> Math.abs(v.getXRot()) > 3 || Math.abs(v.getZRot()) > 3
+                ? String.format(Locale.ROOT, "pitch %.1f roll %.1f", v.getXRot(), v.getZRot()) : null);
+    }
+
+    /** Half lift-off speed, full aileron. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
+    public static void aTaxiingPlaneCannotBank(GameTestHelper helper) {
+        double[] roll = {0};
+        loose(helper, -10, A10, 0, 0, 60, v -> {
+        }, (v, y) -> {
+            v.controlUnit.right = true;
+            v.setDeltaMovement(v.getLookAngle().multiply(1, 0, 1).normalize().scale(((FixedWingVehicle) v).liftOffSpeed() / 2));
+            roll[0] = Math.max(roll[0], Math.abs(v.getZRot()));
+        }, v -> roll[0] > 1 ? String.format(Locale.ROOT, "roll %.1f", roll[0]) : null);
+    }
+
+    /** Nose half over a 1-block ledge: rests pitched onto both levels. */
+    private static void step(GameTestHelper helper, int lane, ResourceLocation id) {
+        ServerLevel level = helper.getLevel();
+        BlockPos at = helper.absolutePos(BlockPos.ZERO).offset(LANE_X + lane * LANE_PITCH, 120, 0);
+        loose(helper, lane, id, 1, 0, 160, v -> {
+            ledge(level, at, Blocks.STONE.defaultBlockState());
+            v.setDeltaMovement(0, 0, 0);
+        }, (v, y) -> {
+        }, v -> {
+            ledge(level, at, Blocks.AIR.defaultBlockState());
+            return Math.abs(v.getXRot()) < 3 || v.physicsEngine.angularVelocity.length() > 0.005 || Math.abs(v.getDeltaMovement().y) > 0.01
+                    ? String.format(Locale.ROOT, "pitch %.1f roll %.1f spin %.4f vy %.3f", v.getXRot(), v.getZRot(),
+                    v.physicsEngine.angularVelocity.length(), v.getDeltaMovement().y) : null;
+        });
+    }
+
+    private static void ledge(ServerLevel level, BlockPos at, BlockState state) {
+        BlockPos.MutableBlockPos cell = new BlockPos.MutableBlockPos();
+        for (int x = -PAD_HALF_X; x <= PAD_HALF_X; x++) {
+            for (int z = 1; z <= 12; z++) {
+                level.setBlock(cell.setWithOffset(at, x, 0, z), state, 18);
+            }
+        }
     }
 
     /** Unmanned vehicle settled on the pad, then lifted {@code height} and released; {@code verdict} null = pass. */

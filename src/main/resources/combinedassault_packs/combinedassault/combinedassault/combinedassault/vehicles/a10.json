@@ -1,18 +1,5 @@
 {
-    "armor": {
-        "plates": {
-            "canopy": {
-                "curved": true,
-                "hull": 0.15,
-                "layers": [
-                    {
-                        "mm": 38,
-                        "mat": "laminated"
-                    }
-                ]
-            }
-        }
-    },
+    "armor": {"front": 2, "side": 2, "rear": 2, "top": 2, "bottom": 2, "plates": {"tub": {"curved": true, "layers": [{"mm": 34, "mat": "rha"}]}, "canopy": {"curved": true, "hull": 0.15, "layers": [{"mm": 38, "mat": "laminated"}]}}},
     "type": "combinedassault:fixed_wing_vehicle",
     "attributes": {
         "thrust": 80000,
@@ -84,8 +71,15 @@
                 },
                 {
                     "id": "combinedassault:agm_65",
-                    "part_unit_id": "ag_missile",
-                    "round_bones": ["store_ag_missile_0", "store_ag_missile_1"]
+                    "part_unit_id": "ag_missile_l",
+                    "salvo": "agm_65",
+                    "round_bones": ["store_ag_missile_l_0"]
+                },
+                {
+                    "id": "combinedassault:agm_65",
+                    "part_unit_id": "ag_missile_r",
+                    "salvo": "agm_65",
+                    "round_bones": ["store_ag_missile_r_0"]
                 },
                 {
                     "id": "combinedassault:aim_9",
@@ -99,7 +93,13 @@
                 },
                 {
                     "id": "combinedassault:hydra_70",
-                    "part_unit_id": "rocket"
+                    "part_unit_id": "rocket_l",
+                    "salvo": "hydra_70"
+                },
+                {
+                    "id": "combinedassault:hydra_70",
+                    "part_unit_id": "rocket_r",
+                    "salvo": "hydra_70"
                 },
                 {
                     "id": "combinedassault:decoy_flare",
@@ -120,11 +120,26 @@
             }
         },
         {
-            "id": "ag_missile",
-            "name": "ag_missile",
+            "id": "ag_missile_l",
+            "name": "ag_missile_l",
             "type": "combinedassault:weapon",
             "is_seat": false,
-            "ammo_capacity": 2,
+            "on_system": "left wing",
+            "ammo_capacity": 1,
+            "fire_control_sensor_type": "eo",
+            "parent_weapon_unit_aim": true,
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "ag_missile_r",
+            "name": "ag_missile_r",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "on_system": "right wing",
+            "ammo_capacity": 1,
             "fire_control_sensor_type": "eo",
             "parent_weapon_unit_aim": true,
             "rot_info": {
@@ -137,6 +152,7 @@
             "name": "ir_missile",
             "type": "combinedassault:weapon",
             "is_seat": false,
+            "on_system": "right wing",
             "ammo_capacity": 2,
             "fire_control_sensor_type": "ir",
             "parent_weapon_unit_aim": true,
@@ -159,11 +175,25 @@
             }
         },
         {
-            "id": "rocket",
-            "name": "rocket",
+            "id": "rocket_l",
+            "name": "rocket_l",
             "type": "combinedassault:weapon",
             "is_seat": false,
-            "ammo_capacity": 38,
+            "on_system": "left wing",
+            "ammo_capacity": 19,
+            "crosshair_style": "circle",
+            "rot_info": {
+                "x_rot_speed": 0,
+                "y_rot_speed": 0
+            }
+        },
+        {
+            "id": "rocket_r",
+            "name": "rocket_r",
+            "type": "combinedassault:weapon",
+            "is_seat": false,
+            "on_system": "right wing",
+            "ammo_capacity": 19,
             "crosshair_style": "circle",
             "rot_info": {
                 "x_rot_speed": 0,

@@ -172,21 +172,47 @@ public final class VehicleSystems {
         return true;
     }
 
-    /** No ENGINE cell (emplacement, trailer) => true. */
-    /** Every tick per vehicle: the engine cell is kept per pool set ({@link #cells}: 5 us a call). */
+    /** No ENGINE cell (emplacement, trailer) => true; false only when every engine cell failed. Cells kept per pool set ({@link #cells}: 5 us a call). */
     public static boolean engineWorks(AbstractVehicle vehicle) {
         HullComponents pools = vehicle.hullComponents();
         if (vehicle.engineCellPools != pools) {
-            vehicle.engineCell = null;
+            vehicle.engineCells.clear();
             for (Cell cell : cells(vehicle)) {
                 if (cell.kind == ComponentKind.ENGINE) {
-                    vehicle.engineCell = cell;
-                    break;
+                    vehicle.engineCells.add(cell);
                 }
             }
             vehicle.engineCellPools = pools;
         }
-        return vehicle.engineCell == null || !vehicle.engineCell.failed();
+        if (vehicle.engineCells.isEmpty()) {
+            return true;
+        }
+        for (Cell cell : vehicle.engineCells) {
+            if (!cell.failed()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Mean effectiveness of every engine pool / part; 1 when none declared. Thrust of multi-engine aircraft. */
+    public static float engineScale(AbstractVehicle vehicle) {
+        float sum = 0;
+        int count = 0;
+        for (PartUnit<?> part : vehicle.getPartUnits()) {
+            if (ComponentDamage.kind(part) == ComponentKind.ENGINE) {
+                sum += ComponentDamage.effectiveness(part);
+                count++;
+            }
+        }
+        HullComponents pools = vehicle.hullComponents();
+        for (int i = 0, size = pools.size(); i < size; i++) {
+            if (pools.kind(i) == ComponentKind.ENGINE) {
+                sum += pools.effectiveness(i);
+                count++;
+            }
+        }
+        return count == 0 ? 1 : sum / count;
     }
 
     /** Hull damage beyond zero, split evenly over non-hull members still above zero. */

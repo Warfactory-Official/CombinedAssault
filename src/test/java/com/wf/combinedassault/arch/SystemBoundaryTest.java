@@ -38,7 +38,7 @@ class SystemBoundaryTest {
             Map.entry("ballistics", Set.of("camo", "radar")),
             Map.entry("cargo", Set.of("aircraft", "deck", "tow")),
             Map.entry("dynamics", Set.of("aircraft", "tow")),
-            Map.entry("hud", Set.of("aircraft", "cargo", "energy", "indirect", "naval", "radar", "uav")),
+            Map.entry("hud", Set.of("aircraft", "cargo", "energy", "indirect", "naval", "radar", "tow", "uav")),
             Map.entry("naval", Set.of("energy")),
             Map.entry("pack", Set.of("aircraft", "radar")),
             Map.entry("radar", Set.of("camo")),
