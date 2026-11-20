@@ -1,5 +1,6 @@
 package com.wf.combinedassault.weapon.client;
 
+import com.wf.gemrender.ui.SharpTextScreen;
 import com.wf.combinedassault.indirect.IndirectFire;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.weapon.VehicleMissile;
@@ -16,7 +17,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.Locale;
 import java.util.function.Consumer;
 
-public class CoordinateInputScreen extends Screen {
+public class CoordinateInputScreen extends Screen implements SharpTextScreen {
 
     /** Preview of a fixed-profile round's climb/dive legs, blocks. */
     private static final double PRESET_ASCENT = 64;

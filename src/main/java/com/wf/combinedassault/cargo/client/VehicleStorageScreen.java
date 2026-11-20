@@ -1,5 +1,6 @@
 package com.wf.combinedassault.cargo.client;
 
+import com.wf.gemrender.ui.SharpTextScreen;
 import com.wf.combinedassault.cargo.HoldGrid;
 import com.wf.combinedassault.cargo.VehicleStorageMenu;
 import net.minecraft.client.gui.GuiGraphics;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * Hold panel drawn flat, not blitted: vanilla's chest texture caps at 54 slots, a hold is any size.
  * Overflow rows scroll, not paged. Palette matches CombinedAssault's other screens' shared stylesheet.
  */
-public class VehicleStorageScreen extends AbstractContainerScreen<VehicleStorageMenu> {
+public class VehicleStorageScreen extends AbstractContainerScreen<VehicleStorageMenu> implements SharpTextScreen {
 
     private static final int SURFACE = 0xCC48494A;
 
