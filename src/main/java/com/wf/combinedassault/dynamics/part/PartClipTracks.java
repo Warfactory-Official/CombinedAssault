@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <table>
  *   <tr><th>part</th><th>clip</th><th>p</th></tr>
- *   <tr><td>switchable</td><td>any</td><td>-> on ? 1 : 0 at 1/span per second; span = track's longest clip</td></tr>
+ *   <tr><td>switchable</td><td>any</td><td>-> on ? 1 : 0 at 1/span per second, smoothstep(t^skew), duration and skew rerolled per motion start; span = track's longest clip</td></tr>
  *   <tr><td>flaps</td><td>any</td><td>deflection / full</td></tr>
  *   <tr><td>linked hinge</td><td>any</td><td>rotation / open rotation</td></tr>
  *   <tr><td>weapon</td><td>{@code .fire}</td><td>time since current weapon's last shot / span; never fired => 1</td></tr>
@@ -46,6 +46,10 @@ public final class PartClipTracks {
         private boolean clearsJams;
         private float progress = Float.NaN;
         private float progressO;
+        private int starts;
+        /** Duration multiplier, 0.75..1.35. */
+        private float pace = 1;
+        private float skew = 1;
 
         private Track(PartUnit<?> part, Kind kind, int[] clips, float span) {
             this.part = part;
@@ -77,8 +81,26 @@ public final class PartClipTracks {
                 case UNJAM -> ((WeaponUnit) part).getCurrentWeapon()
                         .map(weapon -> weapon.barrel() == null ? 0 : weapon.barrel().clearProgress(partialTick))
                         .orElse(0f);
-                case TOGGLE -> Float.isNaN(progress) ? target() : Mth.lerp(partialTick, progressO, progress);
+                case TOGGLE -> Float.isNaN(progress) ? target() : ease(Mth.lerp(partialTick, progressO, progress));
             };
+        }
+
+        /** smoothstep(t^skew): where the swing is quick moves per motion. */
+        private float ease(float t) {
+            float u = (float) Math.pow(t, skew);
+            return u * u * (3 - 2 * u);
+        }
+
+        /** Per rest->motion start; seeded by (vehicle id, part index, start count) => client == server. */
+        private void reroll() {
+            long h = (part.getVehicle().getId() * 31L + part.getIndex()) * 0x9E3779B97F4A7C15L + (starts++) * 0xC2B2AE3D27D4EB4FL;
+            h ^= h >>> 29;
+            h *= 0xBF58476D1CE4E5B9L;
+            h ^= h >>> 32;
+            float a = (h & 0xFFFF) / 65535f;
+            float b = ((h >>> 16) & 0xFFFF) / 65535f;
+            pace = 0.75f + 0.6f * a;
+            skew = 0.65f + 0.9f * b;
         }
 
         private float target() {
@@ -98,7 +120,10 @@ public final class PartClipTracks {
                 return true;
             }
             progressO = progress;
-            float step = span <= 0 ? 1 : 1 / (span * 20);
+            if (target != progress && (progress == 0 || progress == 1)) {
+                reroll();
+            }
+            float step = span <= 0 ? 1 : 1 / (span * 20 * pace);
             progress = target > progress ? Math.min(target, progress + step) : Math.max(target, progress - step);
             return progress != progressO;
         }

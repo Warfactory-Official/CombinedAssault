@@ -93,7 +93,7 @@ public final class HullRenderer {
     /** Stable per id: golden-angle hue steps off the id's hash; unbound faces keep the LOS ramp. */
     public static float[] plateColour(String plate) {
         return PLATE_COLOURS.computeIfAbsent(plate, id -> {
-            int rgb = Mth.hsvToRgb(((id.hashCode() * 0.61803398875F) % 1 + 1) % 1, 0.75F, 1);
+            int rgb = Mth.hsvToRgb((float) (((id.hashCode() * 0.61803398875) % 1 + 1) % 1), 0.75F, 1);
             return new float[]{(rgb >> 16 & 255) / 255F, (rgb >> 8 & 255) / 255F, (rgb & 255) / 255F};
         });
     }
@@ -161,6 +161,43 @@ public final class HullRenderer {
                 }
             }
             poseStack.popPose();
+        }
+    }
+
+    private static final float[] LIGHT = {0.35F, 0.80F, 0.48F};
+
+    /**
+     * Armour hit surfaces as shaded plate-coloured triangles (quad buffer, last vertex doubled): reads where
+     * {@link #renderHits} wire turns to a blob at small scale. Modules are skipped; unbound faces grey.
+     */
+    public static void renderHitsSolid(AbstractVehicle vehicle, PoseStack poseStack, VertexConsumer buffer, float alpha) {
+        VehicleHits hits = vehicle.hits();
+        if (hits == null) {
+            return;
+        }
+        Matrix4f pose = new Matrix4f();
+        for (int i = 0; i < hits.model().nodes().size(); i++) {
+            HitModel.Node node = hits.model().nodes().get(i);
+            TriangleBvh mesh = node.mesh().mesh();
+            if (!hits.live(i) || node.mesh().module() || mesh == null) {
+                continue;
+            }
+            hits.pose(i, vehicle.position(), pose);
+            Matrix4f m = new Matrix4f(poseStack.last().pose()).mul(pose);
+            float[] t = mesh.triangles();
+            float[] n = new float[3];
+            Vector3f normal = new Vector3f();
+            for (int k = 0; k < t.length; k += 9) {
+                String plate = hits.model().mesh().plateId(mesh.plate(k / 9));
+                float[] c = plate != null ? plateColour(plate) : NO_ARMOR;
+                mesh.normal(k / 9, n);
+                pose.transformDirection(normal.set(n[0], n[1], n[2])).normalize();
+                float shade = 0.5F + 0.5F * Math.abs(normal.x * LIGHT[0] + normal.y * LIGHT[1] + normal.z * LIGHT[2]);
+                for (int v = 0; v < 4; v++) {
+                    int at = k + Math.min(v, 2) * 3;
+                    buffer.addVertex(m, t[at], t[at + 1], t[at + 2]).setColor(c[0] * shade, c[1] * shade, c[2] * shade, alpha);
+                }
+            }
         }
     }
 

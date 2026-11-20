@@ -26,6 +26,11 @@ public final class VehicleCapture {
     private static final float MARGIN = 0.1f;
     /** Pitch/roll spin kept per tick on the belly, sprung. */
     private static final float BELLY_SPIN_RETENTION = 0.6f;
+    /**
+     * Spin kept per grounded tick, unsprung: rocking on rigid contacts loses nothing otherwise (A-10 wing on a humvee
+     * roof rolled 0 <-> 11 deg, 2.4 s period, undamped; wreck in its crater pitched 3 <-> 12). TODO estimate.
+     */
+    private static final float UNSPRUNG_GROUND_SPIN_RETENTION = 0.97f;
     /** Strut -y: full spring at cos 45, none at cos 60 (SuspensionUnit probes to there). */
     private static final double STRUT_FADE_START = 0.7071, STRUT_FADE_END = 0.5;
     /** Blocks; past it a pose is broken, and preparing the sweep allocates collision columns without bound. */
@@ -78,12 +83,18 @@ public final class VehicleCapture {
             s.inverseInertia.zero();
         } else {
             engine.inverseInertiaWorld(s.hullRotation, s.inverseInertia);
+            if (engine.yawRotOnly) {
+                yawOnly(s.inverseInertia);
+            }
         }
         Vec3 movement = v.getDeltaMovement();
         s.velocity.set((float) movement.x, (float) movement.y, (float) movement.z);
         s.spin.set(engine.angularVelocity);
         if (engine.lockCenterRot) {
             s.spin.zero();
+        } else if (engine.yawRotOnly) {
+            s.spin.x = 0;
+            s.spin.z = 0;
         }
         s.sprung = engine.suspended();
         boolean wheelsWereDown = engine.wheelsGrounded();
@@ -94,6 +105,9 @@ public final class VehicleCapture {
         s.gear = !s.sprung && v.rollsOnGear();
         s.acceleration.set(0, v.isNoGravity() || s.carried ? 0 : -PhysicsEngine.G, 0);
         engine.buoyancy(s.velocity, s.acceleration);
+        if (v.bodyDrag()) {
+            engine.bodyDrag(s.velocity, s.hullRotation, main.obb().extents());
+        }
         if (s.sprung) {
             s.spin.y = engine.decayYawSpin(s.spin.y, v.onGround());
             // Wreck: locked gear drags; upright belly frictionless in the step (> 45 deg: Coulomb there). Gear-only
@@ -109,8 +123,11 @@ public final class VehicleCapture {
         } else if ((v.towedOnWheels() || s.gear) && v.onGround()) {
             engine.rollingResistance(s.velocity);
         }
+        if (!s.sprung && engine.yawRotOnly && v.onGround()) {
+            s.spin.y = engine.decayYawSpin(s.spin.y, true);
+        }
         driveTorque(engine, s, wheelsWereDown);
-        s.spinRetention = v.onGround() ? 1 : engine.tumbleAirDamping;
+        s.spinRetention = !v.onGround() ? v.airSpinRetention() : s.sprung ? 1 : UNSPRUNG_GROUND_SPIN_RETENTION;
         s.maxSpin = engine.effectiveMaxRotV();
 
         float reach = s.hullExtents.length();
@@ -128,6 +145,16 @@ public final class VehicleCapture {
         s.restitution = engine.bounce;
         v.bindStepWorld(s, gather);
         engine.prepareSuspension();
+    }
+
+    /** (R (m I)^-1 R^T) -> 1 / I_yy on the y axis alone. */
+    private static void yawOnly(Matrix3f inverseInertia) {
+        if (!(inverseInertia.determinant() > 1.0e-20f)) {
+            inverseInertia.zero();
+            return;
+        }
+        float yy = inverseInertia.invert().m11;
+        inverseInertia.zero().m11 = 1 / yy;
     }
 
     /** Sprung: the drive's dv acts at the wheels' contact plane, not the COM => squat, dive, lean. */
@@ -193,6 +220,7 @@ public final class VehicleCapture {
     /** Coupling geometry against the tractor's current (pre-step) pose; parted-far couplings left to {@link TowSolver}. */
     private static void captureTow(AbstractVehicle v, BodyState s) {
         s.coupling = null;
+        s.ropeCount = 0;
         TowLink link = v.towLink();
         HitchInfo hitch = link == null ? null : link.hitch();
         if (hitch == null || link.tractor().isRemoved() || link.tractor().level() != v.level()) {
@@ -201,8 +229,10 @@ public final class VehicleCapture {
         AbstractVehicle tractor = link.tractor();
         TowMode mode = link.mode();
         Vec3 hitchAt = TowLinks.hitchPoint(tractor, hitch);
-        Vec3 attach = TowLinks.attachPoint(v, mode);
-        s.couplingLength = mode == TowMode.HITCH ? -1 : (float) link.cable();
+        boolean sling = mode == TowMode.SLING;
+        Vec3 attach = sling ? TowLinks.worldPoint(v, TowLinks.slingLegOffset(v, 0)) : TowLinks.attachPoint(v, mode);
+        s.couplingLength = mode == TowMode.HITCH ? -1
+                : (float) (sling ? TowLinks.slingLegLength(v, link.cable(), 0) : link.cable());
         if (hitchAt.distanceTo(attach) - Math.max(s.couplingLength, 0) > TowSolver.BREAK_MARGIN) {
             return;
         }
@@ -217,7 +247,18 @@ public final class VehicleCapture {
         s.couplingYawLimit = Float.NaN;
         s.couplingRoll = Float.NaN;
         s.couplingGrip = (float) PhysicsEngine.TYRE_GRIP;
-        if (mode == TowMode.SLING) {
+        if (sling) {
+            s.ropeCount = TowLinks.SLING_LEGS - 1;
+            for (int i = 0; i < s.ropeCount; i++) {
+                Vec3 leg = TowLinks.worldPoint(v, TowLinks.slingLegOffset(v, i + 1));
+                s.ropePoints[i * 6] = leg.x;
+                s.ropePoints[i * 6 + 1] = leg.y;
+                s.ropePoints[i * 6 + 2] = leg.z;
+                s.ropePoints[i * 6 + 3] = hitchAt.x;
+                s.ropePoints[i * 6 + 4] = hitchAt.y;
+                s.ropePoints[i * 6 + 5] = hitchAt.z;
+                s.ropeLength[i] = (float) TowLinks.slingLegLength(v, link.cable(), i + 1);
+            }
             return;
         }
         TowableInfo towable = v.towing.towable;
@@ -347,6 +388,20 @@ public final class VehicleCapture {
         return 0.5f * spin.dot(inertia.transform(new Vector3f(spin)));
     }
 
+    /**
+     * Past 45 deg and turning toward the nearer rest (side, roof): exempt from the belly spin rule. Damped => rollover
+     * at a constant creep (M1A2 73 -> 90 deg in 36 t). Exempt both ways => rocked 83..98 deg on its side 80+ t, a
+     * truck dropped on its side rolled on to 119..133 deg.
+     */
+    private static boolean fallingOver(BodyState s, StepResult r) {
+        Vector3f up = s.hullRotation.transform(new Vector3f(0, 1, 0));
+        if (up.y > BodyState.BELLY_SPIN_UP) {
+            return false;
+        }
+        float rising = r.spin.z * up.x - r.spin.x * up.z;
+        return up.y > 0 || up.y < -BodyState.BELLY_SPIN_UP ? rising < 0 : rising > 0;
+    }
+
     /** Island task: belly spin rule, impact, engine bookkeeping. */
     public static void solved(AbstractVehicle v, BodyState s, StepResult r) {
         PhysicsEngine engine = v.physicsEngine;
@@ -357,14 +412,16 @@ public final class VehicleCapture {
         // of the load). Frictionless lift rows at the hull edge kicked roll every bump; gated on < half the wheels
         // down and up.y > cos 45 the rule missed both (m3 WEAVE: 3 wheels down, 0.09 rad/t roll, then airborne).
         // Coulomb belly FORBIDDEN (tripped flat turns). Yaw kept.
-        if (s.sprung && r.belly) {
+        if (s.sprung && r.belly && !fallingOver(s, r)) {
             r.spin.x *= BELLY_SPIN_RETENTION;
             r.spin.z *= BELLY_SPIN_RETENTION;
         }
         rig.impactVelocityDiff = 0;
-        if (r.impactWeight > 0 && r.velocityDiff * PhysicsHelper.TICKS_PER_SECOND > v.impactSpeedThreshold()) {
-            rig.impactVelocityDiff = r.velocityDiff;
+        if (r.impactWeight > 0) {
             rig.impactPos = new Vec3(r.impactX, r.impactY, r.impactZ);
+            if (r.velocityDiff * PhysicsHelper.TICKS_PER_SECOND > v.impactSpeedThreshold()) {
+                rig.impactVelocityDiff = r.velocityDiff;
+            }
         }
         engine.solved(r.spin, r.wheelLoad, r.bellyLoad, r.groundY, r.blockingCells, r.ramSpeed, rig.cursor);
     }

@@ -34,7 +34,7 @@ public final class TowCable {
     private TowCable() {
     }
 
-    /** [tractor end, towed end]; null if not on a cable link. */
+    /** Pairs [tractor end, towed end], one per rope (sling: {@link TowLinks#SLING_LEGS}); null if not on a cable link. */
     @Nullable
     public static Vec3[] ends(AbstractVehicle towed, float partialTick) {
         int packed = towed.getTowHitch();
@@ -52,8 +52,16 @@ public final class TowCable {
             return null;
         }
         HitchInfo hitch = tractor.towing.hitches.get(index);
-        return new Vec3[]{point(tractor, hitch.offset, partialTick),
-                point(towed, mode == TowMode.SLING ? TowLinks.slingOffset(towed) : towed.towing.towable.offset, partialTick)};
+        Vec3 hook = point(tractor, hitch.offset, partialTick);
+        if (mode != TowMode.SLING) {
+            return new Vec3[]{hook, point(towed, towed.towing.towable.offset, partialTick)};
+        }
+        Vec3[] legs = new Vec3[TowLinks.SLING_LEGS * 2];
+        for (int i = 0; i < TowLinks.SLING_LEGS; i++) {
+            legs[i * 2] = hook;
+            legs[i * 2 + 1] = point(towed, TowLinks.slingLegOffset(towed, i), partialTick);
+        }
+        return legs;
     }
 
     /** Vehicle-frame point -> world, interpolated to {@code partialTick} (not snapped to tick). */

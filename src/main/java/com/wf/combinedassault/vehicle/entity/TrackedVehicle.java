@@ -177,6 +177,9 @@ public class TrackedVehicle extends GroundVehicle
             }
             entityData.set(FORWARD_SPEED, vf);
             entityData.set(TURN_SPEED, 0f);
+            if (hasTraction()) {
+                setDeltaMovement(heading.scale(along).add(sideways).add(0, getDeltaMovement().y, 0));
+            }
             return new Vec3(0, 0, 0);
         }
 

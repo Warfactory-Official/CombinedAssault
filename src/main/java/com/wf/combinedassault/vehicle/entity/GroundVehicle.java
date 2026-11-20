@@ -3,6 +3,7 @@ package com.wf.combinedassault.vehicle.entity;
 import com.wf.combinedassault.dynamics.PhysicsHelper;
 import com.wf.combinedassault.vehicle.VehicleConfig;
 import com.wf.combinedassault.vehicle.drive.Transmission;
+import com.wf.combinedassault.vehicle.light.VehicleLight;
 import com.wf.combinedassault.vehicle.control.ControlUnit;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -30,9 +31,14 @@ public abstract class GroundVehicle extends AbstractVehicle {
     /** Blocks/tick: below => stopped (automatic picks R / 1; manual may enter R). */
     public static final double STOPPED = 0.02;
     /** Throttle off in gear: drag as a fraction of the full brake. */
-    public static final float ENGINE_BRAKE = 0.05F;
+    public static final float ENGINE_BRAKE = 0.15F;
     /** Free-revving rpm change per tick, fraction of the idle..max span. */
     private static final float REV_RATE = 0.1F;
+
+    @Override
+    public boolean bodyDrag() {
+        return true;
+    }
 
     @Nullable
     public Transmission transmission;
@@ -136,6 +142,22 @@ public abstract class GroundVehicle extends AbstractVehicle {
     protected boolean controlsNeutral() {
         return super.controlsNeutral() && (transmission == null || controlUnit.gearRequest == ControlUnit.NO_GEAR
                 || controlUnit.gearRequest == getGear());
+    }
+
+    /** Toggled groups + {@link VehicleLight.Kind#BRAKE} (pedal / handbrake) + {@link VehicleLight.Kind#REVERSE}. */
+    @Override
+    public int lightsOn() {
+        int on = super.lightsOn();
+        if (isDestroyed()) {
+            return 0;
+        }
+        int pedals = getPedals();
+        boolean reverse = transmission != null ? getGear() == Transmission.REVERSE
+                : (pedals & BRAKE) != 0 && getForwardSpeed() < STOPPED;
+        if ((pedals & HANDBRAKE) != 0 || (pedals & BRAKE) != 0 && (transmission != null || getForwardSpeed() >= STOPPED)) {
+            on |= VehicleLight.Kind.BRAKE.bit();
+        }
+        return reverse ? on | VehicleLight.Kind.REVERSE.bit() : on;
     }
 
     protected void setPedals(int pedals) {

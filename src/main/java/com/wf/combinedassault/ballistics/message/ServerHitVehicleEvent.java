@@ -13,6 +13,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.UUID;
 
 public class ServerHitVehicleEvent implements CustomPacketPayload {
@@ -26,6 +28,8 @@ public class ServerHitVehicleEvent implements CustomPacketPayload {
     public float caliber;
     public float damage;
     public Component message;
+    @Nullable
+    public HitDetail detail;
 
     public ServerHitVehicleEvent() {}
 
@@ -37,6 +41,7 @@ public class ServerHitVehicleEvent implements CustomPacketPayload {
         this.caliber = hitVehicleEvent.caliber;
         this.damage = hitVehicleEvent.damage;
         this.message = hitVehicleEvent.message;
+        this.detail = hitVehicleEvent.detail;
     }
 
     public static ServerHitVehicleEvent decode(FriendlyByteBuf buf) {
@@ -48,6 +53,7 @@ public class ServerHitVehicleEvent implements CustomPacketPayload {
         serverHitVehicleEvent.caliber = buf.readFloat();
         serverHitVehicleEvent.damage = buf.readFloat();
         serverHitVehicleEvent.message = Component.translatable(buf.readUtf());
+        serverHitVehicleEvent.detail = buf.readNullable(HitDetail::read);
         return serverHitVehicleEvent;
     }
 
@@ -59,6 +65,7 @@ public class ServerHitVehicleEvent implements CustomPacketPayload {
         buf.writeFloat(caliber);
         buf.writeFloat(damage);
         buf.writeUtf(message.getString());
+        buf.writeNullable(detail, (b, d) -> d.write(b));
     }
 
     public static void handle(ServerHitVehicleEvent message, IPayloadContext ctxSupplier) {
@@ -72,6 +79,7 @@ public class ServerHitVehicleEvent implements CustomPacketPayload {
                     HitFeedback.events.clear();
                 }
                 HitFeedback.events.add(message);
+                HitFeedback.remember(message);
                 if (HitFeedback.events.size() > 128) {
                     HitFeedback.events.remove(0);
                 }

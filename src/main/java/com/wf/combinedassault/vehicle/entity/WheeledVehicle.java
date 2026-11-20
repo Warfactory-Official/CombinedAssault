@@ -61,6 +61,12 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
     public WheelSpin wheelspin;
     /** Drive past grip; hysteresis state, in the prediction snapshot. */
     private boolean spinning;
+    /** Max ticks between handbrake presses that make a double tap. */
+    private static final int DOUBLE_TAP_TICKS = 8;
+    /** Handbrake held on by a double tap; in the prediction snapshot with {@link #handbrakeHeld} and {@link #sinceTap}. */
+    private boolean handbrakeLatched;
+    private boolean handbrakeHeld;
+    private int sinceTap = DOUBLE_TAP_TICKS + 1;
     /** Mouse wheel: lock slew in {@link #turnStep}s per tick; the client already ramps keyed input at 1. */
     private static final float WHEEL_SLEW = 4;
     /** Grip fraction with the handbrake on. */
@@ -146,7 +152,18 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
 
         VehicleMobility mobility = VehicleMobility.of(this);
 
-        boolean handbrake = controlUnit.up;
+        if (controlUnit.up && !handbrakeHeld) {
+            if (sinceTap <= DOUBLE_TAP_TICKS) {
+                handbrakeLatched = !handbrakeLatched;
+                sinceTap = DOUBLE_TAP_TICKS + 1;
+            } else {
+                sinceTap = 0;
+            }
+        } else if (sinceTap <= DOUBLE_TAP_TICKS) {
+            sinceTap++;
+        }
+        handbrakeHeld = controlUnit.up;
+        boolean handbrake = controlUnit.up || handbrakeLatched;
         if (handbrake && wheelspin == null) {
             velocity = velocity.scale(0.98);
             motion = velocity.length();
@@ -436,6 +453,9 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
         buf.writeFloat(entityData.get(FORWARD_SPEED));
         buf.writeBoolean(loseTraction);
         buf.writeBoolean(spinning);
+        buf.writeBoolean(handbrakeLatched);
+        buf.writeBoolean(handbrakeHeld);
+        buf.writeVarInt(sinceTap);
         buf.writeFloat(entityData.get(WHEEL_SPIN));
     }
 
@@ -446,6 +466,9 @@ public class WheeledVehicle extends GroundVehicle implements IAnimationEntity<Wh
         entityData.set(FORWARD_SPEED, buf.readFloat());
         loseTraction = buf.readBoolean();
         spinning = buf.readBoolean();
+        handbrakeLatched = buf.readBoolean();
+        handbrakeHeld = buf.readBoolean();
+        sinceTap = buf.readVarInt();
         entityData.set(WHEEL_SPIN, buf.readFloat());
     }
 

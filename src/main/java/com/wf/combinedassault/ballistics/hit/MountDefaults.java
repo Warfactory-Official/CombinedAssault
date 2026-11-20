@@ -39,6 +39,8 @@ public final class MountDefaults {
     private static final String TRACK = "combinedassault:track";
     private static final String SUSPENSION = "combinedassault:suspension";
     private static final String MISSILE_HOLDER = "combinedassault:missile_holder";
+    /** Mass share at axle height (axles, wheels, driveline; non-solid colliders: not in the centroid). TODO estimate. */
+    private static final float RUNNING_GEAR = 0.5f;
     /** Track outline vertex weld, blocks. */
     private static final float WELD = 1.0e-4f;
     /** Node-only def keys -> socket role. */
@@ -208,7 +210,11 @@ public final class MountDefaults {
         }
     }
 
-    /** No json, no socket: volume centroid of the solid colliders, rest pose (uniform density). */
+    /**
+     * No json, no socket: volume centroid of the solid colliders, rest pose (uniform density); wheeled: lowered by the
+     * running gear's share. Centroid alone: m1129 / m983 / m142 CoM 1.0-1.2 over a 0.9-1.1 half track (SSF 0.9), tip
+     * angle 42 deg against the 24-29 deg roll one side over a 1-block bump forces.
+     */
     private void centerOfMass() {
         JsonObject physics = object(vehicle, "physics_info");
         if (physics.has("center")) {
@@ -224,8 +230,25 @@ public final class MountDefaults {
             }
         }
         if (volume > 0) {
-            physics.add("center", vec(sum.div(volume)));
+            sum.div(volume);
+            sum.y = Math.min(sum.y, sum.y + RUNNING_GEAR * (axleHeight() - sum.y));
+            physics.add("center", vec(sum));
         }
+    }
+
+    /** Mean wheel-frame height of the suspension parts (legs excluded); NaN: none. */
+    private float axleHeight() {
+        float sum = 0;
+        int count = 0;
+        for (ModelRig.Frame frame : mounts.rig().frames()) {
+            JsonObject part = parts.get(frame.part());
+            if (part != null && frame.role() == NodeRole.PART && part.has("type") && part.get("type").getAsString().equals(SUSPENSION)
+                    && !(part.has("stow_when_towed") && part.get("stow_when_towed").getAsBoolean())) {
+                sum += frame.world().getTranslation(new Vector3f()).y;
+                count++;
+            }
+        }
+        return count == 0 ? Float.NaN : sum / count;
     }
 
     /**

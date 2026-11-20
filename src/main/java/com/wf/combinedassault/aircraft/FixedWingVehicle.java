@@ -1,5 +1,11 @@
 package com.wf.combinedassault.aircraft;
 
+import com.wf.combinedassault.vehicle.part.PartUnit;
+import com.wf.combinedassault.ballistics.component.ComponentDamage;
+import net.minecraft.world.phys.AABB;
+import com.wf.wflib.physics.api.BodyState;
+import com.wf.wflib.geom.api.OBB;
+import com.wf.combinedassault.ballistics.component.HullComponents;
 import com.wf.combinedassault.aircraft.client.FixedWingVehicleContext;
 import com.wf.combinedassault.aircraft.client.FixedWingVehicleDisplay;
 import com.wf.combinedassault.aircraft.part.AirbrakeUnit;
@@ -256,14 +262,24 @@ public class FixedWingVehicle extends AbstractVehicle
 
     @Override
     protected Vec3 tickMove() {
-        // Wreck: rigid body only. Locked rotation + flight writes => wedged at impact attitude.
-        physicsEngine.lockCenterRot = !isDestroyed();
+        // Wreck: rigid body only.
+        physicsEngine.lockCenterRot = false;
+        physicsEngine.yawRotOnly = false;
         if (isDestroyed()) {
+            weathervane();
             return Vec3.ZERO;
         }
         Vector3f[] axes;
         // gear feet resting: onGround(); groundedOrOnDeck() tests the block under the origin (> 1 block up on tall gear)
         boolean onGround = onGround() || groundedOrOnDeck();
+        // Stance (below) owns pitch / roll only with every foot down; propped (hull on a vehicle, a ledge, a slope,
+        // gear leg severed) => free. Latched until it rolls or flies: stance re-engaging at rest lifts the feet again.
+        if (!onGround || getDeltaMovement().horizontalDistanceSqr() > TAXI * TAXI) {
+            propped = false;
+        }
+        propped |= onGround && rollsOnGear() && !standsOnGear();
+        boolean stance = onGround && rollsOnGear() && !propped;
+        physicsEngine.yawRotOnly = stance;
         if (onGround) {
             axes = getMainCubeOBB().obb().getAxes();
         } else {
@@ -438,8 +454,16 @@ public class FixedWingVehicle extends AbstractVehicle
             double d = Math.max(Math.min(zTurnRate, ke * zTurnRate), rcs * zTurnRate);
             q.rotateZ((float) Math.toRadians(zRotInput * d * inertia));
         }
+        // Past the stall angle (signed, deg); 0 on the ground and hovering on vectored thrust.
+        double stallAngle = angleOfAttackMax - flaps(Flap.STALL_SHIFT);
+        double stalled = onGround || rcs != 0 ? 0
+                : degreeX > stallAngle ? degreeX - stallAngle : degreeX < angleOfAttackMin ? degreeX - angleOfAttackMin : 0;
+        // Dynamic pressure, of that at lift-off speed.
+        double pressure = al / liftOffSpeed();
+        pressure = Math.min(1, pressure * pressure);
         if (xRotInput != 0) {
-            double d = Math.max(Math.min(xTurnRate, ke * xTurnRate), rcs * xTurnRate);
+            // Stalled elevator: authority falls with the excess.
+            double d = Math.max(Math.min(xTurnRate, ke * xTurnRate) * Math.cos(Math.toRadians(stalled)), rcs * xTurnRate);
             q.rotateX((float) Math.toRadians(xRotInput * d * inertia));
         }
         if (yRotInput != 0) {
@@ -461,17 +485,19 @@ public class FixedWingVehicle extends AbstractVehicle
         Vec3 downDirection = upDirection.scale(-1);
         if (VectorUtil.angleBetween(airSpeed, downDirection) < Math.PI / 4) {
             double vd = airSpeed.dot(downDirection);
-            double kvd = Math.min(1.5, vd);
-            q.rotateY((float) (Math.PI / 72 * kvd));
+            // A 10-block drop at zero airspeed yawed 28 deg otherwise.
+            q.rotateY((float) (Math.PI / 72 * Math.min(1.5, vd) * pressure));
         }
+        // The tail pitches a stalled nose into the airflow; fell flat at any sink rate otherwise.
+        q.rotateX((float) Math.toRadians(STALL_PITCH * xTurnRate * Math.sin(Math.toRadians(stalled)) * pressure));
         if (wings[0] != wings[1]) {
             double horizontal = Math.sqrt(airSpeed.x * airSpeed.x + airSpeed.z * airSpeed.z);
             q.rotateZ((float) Math.toRadians((wings[0] < wings[1] ? -1 : 1) * WING_LOSS_ROLL * horizontal));
         }
         Vector3f rot = new Vector3f();
         q.getEulerAnglesYXZ(rot);
-        if (onGround && !isLandingGearUp()) {
-            // lockCenterRot => contacts never rotate the hull: look-up 10 deg sat an A-10 on its tail at 0.07 b/t,
+        if (stance) {
+            // yawRotOnly => contacts never pitch / roll the hull: look-up 10 deg sat an A-10 on its tail at 0.07 b/t,
             // landed one parked at -10. Gear stance eases to ground_pitch (pre-rewrite AUTO_LEVEL_EASE), released as lift at
             // the stall angle reaches weight (current lift: ease held AoA down, never flew). TODO: ease toward the ground slope.
             double stallLift = lift(f, angleOfAttackMax - flaps(Flap.STALL_SHIFT), liftToDragK, scaleAir) * wingLift;
@@ -705,6 +731,96 @@ public class FixedWingVehicle extends AbstractVehicle
     }
 
     private static final int GROUND_RUN_SETTLED = 10;
+
+    /** Blocks under a gear foot within which it stands. */
+    private static final double FOOT_REST = 0.3;
+    /** b/t horizontal: rolling, not parked. */
+    private static final double TAXI = 0.1;
+    private boolean propped;
+
+    /** Every landing gear foot over a block collision box within {@link #FOOT_REST}, none severed; or riding a deck. */
+    private boolean standsOnGear() {
+        if (deckCarrierId() >= 0 || harnessCarrierId() >= 0) {
+            return true;
+        }
+        OBB hull = getMainCubeOBB().obb();
+        Vector3f at = new Vector3f();
+        boolean any = false;
+        for (PartUnit<?> unit : getPartUnits()) {
+            if (!(unit instanceof LandingGearUnit gear) || gear.isDetached()) {
+                continue;
+            }
+            if (ComponentDamage.severed(gear)) {
+                return false;
+            }
+            for (int i = 0; i < gear.footCount(); i++) {
+                hull.rotation().transform(at.set(gear.foot(i)));
+                double x = hull.centerX() + at.x, y = hull.centerY() + at.y, z = hull.centerZ() + at.z;
+                if (!level().getBlockCollisions(null, new AABB(x - BodyState.FOOT, y - FOOT_REST, z - BodyState.FOOT,
+                        x + BodyState.FOOT, y + BodyState.FOOT, z + BodyState.FOOT)).iterator().hasNext()) {
+                    return false;
+                }
+                any = true;
+            }
+        }
+        return any;
+    }
+
+    /** Aerodynamic damping of contact spin on a flying airframe. TODO estimate; scale with airspeed. */
+    private static final float LIVE_SPIN_RETENTION = 0.85f;
+    /** Speculative contact margin, blocks. */
+    private static final float CONTACT_REACH = 0.75f;
+
+    /** Wreck nose-to-airflow spin gain, rad/t^2 per (b/t)^2 at 90 deg off. TODO estimate. */
+    private static final float WEATHERVANE = 0.004f;
+    /** Stalled nose-drop rate at 90 deg past the stall angle and lift-off dynamic pressure, of {@code xTurnRate}. TODO estimate. */
+    private static final float STALL_PITCH = 1f;
+    /** Tail damps the weathervane swing. TODO estimate. */
+    private static final float WRECK_SPIN_RETENTION = 0.97f;
+
+    @Override
+    public float airSpinRetention() {
+        return isDestroyed() ? WRECK_SPIN_RETENTION : LIVE_SPIN_RETENTION;
+    }
+
+    @Override
+    public boolean bodyDrag() {
+        return isDestroyed();
+    }
+
+    /** Airborne wreck: tail turns the nose into the airflow (fell level, pitch 0, the whole way down otherwise). */
+    private void weathervane() {
+        Vec3 velocity = getDeltaMovement();
+        if (onGround() || velocity.lengthSqr() < 1.0e-4) {
+            return;
+        }
+        Vector3f forward = getMainCubeOBB().obb().getAxes()[2];
+        Vector3f flow = new Vector3f((float) velocity.x, (float) velocity.y, (float) velocity.z);
+        physicsEngine.angularVelocity.add(new Vector3f(forward).cross(flow.normalize(new Vector3f())).mul(WEATHERVANE * flow.lengthSquared()));
+    }
+
+    /** Wing struck harder than its pool takes as impact damage: it shears, the hull keeps the shearing impulse. */
+    @Override
+    protected float impactYield(Vec3 at, Vector3f lost) {
+        HullComponents pools = hullComponents();
+        // Centroid = contact frame, pose = after the step: up to a tick of travel apart.
+        int pool = WingLoss.poolAt(this, at, CONTACT_REACH + (float) getDeltaMovement().length() + lost.length());
+        float perSpeedSquared = 0.5f * physicsEngine.mass / PhysicsHelper.KILOGRAMS_PER_TONNE * defenseStats.impactMultiplier;
+        if (pool < 0 || !(perSpeedSquared > 0)) {
+            return 1;
+        }
+        double shear = Math.sqrt(pools.maxHealth(pool) / perSpeedSquared) / PhysicsHelper.TICKS_PER_SECOND;
+        if (lost.length() <= shear) {
+            return 1;
+        }
+        pools.setHealth(pool, 0);
+        return (float) (shear / lost.length());
+    }
+
+    @Override
+    protected boolean pieceShed(VehicleCubeOBB cube) {
+        return wingLoss.sheds(this, cube);
+    }
 
     public boolean isAirbrakeOn() {
         return airbrakeUnit != null && airbrakeUnit.isOn();

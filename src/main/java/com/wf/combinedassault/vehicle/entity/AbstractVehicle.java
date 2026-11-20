@@ -355,6 +355,11 @@ public abstract class AbstractVehicle extends ContainerCraft
     /** Damage to systems that are hull geometry rather than parts; see {@link #hullComponents()}. */
     @Nullable
     private HullComponents hullComponents;
+    /** {@link VehicleSystems#engineWorks}: engine cell (null: none) of {@link #engineCellPools}. */
+    @Nullable
+    public VehicleSystems.Cell engineCell;
+    @Nullable
+    public HullComponents engineCellPools;
     @Nullable
     private CompoundTag hullComponentSave;
     @Nullable
@@ -383,6 +388,10 @@ public abstract class AbstractVehicle extends ContainerCraft
     @Nullable
     private ClipFrames clipFrames;
     private int[] cubeGroupIndex = new int[0];
+    /** Group poses a solid cube or the main one: its transform is {@link #collisionBody} geometry. */
+    private boolean[] groupSolid = new boolean[0];
+    /** Last {@link #refreshGroupTransforms} moved a {@link #groupSolid} group. */
+    private boolean solidGroupsChanged;
     /** Owning part unit per entry of allCubeOBBs, or -1 for body cubes. */
     private int[] cubePartIndex = new int[0];
     private boolean[] cubeDetached = new boolean[0];
@@ -1405,7 +1414,14 @@ public abstract class AbstractVehicle extends ContainerCraft
             physicsRestTicks++;
             return false;
         }
-        return level().isClientSide() || tickCount % REST_SOLVE_INTERVAL != 0;
+        // Train-wide phase: a heartbeat wakes the bodies it is coupled to for 20 ticks, theirs woke it back
+        // (parked train never slept).
+        return level().isClientSide() || (level().getGameTime() + TowLinks.head(this).getId()) % REST_SOLVE_INTERVAL != 0;
+    }
+
+    /** Solve skipped but for the heartbeat. */
+    public boolean resting() {
+        return physicsRestTicks >= REST_TICKS_TO_SLEEP;
     }
 
     /** Restarts the stillness count: a state change the velocity thresholds do not see. */
@@ -1760,7 +1776,8 @@ public abstract class AbstractVehicle extends ContainerCraft
         boolean anyDetached = false;
         for (int i = 0; i < cubeDetached.length; i++) {
             int part = cubePartIndex[i];
-            boolean detached = part >= 0 && partUnits.get(part).isDetached();
+            boolean detached = part >= 0 && partUnits.get(part).isDetached()
+                    || allCubeOBBs.get(i) != mainCubeOBB && pieceShed(allCubeOBBs.get(i));
             anyDetached |= detached;
             if (cubeDetached[i] != detached) {
                 cubeDetached[i] = detached;
@@ -1775,12 +1792,9 @@ public abstract class AbstractVehicle extends ContainerCraft
             return true;
         }
         List<OBB> obbs = new ArrayList<>(cachedOBBs.size());
-        for (VehicleCubeOBB cubeOBB : vehicleCubeOBBs) {
-            obbs.add(cubeOBB.obb());
-        }
-        for (PartUnit<?> partUnit : partUnits) {
-            if (!partUnit.isDetached()) {
-                obbs.addAll(partUnit.getOBBs());
+        for (int i = 0; i < cubeDetached.length; i++) {
+            if (!cubeDetached[i]) {
+                obbs.add(cachedOBBs.get(i));
             }
         }
         activeOBBs = Collections.unmodifiableList(obbs);
@@ -1830,6 +1844,8 @@ public abstract class AbstractVehicle extends ContainerCraft
         if (rebuilt || detachChanged || groupsChanged || hits != null && !hits.boundsCurrent()) {
             localVersion++;
         }
+        // Wheel travel moves non-solid cubes only: every tick driven, 47 pieces (mim104) re-tested for nothing.
+        collisionStale |= rebuilt || detachChanged || solidGroupsChanged;
         if (detachChanged) {
             physicsRestTicks = 0;
         }
@@ -1926,7 +1942,10 @@ public abstract class AbstractVehicle extends ContainerCraft
         localBoundsValid = minX <= maxX;
         // Off the poses just written, and before any solve reads them. Relative geometry only
         // changes when a bone moves, which is once a tick, here.
-        collisionBody.refresh(mainCubeOBB, allCubeOBBs, cubeDetached);
+        if (collisionStale) {
+            collisionBody.refresh(mainCubeOBB, allCubeOBBs, cubeDetached);
+            collisionStale = false;
+        }
         deckBoxCount = boxCount;
         deckLandingCount = landingCount;
         publishOBBs(deck, vehicleRotation, boxCount, landingCount);
@@ -1984,6 +2003,7 @@ public abstract class AbstractVehicle extends ContainerCraft
      * written at the current version holds current local boxes => {@link #updateOBBs} poses only.
      */
     private int localVersion;
+    private boolean collisionStale;
     private final int[] deckSlotVersion = {-1, -1};
     private int deckBoxCount, deckLandingCount;
 
@@ -2065,6 +2085,10 @@ public abstract class AbstractVehicle extends ContainerCraft
             VehicleCubeOBB cubeOBB = i == size ? mainCubeOBB : cubes.get(i);
             cubeGroupIndex[i] = cubeOBB.group == null ? 0 : indexOf.get(cubeOBB.group);
         }
+        groupSolid = new boolean[groupOrder.length];
+        for (int i = 0, size = cubes.size(); i <= size; i++) {
+            groupSolid[cubeGroupIndex[i]] |= i == size || cubes.get(i).isSolid();
+        }
         if (hits != null) {
             hits.index(indexOf);
         }
@@ -2082,6 +2106,7 @@ public abstract class AbstractVehicle extends ContainerCraft
     /** @return a group's offset or rotation changed (NaN => changed). */
     private boolean refreshGroupTransforms() {
         boolean changed = false;
+        solidGroupsChanged = false;
         for (int i = 0; i < groupOrder.length; i++) {
             VehicleCubeGroup group = groupOrder[i];
             if (group == null) {
@@ -2100,8 +2125,10 @@ public abstract class AbstractVehicle extends ContainerCraft
                 offset.add(groupOffset[parent]);
                 groupRotation[parent].mul(group.rotation, rotation);
             }
-            changed |= !(ox == offset.x && oy == offset.y && oz == offset.z && rx == rotation.x && ry == rotation.y
+            boolean moved = !(ox == offset.x && oy == offset.y && oz == offset.z && rx == rotation.x && ry == rotation.y
                     && rz == rotation.z && rw == rotation.w);
+            changed |= moved;
+            solidGroupsChanged |= moved && groupSolid[i];
         }
         return changed;
     }
@@ -3624,8 +3651,10 @@ public abstract class AbstractVehicle extends ContainerCraft
         if (pEntity.noPhysics || this.noPhysics || !collision || pEntity.isPassenger()) {
             return;
         }
+        // Attached, gripped or not: deck clip + settle own it. Both here => radial 0.2 shove on mtv.y < 0
+        // (server-side for players => snap-back) slid a player under the open C-5 clamshell along it.
         DeckAttachment attachment = VehicleParenting.attachmentOf(pEntity);
-        if (attachment != null && attachment.vehicle() == this && attachment.gripped()) {
+        if (attachment != null && attachment.vehicle() == this) {
             return;
         }
         boolean carried = false;
@@ -4499,6 +4528,10 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     @Override
     public void neighbours(AABB bounds, List<PhysicsBody> out) {
+        // Heartbeat of a resting hull wakes nobody: parked side by side, each woke the other for 20 ticks, forever.
+        if (resting()) {
+            return;
+        }
         out.addAll(level().getEntitiesOfClass(AbstractVehicle.class, bounds));
     }
 
@@ -4861,9 +4894,13 @@ public abstract class AbstractVehicle extends ContainerCraft
             flushTravel(rig);
             this.setDeltaMovement(rig.getDeltaMovement());
             this.setOnGround(rig.onGround());
-            // Wreck pool = weapons only: its own crash would discard it on touchdown.
-            if (impactsHurt() && rig.impactVelocityDiff > 0 && !isDestroyed()) {
-                DamageSystem.impactHurt(rig.impactVelocityDiff, rig.impactPos, this);
+            if (!impactsHurt()) {
+                scrapeEnergy = 0;
+            } else if (rig.impactVelocityDiff > 0) {
+                impacted(rig);
+            } else if (step.belly && !physicsEngine.wheelsGrounded() && !level().isClientSide()) {
+                scrapeEnergy = CrashCrater.scrape(this, scrapeEnergy, new Vector3f(bodyState.velocity).add(bodyState.acceleration),
+                        getDeltaMovement(), rig.impactPos);
             }
             for (int i = 0, size = step.touched.size(); i < size; i++) {
                 impact((AbstractVehicle) step.touched.get(i));
@@ -4879,6 +4916,81 @@ public abstract class AbstractVehicle extends ContainerCraft
         this.pushEntities();
         postMoveEvent();
         finishTick(physicsTrace, true);
+    }
+
+    /** Contact losses of a hull slide not yet ploughed ({@link CrashCrater#scrape}), J. */
+    private double scrapeEnergy;
+
+    /** Contacts cancelled more than {@link #impactSpeedThreshold}: yielding part, damage, crater. */
+    private void impacted(PhysicsRig rig) {
+        BodyState step = bodyState;
+        Vec3 after = getDeltaMovement();
+        Vector3f lost = new Vector3f(step.velocity).add(step.acceleration)
+                .sub((float) after.x, (float) after.y, (float) after.z);
+        float kept = 1;
+        // Wreck pool = weapons only: its own crash would discard it on touchdown.
+        if (!isDestroyed()) {
+            kept = impactYield(rig.impactPos, lost);
+            if (kept < 1) {
+                setDeltaMovement(after.add(lost.x * (1 - kept), lost.y * (1 - kept), lost.z * (1 - kept)));
+                physicsEngine.angularVelocity.sub(step.spin).mul(kept).add(step.spin);
+                lost.mul(kept);
+            }
+            if (kept == 1) {
+                DamageSystem.impactHurt(rig.impactVelocityDiff, rig.impactPos, this);
+            }
+        }
+        if (CrashCrater.digs(lost)) {
+            // Ploughed through (furrow lip, soft wall): dead stop from 2.5 b/t on a 1-block lip otherwise.
+            float through = CrashCrater.dig(this, lost, rig.impactPos);
+            setDeltaMovement(getDeltaMovement().add(lost.x * through, lost.y * through, lost.z * through));
+            physicsEngine.angularVelocity.sub(step.spin).mul(1 - through).add(step.spin);
+            crumple(step, lost);
+        }
+    }
+
+    /** Spin share a crater-speed impact leaves. TODO estimate. */
+    private static final float CRUMPLE_SPIN = 0.5f;
+
+    /**
+     * Crater-speed impact is plastic: no rebound against the cancelled velocity, no upward speed gained, impact spin
+     * cut. Rigid end-strike + second slap threw an A-10 wreck 21 blocks back up (hit 2.2 b/t down, left 1.2 b/t up);
+     * tail on a furrow lip (oblique normal) turned a 2.5 b/t slide into 0.76 b/t up, apex 9.
+     */
+    private void crumple(BodyState step, Vector3f lost) {
+        Vector3f into = new Vector3f(lost).normalize();
+        Vec3 after = getDeltaMovement();
+        double rebound = -(after.x * into.x + after.y * into.y + after.z * into.z);
+        if (rebound > 0) {
+            after = after.add(into.x * rebound, into.y * rebound, into.z * rebound);
+        }
+        setDeltaMovement(after.x, Math.min(after.y, Math.max(0, step.velocity.y + step.acceleration.y)), after.z);
+        physicsEngine.angularVelocity.sub(step.spin).mul(CRUMPLE_SPIN).add(step.spin);
+    }
+
+    /**
+     * Tick thread: a struck part that fails passes on only what it took to break it.
+     *
+     * @param lost velocity the contacts cancelled, b/t, world
+     * @return share of the contact response (dv, spin) the hull keeps, 0..1; < 1 => the part took the damage
+     */
+    protected float impactYield(Vec3 at, Vector3f lost) {
+        return 1;
+    }
+
+    /** Step applies {@link PhysicsEngine#bodyDrag}: no aerodynamics of its own. */
+    public boolean bodyDrag() {
+        return false;
+    }
+
+    /** Spin kept per airborne tick. */
+    public float airSpinRetention() {
+        return physicsEngine.tumbleAirDamping;
+    }
+
+    /** Collision piece gone with a lost part (never the main piece). */
+    protected boolean pieceShed(VehicleCubeOBB cube) {
+        return false;
     }
 
     /** The substep sweep. Worker-safe; reads prepared snapshots and records each slice. */

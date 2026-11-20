@@ -1,4 +1,28 @@
 {
+    "armor": {
+        "plates": {
+            "canopy": {
+                "curved": true,
+                "hull": 0.15,
+                "layers": [
+                    {
+                        "mm": 40,
+                        "mat": "laminated"
+                    }
+                ]
+            },
+            "window": {
+                "curved": true,
+                "hull": 0.15,
+                "layers": [
+                    {
+                        "mm": 40,
+                        "mat": "laminated"
+                    }
+                ]
+            }
+        }
+    },
     "type": "combinedassault:rotary_wing_vehicle",
     "attributes": {
         "main_rotor_force": 99128.96,

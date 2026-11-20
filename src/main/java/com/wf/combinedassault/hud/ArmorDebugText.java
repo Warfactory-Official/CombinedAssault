@@ -1,6 +1,8 @@
 package com.wf.combinedassault.hud;
 
 import com.wf.combinedassault.ballistics.hit.PlateBinding;
+import com.wf.combinedassault.ballistics.message.HitDetail;
+import com.wf.combinedassault.ballistics.message.ServerHitVehicleEvent;
 import com.wf.combinedassault.ballistics.hit.VehicleHits;
 import com.wf.combinedassault.render.util.HullRenderer;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
@@ -85,5 +87,44 @@ public final class ArmorDebugText {
         }
         lines.add(String.format(Locale.ROOT, "LOS KE %.0f / CE %.0f mm @ %.1f deg, surface %.1f deg",
                 ke.effective(), ce.effective(), ke.incidence(), ke.surfaceIncidence()));
+    }
+
+    /** Recent rounds the local player resolved against a vehicle, newest first: plate, angle, thickness, damage split. */
+    @SubscribeEvent
+    public static void onHitDebugText(CustomizeGuiOverlayEvent.DebugText event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (!mc.getDebugOverlay().showDebugScreen() || mc.player == null || !DebugGate.allowed()
+                || HitFeedback.recent.isEmpty()) {
+            return;
+        }
+        List<String> lines = event.getLeft();
+        lines.add("");
+        lines.add("Last hits (newest first):");
+        List<ServerHitVehicleEvent> recent = HitFeedback.recent;
+        for (int i = recent.size() - 1; i >= Math.max(0, recent.size() - 4); i--) {
+            HitDetail d = recent.get(i).detail;
+            if (d == null) {
+                lines.add(String.format(Locale.ROOT, "  %s -%.2f (no armour model)", recent.get(i).message.getString(),
+                        recent.get(i).damage));
+                continue;
+            }
+            lines.add(String.format(Locale.ROOT, "  %s %s%s %.0f deg: nom %.0f eff %.0f pen %.1f x%.2f", d.outcome(),
+                    d.plate() == null ? "unbound" : d.plate(), d.part() == null ? "" : "[" + d.part() + "]", d.incidence(),
+                    d.nominal(), Float.isFinite(d.effective()) ? d.effective() : 0f, d.penetration(),
+                    d.effective() > 0 ? d.penetration() / d.effective() : 0f));
+            lines.add(String.format(Locale.ROOT, "    hull -%.2f (plate x%.2f) part -%.2f | layers %d/%d%s%s%s%s",
+                    d.hullPool(), d.hullShare(), d.partDamage(), d.defeated(), d.layers(),
+                    d.stoppedAt() >= 0 ? " stopped@" + d.stoppedAt() : d.interiorPen() > 0 ? " through" : "",
+                    d.eraHits() > 0 ? " ERA" + d.eraHits() : "", d.glassHits() > 0 ? " glass" + d.glassHits() : "",
+                    d.spall() ? " spall" : ""));
+            StringBuilder path = new StringBuilder("    path:");
+            for (int k = 0; k < d.crossings().length; k++) {
+                path.append(' ').append(d.crossingPlates()[k] == null ? "unbound" : d.crossingPlates()[k])
+                        .append(d.entering()[k] ? "(in)" : "(out)")
+                        .append(String.format(Locale.ROOT, "@%.2f", d.crossings()[k]))
+                        .append(k == d.stoppedAt() ? " STOP" : "");
+            }
+            lines.add(path.toString());
+        }
     }
 }

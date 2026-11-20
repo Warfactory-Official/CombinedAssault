@@ -49,9 +49,11 @@ const DEFAULTS = {
 	light_kind: 'head', light_color: '', light_range: 0, light_intensity: 0, light_inner: 0, light_outer: 0,
 	light_shadow: true, light_cookie: '', hand: 'right', foot: 'right', action: '',
 };
-const LIGHT_KINDS = {head: 'Headlight (driver toggles)', search: 'Searchlight (other crew toggle)'};
+const LIGHT_KINDS = {head: 'Headlight (driver toggles)', search: 'Searchlight (other crew toggle)', high: 'High beam (driver toggles)', nav: 'Navigation light (pilot toggles)', taxi: 'Taxi light (pilot toggles)', brake: 'Brake light (lit while braking)', reverse: 'Reverse light (lit in reverse)'};
 // VehicleLight.Kind defaults: color, range (blocks), inner / outer half angle (deg).
-const LIGHT_KIND_DEFAULTS = {head: {color: 0xFFF1D8, range: 40, inner: 12, outer: 32}, search: {color: 0xEEF4FF, range: 96, inner: 2.5, outer: 6}};
+const LIGHT_KIND_DEFAULTS = {head: {color: 0xFFF1D8, range: 40, inner: 12, outer: 32}, search: {color: 0xEEF4FF, range: 96, inner: 2.5, outer: 6},
+    high: {color: 0xFFF6E8, range: 90, inner: 6, outer: 18}, nav: {color: 0xFFFFFF, range: 24, inner: 40, outer: 80}, taxi: {color: 0xFFF6E8, range: 60, inner: 10, outer: 28},
+    brake: {color: 0xFF1A10, range: 12, inner: 30, outer: 70}, reverse: {color: 0xFFFFFF, range: 14, inner: 25, outer: 60}};
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
 /** Light socket keys: kind always, the rest only when set (0 / empty / on = the kind's default). */

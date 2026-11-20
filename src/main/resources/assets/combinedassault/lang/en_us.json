@@ -372,6 +372,8 @@
   "ui.combinedassault.helm.no_power": "NO POWER",
   "key.combinedassault.tow_couple.desc": "Couple / Uncouple Tow",
   "key.combinedassault.toggle_lights.desc": "Vehicle lights",
+  "key.combinedassault.toggle_aux_lights.desc": "High beams / taxi light",
+  "key.combinedassault.toggle_nav_lights.desc": "Navigation lights",
   "tips.tow.coupled": "%s coupled to the %s",
   "tips.tow.on_cable": "%s on the cable from the %s",
   "tips.tow.uncoupled": "%s dropped from the %s",

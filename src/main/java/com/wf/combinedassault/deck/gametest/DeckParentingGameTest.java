@@ -17,6 +17,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -465,6 +466,52 @@ public class DeckParentingGameTest {
                     }
                 })
                 .thenSucceed();
+    }
+
+    /** Rider under a hull, head within the deck skin of its underside: nothing moves it. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = "empty", timeoutTicks = 200)
+    public static void aRiderTouchingTheUndersideIsNotShovedAlongIt(GameTestHelper helper) {
+        AbstractVehicle c5 = spawnRider(helper, CombinedAssault.modLocation("c5"), 1, 2, 1, 0);
+        if (c5 == null) {
+            return;
+        }
+        c5.setNoGravity(true);
+        Chicken[] mob = new Chicken[1];
+        Vec3[] placed = new Vec3[1];
+        double[] worst = new double[1];
+        helper.startSequence()
+                .thenIdle(5)
+                .thenExecute(() -> {
+                    mob[0] = EntityType.CHICKEN.create(helper.getLevel());
+                    mob[0].setNoAi(true);
+                    mob[0].setNoGravity(true);
+                    mob[0].moveTo(underside(c5, -0.2));
+                    helper.getLevel().addFreshEntity(mob[0]);
+                })
+                .thenIdle(5)
+                .thenExecute(() -> {
+                    placed[0] = underside(c5, 0.003);
+                    mob[0].setPos(placed[0]);
+                })
+                .thenExecuteFor(20, () -> worst[0] = Math.max(worst[0], mob[0].position().distanceTo(placed[0])))
+                .thenExecute(() -> {
+                    DeckAttachment attachment = VehicleParenting.attachmentOf(mob[0]);
+                    mob[0].discard();
+                    discard(c5);
+                    if (attachment == null || attachment.vehicle() != c5) {
+                        helper.fail("the chicken was never attached to the hull, so this proves nothing");
+                    } else if (worst[0] > 1.0E-4) {
+                        helper.fail(String.format(Locale.ROOT, "standing still under the hull, moved %.3f", worst[0]));
+                    }
+                })
+                .thenSucceed();
+    }
+
+    /** Chicken feet under C-5 fuselage floor (deck box 0, local x 2 z 5), head {@code overlap} into it. */
+    private static Vec3 underside(AbstractVehicle c5, double overlap) {
+        float bottom = c5.deckSnapshot().boxes()[1];
+        return VehicleParenting.toWorld(c5.deckSnapshot(),
+                new Vector3d(2, bottom + overlap - EntityType.CHICKEN.getHeight(), 5), new Vector3d());
     }
 
     /** Spawns anything, not just a hull, for the deck tests. */

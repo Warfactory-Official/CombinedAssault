@@ -31,9 +31,7 @@ import java.util.Optional;
 @GameTestHolder(CombinedAssault.MOD_ID)
 public class TerrainGameTest {
 
-    // TODO m1129 (SSF 1.1 half-track / 1.2 CoM = 0.92) rolls on WEAVE/LOCK and rough lanes, airborne off bumps;
-    // pre-audit physics identical. Back in once its data or the bump response is fixed.
-    private static final String[] BUILTIN_VEHICLES = {"humvee", "centauro", "m983", "m1a2", "t90", "m113"};
+    private static final String[] BUILTIN_VEHICLES = {"humvee", "centauro", "m983", "m1a2", "t90", "m113", "m1129"};
     /** `-PoptionalPacks` namespaces + `-PoptionalOnly` paths (same properties as OptionalPackGameTest) => those instead. */
     private static final List<String> PACKS = split(System.getProperty("combinedassault.optionalPacks", ""));
     private static final String[] VEHICLES = PACKS.isEmpty() || System.getProperty("combinedassault.optionalPacks.only", "").isEmpty()

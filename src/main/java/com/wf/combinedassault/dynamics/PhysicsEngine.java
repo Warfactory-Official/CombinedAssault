@@ -43,7 +43,7 @@ public class PhysicsEngine {
     /** Block cells pressed per tick, summed, before a jammed hull grinds through. */
     private static final int STUCK_DESTROY_THRESHOLD = 10;
     /** Hardness at or above which the vehicle cannot break the block. */
-    private static final float UNBREAKABLE_HARDNESS = 20.0F;
+    static final float UNBREAKABLE_HARDNESS = 20.0F;
     /** Most cells queued from one refused rotation (merged geometry). */
     private static final int MAX_ROTATION_RAM_CELLS = 27;
     /** Approach speed into blocking cells, b/t: pressing, not resting against. */
@@ -71,6 +71,8 @@ public class PhysicsEngine {
     public float climbGradient = 1.0f;
     public boolean lockZRot;
     public boolean lockCenterRot;
+    /** Contacts spin the hull about world y only; pitch / roll stay the controller's (gear stance, heel). */
+    public boolean yawRotOnly;
     public boolean canDestroyBlock;
     /** Last step pressed into blocks sideways. */
     public boolean blockedByContacts;
@@ -535,6 +537,23 @@ public class PhysicsEngine {
     /** NaN before the first grounded step. */
     public double groundY() {
         return groundY;
+    }
+
+    /** kg/m^3. */
+    private static final float AIR_DENSITY = 1.2f;
+    /** Drag coefficient on the main box's projected area. TODO estimate. */
+    private static final float BODY_DRAG = 0.5f;
+
+    /** Quadratic air drag: main box faces projected on the travel direction. */
+    public void bodyDrag(Vector3f velocity, Quaternionf rotation, Vector3f half) {
+        float speed = velocity.length();
+        if (speed < 1.0e-4f) {
+            return;
+        }
+        Vector3f along = rotation.transformInverse(new Vector3f(velocity)).div(speed);
+        float area = 4 * (Math.abs(along.x) * half.y * half.z + Math.abs(along.y) * half.x * half.z + Math.abs(along.z) * half.x * half.y);
+        float loss = (float) PhysicsHelper.dragAccelerationPerTick(0.5 * AIR_DENSITY * BODY_DRAG * area, mass, speed * speed);
+        velocity.mul(Math.max(0, speed - loss) / speed);
     }
 
     /** Wheels down: horizontal speed loses {@link #friction} as a force, never reversing. */

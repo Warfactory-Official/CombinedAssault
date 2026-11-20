@@ -62,8 +62,13 @@ public final class TowSolver {
     /** @return false when the coupling has parted */
     private static boolean check(AbstractVehicle tractor, AbstractVehicle towed, TowLink link, HitchInfo hitch) {
         double slack = link.mode() == TowMode.HITCH ? 0 : link.cable();
-        double open = TowLinks.hitchPoint(tractor, hitch).distanceTo(TowLinks.attachPoint(towed, link.mode())) - slack;
         if (link.mode() == TowMode.SLING) {
+            Vec3 hook = TowLinks.hitchPoint(tractor, hitch);
+            double open = Double.NEGATIVE_INFINITY;
+            for (int i = 0; i < TowLinks.SLING_LEGS; i++) {
+                open = Math.max(open, hook.distanceTo(TowLinks.worldPoint(towed, TowLinks.slingLegOffset(towed, i)))
+                        - TowLinks.slingLegLength(towed, slack, i));
+            }
             link.recordStrain(Math.max(0, open), false);
             if (open > SLING_BREAK) {
                 return false;
@@ -73,6 +78,7 @@ public final class TowSolver {
             }
             return true;
         }
+        double open = TowLinks.hitchPoint(tractor, hitch).distanceTo(TowLinks.attachPoint(towed, link.mode())) - slack;
         link.recordStrain(Math.max(0, open), open > STRAIN);
         return open <= BREAK_MARGIN && link.strainTicks() <= BREAK_TICKS;
     }

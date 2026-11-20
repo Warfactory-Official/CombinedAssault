@@ -92,7 +92,8 @@ public class TumbleGameTest {
         Vec3[] parked = new Vec3[1];
         double[] settled = new double[1];
         helper.startSequence()
-                .thenIdle(80)
+                // Lands past its side in a full-suite arena (112..125 deg), then rolls back onto it: settle first.
+                .thenIdle(160)
                 .thenExecute(() -> {
                     settled[0] = up(truck);
                     parked[0] = truck.position();

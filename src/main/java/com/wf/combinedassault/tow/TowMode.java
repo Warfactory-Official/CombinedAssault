@@ -5,7 +5,7 @@ import java.util.Locale;
 
 /**
  * HITCH: joint, trailer heading from geometry (one articulated vehicle). CABLE: slack rope, pulls only once taut.
- * SLING: helicopter hook; load hangs from its top centre, rope-length constraint with momentum exchange.
+ * SLING: helicopter hook; load hangs from 4 top-corner legs (bridle) off one hook, rope-length constraints with momentum exchange.
  */
 public enum TowMode {
 

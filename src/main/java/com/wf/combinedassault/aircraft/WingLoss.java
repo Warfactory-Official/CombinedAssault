@@ -4,6 +4,7 @@ import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.ballistics.component.HullComponents;
 import com.wf.combinedassault.ballistics.hit.HitModel;
 import com.wf.combinedassault.ballistics.hit.VehicleHits;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -21,7 +22,9 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Per-side wing pools ({@code left wing}, {@code right wing}). A pool reaching 0 (fire, or a live wing cutting a block
@@ -34,6 +37,9 @@ public final class WingLoss {
     private static final double STRIKE_SPEED = 0.4;
     /** Sample spacing over a wing node's triangles, blocks. */
     private static final float SAMPLE = 0.3f;
+    private static final float SURFACE_REACH = 0.5f;
+    /** Node-frame -y reach of a wing's hung stores, blocks. */
+    private static final float STORES_UNDER = 1.5f;
 
     @Nullable
     private HullComponents pools;
@@ -101,6 +107,85 @@ public final class WingLoss {
         }
         int pool = pools.indexOf(node.systemId());
         return pool >= 0 && pools.health(pool) <= 0;
+    }
+
+    /** Unspent wing pool with a drawn node whose box, grown by {@code reach}, holds the world point; -1 none. */
+    public static int poolAt(FixedWingVehicle vehicle, Vec3 point, float reach) {
+        VehicleHits hits = vehicle.hits();
+        HullComponents pools = vehicle.hullComponents();
+        if (hits == null) {
+            return -1;
+        }
+        List<HitModel.Node> nodes = hits.model().nodes();
+        Vec3 at = vehicle.position();
+        Matrix4f pose = new Matrix4f();
+        Vector3f p = new Vector3f();
+        for (int i = 0; i < nodes.size(); i++) {
+            HitModel.Node node = nodes.get(i);
+            if (node.kind() != ComponentKind.WING || node.mesh().mesh() == null) {
+                continue;
+            }
+            int pool = pools.indexOf(node.systemId());
+            if (pool < 0 || pools.health(pool) <= 0) {
+                continue;
+            }
+            hits.pose(i, at, pose).invert().transformPosition(p.set((float) (point.x - at.x), (float) (point.y - at.y),
+                    (float) (point.z - at.z)));
+            if (within(node.bounds(), p, reach, reach)) {
+                return pool;
+            }
+        }
+        return -1;
+    }
+
+    private static boolean within(float[] b, Vector3f p, float reach, float under) {
+        return p.x >= b[0] - reach && p.x <= b[3] + reach && p.y >= b[1] - under && p.y <= b[4] + reach
+                && p.z >= b[2] - reach && p.z <= b[5] + reach;
+    }
+
+    /** Spent wing pools as a bit set by pool index. */
+    private long spentPools = -1;
+    private final Map<VehicleCubeOBB, Boolean> shedPieces = new IdentityHashMap<>();
+
+    /**
+     * Collision piece centred within {@link #SURFACE_REACH} of a spent wing's drawn node box (flaps, ailerons: own
+     * parts, own pools) or {@link #STORES_UNDER} below it (pylons, pods).
+     */
+    public boolean sheds(FixedWingVehicle vehicle, VehicleCubeOBB cube) {
+        VehicleHits hits = vehicle.hits();
+        HullComponents current = vehicle.hullComponents();
+        if (hits == null || current.isEmpty()) {
+            return false;
+        }
+        long now = 0;
+        for (int i = 0; i < current.size(); i++) {
+            if (current.kind(i) == ComponentKind.WING && current.health(i) <= 0) {
+                now |= 1L << i;
+            }
+        }
+        if (now != spentPools) {
+            spentPools = now;
+            shedPieces.clear();
+        }
+        if (now == 0) {
+            return false;
+        }
+        return shedPieces.computeIfAbsent(cube, piece -> {
+            List<HitModel.Node> nodes = hits.model().nodes();
+            Vec3 offset = vehicle.centerOffset;
+            Vector3f centre = vehicle.rotYXZ().transform(new Vector3f(piece.localCenter()))
+                    .add((float) offset.x, (float) offset.y, (float) offset.z);
+            Matrix4f pose = new Matrix4f();
+            Vector3f p = new Vector3f();
+            for (int i = 0; i < nodes.size(); i++) {
+                if (spent(nodes.get(i), current)
+                        && within(nodes.get(i).bounds(), hits.pose(i, vehicle.position(), pose).invert().transformPosition(p.set(centre)),
+                        SURFACE_REACH, STORES_UNDER)) {
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 
     /** First live wing node whose triangles cut a block collision box => its pool to 0. True if one did. */

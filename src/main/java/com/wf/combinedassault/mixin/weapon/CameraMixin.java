@@ -5,6 +5,7 @@ import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.weapon.client.StationRecoil;
+import com.wf.combinedassault.weapon.client.VehicleVibration;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -66,6 +67,7 @@ public abstract class CameraMixin {
             this.setPosition(position.x, position.y, position.z);
             Vector3f euler = instance.frameCameraRotation(pPartialTick).getEulerAnglesYXZ(new Vector3f());
             float[] jolt = StationRecoil.jolt(pPartialTick, JOLT);
+            VehicleVibration.add(vehicle, jolt);
             this.setRotation((float) Math.toDegrees(-euler.y) + (float) FirstPersonHandler.getCurrentYawShake() + jolt[0],
                     (float) Math.toDegrees(euler.x) + (float) FirstPersonHandler.getCurrentPitchShake() + jolt[1],
                     (float) Math.toDegrees(euler.z) + (float) FirstPersonHandler.getCurrentRollShake() + jolt[2]);

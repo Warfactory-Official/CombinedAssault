@@ -65,7 +65,7 @@ public final class VehicleBlastResolver {
     public static final float FRAGMENT_DECAY = 80.0f;
     /** Damage per kJ a fragment carries into a hull. */
     static final float FRAGMENT_DAMAGE_PER_KJ = 1.0f;
-    /** Hull damage a jet carries per mm of penetration when no round hit priced it ({@link AddonStrikes#contact}: proximity-fuzed missile). TODO estimate. */
+    /** Floor of a jet's hull damage per mm of penetration; the round's own contact hit ({@link AddonStrikes#contact}) raises it, never lowers (rocket body kinetic ~77 vs 300 mm jet). TODO estimate. */
     static final float JET_DAMAGE_PER_MM = 2.0f;
     static final float JET_REACH = 8.0f;
     /** HESH: pen figure that walks the plate = this x calibre ({@code mm <= 1.3 x calibre} spalls). */
@@ -152,7 +152,7 @@ public final class VehicleBlastResolver {
 
     private static void run(AbstractVehicle vehicle, @Nullable Entity direct, @Nullable Entity causing,
                             @Nullable ExplosionAEF aef, BlastPayload payload, Vec3 centre, float size) {
-        boolean armoured = vehicle.armorProfile != null && vehicle.armorProfile.isDefined();
+        boolean armoured = vehicle.armorProfile != null && vehicle.armorProfile.hullDefined();
         Ctx c = new Ctx(vehicle, direct, causing, aef, centre, size, armoured);
         if (inside(vehicle, centre)) {
             c.interiorBlast(payload);
@@ -401,7 +401,7 @@ public final class VehicleBlastResolver {
             }
             Threat threat = new Threat(kind, caliber, pen, 1.0f, THREAT_NO_RICOCHET, kind.slopeExp, 0.0f, 0.0f);
             Float contact = AddonStrikes.contact(vehicle);
-            float incoming = contact != null ? contact : pen * JET_DAMAGE_PER_MM;
+            float incoming = Math.max(contact == null ? 0.0f : contact, pen * JET_DAMAGE_PER_MM);
             if (!damage.armoured) {
                 legacy += incoming;
                 return;

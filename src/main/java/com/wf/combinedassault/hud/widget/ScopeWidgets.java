@@ -1,6 +1,8 @@
 package com.wf.combinedassault.hud.widget;
 
 import com.wf.combinedassault.ballistics.component.ComponentState;
+import com.wf.combinedassault.ballistics.component.VehicleSystems;
+import com.wf.combinedassault.ballistics.component.client.SystemsHud;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 import com.wf.combinedassault.hud.CaDraw;
 import com.wf.combinedassault.hud.HudCache;
@@ -24,11 +26,13 @@ import com.wf.gemrender.ui.TextBuffer;
 import com.wf.wflib.ui.api.*;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -199,7 +203,7 @@ public final class ScopeWidgets {
      * ({@link SchematicSprites}); own station blue, damage steps yellow/orange/red, destroyed red. Boxes while the
      * model has no sprites. Scaled so any hull is {@code length} units long (default 50); {@code hullUp} keeps the hull's nose up instead of following the traverse.
      */
-    public record VehicleSchematic(float length, boolean hullUp) implements WidgetDef {
+    public record VehicleSchematic(float length, boolean hullUp, boolean systems) implements WidgetDef {
         @Override
         public Widget create(Binder binder) {
             SubjectRef<AbstractVehicle> vehicleRef = binder.subject(HudSubjects.VEHICLE);
@@ -214,6 +218,8 @@ public final class ScopeWidgets {
                 private AbstractVehicle bound;
                 private SchematicSprites.Sheet sheet;
                 private final Map<String, PartUnit<?>> boneParts = new LinkedHashMap<>();
+                private final Map<String, VehicleSystems.Member> boneMembers = new HashMap<>();
+                private VehicleSystems.Member[] spriteMembers = new VehicleSystems.Member[0];
                 private SchematicSprites.Sheet resolved;
                 private PartUnit<?>[] spriteParts = new PartUnit<?>[0];
                 private int[] spriteBones = new int[0];
@@ -311,7 +317,7 @@ public final class ScopeWidgets {
                         float v = 1.0f / result.height();
                         canvas.sprite(sheet.texture(), sprite.minX(), sprite.minZ(), sprite.maxX(), sprite.maxZ(),
                                 sprite.x() * u, sprite.y() * v, (sprite.x() + sprite.w()) * u,
-                                (sprite.y() + sprite.h()) * v, tint(vehicle, spriteParts[i], player));
+                                (sprite.y() + sprite.h()) * v, tint(vehicle, spriteParts[i], spriteMembers[i], player));
                         canvas.pop();
                     }
                     canvas.pop();
@@ -321,6 +327,7 @@ public final class ScopeWidgets {
                 private void bind(AbstractVehicle vehicle) {
                     bound = vehicle;
                     boneParts.clear();
+                    boneMembers.clear();
                     List<PartUnit<?>> parts = vehicle.getPartUnits();
                     for (int p = 0; p < parts.size(); p++) {
                         PartUnit<?> part = parts.get(p);
@@ -329,6 +336,16 @@ public final class ScopeWidgets {
                             List<WeaponUnit> subs = weapon.getSubWeaponUnits();
                             for (int s = 0; s < subs.size(); s++) {
                                 claim(subs.get(s));
+                            }
+                        }
+                    }
+                    if (systems) {
+                        for (HudCache.SystemCell sc : HudCache.systems(vehicle)) {
+                            for (VehicleSystems.Member member : sc.cell().members()) {
+                                for (String node : member.nodes(vehicle)) {
+                                    boneMembers.putIfAbsent(node, member);
+                                    boneParts.putIfAbsent(node, null);
+                                }
                             }
                         }
                     }
@@ -347,15 +364,20 @@ public final class ScopeWidgets {
                     int count = result.sprites().size();
                     spriteParts = new PartUnit<?>[count];
                     spriteBones = new int[count];
+                    spriteMembers = new VehicleSystems.Member[count];
                     for (int i = 0; i < count; i++) {
                         String bone = result.sprites().get(i).bone();
                         spriteParts[i] = boneParts.get(bone);
+                        spriteMembers[i] = boneMembers.get(bone);
                         spriteBones[i] = bone.isEmpty() ? -1 : instance.boneIndex(bone);
                     }
                     resolved = sheet;
                 }
 
-                private int tint(AbstractVehicle vehicle, PartUnit<?> part, Player player) {
+                private int tint(AbstractVehicle vehicle, PartUnit<?> part, VehicleSystems.Member member, Player player) {
+                    if (member != null) {
+                        return SystemsHud.colour(ComponentState.of(member.ratio()));
+                    }
                     if (part == null) {
                         return CaDraw.WHITE;
                     }

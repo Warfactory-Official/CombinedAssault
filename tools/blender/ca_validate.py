@@ -54,7 +54,10 @@ FRAME_KEYS = {"x_rot_min", "x_rot_max", "y_rot_min", "y_rot_max", "follows_clips
 SPINS = ("cw", "ccw")
 # VehicleLight.KEYS; Kind -> (color, range, intensity, inner, outer).
 LIGHT_KEYS = {"kind", "color", "range", "intensity", "inner", "outer", "shadow", "cookie", "index"}
-LIGHT_KINDS = {"head": (0xFFF1D8, 40.0, 300.0, 12.0, 32.0), "search": (0xEEF4FF, 96.0, 4000.0, 2.5, 6.0)}
+LIGHT_KINDS = {"head": (0xFFF1D8, 40.0, 300.0, 12.0, 32.0), "search": (0xEEF4FF, 96.0, 4000.0, 2.5, 6.0),
+               "high": (0xFFF6E8, 90.0, 900.0, 6.0, 18.0), "nav": (0xFFFFFF, 24.0, 40.0, 40.0, 80.0),
+               "taxi": (0xFFF6E8, 60.0, 1200.0, 10.0, 28.0), "brake": (0xFF1A10, 12.0, 60.0, 30.0, 70.0),
+               "reverse": (0xFFFFFF, 14.0, 120.0, 25.0, 60.0)}
 # SurfaceMaterial tokens (`_ . space` delimited); untagged = steel.
 SURFACES = {"rubber": "rubber", "glass": "glass", "soft": "soft|fabric|cloth|canvas"}
 # ModelDataManager.PLATE: `armor:<id>` last token (Blender `.001` ignored).

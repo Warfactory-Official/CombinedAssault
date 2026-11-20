@@ -8,6 +8,7 @@ import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.ballistics.component.HullComponents;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
 import com.wf.combinedassault.ballistics.event.HitVehicleEvent;
+import com.wf.combinedassault.ballistics.message.HitDetail;
 import com.wf.combinedassault.ballistics.hit.HitModel;
 import com.wf.combinedassault.ballistics.hit.SurfaceMaterial;
 import com.wf.combinedassault.ballistics.hit.VehicleHits;
@@ -141,7 +142,7 @@ public class DamageSystem {
             }
             amount = ballistic.hullDamage();
         } else if (amount < vehicle.defenseStats.damageThreshold && !thermal && !jetOwned
-                && !(explosion && vehicle.armorProfile != null && vehicle.armorProfile.isDefined())) {
+                && !(explosion && vehicle.armorProfile != null && vehicle.armorProfile.hullDefined())) {
             amount = 0.1f;
         } else {
             if (hitPos == null) {
@@ -210,7 +211,8 @@ public class DamageSystem {
                         round.velocity(),
                         caliber,
                         amount,
-                        message);
+                        message,
+                        ballistic == null ? null : HitDetail.of(ballistic, amount, fragments));
                 NeoForge.EVENT_BUS.post(hitVehicleEvent);
             } else if (damageSource.getDirectEntity() instanceof AbstractVehicle && damageSource.getDirectEntity() != vehicle
                     && damageSource.getEntity() instanceof ServerPlayer serverPlayer) {
@@ -286,7 +288,7 @@ public class DamageSystem {
     /** Wears the armour region at {@code at}; no profile / unarmoured face => nothing. */
     public static void wearArmor(AbstractVehicle vehicle, Vec3 at, @Nullable Vector3f normal, float damage,
                                  HullWear.Kind kind) {
-        if (vehicle.armorProfile == null || !vehicle.armorProfile.isDefined()) {
+        if (vehicle.armorProfile == null || !vehicle.armorProfile.hullDefined()) {
             return;
         }
         int region = HullWear.region(vehicle.mainBox(), at, normal);

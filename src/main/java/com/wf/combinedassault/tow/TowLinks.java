@@ -86,6 +86,28 @@ public final class TowLinks {
         return main == null ? Vec3.ZERO : main.offset().add(0, main.obb().extents().y, 0);
     }
 
+    /** Sling legs per load: top corners of the main hull box, inset. */
+    public static final int SLING_LEGS = 4;
+
+    private static final double SLING_INSET = 0.85;
+
+    /** Leg {@code i} eye, own frame: hull top corner. */
+    public static Vec3 slingLegOffset(AbstractVehicle towed, int i) {
+        VehicleCubeOBB main = towed.getMainCubeOBB();
+        if (main == null) {
+            return Vec3.ZERO;
+        }
+        Vector3f e = main.obb().extents();
+        return main.offset().add((i & 1) == 0 ? e.x * SLING_INSET : -e.x * SLING_INSET, e.y,
+                (i & 2) == 0 ? e.z * SLING_INSET : -e.z * SLING_INSET);
+    }
+
+    /** Leg length hanging the load level at the single-rope drop: {@code sqrt(cable^2 + run^2)}, run = corner's horizontal distance from the top-centre eye. */
+    public static double slingLegLength(AbstractVehicle towed, double cable, int i) {
+        Vec3 run = slingLegOffset(towed, i).subtract(slingOffset(towed));
+        return Math.sqrt(cable * cable + run.x * run.x + run.z * run.z);
+    }
+
     /** Where this mode's rope or joint meets the towed vehicle. */
     public static Vec3 attachPoint(AbstractVehicle towed, TowMode mode) {
         return mode == TowMode.SLING ? worldPoint(towed, slingOffset(towed)) : couplingPoint(towed);
@@ -123,7 +145,6 @@ public final class TowLinks {
         return out;
     }
 
-    /** No allocation; called every tick by the sleep/rest check. */
     public static boolean tows(AbstractVehicle tractor) {
         List<AbstractVehicle> index = TOWED.get(tractor.level());
         if (index != null) {
@@ -177,11 +198,11 @@ public final class TowLinks {
         return one != other && head(one) == head(other);
     }
 
-    /** Must not sleep: towing something, or towed by a tractor that's moving, airborne, or gone. */
+    /** Must not sleep: towed by a tractor that's moving, airborne, or gone. Tractor: its own motion decides (parked train stepped every tick otherwise). */
     public static boolean awake(AbstractVehicle vehicle) {
         TowLink link = vehicle.towLink();
         if (link == null) {
-            return tows(vehicle);
+            return false;
         }
         AbstractVehicle tractor = link.tractor();
         return tractor.isRemoved() || tractor.getDeltaMovement().lengthSqr() > 1.0E-6

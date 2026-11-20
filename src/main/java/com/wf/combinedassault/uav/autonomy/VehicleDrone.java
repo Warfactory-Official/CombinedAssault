@@ -231,6 +231,10 @@ public final class VehicleDrone implements ControllableDrone {
         Vec3 pos = this.vehicle.position();
         Vec3 destination = this.route.getDestination();
         double groundY = TerrainSampler.groundY(level, pos.x, pos.z, pos.y - this.flight.getCruiseAltitude());
+        if (this.pilot.grounded()) {
+            // Origin sits under the surface top by the static sag: altitude < 0 never completed TAKEOFF.
+            groundY = Math.min(groundY, pos.y);
+        }
         double destGroundY = destination == null ? groundY
                 : TerrainSampler.groundY(level, destination.x, destination.z, destination.y);
         this.flight.noteGround(groundY);

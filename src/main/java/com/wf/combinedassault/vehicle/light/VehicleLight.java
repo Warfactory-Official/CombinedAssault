@@ -23,10 +23,18 @@ public record VehicleLight(int node, String name, Kind kind, int color, float ra
     private static final Set<String> KEYS = Set.of("kind", "color", "range", "intensity", "inner", "outer", "shadow",
             "cookie", "index");
 
-    /** Toggle group: {@code HEAD} driver only, {@code SEARCH} any crew. */
+    /**
+     * Toggle group: {@code HEAD}, {@code HIGH}, {@code NAV}, {@code TAXI} driver / pilot only, {@code SEARCH} any crew.
+     * {@code BRAKE}, {@code REVERSE}: not toggled, lit by the drive state.
+     */
     public enum Kind {
         HEAD(0xFFF1D8, 40, 300, 12, 32),
-        SEARCH(0xEEF4FF, 96, 4000, 2.5F, 6);
+        SEARCH(0xEEF4FF, 96, 4000, 2.5F, 6),
+        HIGH(0xFFF6E8, 90, 900, 6, 18),
+        NAV(0xFFFFFF, 24, 40, 40, 80),
+        TAXI(0xFFF6E8, 60, 1200, 10, 28),
+        BRAKE(0xFF1A10, 12, 60, 30, 70),
+        REVERSE(0xFFFFFF, 14, 120, 25, 60);
 
         final int color;
         final float range, intensity, inner, outer;
@@ -37,6 +45,11 @@ public record VehicleLight(int node, String name, Kind kind, int color, float ra
             this.intensity = intensity;
             this.inner = inner;
             this.outer = outer;
+        }
+
+        /** Flipped by {@link LightToggleMessage}; else derived from the drive state. */
+        public boolean toggled() {
+            return this != BRAKE && this != REVERSE;
         }
 
         public int bit() {

@@ -23,6 +23,7 @@ public final class TowLink implements Coupling {
 
     /** Last step's joint impulses (ball x/y/z or rope x, yaw stop, axle, roll): next step's warm start. */
     private final Vector3f impulse = new Vector3f();
+    private final Vector3f[] ropeImpulses = {new Vector3f(), new Vector3f(), new Vector3f()};
     private float yawImpulse, axleImpulse, rollImpulse;
 
     TowLink(AbstractVehicle tractor, String hitchId, TowMode mode, double cable) {
@@ -71,6 +72,11 @@ public final class TowLink implements Coupling {
     @Override
     public Vector3f impulse() {
         return impulse;
+    }
+
+    @Override
+    public Vector3f[] ropeImpulses() {
+        return ropeImpulses;
     }
 
     @Override

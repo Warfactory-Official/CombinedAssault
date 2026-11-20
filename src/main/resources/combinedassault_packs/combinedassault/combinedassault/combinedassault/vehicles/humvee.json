@@ -334,8 +334,8 @@
             "type": "combinedassault:suspension",
             "max_health": 40,
             "is_seat": false,
-            "spring_stiffness": 64000,
-            "damping": 1000,
+            "spring_stiffness": 28900,
+            "damping": 2450,
             "rest_length": 0.25,
             "max_compression": 0.25,
             "max_extension": 0.2
@@ -346,8 +346,8 @@
             "type": "combinedassault:suspension",
             "max_health": 40,
             "is_seat": false,
-            "spring_stiffness": 64000,
-            "damping": 1000,
+            "spring_stiffness": 28900,
+            "damping": 2450,
             "rest_length": 0.25,
             "max_compression": 0.25,
             "max_extension": 0.2
@@ -358,8 +358,8 @@
             "type": "combinedassault:suspension",
             "max_health": 40,
             "is_seat": false,
-            "spring_stiffness": 64000,
-            "damping": 1000,
+            "spring_stiffness": 28900,
+            "damping": 2450,
             "rest_length": 0.25,
             "max_compression": 0.25,
             "max_extension": 0.2
@@ -370,8 +370,8 @@
             "type": "combinedassault:suspension",
             "max_health": 40,
             "is_seat": false,
-            "spring_stiffness": 64000,
-            "damping": 1000,
+            "spring_stiffness": 28900,
+            "damping": 2450,
             "rest_length": 0.25,
             "max_compression": 0.25,
             "max_extension": 0.2

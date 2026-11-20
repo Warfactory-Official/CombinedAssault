@@ -11,7 +11,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-/** C2S: flip one light group of the ridden vehicle. {@code HEAD}: driver only. */
+/** C2S: flip one light group of the ridden vehicle. Driver only, except {@code SEARCH}. */
 public record LightToggleMessage(int vehicleId, VehicleLight.Kind kind) implements CustomPacketPayload {
 
     public static final Type<LightToggleMessage> TYPE = new Type<>(CombinedAssault.modLocation("vehicle_lights"));
@@ -26,7 +26,10 @@ public record LightToggleMessage(int vehicleId, VehicleLight.Kind kind) implemen
                 || vehicle.isDestroyed()) {
             return;
         }
-        if (message.kind == VehicleLight.Kind.HEAD && !CrewRules.has(vehicle, player, CrewRole.DRIVER)) {
+        if (!message.kind.toggled()) {
+            return;
+        }
+        if (message.kind != VehicleLight.Kind.SEARCH && !CrewRules.has(vehicle, player, CrewRole.DRIVER)) {
             player.displayClientMessage(Component.translatable("tips.crew.driver_only"), true);
             return;
         }

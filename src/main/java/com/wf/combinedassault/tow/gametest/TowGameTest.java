@@ -106,6 +106,29 @@ public class TowGameTest {
         });
     }
 
+    /** Before: tractor awake while towing, each heartbeat woke the other half: 2 solves a tick for good. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
+    public static void aParkedTrainSleeps(GameTestHelper helper) {
+        Lane lane = lane(helper, 12);
+        Train train = couple(helper, lane, TowMode.HITCH);
+        if (train == null) {
+            return;
+        }
+        int[] awake = new int[1];
+        helper.startSequence()
+                .thenIdle(150)
+                .thenExecuteFor(60, () -> awake[0] += (train.tractor.resting() ? 0 : 1) + (train.trailer.resting() ? 0 : 1))
+                .thenExecute(() -> {
+                    boolean towed = TowLinks.isTowed(train.trailer);
+                    double gap = train.gap();
+                    release(lane, train.tractor, train.trailer);
+                    if (!towed || awake[0] > 0 || gap > HELD) {
+                        helper.fail(String.format(Locale.ROOT, "towed %s, %d awake vehicle ticks of 120, gap %.3f", towed, awake[0], gap));
+                    }
+                })
+                .thenSucceed();
+    }
+
     /** Reversing on full lock is how a real rig jackknifes. */
     @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void aJackknifeIsHeldAtTheStops(GameTestHelper helper) {

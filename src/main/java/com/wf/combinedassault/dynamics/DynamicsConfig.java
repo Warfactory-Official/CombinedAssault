@@ -13,6 +13,9 @@ public final class DynamicsConfig {
     private static final ModConfigSpec.BooleanValue CAN_DESTROY_BLOCK;
     private static final ModConfigSpec.DoubleValue RAM_BREAK_MOMENTUM;
     private static final ModConfigSpec.DoubleValue RIGHTING_EFFORT_PER_PLAYER;
+    private static final ModConfigSpec.BooleanValue CRASH_CRATERS;
+    private static final ModConfigSpec.DoubleValue CRASH_CRATER_SPEED;
+    private static final ModConfigSpec.DoubleValue CRASH_ENERGY_PER_HARDNESS;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -22,6 +25,12 @@ public final class DynamicsConfig {
                 .defineInRange("ramBreakMomentum", 125.0, 0.0, Double.MAX_VALUE);
         RIGHTING_EFFORT_PER_PLAYER = builder.comment("每名潜行玩家能推翻的车体量（质量kg×主碰撞体积），需要 ceil(质量×体积/此值) 人同时推；0为禁用手动翻正")
                 .defineInRange("rightingEffortPerPlayer", 30000.0, 0.0, Double.MAX_VALUE);
+        CRASH_CRATERS = builder.comment("A hard impact excavates the ground under the hull (needs canDestroyBlock)")
+                .define("crashCraters", true);
+        CRASH_CRATER_SPEED = builder.comment("m/s an impact must cancel, or a hull must slide at, before it excavates")
+                .defineInRange("crashCraterSpeed", 10.0, 0.0, Double.MAX_VALUE);
+        CRASH_ENERGY_PER_HARDNESS = builder.comment("J of impact energy per point of block hardness excavated; lower = bigger craters")
+                .defineInRange("crashEnergyPerHardness", 250000.0, 1.0, Double.MAX_VALUE);
         DECK_HARNESS = builder.comment("停放在甲板上的载具进入休眠，位姿直接由母舰推导（纯性能优化）")
                 .define("deckHarness", true);
         VEHICLE_MOUNTS = builder.comment("载具可安装到其他载具声明的挂载点上（如皮卡车斗上的迫击炮）")
@@ -40,7 +49,8 @@ public final class DynamicsConfig {
         if (event.getConfig().getSpec() == SPEC) {
             VehicleSettings.configure(new VehicleSettings(RESTING_VEHICLE_SLEEP.get(), DECK_HARNESS.get(),
                     VEHICLE_MOUNTS.get(), PREDICT_DRIVING.get(), CAN_DESTROY_BLOCK.get(), RAM_BREAK_MOMENTUM.get(),
-                    RIGHTING_EFFORT_PER_PLAYER.get()));
+                    RIGHTING_EFFORT_PER_PLAYER.get(), CRASH_CRATERS.get(), CRASH_CRATER_SPEED.get(),
+                    CRASH_ENERGY_PER_HARDNESS.get()));
         }
     }
 }

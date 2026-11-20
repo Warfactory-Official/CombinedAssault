@@ -283,7 +283,10 @@ public class RotaryWingVehicle extends AbstractVehicle
     @Override
     protected Vec3 tickMove() {
         // Wreck: rigid body only; airborne spin as upstream.
-        physicsEngine.lockCenterRot = !isDestroyed();
+        // Sling load: rope pull at the hook would swing the airframe; controller holds rates, not attitude.
+        physicsEngine.lockCenterRot = !isDestroyed() && !coupledBehind().isEmpty();
+        // Skids down: level ease (below) owns pitch / roll.
+        physicsEngine.yawRotOnly = !isDestroyed() && onGround();
         if (isDestroyed()) {
             if (!onGround()) {
                 setYRot(getYRot() + 10);
@@ -477,7 +480,29 @@ public class RotaryWingVehicle extends AbstractVehicle
         xRotSpeed = Math.signum(xRotSpeed) * (Math.max(0, Math.abs(xRotSpeed) - ROT_FRICTION));
         zRotSpeed = Math.signum(zRotSpeed) * (Math.max(0, Math.abs(zRotSpeed) - ROT_FRICTION));
 
+        if (onGround()) {
+            // yawRotOnly => contacts never pitch / roll the hull: CH-47 dropped 50 deg nose-down rested on its nose
+            // corner indefinitely. Eased level, released as rotor lift reaches weight. TODO: ease toward the ground slope.
+            float keep = GROUND_LEVEL_EASE + (1 - GROUND_LEVEL_EASE)
+                    * Mth.clamp((float) (force.y / (physicsEngine.mass * PhysicsHelper.GRAVITY)), 0, 1);
+            setXRot(getXRot() * keep);
+            setZRot(getZRot() * keep);
+        }
         return force;
+    }
+
+    private static final float GROUND_LEVEL_EASE = 0.7f;
+    /** Rotor disc damping of contact spin in flight. TODO estimate. */
+    private static final float LIVE_SPIN_RETENTION = 0.85f;
+
+    @Override
+    public boolean bodyDrag() {
+        return isDestroyed();
+    }
+
+    @Override
+    public float airSpinRetention() {
+        return isDestroyed() ? super.airSpinRetention() : LIVE_SPIN_RETENTION;
     }
 
     protected void tickCargo() {

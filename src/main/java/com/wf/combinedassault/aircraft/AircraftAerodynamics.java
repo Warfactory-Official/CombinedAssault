@@ -58,7 +58,7 @@ public final class AircraftAerodynamics {
     /** Hover: PD natural frequency (rad/tick), tilt clamp (deg), anchor capture speed and climb clamp (blocks/tick). */
     public float hoverBandwidth = 0.05f;
     public float hoverMaxTilt = 30;
-    public float hoverCaptureSpeed = 0.15f;
+    public float hoverCaptureSpeed = 0.03f;
     public float hoverClimbRate = 0.2f;
     /** Ticks of vertical acceleration added to the hover climb error (damping). */
     public float hoverClimbLead = 10;

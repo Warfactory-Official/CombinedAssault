@@ -1586,7 +1586,10 @@ class CombinedAssaultObjectSettings(PropertyGroup):
         items=[("NONE", "Inherit", ""), ("CW", "Clockwise", ""), ("CCW", "Counter-clockwise", "")], default="NONE")
     # Light socket; 0 = the kind's default (VehicleLight.Kind).
     light_kind: EnumProperty(
-        name="Kind", items=[("HEAD", "Headlight", "Driver toggles"), ("SEARCH", "Searchlight", "Other crew toggle")],
+        name="Kind", items=[("HEAD", "Headlight", "Driver toggles"), ("SEARCH", "Searchlight", "Other crew toggle"),
+               ("HIGH", "High beam", "Driver toggles"), ("NAV", "Navigation light", "Pilot toggles"),
+               ("TAXI", "Taxi light", "Pilot toggles"), ("BRAKE", "Brake light", "Lit while braking"),
+               ("REVERSE", "Reverse light", "Lit in reverse")],
         default="HEAD")
     light_use_color: BoolProperty(name="Colour", description="Off: the kind's colour", default=False)
     light_color: FloatVectorProperty(name="Colour", subtype="COLOR_GAMMA", size=3, min=0.0, max=1.0,

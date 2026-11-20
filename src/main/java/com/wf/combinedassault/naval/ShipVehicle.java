@@ -85,8 +85,8 @@ public class ShipVehicle extends AbstractVehicle
 
     public ShipVehicle(EntityType<? extends AbstractVehicle> type, Level level) {
         super(type, level);
-        // No free-flight wobble and no tumbling: attitude is the model's.
-        this.physicsEngine.lockCenterRot = true;
+        // No free-flight wobble and no tumbling: heel and trim are the model's; contacts yaw.
+        this.physicsEngine.yawRotOnly = true;
     }
 
 

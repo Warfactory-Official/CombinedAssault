@@ -1,4 +1,18 @@
 {
+    "armor": {
+        "plates": {
+            "canopy": {
+                "curved": true,
+                "hull": 0.15,
+                "layers": [
+                    {
+                        "mm": 38,
+                        "mat": "laminated"
+                    }
+                ]
+            }
+        }
+    },
     "type": "combinedassault:fixed_wing_vehicle",
     "attributes": {
         "thrust": 80000,

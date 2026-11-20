@@ -4,12 +4,14 @@ import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.CombinedAssaultSystem;
 import com.wf.combinedassault.dynamics.gametest.CollisionProviderGameTest;
 import com.wf.combinedassault.dynamics.gametest.StepDeterminismGameTest;
+import com.wf.combinedassault.dynamics.message.ServerCrashImpact;
 import com.wf.combinedassault.vehicle.command.RootCommand;
 import com.wf.combinedassault.vehicle.gametest.GameTestSetup;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.config.ModConfigEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 import java.util.Set;
 
@@ -38,5 +40,7 @@ public final class DynamicsSystem implements CombinedAssaultSystem {
         modBus.addListener(ModConfigEvent.Reloading.class, DynamicsConfig::onLoad);
         RootCommand.SUBCOMMANDS.register(CombinedAssault.modLocation("physicstrace"), 0, PhysicsTraceCommand::get);
         CollisionProviderGameTest.install();
+        modBus.addListener(RegisterPayloadHandlersEvent.class, event -> event.registrar("dynamics-1")
+                .playToClient(ServerCrashImpact.TYPE, ServerCrashImpact.STREAM_CODEC, ServerCrashImpact::handle));
     }
 }

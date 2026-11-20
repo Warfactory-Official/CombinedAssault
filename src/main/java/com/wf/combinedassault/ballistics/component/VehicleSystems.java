@@ -57,6 +57,11 @@ public final class VehicleSystems {
             return null;
         }
 
+        /** Model node names whose geometry is this member; empty = none. */
+        default List<String> nodes(AbstractVehicle vehicle) {
+            return List.of();
+        }
+
         default float ratio() {
             float max = maxHealth();
             return max <= 0 ? 1 : Mth.clamp(health() / max, 0, 1);
@@ -124,11 +129,24 @@ public final class VehicleSystems {
                 cell(cells, kind, sided(kind, pools.id(i)), pools.unit(i)).members.add(new PoolMember(pools, i));
             }
         }
+        List<PartUnit<?>> parts = new ArrayList<>();
         for (PartUnit<?> part : vehicle.getPartUnits()) {
-            ComponentKind kind = ComponentDamage.kind(part);
-            if (kind.isSystem() && part.getMaxHealth() > 0) {
-                cell(cells, kind, sided(kind, part.getId()), "").members.add(new PartMember(part));
+            if (ComponentDamage.kind(part).isSystem() && part.getMaxHealth() > 0) {
+                parts.add(part);
             }
+        }
+        List<String> taken = new ArrayList<>();
+        for (PartUnit<?> part : parts) {
+            ComponentKind kind = ComponentDamage.kind(part);
+            Side side = sided(kind, part.getId());
+            int same = 0;
+            for (PartUnit<?> other : parts) {
+                if (ComponentDamage.kind(other) == kind && sided(kind, other.getId()) == side) {
+                    same++;
+                }
+            }
+            String unit = same > 1 ? unitName(kind, side, part.getId(), taken) : "";
+            cell(cells, kind, side, unit).members.add(new PartMember(part));
         }
         cells.sort((a, b) -> a.kind != b.kind ? order(a.kind) - order(b.kind)
                 : a.side != b.side ? a.side.compareTo(b.side) : a.unit.compareTo(b.unit));
@@ -155,13 +173,20 @@ public final class VehicleSystems {
     }
 
     /** No ENGINE cell (emplacement, trailer) => true. */
+    /** Every tick per vehicle: the engine cell is kept per pool set ({@link #cells}: 5 us a call). */
     public static boolean engineWorks(AbstractVehicle vehicle) {
-        for (Cell cell : cells(vehicle)) {
-            if (cell.kind == ComponentKind.ENGINE) {
-                return !cell.failed();
+        HullComponents pools = vehicle.hullComponents();
+        if (vehicle.engineCellPools != pools) {
+            vehicle.engineCell = null;
+            for (Cell cell : cells(vehicle)) {
+                if (cell.kind == ComponentKind.ENGINE) {
+                    vehicle.engineCell = cell;
+                    break;
+                }
             }
+            vehicle.engineCellPools = pools;
         }
-        return true;
+        return vehicle.engineCell == null || !vehicle.engineCell.failed();
     }
 
     /** Hull damage beyond zero, split evenly over non-hull members still above zero. */
@@ -184,6 +209,27 @@ public final class VehicleSystems {
         for (Member member : standing) {
             member.setHealth(Math.max(0, member.health() - share));
         }
+    }
+
+    private static final java.util.Set<String> GENERIC = java.util.Set.of("gun", "mg", "machine", "weapon", "part",
+            "unit", "left", "right", "l", "r");
+
+    /** Four-letter label of one of several same-kind parts: first non-generic id token; duplicates get a digit. */
+    private static String unitName(ComponentKind kind, Side side, String id, List<String> taken) {
+        String chosen = id;
+        for (String token : id.toLowerCase(Locale.ROOT).split("[_\\- .]+")) {
+            if (!token.isEmpty() && !GENERIC.contains(token)) {
+                chosen = token;
+                break;
+            }
+        }
+        String base = chosen.length() > 4 ? chosen.substring(0, 4) : chosen;
+        String name = base;
+        for (int n = 2; taken.contains(kind + ":" + side + ":" + name); n++) {
+            name = base.substring(0, Math.min(base.length(), 3)) + n;
+        }
+        taken.add(kind + ":" + side + ":" + name);
+        return name;
     }
 
     private static Side sided(ComponentKind kind, String id) {
@@ -243,6 +289,14 @@ public final class VehicleSystems {
             String id = pools.id(index);
             return hits == null ? null : hits.centre(i -> id.equals(hits.model().nodes().get(i).systemId()));
         }
+
+        @Override
+        public List<String> nodes(AbstractVehicle vehicle) {
+            VehicleHits hits = vehicle.hits();
+            String id = pools.id(index);
+            return hits == null ? List.of() : hits.model().nodes().stream()
+                    .filter(n -> id.equals(n.systemId())).map(n -> n.mesh().name()).toList();
+        }
     }
 
     private record PartMember(PartUnit<?> part) implements Member {
@@ -271,6 +325,12 @@ public final class VehicleSystems {
             }
             Vec3 centre = vehicle.hits() == null ? null : vehicle.hits().centre(part);
             return centre != null ? centre : part.worldPivotPosition();
+        }
+
+        @Override
+        public List<String> nodes(AbstractVehicle vehicle) {
+            String bone = part.getRenderBoneName();
+            return bone == null || bone.isBlank() ? List.of() : List.of(bone);
         }
     }
 }

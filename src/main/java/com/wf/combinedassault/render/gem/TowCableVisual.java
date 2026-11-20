@@ -1,5 +1,6 @@
 package com.wf.combinedassault.render.gem;
 
+import com.wf.combinedassault.tow.TowLinks;
 import com.wf.combinedassault.tow.TowMode;
 import com.wf.combinedassault.tow.client.TowCable;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
@@ -14,7 +15,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A tow cable as one Flywheel instance, owned by the towed vehicle's visual (it holds the link).
@@ -34,8 +34,7 @@ final class TowCableVisual {
     private final VisualizationContext context;
     private final BlockPos.MutableBlockPos lightPos = new BlockPos.MutableBlockPos();
 
-    @Nullable
-    private RopeInstance rope;
+    private final RopeInstance[] ropes = new RopeInstance[TowLinks.SLING_LEGS];
 
     TowCableVisual(VisualizationContext context) {
         this.context = context;
@@ -47,19 +46,28 @@ final class TowCableVisual {
             hide();
             return;
         }
-        if (rope == null) {
-            rope = context.instancerProvider()
-                    .instancer(GemRenderRopeTypes.ROPE, RopeModels.cutout(TowCable.TEXTURE, RINGS, SIDES))
-                    .createInstance();
-            rope.colorArgb(0xFFFFFFFF);
+        int count = ends.length / 2;
+        for (int i = 0; i < ropes.length; i++) {
+            if (i >= count) {
+                hide(i);
+            } else if (ropes[i] == null) {
+                ropes[i] = context.instancerProvider()
+                        .instancer(GemRenderRopeTypes.ROPE, RopeModels.cutout(TowCable.TEXTURE, RINGS, SIDES))
+                        .createInstance();
+                ropes[i].colorArgb(0xFFFFFFFF);
+            }
         }
-        Vec3 from = ends[0];
-        Vec3 to = ends[1];
+        for (int i = 0; i < count; i++) {
+            draw(ropes[i], towed, origin, ends[i * 2], ends[i * 2 + 1], count > 1 ? TowLinks.slingLegLength(towed, paidOut(towed), i) : paidOut(towed));
+        }
+    }
+
+    private void draw(RopeInstance rope, AbstractVehicle towed, Vec3i origin, Vec3 from, Vec3 to, double length) {
         rope.between((float) (from.x - origin.getX()), (float) (from.y - origin.getY()),
                         (float) (from.z - origin.getZ()),
                         (float) (to.x - origin.getX()), (float) (to.y - origin.getY()),
                         (float) (to.z - origin.getZ()))
-                .sag(TowCable.sag(from, to, paidOut(towed)))
+                .sag(TowCable.sag(from, to, length))
                 .radius(TowCable.RADIUS)
                 .tiling((float) (from.distanceTo(to) / TILING))
                 .lightB(lightAt(towed, to))
@@ -83,10 +91,16 @@ final class TowCableVisual {
         return LevelRenderer.getLightColor(towed.level(), lightPos);
     }
 
+    private void hide(int i) {
+        if (ropes[i] != null) {
+            ropes[i].delete();
+            ropes[i] = null;
+        }
+    }
+
     private void hide() {
-        if (rope != null) {
-            rope.delete();
-            rope = null;
+        for (int i = 0; i < ropes.length; i++) {
+            hide(i);
         }
     }
 
