@@ -18,17 +18,11 @@ public class PhysicsInfo {
     @SerializedName("liquid_damping")
     public float liquidDamping = 0.1f;
 
-    @SerializedName("suspension_response")
-    public float suspensionResponse = 2.0f;
-
     @SerializedName("center")
     public Vec3 center = Vec3.ZERO;
 
     @SerializedName("can_destroy_block")
     public boolean canDestroyBlock = false;
-
-    @SerializedName("can_tumble")
-    public boolean canTumble = true;
 
     @SerializedName("radar_cross_section")
     public float radarCrossSection = 1f;
@@ -42,7 +36,6 @@ public class PhysicsInfo {
         copy.density = this.density;
         copy.friction = this.friction;
         copy.liquidDamping = this.liquidDamping;
-        copy.suspensionResponse = this.suspensionResponse;
         copy.center = new Vec3(this.center.x, this.center.y, this.center.z);
         copy.canDestroyBlock = this.canDestroyBlock;
         copy.radarCrossSection = this.radarCrossSection;

@@ -13,7 +13,6 @@
   "physics_info": {
     "mass": 46000,
     "friction": 18236,
-    "suspension_response": 4,
     "can_destroy_block": true,
     "center": [
       0.0,

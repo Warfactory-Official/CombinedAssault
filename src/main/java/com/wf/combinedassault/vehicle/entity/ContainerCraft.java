@@ -137,14 +137,6 @@ public abstract class ContainerCraft extends Entity implements ContainerEntity, 
         }
     }
 
-    public void heal(float pHealAmount) {
-        if (pHealAmount <= 0) return;
-        float f = this.getHealth();
-        if (f > 0.0F) {
-            this.setHealth(f + pHealAmount);
-        }
-    }
-
     public InvWrapper getItemHandler() {
         return itemHandler;
     }

@@ -336,7 +336,6 @@ public abstract class AbstractVehicle extends ContainerCraft
     private List<OBB> cachedOBBs = List.of();
     private List<OBB> activeOBBs = List.of();
     private ChunkCollisionCache.Cursor collisionCursor;
-    private final BoxBuffer scratchBoxes = new BoxBuffer();
     // Providers hand back real AABBs, cached and reused across ticks rather than rebuilt.
     // Hull swept against world, rewritten per substep; must not live on shared cube groups.
     private final OBB sweepHull = new OBB(new Vector3f(), new Vector3f(), new Quaternionf());
@@ -1557,10 +1556,6 @@ public abstract class AbstractVehicle extends ContainerCraft
             this.markHurt();
             return true;
         }
-    }
-
-    public int passengerCapacity() {
-        return seats.size();
     }
 
     public VehicleModelInstance getVehicleModelInstance() {
@@ -3825,46 +3820,6 @@ public abstract class AbstractVehicle extends ContainerCraft
         return 0;
     }
 
-    /**
-     * Translates by up to (dx, dy, dz), stopped by the world and a deck the way travel is (vertical
-     * cast, horizontal legs, step-up). Tick thread, outside a solve (constraints: towing).
-     * @return fraction of the horizontal move taken, or of the vertical when there is none
-     */
-    public double sweepBy(double dx, double dy, double dz) {
-        if (!collision || mainCubeOBB == null) {
-            this.setPos(getX() + dx, getY() + dy, getZ() + dz);
-            return 1;
-        }
-        ChunkCollisionCache cache = ChunkCollisionCache.of(this.level());
-        AABB bounds = getBoundingBox().expandTowards(dx, dy, dz).expandTowards(0, maxUpStep(), 0)
-                .inflate(SAMPLE_GATE_MARGIN);
-        if (!cache.prepare(this.level(), bounds) && !carrierLink.active()) {
-            this.setPos(getX() + dx, getY() + dy, getZ() + dz);
-            return 1;
-        }
-        OBB hull = SweptHull.climbHull(mainCubeOBB.obb(), sweepSkirt(mainCubeOBB.obb().rotation()), sweepHull);
-        sweepFrame.set(hull.rotation());
-        sweptBroadphase.init(cache);
-        BoxBuffer near = sweptBroadphase.near(hull, dx, dy + maxUpStep(), dz);
-        double movedY = dy == 0 ? 0 : dy * castToi(hull, near, 0, dy, 0, null, sweepFrame);
-        hull.translate(0, movedY, 0);
-        double baseX = hull.centerX();
-        double baseY = hull.centerY();
-        double baseZ = hull.centerZ();
-        sweepHorizontal(hull, near, dx, dz, null);
-        double got = Math.abs(sweptLegX) + Math.abs(sweptLegZ);
-        double wanted = Math.abs(dx) + Math.abs(dz);
-        double lift = 0;
-        if (got < wanted - 1.0e-7) {
-            lift = stepUp(hull, near, baseX, baseY, baseZ, dx, dz, got);
-            if (lift > 0) {
-                got = Math.abs(sweptLegX) + Math.abs(sweptLegZ);
-            }
-        }
-        this.setPos(getX() + sweptLegX, getY() + movedY + lift, getZ() + sweptLegZ);
-        return wanted > 0 ? got / wanted : (dy == 0 ? 1 : movedY / dy);
-    }
-
     private static boolean horizontal(Vec3 step) {
         return step.x != 0 || step.z != 0;
     }
@@ -3939,10 +3894,6 @@ public abstract class AbstractVehicle extends ContainerCraft
     /** The skirt plane every piece of the vehicle is cut against, as a height in the hull's frame. */
     private float sweepBottom(Quaternionf rotation) {
         return SweptHull.climbBottom(mainCubeOBB.obb().extents().y, sweepSkirt(rotation));
-    }
-
-    public double climbToi(OBB hull, BoxBuffer near, double lift, OBB.SatFrame frame) {
-        return castToi(hull, near, 0, lift, 0, null, frame);
     }
 
     @Override
@@ -4321,7 +4272,7 @@ public abstract class AbstractVehicle extends ContainerCraft
     private double stepUp(OBB hull, BoxBuffer near, double baseX, double baseY, double baseZ,
                           double moveX, double moveZ, double baseGain) {
         double stepLen = Math.sqrt(moveX * moveX + moveZ * moveZ);
-        double budget = Math.min(maxUpStep(), stepLen * physicsEngine.climbGradient);
+        double budget = Math.min(maxUpStep(), stepLen * PhysicsEngine.CLIMB_GRADIENT);
         if (budget <= 1.0e-4) {
             return 0;
         }
@@ -4999,7 +4950,7 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     /** Spin kept per airborne tick. */
     public float airSpinRetention() {
-        return physicsEngine.tumbleAirDamping;
+        return PhysicsEngine.AIR_SPIN_RETENTION;
     }
 
     /** Collision piece gone with a lost part (never the main piece). */
@@ -5116,6 +5067,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     }
 
     private static final int SUPPORT_PROBE_CELLS = 2;
+    /** Blocks; partial-height cells (soul sand, snow, honey) still reach above it. */
+    private static final double INSIDE_FLOOR = 1.0 / 16;
 
     /** No fluid in any section palette under the box => vanilla's per-cell scan finds none. */
     @Override
@@ -5125,11 +5078,14 @@ public abstract class AbstractVehicle extends ContainerCraft
         }
     }
 
-    /** = vanilla, minus air cells (entityInside no-op) and the per-cell chunk lookup. */
+    /**
+     * = vanilla, minus air cells (entityInside no-op), the per-cell chunk lookup, and the bottom {@link #INSIDE_FLOOR}:
+     * resting contact overlap => every footprint column's floor cell scanned each tick.
+     */
     @Override
     protected void checkInsideBlocks() {
         AABB box = getBoundingBox();
-        BlockPos min = BlockPos.containing(box.minX + 1.0E-7, box.minY + 1.0E-7, box.minZ + 1.0E-7);
+        BlockPos min = BlockPos.containing(box.minX + 1.0E-7, box.minY + INSIDE_FLOOR, box.minZ + 1.0E-7);
         BlockPos max = BlockPos.containing(box.maxX - 1.0E-7, box.maxY - 1.0E-7, box.maxZ - 1.0E-7);
         if (!level().hasChunksAt(min, max)) {
             return;

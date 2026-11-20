@@ -89,10 +89,6 @@ public class TrackUnitData extends SuspensionUnitData {
         partCubeOBBs.add(cube);
     }
 
-    public float getTrackWidth() {
-        return trackWidth;
-    }
-
     public List<List<Vec3>> getTracks() {
         return tracks;
     }

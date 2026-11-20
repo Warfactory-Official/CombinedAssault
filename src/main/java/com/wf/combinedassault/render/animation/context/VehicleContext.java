@@ -3,7 +3,6 @@ package com.wf.combinedassault.render.animation.context;
 import com.wf.combinedassault.ballistics.component.HullComponents;
 import com.wf.combinedassault.render.entity.vehicle.VehicleRender;
 import com.wf.combinedassault.render.model.VehicleModelInstance;
-import com.wf.combinedassault.vehicle.control.ControlUnit;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.RotatableUnit;
@@ -114,16 +113,8 @@ public class VehicleContext<E extends AbstractVehicle> extends EntityContext<E> 
         return getEntity().getZRot();
     }
 
-    public boolean hasOwner(String id) {
-        return getEntity().getPartUnit(id).map(part -> part.getOwner() != null).orElse(false);
-    }
-
     public double getSpeed() {
         return getEntity().getDeltaMovement().length();
-    }
-
-    public ControlUnit getControlUnit() {
-        return getEntity().controlUnit;
     }
 
     /** Hull system pool {@code id} ({@code "rotor FL"}): 0 broken .. 1; no such pool => 1. */
@@ -159,14 +150,6 @@ public class VehicleContext<E extends AbstractVehicle> extends EntityContext<E> 
         }).orElse(0f);
     }
 
-    public boolean isPartDestroyed(String id) {
-        return getEntity().getPartUnit(id).map(PartUnit::isDestroyed).orElse(false);
-    }
-
-    public boolean isPartDetached(String id) {
-        return getEntity().getPartUnit(id).map(PartUnit::isDetached).orElse(false);
-    }
-
     public boolean isPartOn(String id) {
         return getEntity().getPartUnit(id).map(part -> {
             if (part instanceof SwitchableUnit<?> switchableUnit) {
@@ -192,24 +175,6 @@ public class VehicleContext<E extends AbstractVehicle> extends EntityContext<E> 
             }
         }
         return 0;
-    }
-
-    public String getWeaponName(String id, int weaponIndex) {
-        Optional<PartUnit<?>> partUnitOptional = getEntity().getPartUnit(id);
-        if (partUnitOptional.isEmpty()) {
-            return "";
-        }
-        if (partUnitOptional.get() instanceof WeaponUnit weaponUnit) {
-            List<AbstractVehicleWeapon<?>> indexedWeapons = weaponUnit.getIndexedWeapons();
-            if (weaponIndex >= 0 && weaponIndex < indexedWeapons.size()) {
-                AbstractVehicleWeapon<?> weapon = indexedWeapons.get(weaponIndex);
-                if (weapon instanceof VehicleWeaponAgent weaponAgent) {
-                    return weaponAgent.getWeaponUnit().getCurrentWeapon().get().getDisplayName().getString();
-                }
-                return weapon.getDisplayName().getString();
-            }
-        }
-        return "";
     }
 
     public double getContainerFillRate() {

@@ -50,7 +50,6 @@ public final class WakeFx {
     // Harness.
     static long nanos;
     static long ticks;
-    static int foams;
     static int sprays;
     static int bubbles;
 
@@ -199,7 +198,6 @@ public final class WakeFx {
         if (em != null) {
             em.spawnDecal(x, y, z, 0, 1, 0, life, size * (0.8F + 0.4F * RANDOM.nextFloat()), RANDOM.nextFloat() * TAU,
                     look);
-            foams++;
         }
     }
 

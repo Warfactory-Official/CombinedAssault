@@ -49,8 +49,4 @@ public class RotaryWingVehicleContext extends VehicleContext<RotaryWingVehicle> 
         return VehicleRotors.of(entity).antiTorque();
     }
 
-    public float getCargoRopeLength() {
-        return entity.cargoRope == null ? 0 : entity.cargoRope.getLength();
-    }
-
 }

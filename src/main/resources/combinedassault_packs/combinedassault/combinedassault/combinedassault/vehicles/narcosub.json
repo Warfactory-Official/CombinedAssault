@@ -122,8 +122,7 @@
     },
     "physics_info": {
         "mass": 2000,
-        "radar_cross_section": 0.2,
-        "can_tumble": false
+        "radar_cross_section": 0.2
     },
     "storage": {
         "slots": 36
@@ -164,6 +163,7 @@
     "display": {
         "cabin_muffle": 0.3,
         "icon": "combinedassault:textures/slot/narcosub.png",
+        "controller": "combinedassault:narcosub_controller",
         "tab_index": 706,
         "description": ""
     }

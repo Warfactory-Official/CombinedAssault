@@ -6,27 +6,20 @@ import com.wf.combinedassault.pack.weapon.VehicleWeaponType;
 import com.wf.combinedassault.weapon.VehicleLaser;
 import com.wf.combinedassault.weapon.data.VehicleLaserWeaponData;
 import com.wf.combinedassault.weapon.*;
+import net.minecraft.resources.ResourceLocation;
+
+import java.util.List;
 import com.wf.combinedassault.weapon.data.*;
 
 public class VehicleWeaponTypes {
 
+    public static final ResourceLocation CANNON = CombinedAssault.modLocation("cannon");
+    public static final ResourceLocation ROCKET = CombinedAssault.modLocation("rocket");
+    public static final ResourceLocation GRENADE = CombinedAssault.modLocation("grenade");
+    public static final ResourceLocation AERIAL_BOMB = CombinedAssault.modLocation("aerial_bomb");
+    public static final ResourceLocation DECOY_FLARE = CombinedAssault.modLocation("decoy_flare");
+
     public static void registerTypes() {
-        register(
-                "cannon", json -> GsonUtil.GSON.fromJson(json, VehicleCannonWeaponData.class), VehicleCannon::new
-        );
-
-        register(
-                "grenade", json -> GsonUtil.GSON.fromJson(json, VehicleGrenadeWeaponData.class), VehicleGrenade::new
-        );
-
-        register(
-                "rocket", json -> GsonUtil.GSON.fromJson(json, VehicleRocketWeaponData.class), VehicleRocket::new
-        );
-
-        register(
-                "aerial_bomb", json -> GsonUtil.GSON.fromJson(json, VehicleAerialBombWeaponData.class), VehicleAerialBomb::new
-        );
-
         register(
                 "missile", json -> GsonUtil.GSON.fromJson(json, VehicleMissileWeaponData.class), VehicleMissile::new
         );
@@ -40,9 +33,13 @@ public class VehicleWeaponTypes {
                 "spray_pod", json -> GsonUtil.GSON.fromJson(json, VehicleSprayPodWeaponData.class), VehicleSprayPod::new
         );
 
-        register(
-                "decoy_flare", json -> GsonUtil.GSON.fromJson(json, BaseVehicleWeaponData.class), VehicleDecoyFlare::new
-        );
+        for (ResourceLocation type : List.of(CANNON, ROCKET, GRENADE, AERIAL_BOMB, DECOY_FLARE)) {
+            VehicleWeaponTypes.<VehicleLoadedWeapon, BaseVehicleWeaponData>register(
+                    type.getPath(), json -> GsonUtil.GSON.fromJson(json, BaseVehicleWeaponData.class),
+                    (vehicle, unit, index, data, serializeId) ->
+                            new VehicleLoadedWeapon(type, vehicle, unit, index, data, serializeId)
+            );
+        }
     }
 
     private static <T extends AbstractVehicleWeapon<D>, D extends BaseVehicleWeaponData> void register(

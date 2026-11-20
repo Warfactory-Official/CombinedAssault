@@ -42,7 +42,7 @@ public class VehicleSystemsGameTest {
             return;
         }
         List<String> labels = VehicleSystems.cells(vehicle).stream().map(VehicleSystems.Cell::label).toList();
-        if (!labels.equals(List.of("HULL", "ENG", "GUN", "L-TR", "R-TR", "TRRT"))) {
+        if (!labels.equals(List.of("HULL", "ENG", "GUN ANTI", "GUN LOAD", "L-TR", "R-TR", "TRRT"))) {
             helper.fail("m1a2 cells " + labels);
             return;
         }

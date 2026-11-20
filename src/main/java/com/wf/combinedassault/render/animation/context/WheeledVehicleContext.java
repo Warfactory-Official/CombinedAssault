@@ -63,10 +63,6 @@ public class WheeledVehicleContext extends VehicleContext<WheeledVehicle> {
         return (drivenRotation / (float) (2 * Math.PI * radius)) % 360f;
     }
 
-    public float getWheelRotation() {
-        return wheelRotation;
-    }
-
     public float getSteeringAngle() {
         return steeringAngle;
     }

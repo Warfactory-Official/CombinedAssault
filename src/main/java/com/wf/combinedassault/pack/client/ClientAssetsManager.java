@@ -110,10 +110,6 @@ public enum ClientAssetsManager {
         return Optional.ofNullable(animationControllerDefinitionManager.getData(id));
     }
 
-    public ScriptManager getScriptManager() {
-        return scriptManager;
-    }
-
     public Optional<Script> getScript(ResourceLocation script) {
         return scriptManager.getScript(script);
     }

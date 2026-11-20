@@ -231,7 +231,10 @@ public final class MountDefaults {
         }
         if (volume > 0) {
             sum.div(volume);
-            sum.y = Math.min(sum.y, sum.y + RUNNING_GEAR * (axleHeight() - sum.y));
+            float axle = axleHeight();
+            if (axle < sum.y) {
+                sum.y += RUNNING_GEAR * (axle - sum.y);
+            }
             physics.add("center", vec(sum));
         }
     }

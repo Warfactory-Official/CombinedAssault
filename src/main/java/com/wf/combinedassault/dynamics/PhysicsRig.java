@@ -105,44 +105,6 @@ public final class PhysicsRig {
         this.rotCacheRoll = Float.NaN;
     }
 
-    /**
-     * Copies everything a travel solve reads so a candidate mover runs against the live one's exact inputs. MUST
-     * run before the live solve, which moves pose and hull.
-     *
-     * <p>World view not copied: call {@link #bindWorld} with the source's sections after. Snapshots immutable
-     * (both solves share frozen geometry); cursor over them is mutable, so a candidate mover gets its own, never
-     * the live rig's. Recorded slices not copied either; this rig produces its own.
-     */
-    public void copyTravelStateFrom(PhysicsRig source) {
-        this.x = source.x;
-        this.y = source.y;
-        this.z = source.z;
-        this.xRot = source.xRot;
-        this.yRot = source.yRot;
-        this.zRot = source.zRot;
-        this.deltaMovement = source.deltaMovement;
-        this.onGround = source.onGround;
-        this.hull.setCenter(source.hull);
-        this.hull.extents().set(source.hull.extents());
-        this.hull.rotation().set(source.hull.rotation());
-        this.axes = hull.getAxes();
-        this.travelMovement = source.travelMovement;
-        this.swept = source.swept;
-        this.substeps = source.substeps;
-        this.carried = source.carried;
-        this.baseBounds = source.baseBounds;
-        this.baseX = source.baseX;
-        this.baseY = source.baseY;
-        this.baseZ = source.baseZ;
-        this.substepMoves.clear();
-        this.posRotUpdates = 0;
-        this.impactVelocityDiff = 0;
-        this.needsLiveWorld = false;
-        this.rotCacheYaw = Float.NaN;
-        this.rotCachePitch = Float.NaN;
-        this.rotCacheRoll = Float.NaN;
-    }
-
     /** Points the rig's world reads at a source and gives it a fresh cursor over it. */
     public void bindWorld(SectionSource sections) {
         this.sections = sections;

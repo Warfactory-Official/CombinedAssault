@@ -18,7 +18,6 @@ import com.wf.combinedassault.vehicle.screen.ScreenInfo;
 import com.wf.combinedassault.weapon.pojo.LoadoutInfo;
 import com.wf.wflib.armor.api.hull.HullProfile;
 import java.util.LinkedHashMap;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -108,9 +107,6 @@ public class BaseVehicleDataPojo {
 
     @SerializedName("center_offset")
     public Vec3 centerOffset = Vec3.ZERO;
-
-    @SerializedName("structure_model")
-    public ResourceLocation structureModel = null;
 
     @SerializedName("parts")
     public List<PartUnitEntry<?, ?>> parts = List.of();

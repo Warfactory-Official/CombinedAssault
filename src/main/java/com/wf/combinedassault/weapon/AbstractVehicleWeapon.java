@@ -302,11 +302,6 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
         return this.getData().getShootInterval();
     }
 
-    @Nullable
-    public Vec3 getTargetLocation() {
-        return targetLocation;
-    }
-
     public void setTargetLocation(@Nullable Vec3 targetLocation) {
         this.targetLocation = targetLocation;
     }
@@ -822,16 +817,8 @@ public abstract class AbstractVehicleWeapon<T extends BaseVehicleWeaponData> imp
         return weaponUnit;
     }
 
-    public void setDisplayName(Component displayName) {
-        this.displayName = displayName;
-    }
-
     public Component getDisplayName() {
         return displayName;
-    }
-
-    public boolean hasSyncData() {
-        return true;
     }
 
     @Override

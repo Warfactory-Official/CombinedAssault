@@ -71,10 +71,6 @@ public class MissileHolderUnitData extends PartUnitData {
         return size != null && accepts.contains(size);
     }
 
-    public Set<MissileSize> getAccepts() {
-        return accepts;
-    }
-
     public int getCapacity() {
         return capacity;
     }

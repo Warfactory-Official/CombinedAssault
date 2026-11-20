@@ -70,10 +70,6 @@ public class BaseDisplay {
         return vehicleModel;
     }
 
-    public ResourceLocation getAnimationControllerPath() {
-        return animationControllerPath;
-    }
-
     @Nullable
     public EngineSound getEngine() {
         return engine;

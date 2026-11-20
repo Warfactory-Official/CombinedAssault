@@ -193,6 +193,43 @@ public class ShipGameTest {
                 .thenSucceed();
     }
 
+    /** Dry hull dropped across a 1-block step: rolls off the step edge onto the lower floor, then rests. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = POOL, timeoutTicks = 400)
+    public static void aBeachedBoatTakesTheGroundsTilt(GameTestHelper helper) {
+        for (int x = 8; x < 41; x++) {
+            for (int z = 8; z < 41; z++) {
+                for (int y = 2; y <= (x >= 25 ? 13 : 12); y++) {
+                    helper.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+                }
+            }
+        }
+        ShipVehicle boat = spawn(helper, BOAT, 24, 16, 24, 0);
+        if (boat == null) {
+            return;
+        }
+        float[] roll = {0};
+        helper.startSequence()
+                .thenIdle(160)
+                .thenExecute(() -> roll[0] = boat.getZRot())
+                .thenIdle(40)
+                .thenExecute(() -> {
+                    if (boat.afloat()) {
+                        helper.fail("reads afloat on dry stone");
+                    }
+                    if (Math.abs(roll[0]) < 5) {
+                        helper.fail("held level across the step: roll " + roll[0]);
+                    }
+                    if (Math.abs(roll[0]) > 45) {
+                        helper.fail("rolled over: " + roll[0]);
+                    }
+                    if (Math.abs(boat.getZRot() - roll[0]) > 0.5 || boat.getDeltaMovement().length() > 0.01) {
+                        helper.fail("not at rest: roll " + roll[0] + " -> " + boat.getZRot() + ", v " + boat.getDeltaMovement());
+                    }
+                })
+                .thenExecute(() -> discard(boat))
+                .thenSucceed();
+    }
+
     /** A shoal under the surface grounds the hull: it stops on the shelf face and the readout says so. */
     @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = TRENCH, timeoutTicks = 800)
     public static void aSubmarineGroundsOnAShoal(GameTestHelper helper) {

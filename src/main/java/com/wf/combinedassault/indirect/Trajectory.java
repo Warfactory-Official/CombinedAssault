@@ -77,10 +77,6 @@ public class Trajectory {
         return speed * travelled - gravity / drag * (ticks - travelled);
     }
 
-    public static double riseOf(double speed, double drag, double gravity, double ticks) {
-        return riseOfDecay(speed, decayOf(drag), gravity, ticks);
-    }
-
     public static double axisSpeedAtDecay(double speed, double decay, double ticks) {
         return decay >= 1 ? speed : speed * Math.pow(decay, ticks);
     }
@@ -94,10 +90,6 @@ public class Trajectory {
         return retained * speed - gravity * (1 - retained) / drag;
     }
 
-    public static double verticalSpeedOf(double speed, double drag, double gravity, double ticks) {
-        return verticalSpeedOfDecay(speed, decayOf(drag), gravity, ticks);
-    }
-
     /** Tick a round launched at {@code speed} stops climbing; 0 if it never does. */
     public static double apexOfDecay(double speed, double decay, double gravity) {
         double drag = 1 - decay;
@@ -109,10 +101,6 @@ public class Trajectory {
         }
         double terminal = gravity / drag;
         return Math.log(terminal / (speed + terminal)) / Math.log(decay);
-    }
-
-    public static double apexOf(double speed, double drag, double gravity) {
-        return apexOfDecay(speed, decayOf(drag), gravity);
     }
 
     public double horizontalAt(double ticks) {

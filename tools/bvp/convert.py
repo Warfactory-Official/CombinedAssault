@@ -731,7 +731,7 @@ class Tracked(Ground):
                             "max_speed_backward": round(e["MaxBackwardSpeedRate"], 3),
                             "turn_acceleration": 1, "max_turn": round(e["TrackRotSpeed"], 3),
                             "engine_power": round(self.info["engine_kw"] * loaded / mass, 1)},
-             "physics_info": {"mass": mass, "friction": round(0.04 * loaded * G), "suspension_response": 4,
+             "physics_info": {"mass": mass, "friction": round(0.04 * loaded * G),
                               "can_destroy_block": mass > 15000}}
         d.update(self.common_def(model))
         d["display"]["track"] = self.track
@@ -1399,7 +1399,7 @@ class Ship(Vehicle):
             "view_info": {"third_person_distance": 160, "third_person_distance_zoomed": 8},
             "energy_info": {"energy_capacity": self.fuel(), "energy_consumption_per_tick": round(self.fuel() / 72000, 4)},
             "defense_stats": {"damage_threshold": 50, "impact_multiplier": 0.05},
-            "physics_info": {"mass": mass, "radar_cross_section": 40, "can_tumble": False},
+            "physics_info": {"mass": mass, "radar_cross_section": 40},
             "storage": {"slots": 216}, "parts": self.parts, "model": model,
             "display": {"icon": f"{NS}:textures/slot/{self.vid}.png", "tab_index": 600,
                         "controller": self.write_controller()}})

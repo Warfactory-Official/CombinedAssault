@@ -105,16 +105,8 @@ public class BaseVehicleWeaponData {
             return time;
         }
 
-        public void setTime(int time) {
-            this.time = time;
-        }
-
         public Ingredient getAmmo() {
             return ammo;
-        }
-
-        public void setAmmo(Ingredient ammo) {
-            this.ammo = ammo;
         }
 
         public boolean isAmmo(ItemStack stack) {
@@ -267,24 +259,12 @@ public class BaseVehicleWeaponData {
         return inaccuracy;
     }
 
-    public void setInaccuracy(float inaccuracy) {
-        this.inaccuracy = inaccuracy;
-    }
-
     public float getRecoil() {
         return recoil;
     }
 
-    public void setRecoil(float recoil) {
-        this.recoil = recoil;
-    }
-
     public long getShootInterval() {
         return shootInterval;
-    }
-
-    public void setShootInterval(long shootInterval) {
-        this.shootInterval = shootInterval;
     }
 
     public int getMaxCapacity() {

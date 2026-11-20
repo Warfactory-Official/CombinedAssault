@@ -17,8 +17,4 @@ public class PoseGraph {
         }
         return rootNode.evaluate(context);
     }
-
-    public PoseNode getRootNode() {
-        return rootNode;
-    }
 }

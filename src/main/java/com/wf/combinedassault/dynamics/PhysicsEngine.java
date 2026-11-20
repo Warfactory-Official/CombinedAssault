@@ -53,12 +53,12 @@ public class PhysicsEngine {
     public float radarCrossSection;
     public float mass = 1;
     public Vec3 center;
-    public float bounce = 0.05f;
-    public float angularDampingAir = 0.96f;
-    public float maxRotV = 0.3f;
-    public float maxTipSpeed = 3.6f;
+    public static final float BOUNCE = 0.05f;
+    private static final float ANGULAR_DAMPING_AIR = 0.96f;
+    private static final float MAX_ROT_V = 0.3f;
+    private static final float MAX_TIP_SPEED = 3.6f;
     /** Spin kept per tick while airborne. */
-    public float tumbleAirDamping = 0.995f;
+    public static final float AIR_SPIN_RETENTION = 0.995f;
     /** World frame, rad/tick. */
     public final Vector3f angularVelocity = new Vector3f();
     public float friction = 0.005f;
@@ -68,7 +68,7 @@ public class PhysicsEngine {
     /** Fraction of velocity bled off per tick at full submersion. */
     public float liquidDamping = 0.1f;
     /** Blocks of rise per block of horizontal travel, steepest step-up; 1.0 = 45 degrees. */
-    public float climbGradient = 1.0f;
+    public static final float CLIMB_GRADIENT = 1.0f;
     public boolean lockZRot;
     public boolean lockCenterRot;
     /** Contacts spin the hull about world y only; pitch / roll stay the controller's (gear stance, heel). */
@@ -166,9 +166,9 @@ public class PhysicsEngine {
     public float effectiveMaxRotV() {
         float radius = vehicle.getMainCubeOBB().obb().extents().length();
         if (radius < 1.0e-3f) {
-            return maxRotV;
+            return MAX_ROT_V;
         }
-        return Math.min(maxRotV, maxTipSpeed / radius);
+        return Math.min(MAX_ROT_V, MAX_TIP_SPEED / radius);
     }
 
     /** Last {@link #sampleBuoyancy}. */
@@ -361,7 +361,7 @@ public class PhysicsEngine {
     /** Yaw spin (rad/tick) after one tick: ground friction mu G r / k^2, r = (w + d) / 6 ~ mean arm of the patch; else air. */
     public float decayYawSpin(float spin, boolean grounded) {
         if (!grounded) {
-            return spin * angularDampingAir;
+            return spin * ANGULAR_DAMPING_AIR;
         }
         VehicleCubeOBB cube = physicsCube();
         float k2 = bodyInertia.m11;

@@ -1,0 +1,9 @@
+{
+    "name": "narcosub_controller",
+    "script": "combinedassault:narcosub",
+    "parameters": {},
+    "graph": {
+        "type": "script",
+        "function": "updateBones"
+    }
+}

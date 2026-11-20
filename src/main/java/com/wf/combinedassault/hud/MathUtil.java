@@ -1,6 +1,5 @@
 package com.wf.combinedassault.hud;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import org.joml.*;
 
 import javax.annotation.Nonnull;
@@ -12,31 +11,10 @@ public class MathUtil {
     public static final float[] QUATERNION_ONE = {0, 0, 0, 1};
     public static final Quaternionf IDENTITY_QUATERNION = new Quaternionf();
 
-    public static double magnificationToFovMultiplier(double magnification, double currentFov) {
-        return magnificationToFov(magnification, currentFov) / currentFov;
-    }
-
     public static double magnificationToFov(double magnification, double currentFov) {
         double currentTan = Math.tan(Math.toRadians(currentFov / 2));
         double newTan = currentTan / magnification;
         return Math.toDegrees(Math.atan(newTan)) * 2;
-    }
-
-    public static double fovToMagnification(double currentFov, double originFov) {
-        return Math.tan(Math.toRadians(originFov / 2)) / Math.tan(Math.toRadians(currentFov / 2));
-    }
-
-    public static double zoomSensitivityRatio(double currentFov, double originFov, double coefficient) {
-        return Math.atan(Math.tan(Math.toRadians(currentFov / 2)) * coefficient) /
-                Math.atan(Math.tan(Math.toRadians(originFov / 2)) * coefficient);
-    }
-
-    public static void mulMatrix(PoseStack poseStack, Matrix4fc matrix) {
-        Matrix3f linearPart = new Matrix3f(matrix);
-        linearPart.invert();
-        linearPart.transpose();
-        poseStack.last().normal().mul(linearPart);
-        poseStack.last().pose().mul(matrix);
     }
 
     /** Euler -> quaternion, order roll(z) -> yaw(y) -> pitch(x). Returns {@code [x,y,z,w]}. */
@@ -70,24 +48,6 @@ public class MathUtil {
                 (float) (sy * cp * cr - cy * sp * sr),
                 (float) (cy * cp * cr + sy * sp * sr)
         );
-    }
-
-    /** Quaternion {@code [x,y,z,w]} -> Euler array {@code [pitch,yaw,roll]}. */
-    public static float[] toEulerAngles(float[] q) {
-        float[] angles = new float[3];
-        double sinrCosp = 2 * (q[3] * q[0] + q[1] * q[2]);
-        double cosrCosp = 1 - 2 * (q[0] * q[0] + q[1] * q[1]);
-        angles[0] = (float) Math.atan2(sinrCosp, cosrCosp);
-        double sinp = 2 * (q[3] * q[1] - q[2] * q[0]);
-        if (Math.abs(sinp) >= 1) {
-            angles[1] = (float) Math.copySign(Math.PI / 2, sinp);
-        } else {
-            angles[1] = (float) Math.asin(sinp);
-        }
-        double sinyCosp = 2 * (q[3] * q[2] + q[1] * q[0]);
-        double cosyCosp = 1 - 2 * (q[1] * q[1] + q[2] * q[2]);
-        angles[2] = (float) Math.atan2(sinyCosp, cosyCosp);
-        return angles;
     }
 
     public static float[] slerp(float[] from, float[] to, float alpha) {
@@ -167,12 +127,6 @@ public class MathUtil {
         return new Quaternionf(rx, ry, rz, rw);
     }
 
-    public static Vector3f getEulerAngles(Matrix4f matrix) {
-        Vector3f dest = new Vector3f();
-        matrix.getEulerAnglesZYX(dest);
-        return dest;
-    }
-
     public static float[] solveEquations(float[][] coefficients, float[] constants) {
         int n = constants.length;
         for (int pivot = 0; pivot < n - 1; pivot++) {
@@ -218,40 +172,6 @@ public class MathUtil {
         float[] constants = {qb.x(), qb.y(), qb.z(), qb.w()};
         float[] result = solveEquations(coefficients, constants);
         return new Quaternionf(result[0], result[1], result[2], result[3]);
-    }
-
-    /** @param resultMatrix accumulated into (composed), not overwritten. */
-    public static void applyMatrixLerp(Matrix4f fromMatrix, Matrix4f toMatrix, Matrix4f resultMatrix, float alpha) {
-        Vector3f translation = new Vector3f(toMatrix.m30() - fromMatrix.m30(), toMatrix.m31() - fromMatrix.m31(), toMatrix.m32() - fromMatrix.m32());
-        translation.mul(alpha);
-        Vector3f fromRotation = MathUtil.getEulerAngles(fromMatrix);
-        float[] qFrom = MathUtil.toQuaternion(fromRotation.x(), fromRotation.y(), fromRotation.z());
-        Vector3f toRotation = MathUtil.getEulerAngles(toMatrix);
-        float[] qTo = MathUtil.toQuaternion(toRotation.x(), toRotation.y(), toRotation.z());
-        float[] qRelative = getRelativeQuaternion(qFrom, qTo);
-        Quaternionf qLerped = MathUtil.toQuaternion(MathUtil.slerp(QUATERNION_ONE, qRelative, alpha));
-        resultMatrix.m30(resultMatrix.m30() + translation.x);
-        resultMatrix.m31(resultMatrix.m31() + translation.y);
-        resultMatrix.m32(resultMatrix.m32() + translation.z);
-        resultMatrix.rotate(qLerped);
-    }
-
-    public static float splineCurve(float[] y, float tension, float alpha) {
-        if (y.length != 4) {
-            throw new IllegalArgumentException("y value length must be 4 when doing catmull-rom spline");
-        }
-        if (tension < 0 || tension > 1) {
-            throw new IllegalArgumentException("tension must be 0~1 when doing catmull-rom spline");
-        }
-        float v0 = (y[2] - y[0]) * 0.5f;
-        float v1 = (y[3] - y[1]) * 0.5f;
-        float t2 = alpha * alpha;
-        float t3 = alpha * t2;
-        float h1 = 2f * t3 - 3f * t2 + 1f;
-        float h2 = -2f * t3 + 3f * t2;
-        float h3 = t3 - 2f * t2 + alpha;
-        float h4 = t3 - t2;
-        return h1 * y[1] + h2 * y[2] + h3 * v0 + h4 * v1;
     }
 
 }

@@ -8,6 +8,8 @@ import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.armor.api.hull.HullProfile;
+import com.wf.wflib.armor.api.hull.PlateLayer;
+import com.wf.wflib.armor.api.hull.PlateSpec;
 import com.wf.wflib.armor.api.hull.EraType;
 import com.wf.wflib.armor.api.hull.EraTypes;
 import com.wf.wflib.damage.api.Threat;
@@ -45,6 +47,8 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -355,6 +359,19 @@ public class AddonArmorGameTest {
     @GameTest(template = TEMPLATE, timeoutTicks = 200)
     public static void slatStopsABulletOnABarAndPassesOneThroughAGap(GameTestHelper helper) {
         onLane(helper, 1, M1A2, vehicle -> {
+            // Shipped plates stop 12.7 mm => soft hull: gap shot must hurt.
+            HullProfile soft = new HullProfile();
+            soft.front = soft.side = soft.rear = soft.top = soft.bottom = 5;
+            soft.plates = new HashMap<>();
+            vehicle.armorProfile.plates.forEach((plate, spec) -> {
+                PlateSpec thin = new PlateSpec();
+                thin.facing = spec.facing;
+                thin.slope = spec.slope;
+                thin.curved = spec.curved;
+                thin.layers = List.of(new PlateLayer(5, "rha", 0));
+                soft.plates.put(plate, thin);
+            });
+            vehicle.armorProfile = soft;
             fillAll(vehicle, AddonFit.SLAT);
             int rear = mount(helper, vehicle, "rear_slat_1");
             AddonMount m = vehicle.addonArmor().mounts().get(rear);

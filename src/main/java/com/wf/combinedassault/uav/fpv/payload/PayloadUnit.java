@@ -263,11 +263,6 @@ public class PayloadUnit extends SwitchableUnit<PayloadUnitData> {
         return vehicle.controlUnit.getOperator();
     }
 
-    /** True only between the operator being ejected and the effect landing. */
-    public boolean isDetonating() {
-        return detonating;
-    }
-
     /** Where the payload sits; also where its effect lands. */
     public Vec3 payloadPosition() {
         return worldPosition(data.getAttachOffset());

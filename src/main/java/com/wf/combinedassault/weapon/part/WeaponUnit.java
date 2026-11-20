@@ -1403,10 +1403,6 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         return coldLaunchVelocity;
     }
 
-    public void setFiringMode(WeaponUnitData.FiringMode firingMode) {
-        this.firingMode = firingMode;
-    }
-
     public void countFire(int times) {
         this.currentBoltIndex = (this.currentBoltIndex + times) % getBolts().size();
     }
@@ -1519,10 +1515,6 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         return operatorOnWeaponUnit;
     }
 
-    public void setOperatorOnWeaponUnit(boolean operatorOnWeaponUnit) {
-        this.operatorOnWeaponUnit = operatorOnWeaponUnit;
-    }
-
     public WeaponUnit getParentWeaponUnit() {
         return parentWeaponUnit;
     }
@@ -1564,10 +1556,6 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
 
     public boolean isParentWeaponUnitAim() {
         return parentWeaponUnitAim;
-    }
-
-    public void setParentWeaponUnitAim(boolean parentWeaponUnitAim) {
-        this.parentWeaponUnitAim = parentWeaponUnitAim;
     }
 
     public List<RadarUnit> getRadarUnits() {

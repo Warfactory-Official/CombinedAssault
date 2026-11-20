@@ -23,18 +23,6 @@ public class PoseHelper {
         this.boneIndexProvider = null;
     }
 
-    public void hideBone(String boneName) {
-        int boneIndex = boneIndexProvider.getIndex(boneName);
-        if (boneIndex < 0) {
-            return;
-        }
-        transforms.put(boneIndex, new BoneTransformData(
-                0, 0, 0,
-                0, 0, 0,
-                0, 0, 0
-        ));
-    }
-
     /** rotX/rotY/rotZ: degrees. */
     public void setBone(String boneName,
                        double rotX, double rotY, double rotZ,
@@ -47,23 +35,6 @@ public class PoseHelper {
             (float) rotX, (float) rotY, (float) rotZ,
             (float) transX, (float) transY, (float) transZ,
             1.0f, 1.0f, 1.0f
-        ));
-    }
-
-    /** rotX/rotY/rotZ: degrees. */
-    public void setBoneWithScale(String boneName,
-                                double rotX, double rotY, double rotZ,
-                                double transX, double transY, double transZ,
-                                double scaleX, double scaleY, double scaleZ) {
-        int boneIndex = boneIndexProvider.getIndex(boneName);
-        if (boneIndex < 0) {
-            System.err.println("Bone not found: " + boneName);
-            return;
-        }
-        transforms.put(boneIndex, new BoneTransformData(
-            (float) rotX, (float) rotY, (float) rotZ,
-            (float) transX, (float) transY, (float) transZ,
-            (float) scaleX, (float) scaleY, (float) scaleZ
         ));
     }
 

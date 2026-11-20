@@ -6,8 +6,9 @@ import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
-import com.wf.combinedassault.weapon.VehicleCannon;
-import com.wf.combinedassault.weapon.data.VehicleCannonWeaponData;
+import com.wf.combinedassault.pack.VehicleWeaponTypes;
+import com.wf.combinedassault.weapon.VehicleLoadedWeapon;
+import com.wf.combinedassault.weapon.data.BaseVehicleWeaponData;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.wflib.ammo.api.AmmoItems;
 import net.minecraft.core.BlockPos;
@@ -40,7 +41,7 @@ public class LoadedRoundGameTest {
         if (vehicle == null) {
             return;
         }
-        VehicleCannon cannon = testCannon(helper, vehicle, 4);
+        VehicleLoadedWeapon cannon = testCannon(helper, vehicle, 4);
         if (cannon == null) {
             return;
         }
@@ -73,7 +74,7 @@ public class LoadedRoundGameTest {
         if (vehicle == null) {
             return;
         }
-        VehicleCannon cannon = testCannon(helper, vehicle, 4);
+        VehicleLoadedWeapon cannon = testCannon(helper, vehicle, 4);
         if (cannon == null) {
             return;
         }
@@ -108,8 +109,8 @@ public class LoadedRoundGameTest {
         if (vehicle == null) {
             return;
         }
-        VehicleCannon cannon = testCannon(helper, vehicle, 4);
-        VehicleCannon reloaded = testCannon(helper, vehicle, 4);
+        VehicleLoadedWeapon cannon = testCannon(helper, vehicle, 4);
+        VehicleLoadedWeapon reloaded = testCannon(helper, vehicle, 4);
         if (cannon == null || reloaded == null) {
             return;
         }
@@ -164,12 +165,12 @@ public class LoadedRoundGameTest {
             return;
         }
         WeaponUnit unit = firstWeaponUnit(vehicle);
-        VehicleCannonWeaponData data = new VehicleCannonWeaponData();
+        BaseVehicleWeaponData data = new BaseVehicleWeaponData();
         data.setWeaponId(CombinedAssault.modLocation("gametest_20mm"));
         data.setMaxCapacity(8);
-        data.setReload(new VehicleCannonWeaponData.Reload(60,
+        data.setReload(new BaseVehicleWeaponData.Reload(60,
                 Ingredient.of(AmmoItems.item(wflib("20x102")))));
-        VehicleCannon cannon = new VehicleCannon(vehicle, unit, 0, data, "gametest_20mm");
+        VehicleLoadedWeapon cannon = new VehicleLoadedWeapon(VehicleWeaponTypes.CANNON, vehicle, unit, 0, data, "gametest_20mm");
         vehicle.setContainerSize(8);
         vehicle.setItem(0, AmmoItems.stack(wflib("20x102/he"), 4));
         vehicle.setItem(1, AmmoItems.stack(wflib("20x102/ap"), 8));
@@ -208,17 +209,17 @@ public class LoadedRoundGameTest {
 
     /** Fresh cannon, not the pack's: pack weapon data is shared across every vehicle of that type; editing it here would edit everybody's gun. */
     @Nullable
-    private static VehicleCannon testCannon(GameTestHelper helper, AbstractVehicle vehicle, int capacity) {
+    private static VehicleLoadedWeapon testCannon(GameTestHelper helper, AbstractVehicle vehicle, int capacity) {
         WeaponUnit unit = firstWeaponUnit(vehicle);
         if (unit == null) {
             helper.fail("the test vehicle has no weapon mount to put a gun on");
             return null;
         }
-        VehicleCannonWeaponData data = new VehicleCannonWeaponData();
+        BaseVehicleWeaponData data = new BaseVehicleWeaponData();
         data.setWeaponId(CombinedAssault.modLocation("gametest_gun"));
         data.setMaxCapacity(capacity);
-        data.setReload(new VehicleCannonWeaponData.Reload(60, Ingredient.of(Items.STONE, Items.DIRT)));
-        return new VehicleCannon(vehicle, unit, 0, data, "gametest_gun");
+        data.setReload(new BaseVehicleWeaponData.Reload(60, Ingredient.of(Items.STONE, Items.DIRT)));
+        return new VehicleLoadedWeapon(VehicleWeaponTypes.CANNON, vehicle, unit, 0, data, "gametest_gun");
     }
 
     @Nullable

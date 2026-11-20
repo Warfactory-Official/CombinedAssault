@@ -25,10 +25,6 @@ public class ShipVehicleContext extends VehicleContext<ShipVehicle> {
         return (float) Mth.lerp(partialTick, shaftO, shaft);
     }
 
-    public float getThrottle() {
-        return entity.throttle();
-    }
-
     public float getRudder() {
         return entity.rudder();
     }

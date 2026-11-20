@@ -17,7 +17,6 @@ import org.mozillaa.javascript.Script;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -49,10 +48,6 @@ public class ScriptManager extends SimplePreparableReloadListener<Map<ResourceLo
     @Override
     public void apply(@NotNull Map<ResourceLocation, Script> map, @NotNull ResourceManager manager, @NotNull ProfilerFiller pProfiler) {
         scripts = ImmutableMap.copyOf(map);
-    }
-
-    public Map<ResourceLocation, Script> getScripts() {
-        return Collections.unmodifiableMap(scripts);
     }
 
     public Optional<Script> getScript(ResourceLocation resourcelocation) {

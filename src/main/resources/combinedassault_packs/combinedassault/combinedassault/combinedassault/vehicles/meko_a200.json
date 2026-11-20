@@ -170,8 +170,7 @@
     },
     "physics_info": {
         "mass": 74000,
-        "radar_cross_section": 6.0,
-        "can_tumble": false
+        "radar_cross_section": 6.0
     },
     "storage": {
         "slots": 108

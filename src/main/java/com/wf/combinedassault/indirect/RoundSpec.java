@@ -26,8 +26,4 @@ public record RoundSpec(double muzzleSpeed, double drag, double gravity, int lif
         return quadraticDrag == 0.0 ? decay() : Math.max(decay() - quadraticDrag * speed, 0.0);
     }
 
-    public RoundSpec withMuzzleSpeed(double speed) {
-        return new RoundSpec(speed, drag, gravity, lifeTicks, quadraticDrag);
-    }
-
 }

@@ -94,11 +94,6 @@ public class TrackedVehicle extends GroundVehicle
         slipping = buf.readBoolean();
     }
 
-    /** 0..1: fraction of the commanded drive lost to slip this tick. */
-    public float getTrackSlip() {
-        return entityData.get(TRACK_SLIP);
-    }
-
     /** Drive gain (blocks/tick) after the grip cap; identity without {@code track_slip}. */
     private double gripped(double gain) {
         if (trackSlip == null) {
@@ -259,7 +254,7 @@ public class TrackedVehicle extends GroundVehicle
             }
 
             // Horizontal: speed is read back from the planar velocity; along the pitched look => vf x (1 - cos pitch)
-            // lost per tick (T-90 stalled on a 1:4 stair hill). Steps lift via rigid-step rows at travel x climbGradient.
+            // lost per tick (T-90 stalled on a 1:4 stair hill). Steps lift via rigid-step rows at travel x CLIMB_GRADIENT.
             Vec3 motion = heading.scale(vf).add(sideways);
             motion = motion.add(0, Math.min(0, getDeltaMovement().y), 0);
             this.setDeltaMovement(motion);

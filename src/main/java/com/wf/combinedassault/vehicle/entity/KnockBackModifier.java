@@ -1,12 +1,8 @@
 package com.wf.combinedassault.vehicle.entity;
 
-import net.minecraft.world.entity.LivingEntity;
 
 /** Ported from TACZ. */
 public interface KnockBackModifier {
-    static KnockBackModifier fromLivingEntity(LivingEntity entity) {
-        return (KnockBackModifier)entity;
-    }
 
     void combinedassault$resetKnockBackStrength();
 

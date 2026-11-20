@@ -28,8 +28,7 @@
     },
     "physics_info": {
         "mass": 2.0,
-        "friction": 16,
-        "can_tumble": true
+        "friction": 16
     },
     "defense_stats": {
         "damage_threshold": 1,

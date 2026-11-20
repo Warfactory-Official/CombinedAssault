@@ -115,11 +115,6 @@ public final class TowLinks {
 
     // ---------------------------------------------------------------- state
 
-    @Nullable
-    public static TowLink linkOf(AbstractVehicle vehicle) {
-        return vehicle.towLink();
-    }
-
     public static boolean isTowed(AbstractVehicle vehicle) {
         return vehicle.towLink() != null;
     }

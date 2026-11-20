@@ -272,7 +272,7 @@ public class SeatPoseGameTest {
         for (String[] w : want) {
             RiderHand found = null;
             for (RiderHand hand : model.hands()) {
-                if (hand.part().equals(w[0]) && hand.left() == w[1].equals("left")
+                if (!hand.foot() && hand.part().equals(w[0]) && hand.left() == w[1].equals("left")
                         && Objects.equals(hand.action(), w[2]) && Objects.equals(hand.kit(), w[3])) {
                     found = hand;
                 }

@@ -2,7 +2,6 @@ package com.wf.combinedassault.naval.trial;
 
 import com.wf.combinedassault.naval.ShipHydrodynamics;
 import com.wf.combinedassault.naval.ShipVehicle;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.fml.loading.FMLPaths;
 import org.jetbrains.annotations.Nullable;
@@ -332,12 +331,6 @@ public final class TrialRun {
         }
         int index = (int) Math.min(sorted.length - 1, Math.round(fraction * (sorted.length - 1)));
         return sorted[index];
-    }
-
-    /** null, "", or "none" => no vehicle parked */
-    @Nullable
-    public static ResourceLocation parkedVehicle(String id) {
-        return id == null || id.isEmpty() || "none".equals(id) ? null : ResourceLocation.parse(id);
     }
 
 }

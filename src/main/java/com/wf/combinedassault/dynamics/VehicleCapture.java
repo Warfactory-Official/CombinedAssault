@@ -142,7 +142,7 @@ public final class VehicleCapture {
             throw new IllegalStateException(v + " step bounds " + gather);
         }
         s.live = s.predicting || !async || v.physicsTrace() != null || v.level().isDebug() || v.providerNear(gather);
-        s.restitution = engine.bounce;
+        s.restitution = PhysicsEngine.BOUNCE;
         v.bindStepWorld(s, gather);
         engine.prepareSuspension();
     }

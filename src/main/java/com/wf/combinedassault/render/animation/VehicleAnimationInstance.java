@@ -64,10 +64,6 @@ public class VehicleAnimationInstance<T extends BaseAnimationContext> implements
         return context;
     }
 
-    public AnimationController<T> getController() {
-        return controller;
-    }
-
     public VehicleAnimationInstance<T> getCabinAnimationInstance() {
         return cabinAnimationInstance;
     }

@@ -25,6 +25,7 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,16 @@ public final class WingLoss {
     private HullComponents pools;
     /** Per pool: 0 at the last tick. Seeded from the first tick seen => a wreck loaded from save throws nothing. */
     private boolean[] shed;
+    /** Per pool: tickCount it reached 0. */
+    private int[] shedTick;
+
+    /**
+     * Struck this tick or the last: {@link #strike} zeroes the pool in the entity tick, after the step that met the
+     * block => the step's contact still came through the live wing and yields ({@link #poolAt}).
+     */
+    private boolean justShed(int pool, int tick) {
+        return tick - shedTick[pool] <= 1;
+    }
 
     public void tick(FixedWingVehicle vehicle) {
         VehicleHits hits = vehicle.hits();
@@ -59,6 +70,8 @@ public final class WingLoss {
         if (current != pools) {
             pools = current;
             shed = new boolean[current.size()];
+            shedTick = new int[current.size()];
+            Arrays.fill(shedTick, Integer.MIN_VALUE);
             for (int i = 0; i < shed.length; i++) {
                 shed[i] = current.kind(i) == ComponentKind.WING && current.health(i) <= 0;
             }
@@ -72,6 +85,7 @@ public final class WingLoss {
             }
             boolean gone = current.health(i) <= 0;
             if (gone && !shed[i]) {
+                shedTick[i] = vehicle.tickCount;
                 throwOff(vehicle, hits, current.id(i));
                 carried(hits.model().nodes(), current, current.id(i));
                 strip(vehicle);
@@ -115,8 +129,8 @@ public final class WingLoss {
         return pool >= 0 && pools.health(pool) <= 0;
     }
 
-    /** Unspent wing pool with a drawn node whose box, grown by {@code reach}, holds the world point; -1 none. */
-    public static int poolAt(FixedWingVehicle vehicle, Vec3 point, float reach) {
+    /** Unspent (or {@link #justShed}) wing pool with a drawn node whose box, grown by {@code reach}, holds the world point; -1 none. */
+    public int poolAt(FixedWingVehicle vehicle, Vec3 point, float reach) {
         VehicleHits hits = vehicle.hits();
         HullComponents pools = vehicle.hullComponents();
         if (hits == null) {
@@ -132,7 +146,7 @@ public final class WingLoss {
                 continue;
             }
             int pool = pools.indexOf(node.systemId());
-            if (pool < 0 || pools.health(pool) <= 0) {
+            if (pool < 0 || pools.health(pool) <= 0 && !(pools == this.pools && justShed(pool, vehicle.tickCount))) {
                 continue;
             }
             hits.pose(i, at, pose).invert().transformPosition(p.set((float) (point.x - at.x), (float) (point.y - at.y),

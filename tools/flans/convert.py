@@ -1076,7 +1076,7 @@ class Vehicle:
                                "turn_acceleration": 1, "max_turn": 2}
             # rolling resistance 0.04 m g (Flan's 2 m N is a coefficient of 0.2); wheeled keep the engine default 0.015 m g
             d["physics_info"] = {"mass": mass, "friction": round(0.04 * (mass + self.fuel()) * 9.8),
-                                 "suspension_response": 4, "can_destroy_block": mass > 15000,
+                                 "can_destroy_block": mass > 15000,
                                  "center": [round(float(v), 3) for v in self.com_point]}
         elif self.kind == "wheeled_vehicle":
             # engine mass = pack mass + 1 kg per fuel unit (measured: m3 9000 -> 9600, Kettenkrad 1200 -> 1800); forces sized on
@@ -1093,7 +1093,7 @@ class Vehicle:
                                "rudder_rate": 1.5, "turn_rate": 18, "turn_lag": 1.0, "low_speed_turn": 0.1, "drift": 0.3,
                                "heel": -0.5, "trim": 3.0, "heave_period": 3.0, "righting_rate": 10.0,
                                "min_keel_clearance": 0.5, "shallow_drag": 2.0}
-            d["physics_info"] = {"mass": mass, "can_tumble": False}
+            d["physics_info"] = {"mass": mass}
         else:
             d["attributes"] = {}
             d["physics_info"] = {"mass": mass}

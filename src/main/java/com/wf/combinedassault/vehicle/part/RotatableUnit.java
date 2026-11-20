@@ -288,48 +288,24 @@ public class RotatableUnit<T extends RotatableUnitData> extends PartUnit<T> {
         return xRotSpeed;
     }
 
-    public void setXRotSpeed(float xRotSpeed) {
-        this.xRotSpeed = xRotSpeed;
-    }
-
     public float getYRotSpeed() {
         return yRotSpeed;
-    }
-
-    public void setYRotSpeed(float yRotSpeed) {
-        this.yRotSpeed = yRotSpeed;
     }
 
     public float getXRotMax() {
         return xRotMax;
     }
 
-    public void setXRotMax(float xRotMax) {
-        this.xRotMax = xRotMax;
-    }
-
     public float getXRotMin() {
         return xRotMin;
-    }
-
-    public void setXRotMin(float xRotMin) {
-        this.xRotMin = xRotMin;
     }
 
     public float getYRotMax() {
         return yRotMax;
     }
 
-    public void setYRotMax(float yRotMax) {
-        this.yRotMax = yRotMax;
-    }
-
     public float getYRotMin() {
         return yRotMin;
-    }
-
-    public void setYRotMin(float yRotMin) {
-        this.yRotMin = yRotMin;
     }
 
     public float getXAimRot() {
@@ -364,16 +340,8 @@ public class RotatableUnit<T extends RotatableUnitData> extends PartUnit<T> {
         this.yRot = yRot;
     }
 
-    public float getXRemoteAimRot() {
-        return xRemoteAimRot;
-    }
-
     public void setXRemoteAimRot(float xRemoteAimRot) {
         this.xRemoteAimRot = xRemoteAimRot;
-    }
-
-    public float getYRemoteAimRot() {
-        return yRemoteAimRot;
     }
 
     public void setYRemoteAimRot(float yRemoteAimRot) {

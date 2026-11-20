@@ -4,6 +4,7 @@ import com.wf.combinedassault.ballistics.Ballistics;
 import com.wf.combinedassault.ballistics.VehicleBlastResolver;
 import com.wf.combinedassault.ballistics.HitOutcomes;
 import com.wf.combinedassault.ballistics.event.HitVehicleEvent;
+import com.wf.combinedassault.ballistics.hit.VehicleHits;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.armor.api.hull.HullOutcome;
 import com.wf.wflib.armor.api.hull.HullResult;
@@ -120,6 +121,20 @@ public final class AddonStrikes {
      *
      * @return ricochet answered (no damage follows)
      */
+    /**
+     * Ricochet departure plane: struck mesh face. Declared plate normal (incidence) may be off the mesh a few deg =>
+     * reflecting about it can leave into the hull.
+     */
+    private static Vec3 departure(AbstractVehicle vehicle, Vec3 start, Vec3 velocity, Vec3 declared) {
+        VehicleHits hits = vehicle.hits();
+        VehicleHits.Hit hit = hits == null ? null : hits.surface(start, start.add(velocity.scale(1.01)));
+        if (hit == null) {
+            return declared;
+        }
+        Vec3 n = new Vec3(hit.normal()).normalize();
+        return n.dot(velocity) > 0 ? n.reverse() : n;
+    }
+
     private static boolean armour(ProjectileStrikeEvent event, AbstractVehicle vehicle, Threat threat, Vec3 at,
                                   AddonStrike.Lead lead) {
         ThreatKind kind = threat.kind();
@@ -135,7 +150,8 @@ public final class AddonStrikes {
             if (!event.canRicochet()) {
                 return false;
             }
-            event.ricochet(Ricochet.off(event.velocity(), hull.normal(), vehicle.getRandom().nextLong()));
+            event.ricochet(Ricochet.off(event.velocity(), departure(vehicle, start, event.velocity(), hull.normal()),
+                    vehicle.getRandom().nextLong()));
             if (event.shooter() != null) {
                 NeoForge.EVENT_BUS.post(new HitVehicleEvent(event.shooter().getUUID(), vehicle.getId(), at, event.velocity(),
                         event.threat().caliberMm(), 0, Component.translatable(HitOutcomes.translationKey(HullOutcome.RICOCHET))));

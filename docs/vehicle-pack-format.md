@@ -142,7 +142,6 @@ Every field the mod reads from a pack: unit, default. Defaults from the deserial
 | `tank_capacity` | int | — | tank size in mB, if you would rather say it that way. Overrides `energy_capacity` |
 | `fe_per_unit` | int | `20` | electric only: Forge Energy worth one unit, so the buffer holds `energy_capacity × fe_per_unit` FE |
 | `charge_rate` | int | `4096` | electric only: ceiling on FE/t going in |
-| `energy_density` | float | `1` | **unused** — read by the loader, consumed by nothing |
 | `engine_particle_offsets` | Vec3[] | `[]` | exhaust emitters |
 
 `energy_capacity` and `tank_capacity` are the same number. Declare one.
@@ -156,11 +155,9 @@ SI: mass kg, force N. Per tick `Δv = F / (mass × 400)`.
 | `mass` | float | `1000` | the **curb weight**, kg. Total mass is this plus fuel plus cargo — see [§7](#7-mass-and-cargo-weight) |
 | `density` | float | `8` | drives buoyancy against the displaced fluid |
 | `friction` | float | ground: `0.015 m g`; else `2000` | N of rolling resistance (constant force) |
-| `suspension_response` | float | `2` | drive/brake pitch and roll gain on `suspension` parts; clamped at 6° pitch, 8° roll of static spring deflection. Tumbling on: tyre load transfer (`m·a·h`, `a` ≤ 0.8 g) wins when larger => hard cornering can roll a tall hull |
 | `liquid_damping` | float | `0.1` | |
 | `center` | Vec3 | `center_of_mass` socket, else volume centroid of the solid colliders (rest pose); `suspension` wheels present => y lowered halfway to their mean frame height (never raised) | centre of mass, blocks, vehicle frame. Aircraft: ahead of the main-gear box's front face, else a nose-up touch rests on the tail for good (pitch eases level only under `atan(0.5/depth)`). Inertia: uniform density over the solid colliders ([§6.5](#65-colliders)) about this point |
 | `can_destroy_block` | bool | `false` | |
-| `can_tumble` | bool | `true` | `false` (or config `tumbling = false`) => no spin from impacts or rams; sprung hulls snap level past 75° when config `selfRighting` |
 | `radar_cross_section` | float | `1` | detection range x; signature = area x rcs^4. Submarine deeper than the sail (waterline mark > 4 blocks) is radar-opaque; sonar unaffected. Ship noise ~ (speed/own max)^2 / (1 + depth/20) x (mass/60 t)^0.25 + machinery (x0.3 submerged) |
 | `destroy_explosion_velocity` | float | `0.5` | |
 

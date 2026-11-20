@@ -164,10 +164,6 @@ public class PartUnitData {
         return renderBone;
     }
 
-    public void setRenderBone(String renderBone) {
-        this.renderBone = renderBone;
-    }
-
     public boolean isDetachable() {
         return detachable;
     }

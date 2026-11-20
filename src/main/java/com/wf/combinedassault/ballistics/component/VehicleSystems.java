@@ -145,7 +145,8 @@ public final class VehicleSystems {
                     same++;
                 }
             }
-            String unit = same > 1 ? unitName(kind, side, part.getId(), taken) : "";
+            // Steering kinds: one cell per side (wheel sets, track runs).
+            String unit = same > 1 && !kind.steers() ? unitName(kind, side, part.getId(), taken) : "";
             cell(cells, kind, side, unit).members.add(new PartMember(part));
         }
         cells.sort((a, b) -> a.kind != b.kind ? order(a.kind) - order(b.kind)

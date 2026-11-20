@@ -7,8 +7,8 @@ import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
-import com.wf.combinedassault.weapon.VehicleCannon;
-import com.wf.combinedassault.weapon.VehicleGrenade;
+import com.wf.combinedassault.pack.VehicleWeaponTypes;
+import com.wf.combinedassault.weapon.VehicleLoadedWeapon;
 import com.wf.combinedassault.weapon.kit.Hardpoints;
 import com.wf.combinedassault.weapon.kit.HardwareItem;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
@@ -131,7 +131,7 @@ public class HumveeMountGameTest {
             return;
         }
         AbstractVehicleWeapon<?> weapon = unit.getCurrentWeapon().orElse(null);
-        if (!(weapon instanceof VehicleGrenade grenade)) {
+        if (!(weapon instanceof VehicleLoadedWeapon grenade) || !grenade.isType(VehicleWeaponTypes.GRENADE)) {
             helper.fail("roof mount weapon " + weapon + " is not the Mk 19 grenade launcher");
             return;
         }
@@ -155,7 +155,7 @@ public class HumveeMountGameTest {
             return;
         }
         AbstractVehicleWeapon<?> weapon = unit.getCurrentWeapon().orElse(null);
-        if (!(weapon instanceof VehicleCannon gun)) {
+        if (!(weapon instanceof VehicleLoadedWeapon gun) || !gun.isType(VehicleWeaponTypes.CANNON)) {
             helper.fail("roof mount weapon " + weapon + " is not the 12.7mm gun");
             return;
         }
@@ -179,7 +179,7 @@ public class HumveeMountGameTest {
             return;
         }
         AbstractVehicleWeapon<?> weapon = unit.getCurrentWeapon().orElse(null);
-        if (!(weapon instanceof VehicleCannon gun) || !KORD.equals(unit.currentWeaponId())) {
+        if (!(weapon instanceof VehicleLoadedWeapon gun) || !gun.isType(VehicleWeaponTypes.CANNON) || !KORD.equals(unit.currentWeaponId())) {
             helper.fail("roof mount weapon " + weapon + " is not the Kord");
             return;
         }

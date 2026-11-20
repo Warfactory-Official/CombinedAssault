@@ -89,7 +89,7 @@ public final class PhysicsTrace {
 
         /**
          * Rise/block driven. Distinguishes driving up a hill from being lifted onto one; the live
-         * path bounds this via climbGradient. Infinite if height gained with no travel.
+         * path bounds this via CLIMB_GRADIENT. Infinite if height gained with no travel.
          */
         public double climbRate() {
             if (travel <= 1.0e-6) {

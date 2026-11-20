@@ -59,7 +59,6 @@ public final class VehicleHarness {
     private final Quaternionf localRotation = new Quaternionf();
     private final Vector3d scratch = new Vector3d();
     private final Quaternionf scratchRotation = new Quaternionf();
-    private final Quaternionf scratchInverse = new Quaternionf();
     private final Matrix3f scratchBasis = new Matrix3f();
     private final float[] scratchEuler = new float[3];
 
@@ -96,12 +95,6 @@ public final class VehicleHarness {
     public static String mountIdOf(AbstractVehicle vehicle) {
         VehicleHarness harness = vehicle.harness();
         return harness == null || harness.mountPoint == null ? null : harness.mountPoint.id;
-    }
-
-    @Nullable
-    public static MountPointInfo mountPointOf(AbstractVehicle vehicle) {
-        VehicleHarness harness = vehicle.harness();
-        return harness == null ? null : harness.mountPoint;
     }
 
     /**

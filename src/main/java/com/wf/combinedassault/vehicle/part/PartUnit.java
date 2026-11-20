@@ -409,10 +409,6 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
         return renderBoneName;
     }
 
-    public void setRenderBoneName(String renderBoneName) {
-        this.renderBoneName = renderBoneName;
-    }
-
     public int getIndex() {
         return index;
     }
@@ -483,10 +479,6 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
         return displayOffset;
     }
 
-    public void setOwnerViewOffset(Vec3 ownerViewOffset) {
-        this.ownerViewOffset = ownerViewOffset;
-    }
-
     public float getSeatRot() {
         return vehicle.getYRot() + seatRot + frameYaw(seatFrame(), 1.0F);
     }
@@ -530,24 +522,12 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
         return dismountOffset;
     }
 
-    public void setDismountOffset(Vec3 dismountOffset) {
-        this.dismountOffset = dismountOffset;
-    }
-
     public void setParentPartUnit(PartUnit<?> parentPartUnit) {
         this.parentPartUnit = parentPartUnit;
     }
 
     public void addSubPartUnit(PartUnit<?> partUnit) {
         this.subPartUnits.add(partUnit);
-    }
-
-    public List<PartUnit<?>> getSubPartUnits() {
-        return subPartUnits;
-    }
-
-    public PartUnit<?> getBasePartUnit() {
-        return basePartUnit;
     }
 
     public List<PartUnit<?>> getAttPartUnits() {

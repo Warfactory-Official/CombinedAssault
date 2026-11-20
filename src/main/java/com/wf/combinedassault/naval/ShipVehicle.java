@@ -29,6 +29,8 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import java.util.List;
 
@@ -36,7 +38,8 @@ import java.util.List;
  * A surface ship or a submarine: a hull held up by the water rather than by contacts.
  *
  * <p>Motion: {@link ShipHydrodynamics}, fed by {@link SeaProbe}; afloat => no step gravity. Seabed, banks: ordinary
- * contacts.
+ * contacts, full inertia. Pitch/roll: afloat => model attitude as spin into the step (contacts resist; water kills
+ * contact pitch/roll spin each tick); dry => contacts + gravity only.
  */
 public class ShipVehicle extends AbstractVehicle
         implements IAnimationEntity<ShipVehicle, ShipVehicleContext> {
@@ -90,8 +93,6 @@ public class ShipVehicle extends AbstractVehicle
 
     public ShipVehicle(EntityType<? extends AbstractVehicle> type, Level level) {
         super(type, level);
-        // No free-flight wobble and no tumbling: heel and trim are the model's; contacts yaw.
-        this.physicsEngine.yawRotOnly = true;
     }
 
 
@@ -243,7 +244,6 @@ public class ShipVehicle extends AbstractVehicle
 
         VehicleMobility mobility = VehicleMobility.of(this);
         controls.blocked = blocked;
-        controls.supported = onGround();
         controls.ahead = controlUnit.forward;
         controls.astern = controlUnit.backward;
         controls.port = controlUnit.left;
@@ -272,8 +272,9 @@ public class ShipVehicle extends AbstractVehicle
                 maxYaw, degrees -> turnBy((float) degrees));
         TrialProfile.stop(TrialProfile.Stage.SEA, stepAt);
         setDeltaMovement(pose.vx, pose.vy, pose.vz);
-        setXRot(pose.pitch);
-        setZRot(pose.roll);
+        if (environment.afloat) {
+            steerAttitude(pose.pitch, pose.roll);
+        }
 
         boolean grounded = environment.afloat
                 && (blocked || model.turnBlocked
@@ -294,6 +295,27 @@ public class ShipVehicle extends AbstractVehicle
             tickSubmarine();
         }
         return Vec3.ZERO;
+    }
+
+    /**
+     * Kinematic set FORBIDDEN: levelling into the bed => push-out lifted the hull, and a grounded hull never took
+     * the bed's tilt. Contact yaw spin kept.
+     */
+    private void steerAttitude(float pitch, float roll) {
+        Quaternionf now = attitude(getYRot(), getXRot(), getZRot());
+        Quaternionf delta = attitude(getYRot(), pitch, roll).mul(now.conjugate());
+        if (delta.w < 0) {
+            delta.set(-delta.x, -delta.y, -delta.z, -delta.w);
+        }
+        float sin = (float) Math.sqrt(delta.x * delta.x + delta.y * delta.y + delta.z * delta.z);
+        float scale = sin < 1.0e-7f ? 2 : 2 * (float) Math.atan2(sin, delta.w) / sin;
+        Vector3f spin = physicsEngine.angularVelocity;
+        spin.set(delta.x * scale, spin.y + delta.y * scale, delta.z * scale);
+    }
+
+    private static Quaternionf attitude(float yaw, float pitch, float roll) {
+        return new Quaternionf().rotateY((float) Math.toRadians(-yaw)).rotateX((float) Math.toRadians(pitch))
+                .rotateZ((float) Math.toRadians(roll));
     }
 
     @Override

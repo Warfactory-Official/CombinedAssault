@@ -44,11 +44,6 @@ public final class FuelSpec {
         return parsed.isEmpty() ? CONFIG_FALLBACK : new FuelSpec(List.copyOf(parsed));
     }
 
-    /** True when this vehicle declared its own fuels rather than inheriting the config whitelist. */
-    public boolean isDeclared() {
-        return !entries.isEmpty();
-    }
-
     public boolean accepts(Fluid fluid) {
         if (fluid == null || fluid == Fluids.EMPTY) {
             return false;

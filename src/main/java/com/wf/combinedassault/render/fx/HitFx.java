@@ -68,8 +68,6 @@ public final class HitFx {
     /** Harness: strikes drawn, persistent emissions, last strike, ns spent (strikes; system ticks). */
     static int strikes;
     static long strikeNanos;
-    static long systemNanos;
-    static int systemTicks;
     static ServerHitEffect last;
     static int emissions;
 
@@ -82,10 +80,7 @@ public final class HitFx {
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Pre e) -> {
             spent = 0;
             if (++ticks % SYSTEM_PERIOD == 0) {
-                long t0 = System.nanoTime();
                 systems();
-                systemNanos += System.nanoTime() - t0;
-                systemTicks++;
             }
         });
     }

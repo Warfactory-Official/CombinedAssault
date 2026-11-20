@@ -17,11 +17,6 @@ public class VehicleCubeOBB implements HullPiece {
 
     /** How far outside its face a sample point sits for contact detection. */
     public static final float POINT_OFFSET = 0.001f;
-    /**
-     * Headroom above the step height, in blocks. Must stay above the speculative contact margin,
-     * or a contact generated before overlap reads as a wall instead of a step.
-     */
-    private static final double RIDE_STEP_MARGIN = 0.06;
 
     private final OBB obb;
     /**
@@ -46,9 +41,7 @@ public class VehicleCubeOBB implements HullPiece {
     public double height;
     public double width;
     public double depth;
-    public double spaceX;
     public double spaceY;
-    public double spaceZ;
     public Vec3 position;
     public Vec3 positionO;
     public Quaternionf rotation;
@@ -232,22 +225,12 @@ public class VehicleCubeOBB implements HullPiece {
         return localRotation;
     }
 
-    public static VehicleCubeOBB defaultCube() {
-        return new VehicleCubeOBB(new OBB(Vec3.ZERO.toVector3f(), new Vector3f(0.5f, 0.5f, 0.5f), new Quaternionf()));
-    }
-
     private void initSpacing() {
         float gap = 0.1f;
         float offset = POINT_OFFSET;
-        float x1 = -obb.extents().x - gap;
-        float x2 = obb.extents().x + gap;
         float y1 = -obb.extents().y - offset;
         float y2 = obb.extents().y + gap;
-        float z1 = -obb.extents().z - gap;
-        float z2 = obb.extents().z + gap;
-        spaceX = spacing(x2 - x1);
         spaceY = spacing(y2 - y1);
-        spaceZ = spacing(z2 - z1);
     }
 
     /**
@@ -267,14 +250,6 @@ public class VehicleCubeOBB implements HullPiece {
      */
     public double climbSkirt() {
         return -obb.extents().y - POINT_OFFSET + 2 * spaceY;
-    }
-
-    /**
-     * The climb skirt clamped to what this vehicle can actually step up. Anchored to the hull
-     * underside, never to a datum an obstacle can raise.
-     */
-    public double rideSkirt(double maxUpStep) {
-        return Math.min(climbSkirt(), -obb.extents().y + maxUpStep + RIDE_STEP_MARGIN);
     }
 
     public Vec3 offset() {

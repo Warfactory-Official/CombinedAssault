@@ -44,28 +44,12 @@ public class JsonDataManager<T> extends SimplePreparableReloadListener<Map<Resou
         dataMap.putAll(pObject);
     }
 
-    public Class<T> getDataClass() {
-        return dataClass;
-    }
-
     public Marker getMarker() {
         return marker;
     }
 
-    public Gson getGson() {
-        return gson;
-    }
-
     public T getData(ResourceLocation id) {
         return dataMap.get(id);
-    }
-
-    public Map<ResourceLocation, T> getAllData() {
-        return dataMap;
-    }
-
-    public void clearData() {
-        dataMap.clear();
     }
 
 }

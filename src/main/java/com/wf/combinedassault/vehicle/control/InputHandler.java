@@ -23,8 +23,8 @@ import com.wf.combinedassault.vehicle.message.ClientVehicleMoveControl;
 import com.wf.combinedassault.vehicle.screen.VehicleScreens;
 import com.wf.combinedassault.vehicle.util.VectorUtil;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
-import com.wf.combinedassault.weapon.VehicleDecoyFlare;
-import com.wf.combinedassault.weapon.VehicleGrenade;
+import com.wf.combinedassault.pack.VehicleWeaponTypes;
+import com.wf.combinedassault.weapon.VehicleLoadedWeapon;
 import com.wf.combinedassault.weapon.client.AmmoSelect;
 import com.wf.combinedassault.weapon.client.StationAds;
 import com.wf.combinedassault.weapon.message.ClientVehicleSwitchWeapon;
@@ -166,13 +166,15 @@ public class InputHandler {
                 } else if (matchesKey(DECOY_FLARE_LAUNCH, key, scanCode)) {
                     if (weaponUnit != null) {
                         weaponUnit.independentWeapons.stream()
-                                .filter(vehicleWeapon -> vehicleWeapon instanceof VehicleDecoyFlare)
+                                .filter(vehicleWeapon -> vehicleWeapon instanceof VehicleLoadedWeapon flare
+                                        && flare.isType(VehicleWeaponTypes.DECOY_FLARE))
                                 .forEach(AbstractVehicleWeapon::doClientShoot);
                     }
                 } else if (matchesKey(SMOKE_GRENADE_LAUNCH, key, scanCode)) {
                     if (weaponUnit != null) {
                         weaponUnit.independentWeapons.stream()
-                                .filter(vehicleWeapon -> vehicleWeapon instanceof VehicleGrenade grenade
+                                .filter(vehicleWeapon -> vehicleWeapon instanceof VehicleLoadedWeapon grenade
+                                        && grenade.isType(VehicleWeaponTypes.GRENADE)
                                         && grenade.isAmmoForWeapon(new ItemStack(
                                         Countermeasures.SMOKE_GRENADE_ITEM.get())))
                                 .forEach(AbstractVehicleWeapon::doClientShoot);

@@ -6,7 +6,7 @@ import java.util.function.DoubleUnaryOperator;
  * Surge/sway/yaw/heel/trim/heave of a floating hull, blocks+ticks.
  *
  * <p>No Minecraft/JOML deps => {@code tools/ShipCheck.java} drives it directly. In: pose, controls,
- * sea-probe result, masses. Out: velocity, attitude. Yaw returns through a callback (entity
+ * sea-probe result, masses. Out: velocity, attitude (afloat only; dry => pitch/roll untouched). Yaw returns through a callback (entity
  * collision-checks turns, may refuse).
  *
  * <p>Size-dependence, untuned per hull: yaw/sway tau = {@code L/v} (turn est./shed takes ~1 hull length
@@ -79,8 +79,6 @@ public final class ShipHydrodynamics {
         public boolean ahead, astern, port, starboard, dive, rise;
         /** Hull not moving through water regardless of thrust: aground or against a bank. */
         public boolean blocked;
-        /** World contacts bore the hull last step: attitude theirs. Kinematic levelling into the bed => push-out lifts hull. */
-        public boolean supported;
         /** Engine output, 0..1. */
         public double power = 1.0;
         /** Component-damage scales from {@code VehicleMobility}. */
@@ -177,7 +175,6 @@ public final class ShipHydrodynamics {
             shallow = false;
             submerged = false;
             depth = 0;
-            settleAttitude(p, c, pose, 0, 0);
             return;
         }
 
@@ -275,7 +272,7 @@ public final class ShipHydrodynamics {
         if (sinking) {
             pitchTarget -= p.listMax * 0.5;
         }
-        settleAttitude(p, c, pose, pitchTarget, rollTarget);
+        settleAttitude(p, pose, pitchTarget, rollTarget);
     }
 
     private void stepControls(Params p, Controls c, Environment env) {
@@ -312,10 +309,7 @@ public final class ShipHydrodynamics {
         depthSetting = clamp(depthSetting, 0, Math.max(0, deepest));
     }
 
-    private void settleAttitude(Params p, Controls c, Pose pose, double pitchTarget, double rollTarget) {
-        if (c.supported) {
-            return;
-        }
+    private void settleAttitude(Params p, Pose pose, double pitchTarget, double rollTarget) {
         float step = (float) (p.rightingRate / TICKS_PER_SECOND);
         pose.pitch = approachDegrees(pose.pitch, (float) pitchTarget, step);
         pose.roll = approachDegrees(pose.roll, (float) rollTarget, step);

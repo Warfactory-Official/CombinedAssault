@@ -62,10 +62,6 @@ public final class CollisionMeshRenderer {
 
     private CollisionMeshRenderer() {}
 
-    public static boolean isEnabled() {
-        return mode != Mode.OFF;
-    }
-
     public static Mode mode() {
         return mode;
     }

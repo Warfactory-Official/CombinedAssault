@@ -36,7 +36,6 @@ public class BulletHoleOption implements ParticleOptions {
     private final float b;
     private final float caliber;
     private int entityId = -1;
-    private String boneName = "";
     private int attachmentBoneIndex = -1;
     private boolean bakedAttachment;
     private Vec3 boneOffset = Vec3.ZERO;
@@ -60,15 +59,6 @@ public class BulletHoleOption implements ParticleOptions {
         this.caliber = caliber;
     }
 
-    /** v1 model-bone binding; client-local particles only. */
-    public BulletHoleOption withBone(int entityId, String boneName, Vec3 boneOffset, Quaternionf boneRotation) {
-        this.entityId = entityId;
-        this.boneName = boneName;
-        this.boneOffset = boneOffset;
-        this.selfRotation = new Quaternionf(boneRotation);
-        return this;
-    }
-
     /** v2 baked-model attachment binding; {@code attachmentBoneIndex == -1} => static model root space. */
     public BulletHoleOption withBakedBone(int entityId, int attachmentBoneIndex, Vec3 attachmentOffset, Quaternionf selfRotation) {
         this.entityId = entityId;
@@ -86,7 +76,6 @@ public class BulletHoleOption implements ParticleOptions {
     public float getB() { return b; }
     public float getCaliber() { return caliber; }
     public int getEntityId() { return entityId; }
-    public String getBoneName() { return boneName; }
     public int getAttachmentBoneIndex() { return attachmentBoneIndex; }
     public boolean isBakedAttachment() { return bakedAttachment; }
     public Vec3 getBoneOffset() { return boneOffset; }

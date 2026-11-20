@@ -30,9 +30,4 @@ public record ReachBand(double nearest, double farthest, double best, double max
         return farthest > nearest;
     }
 
-    /** 0..1 fraction, not percent. */
-    public double givenUp() {
-        return maxRange <= 0 ? 0 : 1.0 - farthest / maxRange;
-    }
-
 }

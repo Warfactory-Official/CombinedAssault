@@ -20,8 +20,7 @@
     "shallow_drag": 2.0
   },
   "physics_info": {
-    "mass": 100000,
-    "can_tumble": false
+    "mass": 100000
   },
   "max_health": 1000,
   "view_info": {

@@ -43,8 +43,7 @@
     },
     "physics_info": {
         "mass": 60000,
-        "radar_cross_section": 0.5,
-        "can_tumble": false
+        "radar_cross_section": 0.5
     },
     "armor": {
         "front": 30,

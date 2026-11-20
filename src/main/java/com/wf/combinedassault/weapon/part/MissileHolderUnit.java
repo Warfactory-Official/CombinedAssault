@@ -283,12 +283,6 @@ public class MissileHolderUnit extends PartUnit<MissileHolderUnitData> {
         return -1;
     }
 
-    /** {@link #consume} without removing. */
-    public ItemStack peek() {
-        int slot = nextLoaded();
-        return slot < 0 ? ItemStack.EMPTY : slots[slot];
-    }
-
     public ItemStack round(int slot) {
         return slots[slot];
     }

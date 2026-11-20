@@ -17,7 +17,6 @@
     "physics_info": {
         "mass": 61000,
         "friction": 122000,
-        "suspension_response": 4,
         "can_destroy_block": true
     },
     "max_health": 3000,

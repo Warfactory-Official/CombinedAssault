@@ -23,10 +23,6 @@ public class DoorUnitData extends PartUnitData {
         return doorForSeatId;
     }
 
-    public void setDoorForSeatId(String doorForSeatId) {
-        this.doorForSeatId = doorForSeatId;
-    }
-
     public boolean opensOnDismount() {
         return opensOnDismount;
     }

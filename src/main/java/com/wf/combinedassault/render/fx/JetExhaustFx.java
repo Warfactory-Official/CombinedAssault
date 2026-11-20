@@ -67,7 +67,6 @@ public final class JetExhaustFx {
     static long nanos;
     static long ticks;
     static int flames;
-    static int smokes;
     static int lights;
 
     private static int stamp;
@@ -284,7 +283,6 @@ public final class JetExhaustFx {
                                    float life, float size, int look) {
         em.spawn(x, y, z, vx + RANDOM.nextGaussian() * 0.6, vy + RANDOM.nextGaussian() * 0.6,
                 vz + RANDOM.nextGaussian() * 0.6, life, size, RANDOM.nextFloat() * Mth.TWO_PI, 1, look);
-        smokes++;
     }
 
     /** One light per afterburning airframe at its hot nozzles' mean, 2 radii downstream. */

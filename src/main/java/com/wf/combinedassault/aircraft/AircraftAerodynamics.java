@@ -98,10 +98,6 @@ public final class AircraftAerodynamics {
         return authorityRampTicks <= 0 ? 1 : (float) heldTicks / authorityRampTicks;
     }
 
-    public void resetAuthority() {
-        heldTicks = 0;
-    }
-
     /**
      * Applies drag to a velocity in place.
      * @param velocity blocks per tick, modified in place
@@ -126,11 +122,6 @@ public final class AircraftAerodynamics {
             return rollDeg * groundLevelling;
         }
         return rollInput ? rollDeg : rollDeg * rollCentring;
-    }
-
-    /** Pitch flattens on the ground only; in the air it is entirely the pilot's. */
-    public float settlePitch(float pitchDeg, boolean onGround) {
-        return onGround ? pitchDeg * groundLevelling : pitchDeg;
     }
 
     /** Lateral velocity to bleed per tick. Apply along the aircraft's right axis. */
@@ -167,33 +158,6 @@ public final class AircraftAerodynamics {
             return 0;
         }
         return clamp(-verticalVelocity * altitudeHoldGain, -rate, rate);
-    }
-
-    /**
-     * Pitch for a grounded aircraft derived from gear heights. Kinematic attitude adjustment based
-     * on terrain slope, not a solver.
-     * @param frontDrop height of forward gear above surface
-     * @param rearDrop height of rear gear above surface
-     * @param wheelbase distance between gear along fuselage
-     * @return target pitch in degrees, positive nose-down
-     */
-    public static float terrainPitch(float frontDrop, float rearDrop, float wheelbase) {
-        if (wheelbase <= 1.0e-4f) {
-            return 0;
-        }
-        return (float) Math.toDegrees(Math.atan2(frontDrop - rearDrop, wheelbase));
-    }
-
-    /** Moves an angle a fraction of the way toward a target, the shortest way round. */
-    public static float lerpAngle(float current, float target, float rate) {
-        float delta = target - current;
-        while (delta > 180) {
-            delta -= 360;
-        }
-        while (delta < -180) {
-            delta += 360;
-        }
-        return current + delta * rate;
     }
 
     private static float clamp(float value, float min, float max) {

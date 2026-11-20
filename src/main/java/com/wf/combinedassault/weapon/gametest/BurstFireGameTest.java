@@ -5,7 +5,7 @@ import com.wf.combinedassault.pack.CommonAssetsManager;
 import com.wf.combinedassault.vehicle.data.BaseVehicleData;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.gametest.TestLanes;
-import com.wf.combinedassault.weapon.VehicleCannon;
+import com.wf.combinedassault.weapon.VehicleLoadedWeapon;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.wflib.round.api.Rounds;
 import net.minecraft.core.BlockPos;
@@ -35,7 +35,7 @@ public class BurstFireGameTest {
     /** 13 shots x 50 ms / 13 ms = 50 rounds; one round a shot = 13. */
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void theM61FiresItsRateNotTheTickRate(GameTestHelper helper) {
-        VehicleCannon gun = ciws(helper);
+        VehicleLoadedWeapon gun = ciws(helper);
         if (gun == null) {
             return;
         }
@@ -64,7 +64,7 @@ public class BurstFireGameTest {
         // Rounds fly ~100 blocks in 2 ticks, over whatever the neighbouring arenas hold: a lane of its own.
         TestLanes.run(helper, LANE_Z, 3, 3, MK15, (seq, v) -> seq
                 .thenExecute(() -> {
-                    VehicleCannon gun = ciws(helper, v.get());
+                    VehicleLoadedWeapon gun = ciws(helper, v.get());
                     WeaponUnit unit = gun.getWeaponUnit();
                     muzzle[0] = unit.aimContext().from;
                     gun.shoot(new ArrayList<>(List.of(unit.aimContext())), null);
@@ -94,7 +94,7 @@ public class BurstFireGameTest {
     }
 
     @Nullable
-    private static VehicleCannon ciws(GameTestHelper helper) {
+    private static VehicleLoadedWeapon ciws(GameTestHelper helper) {
         BaseVehicleData data = CommonAssetsManager.vehicleDataManager().getVehicleData(MK15).orElse(null);
         if (data == null) {
             helper.fail(MK15 + " is not in the roster");
@@ -106,7 +106,7 @@ public class BurstFireGameTest {
         vehicle.setDisplayId(MK15);
         if (!helper.getLevel().addFreshEntity(vehicle)
                 || !(vehicle.getPartUnit("ciws").orElse(null) instanceof WeaponUnit unit)
-                || !(unit.getCurrentWeapon().orElse(null) instanceof VehicleCannon gun)) {
+                || !(unit.getCurrentWeapon().orElse(null) instanceof VehicleLoadedWeapon gun)) {
             vehicle.discard();
             helper.fail(MK15 + ": no ciws cannon");
             return null;
@@ -119,9 +119,9 @@ public class BurstFireGameTest {
         return gun;
     }
 
-    private static VehicleCannon ciws(GameTestHelper helper, AbstractVehicle vehicle) {
+    private static VehicleLoadedWeapon ciws(GameTestHelper helper, AbstractVehicle vehicle) {
         if (!(vehicle.getPartUnit("ciws").orElse(null) instanceof WeaponUnit unit)
-                || !(unit.getCurrentWeapon().orElse(null) instanceof VehicleCannon gun)) {
+                || !(unit.getCurrentWeapon().orElse(null) instanceof VehicleLoadedWeapon gun)) {
             helper.fail(MK15 + ": no ciws cannon");
             throw new IllegalStateException();
         }

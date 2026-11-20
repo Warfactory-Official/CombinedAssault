@@ -1,5 +1,6 @@
 package com.wf.combinedassault.hud;
 
+import net.minecraft.resources.ResourceLocation;
 import com.wf.combinedassault.aircraft.FixedWingVehicle;
 import com.wf.combinedassault.radar.client.RadarExpanded;
 import com.wf.combinedassault.aircraft.RotaryWingVehicle;
@@ -17,8 +18,8 @@ import com.wf.combinedassault.vehicle.entity.WheeledVehicle;
 import com.wf.combinedassault.vehicle.light.VehicleLight;
 import com.wf.combinedassault.vehicle.pojo.WarnType;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
-import com.wf.combinedassault.weapon.VehicleDecoyFlare;
-import com.wf.combinedassault.weapon.VehicleGrenade;
+import com.wf.combinedassault.pack.VehicleWeaponTypes;
+import com.wf.combinedassault.weapon.VehicleLoadedWeapon;
 import com.wf.combinedassault.weapon.VehicleMissile;
 import com.wf.combinedassault.weapon.client.BarrelHud;
 import com.wf.combinedassault.weapon.part.WeaponBayUnit;
@@ -171,8 +172,8 @@ public final class HudSignals {
         Signals.bool(STATION, "stabilizer", WeaponUnit::withStabilizer);
         Signals.bool(STATION, "focus_locked", u -> u.withFocusLocker() && u.getFocusLockPos() != null);
         Signals.bool(STATION, "focus_locker", WeaponUnit::withFocusLocker);
-        Signals.bool(STATION, "flares", u -> independent(u, VehicleDecoyFlare.class));
-        Signals.bool(STATION, "smoke", u -> independent(u, VehicleGrenade.class));
+        Signals.bool(STATION, "flares", u -> independent(u, VehicleWeaponTypes.DECOY_FLARE));
+        Signals.bool(STATION, "smoke", u -> independent(u, VehicleWeaponTypes.GRENADE));
         Signals.bool(STATION, "crt", u -> u.getOpticalSightType() == WeaponUnitData.OpticalSightType.CRT);
         Signals.bool(STATION, "optical_scope",
                 u -> u.getOpticalSightType() == WeaponUnitData.OpticalSightType.OPTICAL_SCOPE);
@@ -197,10 +198,10 @@ public final class HudSignals {
                 : w.getLoadedRound().isEmpty() ? w.getSelectedRound() : w.getLoadedRound();
     }
 
-    private static boolean independent(WeaponUnit unit, Class<?> type) {
+    private static boolean independent(WeaponUnit unit, ResourceLocation type) {
         List<AbstractVehicleWeapon<?>> weapons = unit.independentWeapons;
         for (int i = 0; i < weapons.size(); i++) {
-            if (type.isInstance(weapons.get(i))) {
+            if (weapons.get(i) instanceof VehicleLoadedWeapon loaded && loaded.isType(type)) {
                 return true;
             }
         }

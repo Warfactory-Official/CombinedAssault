@@ -846,7 +846,7 @@ public class FixedWingVehicle extends AbstractVehicle
     protected float impactYield(Vec3 at, Vector3f lost) {
         HullComponents pools = hullComponents();
         // Centroid = contact frame, pose = after the step: up to a tick of travel apart.
-        int pool = WingLoss.poolAt(this, at, CONTACT_REACH + (float) getDeltaMovement().length() + lost.length());
+        int pool = wingLoss.poolAt(this, at, CONTACT_REACH + (float) getDeltaMovement().length() + lost.length());
         float perSpeedSquared = 0.5f * physicsEngine.mass / PhysicsHelper.KILOGRAMS_PER_TONNE * defenseStats.impactMultiplier;
         if (pool < 0 || !(perSpeedSquared > 0)) {
             return 1;

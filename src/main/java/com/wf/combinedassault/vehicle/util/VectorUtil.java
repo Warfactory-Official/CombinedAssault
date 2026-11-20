@@ -13,7 +13,6 @@ import com.wf.wflib.geom.api.OBB;
 import com.wf.wflib.geom.api.OBBEntity;
 import com.wf.wflib.grenade.api.SightBlocker;
 import com.wf.wflib.missile.api.SeekerDecoy;
-import it.unimi.dsi.fastutil.ints.IntArrays;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -402,24 +401,6 @@ public class VectorUtil {
         return b.scale(dot / len2);
     }
 
-    public static Vec3 projectToPlane(Vec3 v, Vector3f[] axes, int axis1, int axis2) {
-        Vector3f a = axes[axis1];
-        Vector3f b = axes[axis2];
-
-        Vec3 va = new Vec3(a.x(), a.y(), a.z());
-        Vec3 vb = new Vec3(b.x(), b.y(), b.z());
-
-        double dotA = v.dot(va);
-        double lenA2 = va.lengthSqr();
-        Vec3 projA = va.scale(dotA / lenA2);
-
-        double dotB = v.dot(vb);
-        double lenB2 = vb.lengthSqr();
-        Vec3 projB = vb.scale(dotB / lenB2);
-
-        return projA.add(projB);
-    }
-
     public static List<Vector2f> convexHull(List<Vector2f> points) {
         if (points.size() <= 1) return new ArrayList<>(points);
 
@@ -464,125 +445,6 @@ public class VectorUtil {
         return (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1);
     }
 
-    private static final int AKL_TOUSSAINT_MIN = 16;
-    /** > float rounding of cross at block-scale arms; boundary points kept => hull unchanged. */
-    private static final float AKL_TOUSSAINT_MARGIN = 1.0e-4f;
-
-    private static int identity(int n, int[] into) {
-        for (int i = 0; i < n; i++) {
-            into[i] = i;
-        }
-        return n;
-    }
-
-    /**
-     * Akl-Toussaint: drops points strictly inside the octagon of the 8 extreme points (x, y, x+y, x-y); they cannot be
-     * hull vertices. Survivors in input order into {@code into}. Grid belly: n -> ~perimeter.
-     */
-    private static int outsideExtremeOctagon(float[] xs, float[] ys, int n, int[] into) {
-        // CCW by direction: -x, -(x+y), -y, +(x-y), +x, +(x+y), +y, -(x-y).
-        int[] e = new int[8];
-        for (int i = 1; i < n; i++) {
-            float x = xs[i], y = ys[i];
-            if (x < xs[e[0]]) e[0] = i;
-            if (x + y < xs[e[1]] + ys[e[1]]) e[1] = i;
-            if (y < ys[e[2]]) e[2] = i;
-            if (x - y > xs[e[3]] - ys[e[3]]) e[3] = i;
-            if (x > xs[e[4]]) e[4] = i;
-            if (x + y > xs[e[5]] + ys[e[5]]) e[5] = i;
-            if (y > ys[e[6]]) e[6] = i;
-            if (x - y < xs[e[7]] - ys[e[7]]) e[7] = i;
-        }
-        int m = 0;
-        for (int i = 0; i < n; i++) {
-            boolean inside = true;
-            for (int j = 0; j < 8 && inside; j++) {
-                int a = e[j], b = e[(j + 1) & 7];
-                // Coincident extremes (grid corners) => zero edge, no constraint; else it keeps every point.
-                inside = xs[a] == xs[b] && ys[a] == ys[b]
-                        || cross(xs[a], ys[a], xs[b], ys[b], xs[i], ys[i]) > AKL_TOUSSAINT_MARGIN;
-            }
-            if (!inside) {
-                into[m++] = i;
-            }
-        }
-        return m;
-    }
-
-    /**
-     * Convex hull over scratch arrays, returning vertex indices instead of points.
-     */
-    public static int convexHullIndices(float[] xs, float[] ys, int n, int[] sorted, int[] out) {
-        if (n <= 0) {
-            return 0;
-        }
-        if (n == 1) {
-            out[0] = 0;
-            return 1;
-        }
-        int m = n > AKL_TOUSSAINT_MIN ? outsideExtremeOctagon(xs, ys, n, sorted) : identity(n, sorted);
-        System.arraycopy(sorted, 0, out, 0, m);
-        // Stable by (x, y); out = merge support. Insertion sort FORBIDDEN: O(n^2) in belly supports.
-        // < / > (not Float.compare): -0 == 0, as the insertion sort it replaced.
-        IntArrays.mergeSort(sorted, 0, m, (a, b) -> xs[a] < xs[b] ? -1 : xs[a] > xs[b] ? 1
-                : ys[a] < ys[b] ? -1 : ys[a] > ys[b] ? 1 : 0, out);
-        int k = 0;
-        for (int i = 0; i < m; i++) {
-            int idx = sorted[i];
-            while (k >= 2 && cross(xs[out[k - 2]], ys[out[k - 2]],
-                    xs[out[k - 1]], ys[out[k - 1]], xs[idx], ys[idx]) <= 0) {
-                k--;
-            }
-            out[k++] = idx;
-        }
-        int lower = k + 1;
-        for (int i = m - 2; i >= 0; i--) {
-            int idx = sorted[i];
-            while (k >= lower && cross(xs[out[k - 2]], ys[out[k - 2]],
-                    xs[out[k - 1]], ys[out[k - 1]], xs[idx], ys[idx]) <= 0) {
-                k--;
-            }
-            out[k++] = idx;
-        }
-        // The chain closes back on its first vertex; the repeat is not part of the hull.
-        return k - 1;
-    }
-
-    /**
-     * Point-in-polygon test against an indexed hull, including its two-point degenerate case.
-     */
-    public static boolean isPointInPolygonIndexed(float px, float py, float[] xs, float[] ys,
-                                                  int[] hull, int hullSize) {
-        if (hullSize == 2) {
-            float ax = xs[hull[0]];
-            float ay = ys[hull[0]];
-            float bx = xs[hull[1]];
-            float by = ys[hull[1]];
-            float cross = (py - ay) * (bx - ax) - (px - ax) * (by - ay);
-            if (Math.abs(cross) > 1e-6) {
-                return false;
-            }
-            float dot = (px - ax) * (bx - ax) + (py - ay) * (by - ay);
-            if (dot < 0) {
-                return false;
-            }
-            float lenSq = (bx - ax) * (bx - ax) + (by - ay) * (by - ay);
-            return !(dot > lenSq);
-        }
-        boolean inside = false;
-        for (int i = 0, j = hullSize - 1; i < hullSize; j = i++) {
-            float viX = xs[hull[i]];
-            float viY = ys[hull[i]];
-            float vjX = xs[hull[j]];
-            float vjY = ys[hull[j]];
-            if (((viY > py) != (vjY > py))
-                    && (px < (vjX - viX) * (py - viY) / (vjY - viY) + viX)) {
-                inside = !inside;
-            }
-        }
-        return inside;
-    }
-
     /** Distance from point to line segment; primitive version. */
     public static float pointToSegmentDist(float px, float py,
                                            float ax, float ay, float bx, float by) {
@@ -593,33 +455,6 @@ public class VectorUtil {
         float dx = px - (ax + t * abX);
         float dy = py - (ay + t * abY);
         return (float) Math.sqrt(dx * dx + dy * dy);
-    }
-
-    public static boolean isPointInPolygon(Vector2f p, List<Vector2f> polygon) {
-        boolean inside = false;
-        if (polygon.size() == 2) {
-            Vector2f a = polygon.get(0);
-            Vector2f b = polygon.get(1);
-            float cross = (p.y - a.y) * (b.x - a.x) - (p.x - a.x) * (b.y - a.y);
-            if (Math.abs(cross) > 1e-6) {
-                return false;
-            }
-            float dot = (p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y);
-            if (dot < 0) {
-                return false;
-            }
-            float lenSq = (b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y);
-            return !(dot > lenSq);
-        }
-        for (int i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
-            Vector2f vi = polygon.get(i);
-            Vector2f vj = polygon.get(j);
-            if (((vi.y > p.y) != (vj.y > p.y)) &&
-                    (p.x < (vj.x - vi.x) * (p.y - vi.y) / (vj.y - vi.y) + vi.x)) {
-                inside = !inside;
-            }
-        }
-        return inside;
     }
 
     public static float pointToSegmentDist(Vector2f p, Vector2f a, Vector2f b) {

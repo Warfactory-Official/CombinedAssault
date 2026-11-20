@@ -21,10 +21,6 @@ public abstract class BaseAnimationContext {
         events.add(event);
     }
 
-    public boolean hasEvent(String event) {
-        return events.contains(event);
-    }
-
     public void clearEvents() {
         events.clear();
     }
@@ -37,11 +33,6 @@ public abstract class BaseAnimationContext {
         return partialTick;
     }
 
-    // region 参数管理
-    public void setParameter(String name, Object value) {
-        parameters.put(name, value);
-    }
-
     public void setFloat(String name, float value) {
         parameters.put(name, value);
     }
@@ -52,10 +43,6 @@ public abstract class BaseAnimationContext {
 
     public void setInt(String name, int value) {
         parameters.put(name, value);
-    }
-
-    public Object getParameter(String name) {
-        return parameters.get(name);
     }
 
     public float getFloat(String name, float defaultValue) {
