@@ -71,6 +71,7 @@ Install: `python3 tools/blender/build_addon.py` -> `build/combinedassault_tools.
 | wing out of a fused hull mesh | `aircraft_hits.py wings <vehicle> --cut X [--cut-right X] [--node body] [--zrange ZLO ZHI] [--ymax Y] [--no-cap]` |
 | hit module (engine / fuel / ammo) | `aircraft_hits.py hit <vehicle> NAME --system engine --box x0,y0,z0,x1,y1,z1 [--side] [--unit] [--health] [--rha] [--parent NODE]` |
 | flap on a wing node | `aircraft_flaps.py flap <vehicle> --wing NODE --name left_flap --hinge x0,y0,z0,x1,y1,z1 [--chord C] [--deflection D] [--ymin/--ymax]`; then `aircraft_flaps_part.py <vehicle> [--stages 0,15,30]` once |
+| control surface | `aircraft_surfaces.py add <vehicle> NAME --kind rudder\|elevator\|aileron\|stabilator\|elevon --carrier NODE --hinge x0,y0,z0,x1,y1,z1 [--chord C] [--thick T] [--side S] [--pitch/--roll/--yaw]`; `auto <vehicle> KIND [--box a0,a1,y0,y1,z0,z1] [--tz] [--frac] [--span] [--dry-run]` (both sides; run on a pristine carrier); `remove <vehicle> NAME` |
 | proofs | `tools/internal/aircraft_views/{plan,zoom,parts}.py` |
 | ship proof (drawn grey, hit boxes coloured, waterline) | `aircraft_views/ship.py <vehicle> out.png [--only HULL,DECK,..]` |
 
@@ -78,6 +79,19 @@ Install: `python3 tools/blender/build_addon.py` -> `build/combinedassault_tools.
 - `wings`: triangles clipped on x = +-cut (attributes interpolated), planar caps both sides (ear clip; convex hull fallback). Nacelles / pylons beyond the cut ride with the wing.
 - `flap`: end key of clip `flaps` = `--deflection` = deepest `stages` entry; trailing edge DOWN both sides. Mount frame under the wing node => flap sheds with the wing.
 - Flap hinge gap not capped.
+- `aircraft_surfaces.py`: tree `<carrier>/NAME_mount` (x = hinge root -> tip, z = aft) > `NAME` > `NAME_mesh`; clip `NAME` = part id, t 0 / .5 / 1 = -D / 0 / +D, D = |pitch|+|roll|+|yaw|; part `combinedassault:control_surface` {pitch, roll, yaw} written to the def. Re-run => surface merged back into carrier, re-carved. `NAME_mesh` = hit surface (follows clip); carrier system kept; report lists `hit` / collider nodes under the footprint (colliders rest pose). Hinge gap not capped. Hinge 3D (canted fin ok); slab = planes through A, B, aft plane, `|(p-A).u| <= thick`.
+- Signs: +xRot = TE down (horizontal) / TE toward model right = -x (rudder); tool picks the clip sign per hinge orientation. Stick forward = pitch +1 = nose down = elevator TE DOWN (tail lift up) => pitch gain +; real stick back = TE up.
+
+| kind | pitch | roll left / right | yaw | D |
+|---|---:|---:|---:|---:|
+| elevator | +20 | - | - | 20 |
+| stabilator | +20 | +10 / -10 | - | 30 |
+| aileron | - | +15 / -15 | - | 15 |
+| elevon | +20 | +20 / -20 | - | 40 |
+| rudder | - | - | +25 | 25 |
+
+- Roll right (+1): right TE up = -, left TE down = +. Yaw right (+1) = right pedal = rudder TE right = +. Model left = +x.
+- `auto`: fin = tail-zone vertical faces above deck (`--box` overrides: `|x|0,|x|1,y0,y1,z0,z1` centroids; f22a fin `1.2,3.6,2.5,6,-14,-9.5`, stab `1.3,4.6,1.9,2.4,-14.8,-11.5`); hinge at `--frac` from LE (rudder / elevator .60, stabilator .35, aileron .72, elevon .80); wing kinds span `--span` fractions of half span, clamped outboard of existing `*_flap` meshes. Proof: `aircraft_views/surfaces.py <vehicle> out.png [--p 0|.5|1] [--glb BEFORE] [--zoom xmin,xmax,ymin,ymax,zmin,zmax]`.
 - Ships: `hit` unchanged (`--unit` names the pool, `--side` ignored for compartments). Warty drops (`meko_a200`, `visby`, `osa`, `narcosub`): `tools/internal/stage_warty_ships.py` = stage + def + `gen_hulls` main hull + plates + pools in one run (tables in the script, numbers in vehicle-pack-format §3.7). Mesh frame may be rotated (riverine root yaw 90): `info` / `hit --box` / proofs use world model frame; `def_sockets.positions` is raw.
 
 ## Blockbench plugin (`tools/blockbench/combinedassault.js`)

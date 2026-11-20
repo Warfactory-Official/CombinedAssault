@@ -18,6 +18,8 @@
         "righting_rate": 3.0,
         "min_keel_clearance": 1.0,
         "shallow_drag": 2.0,
+        "sink_at": 0.5,
+        "list_max": 20.0,
         "submarine": {
             "max_depth": 40,
             "crush_depth": 60,
@@ -45,11 +47,92 @@
         "can_tumble": false
     },
     "armor": {
-        "front": 40,
-        "side": 35,
-        "rear": 35,
-        "top": 30,
-        "bottom": 30
+        "front": 30,
+        "side": 30,
+        "rear": 30,
+        "top": 20,
+        "bottom": 30,
+        "plates": {
+            "pressure_hull": {
+                "curved": true,
+                "layers": [
+                    {
+                        "mm": 30,
+                        "mat": "rha"
+                    }
+                ]
+            },
+            "casing": {
+                "curved": true,
+                "hull": 0.3,
+                "layers": [
+                    {
+                        "mm": 6,
+                        "mat": "rha"
+                    }
+                ]
+            },
+            "sail": {
+                "curved": true,
+                "hull": 0.3,
+                "layers": [
+                    {
+                        "mm": 8,
+                        "mat": "rha"
+                    }
+                ]
+            },
+            "masts": {
+                "curved": true,
+                "hull": 0.15,
+                "layers": [
+                    {
+                        "mm": 4,
+                        "mat": "rha"
+                    }
+                ]
+            },
+            "hatches": {
+                "curved": true,
+                "hull": 0.15,
+                "layers": [
+                    {
+                        "mm": 10,
+                        "mat": "rha"
+                    }
+                ]
+            },
+            "control_surfaces": {
+                "curved": true,
+                "hull": 0.1,
+                "layers": [
+                    {
+                        "mm": 12,
+                        "mat": "rha"
+                    }
+                ]
+            },
+            "fittings": {
+                "curved": true,
+                "hull": 0.15,
+                "layers": [
+                    {
+                        "mm": 3,
+                        "mat": "rha"
+                    }
+                ]
+            },
+            "running_gear": {
+                "curved": true,
+                "hull": 0.1,
+                "layers": [
+                    {
+                        "mm": 15,
+                        "mat": "cast"
+                    }
+                ]
+            }
+        }
     },
     "storage": {
         "slots": 54

@@ -172,7 +172,7 @@ public final class VehicleSystems {
         return true;
     }
 
-    /** No ENGINE cell (emplacement, trailer) => true; false only when every engine cell failed. Cells kept per pool set ({@link #cells}: 5 us a call). */
+    /** No ENGINE cell (emplacement, trailer) => true; false only when every engine member failed. Cells kept per pool set ({@link #cells}: 5 us a call). */
     public static boolean engineWorks(AbstractVehicle vehicle) {
         if (vehicle.getY() > vehicle.flameoutY()) {
             return false;
@@ -191,8 +191,10 @@ public final class VehicleSystems {
             return true;
         }
         for (Cell cell : vehicle.engineCells) {
-            if (!cell.failed()) {
-                return true;
+            for (Member member : cell.members()) {
+                if (ComponentState.of(member.ratio()) != ComponentState.BROKEN) {
+                    return true;
+                }
             }
         }
         return false;

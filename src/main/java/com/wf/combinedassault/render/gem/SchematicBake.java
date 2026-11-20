@@ -21,10 +21,10 @@ public final class SchematicBake {
     /** Bone name of the group holding every triangle no listed bone owns. */
     public static final String HULL = "";
 
-    static final int TARGET_PX = 160;
+    static final int TARGET_PX = 480;
     static final int PAD = 2;
-    static final int ATLAS_WIDTH = 512;
-    static final int ATLAS_MAX_HEIGHT = 1024;
+    static final int ATLAS_WIDTH = 1024;
+    static final int ATLAS_MAX_HEIGHT = 2048;
     private static final int EMPTY = 0x00FFFFFF;
     private static final int OUTLINE = 0xFFFFFFFF;
     private static final int TRI_FLOATS = 10;
@@ -39,8 +39,9 @@ public final class SchematicBake {
      * @param argb          row-major, straight alpha
      * @param sprites       parents before children
      * @param centreX,centreZ model-space middle of the whole silhouette
+     * @param extent          longer side of the silhouette's bounding box, blocks
      */
-    public record Result(int width, int height, int[] argb, List<Sprite> sprites, float centreX, float centreZ) {
+    public record Result(int width, int height, int[] argb, List<Sprite> sprites, float centreX, float centreZ, float extent) {
     }
 
     private SchematicBake() {
@@ -200,7 +201,8 @@ public final class SchematicBake {
             outline(sprite, argb);
         }
         return new Result(ATLAS_WIDTH, height, argb, List.copyOf(sprites),
-                (model[0] + model[2]) * 0.5f, (model[1] + model[3]) * 0.5f);
+                (model[0] + model[2]) * 0.5f, (model[1] + model[3]) * 0.5f,
+                Math.max(model[2] - model[0], model[3] - model[1]));
     }
 
     private static int dominantSlot(MeshGeometry mesh, int vertex) {

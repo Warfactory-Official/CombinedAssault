@@ -39,6 +39,12 @@ public final class AircraftPartTypes {
                     .setDataSerializer(json -> new FlapUnitData(GsonUtil.GSON.fromJson(json, FlapUnitPojo.class)))
                     .build();
 
+    public static final PartUnitType<ControlSurfaceUnit, ControlSurfaceUnitData> CONTROL_SURFACE =
+            PartUnitType.Builder.<ControlSurfaceUnit, ControlSurfaceUnitData>of(CombinedAssault.modLocation("control_surface"))
+                    .setFactory(ControlSurfaceUnit::new)
+                    .setDataSerializer(json -> new ControlSurfaceUnitData(GsonUtil.GSON.fromJson(json, ControlSurfaceUnitPojo.class)))
+                    .build();
+
     private AircraftPartTypes() {
     }
 }

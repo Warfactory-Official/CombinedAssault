@@ -201,9 +201,12 @@ public final class ScopeWidgets {
     /**
      * Top-down hull schematic rotated to the operator's traverse, one baked sprite per part bone
      * ({@link SchematicSprites}); own station blue, damage steps yellow/orange/red, destroyed red. Boxes while the
-     * model has no sprites. Scaled so any hull is {@code length} units long (default 50); {@code hullUp} keeps the hull's nose up instead of following the traverse.
+     * model has no sprites. {@code length} = max drawn length (default 50), reached at {@link #REFERENCE_BLOCKS};
+     * shorter hulls draw at {@code length * ln(1+L)/ln(1+REFERENCE_BLOCKS)}; {@code hullUp} keeps the hull's nose up instead of following the traverse.
      */
     public record VehicleSchematic(float length, boolean hullUp, boolean systems) implements WidgetDef {
+        static final float REFERENCE_BLOCKS = 40.0f;
+
         @Override
         public Widget create(Binder binder) {
             SubjectRef<AbstractVehicle> vehicleRef = binder.subject(HudSubjects.VEHICLE);
@@ -232,7 +235,15 @@ public final class ScopeWidgets {
                     }
                     float pt = ev.partialTick;
                     Canvas canvas = ev.canvas;
-                    float scale = (length > 0 ? length : 50.0f) / 10.0f / (float) Math.max(4.0, vehicle.getStructureLength());
+                    float blocks = (float) Math.max(4.0, vehicle.getStructureLength());
+                    if (vehicle != bound || !sheet.valid()) {
+                        bind(vehicle);
+                    }
+                    if (sheet.state() == SchematicSprites.Sheet.State.READY) {
+                        blocks = Math.max(4.0f, sheet.result().extent());
+                    }
+                    float shown = (length > 0 ? length : 50.0f) * Math.min(1.0f, (float) (Math.log1p(blocks) / Math.log1p(REFERENCE_BLOCKS)));
+                    float scale = shown / 10.0f / blocks;
                     Player player = LocalVehiclePlayer.instance().getPlayer();
                     PartUnit<?> own = vehicle.getOwnOperatorUnit(player);
                     float zRot = !hullUp && own instanceof RotatableUnit<?> rotatable ? turretYaw(rotatable, vehicle, pt) : 0;

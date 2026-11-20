@@ -27,7 +27,7 @@
             "shadow": true, "scale": 0.5}},
         {"type": "place", "x": 156, "y": "ceil(vehicle.system_count / 3) * 13 - 2", "pivot": "bottom_left",
           "child": {"type": "sized", "w": 88, "h": 88, "child": {"type": "place", "x": 44, "y": 44,
-            "child": {"type": "combinedassault:vehicle_schematic", "length": 80, "hull_up": true, "systems": true}}}},
+            "child": {"type": "combinedassault:vehicle_schematic", "length": 56, "hull_up": true, "systems": true}}}},
         {"type": "place", "x": 150, "y": 15.5, "pivot": "top_right",
           "child": {"type": "text", "text": "POWER {vehicle.power|.1}%", "color": "vehicle.power < 30 ? $red : $white",
             "shadow": true, "scale": 0.5}}

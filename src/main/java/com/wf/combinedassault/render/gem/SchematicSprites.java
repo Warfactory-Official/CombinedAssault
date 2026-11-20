@@ -1,5 +1,8 @@
 package com.wf.combinedassault.render.gem;
 
+import org.lwjgl.opengl.GL11C;
+import org.lwjgl.opengl.GL12C;
+import org.lwjgl.opengl.GL30C;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.render.model.VehicleModelInstance;
@@ -73,6 +76,9 @@ public final class SchematicSprites {
 
     @OnlyIn(Dist.CLIENT)
     public static final class Sheet {
+        /** Atlas pads sprites by {@code SchematicBake.PAD} = 2 px; deeper levels bleed neighbours. */
+        private static final int MIP_LEVELS = 2;
+
         public enum State {PENDING, READY, FAILED}
 
         static final Sheet UNSUPPORTED = new Sheet(null, null, null);
@@ -114,7 +120,10 @@ public final class SchematicSprites {
                         }
                     }
                     texture = new DynamicTexture(image);
-                    texture.setFilter(true, false);
+                    texture.bind();
+                    GL11C.glTexParameteri(GL11C.GL_TEXTURE_2D, GL12C.GL_TEXTURE_MAX_LEVEL, MIP_LEVELS);
+                    texture.setFilter(true, true);
+                    GL30C.glGenerateMipmap(GL11C.GL_TEXTURE_2D);
                     state = State.READY;
                 } catch (RuntimeException e) {
                     CombinedAssault.LOGGER.warn("top-down sprites unavailable for {}", owner.modelPath(), e);

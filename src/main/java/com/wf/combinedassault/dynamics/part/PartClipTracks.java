@@ -1,6 +1,7 @@
 package com.wf.combinedassault.dynamics.part;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.aircraft.part.ControlSurfaceUnit;
 import com.wf.combinedassault.aircraft.part.FlapUnit;
 import com.wf.combinedassault.ballistics.hit.ClipRig;
 import com.wf.combinedassault.ballistics.hit.GltfReader;
@@ -22,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <tr><th>part</th><th>clip</th><th>p</th></tr>
  *   <tr><td>switchable</td><td>any</td><td>-> on ? 1 : 0 at 1/span per second, smoothstep(t^skew), duration and skew rerolled per motion start; span = track's longest clip</td></tr>
  *   <tr><td>flaps</td><td>any</td><td>deflection / full</td></tr>
+ *   <tr><td>control surface</td><td>any</td><td>0.5 + deflection / (2 full)</td></tr>
  *   <tr><td>linked hinge</td><td>any</td><td>rotation / open rotation</td></tr>
  *   <tr><td>weapon</td><td>{@code .fire}</td><td>time since current weapon's last shot / span; never fired => 1</td></tr>
  *   <tr><td>weapon</td><td>{@code .reload}</td><td>current weapon's reload progress; not reloading => 0; no
@@ -34,7 +36,7 @@ public final class PartClipTracks {
     /** model + clip, warned once. */
     private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
 
-    private enum Kind { TOGGLE, FLAPS, HINGE, FIRE, RELOAD, UNJAM }
+    private enum Kind { TOGGLE, FLAPS, SURFACE, HINGE, FIRE, RELOAD, UNJAM }
 
     public static final class Track {
         private final PartUnit<?> part;
@@ -70,6 +72,7 @@ public final class PartClipTracks {
         public float progress(float partialTick) {
             return switch (kind) {
                 case FLAPS -> Mth.clamp(((FlapUnit) part).level(partialTick), 0, 1);
+                case SURFACE -> ((ControlSurfaceUnit) part).clipProgress(partialTick);
                 case HINGE -> Mth.clamp(((LinkedHingeUnit) part).openness(partialTick), 0, 1);
                 case FIRE -> ((WeaponUnit) part).getCurrentWeapon()
                         .map(weapon -> span <= 0 ? 1 : Mth.clamp(weapon.cycleSeconds(partialTick) / span, 0, 1))
@@ -150,7 +153,7 @@ public final class PartClipTracks {
             Kind kind = part == null ? null : kind(part, suffix(name));
             if (kind == null) {
                 if (WARNED.add(model + "#" + name)) {
-                    CombinedAssault.LOGGER.warn("{}: clip '{}' names no switchable, flaps or linked hinge part, nor a "
+                    CombinedAssault.LOGGER.warn("{}: clip '{}' names no switchable, flaps, control surface or linked hinge part, nor a "
                             + "weapon part's .fire / .reload / .unjam, of {}; never plays", model, name, vehicle);
                 }
                 continue;
@@ -197,6 +200,7 @@ public final class PartClipTracks {
         return switch (part) {
             case SwitchableUnit<?> switchable -> Kind.TOGGLE;
             case FlapUnit flaps -> Kind.FLAPS;
+            case ControlSurfaceUnit surface -> Kind.SURFACE;
             case LinkedHingeUnit hinge -> Kind.HINGE;
             case WeaponUnit weapon when suffix.equals("fire") -> Kind.FIRE;
             case WeaponUnit weapon when suffix.equals("reload") -> Kind.RELOAD;

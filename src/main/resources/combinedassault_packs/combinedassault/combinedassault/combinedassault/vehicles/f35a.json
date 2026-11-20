@@ -44,6 +44,12 @@
     },
     "with_warning_receiver": true,
     "parts": [
+        {"id": "right_aileron", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 0, "roll": -15, "yaw": 0, "rot_info": {"x_rot_speed": 1}},
+        {"id": "left_aileron", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 0, "roll": 15, "yaw": 0, "rot_info": {"x_rot_speed": 1}},
+        {"id": "right_stabilator", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 20, "roll": -10, "yaw": 0, "rot_info": {"x_rot_speed": 1}},
+        {"id": "left_stabilator", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 20, "roll": 10, "yaw": 0, "rot_info": {"x_rot_speed": 1}},
+        {"id": "right_rudder", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 0, "roll": 0, "yaw": 25, "rot_info": {"x_rot_speed": 1}},
+        {"id": "left_rudder", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 0, "roll": 0, "yaw": 25, "rot_info": {"x_rot_speed": 1}},
         {"id": "flaps", "name": "part.combinedassault.flaps", "type": "combinedassault:flaps", "is_seat": false, "stages": [0.0, 15.0, 30.0], "rot_info": {"x_rot_speed": 1}},
         {
             "id": "sighting_system",

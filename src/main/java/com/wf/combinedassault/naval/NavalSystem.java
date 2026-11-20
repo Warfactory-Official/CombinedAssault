@@ -8,6 +8,7 @@ import com.wf.combinedassault.naval.data.ShipVehicleData;
 import com.wf.combinedassault.naval.data.ShipVehicleDataPojo;
 import com.wf.combinedassault.naval.data.VesselVehicleData;
 import com.wf.combinedassault.naval.data.VesselVehicleDataPojo;
+import com.wf.combinedassault.naval.gametest.KiloSystemsGameTest;
 import com.wf.combinedassault.naval.gametest.NimitzSystemsGameTest;
 import com.wf.combinedassault.naval.gametest.RiverineGunsGameTest;
 import com.wf.combinedassault.naval.gametest.ShipDamageGameTest;
@@ -41,7 +42,7 @@ public final class NavalSystem implements CombinedAssaultSystem {
 
     @Override
     public void register(IEventBus modBus, ModContainer container) {
-        GameTestSetup.tests(modBus, ShipGameTest.class, ShipDamageGameTest.class, NimitzSystemsGameTest.class, RiverineGunsGameTest.class, WartyShipsGameTest.class);
+        GameTestSetup.tests(modBus, ShipGameTest.class, ShipDamageGameTest.class, NimitzSystemsGameTest.class, RiverineGunsGameTest.class, WartyShipsGameTest.class, KiloSystemsGameTest.class);
         NavalContent.ENTITIES.register(modBus);
         VehicleDataTypes.register("vessel_vehicle", json -> {
             VesselVehicleData data = new VesselVehicleData();

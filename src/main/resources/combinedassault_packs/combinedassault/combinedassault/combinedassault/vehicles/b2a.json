@@ -48,6 +48,16 @@
     },
     "with_warning_receiver": true,
     "parts": [
+        {"id": "right_elevon_5", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 6, "roll": -20, "yaw": 0, "rot_info": {"x_rot_speed": 1}},
+        {"id": "left_elevon_5", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 6, "roll": 20, "yaw": 0, "rot_info": {"x_rot_speed": 1}},
+        {"id": "right_elevon_4", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 6, "roll": -20, "yaw": 0, "rot_info": {"x_rot_speed": 1}},
+        {"id": "left_elevon_4", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 6, "roll": 20, "yaw": 0, "rot_info": {"x_rot_speed": 1}},
+        {"id": "right_elevon_3", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 20, "roll": -8, "yaw": 0, "rot_info": {"x_rot_speed": 1}},
+        {"id": "left_elevon_3", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 20, "roll": 8, "yaw": 0, "rot_info": {"x_rot_speed": 1}},
+        {"id": "right_elevon_2", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 20, "roll": -8, "yaw": 0, "rot_info": {"x_rot_speed": 1}},
+        {"id": "left_elevon_2", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 20, "roll": 8, "yaw": 0, "rot_info": {"x_rot_speed": 1}},
+        {"id": "right_elevon_1", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 20, "roll": -8, "yaw": 0, "rot_info": {"x_rot_speed": 1}},
+        {"id": "left_elevon_1", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 20, "roll": 8, "yaw": 0, "rot_info": {"x_rot_speed": 1}},
         {
             "id": "sighting_system",
             "name": "sighting_system",

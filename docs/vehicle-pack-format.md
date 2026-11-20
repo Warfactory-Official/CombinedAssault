@@ -331,6 +331,35 @@ Shipped plate sets: `humvee`, `m113`, `m1129`, `centauro`, `bob_semple`, `m1a2`,
 - Flood: meko 5 of 8 = 0.625 sinks (4 = 0.5 survives); visby / osa 4 of 8 = 0.5 sinks; narcosub 3 of 6 = 0.5 sinks (2 survives); one side lost (3 / 3 / 3 / 2 pools) = list to that side. `engine` / `propeller` / `rudder` pools averaged per kind: one of n lost costs 1/n, all lost stops.
 - Weapons: `meko_a200` `main_gun` = `cannon_127mm`; `visby` `gun_57mm` = `giat_30` (no 57 mm weapon def: stand-in); `osa` `gun_fwd` / `gun_aft` = `gsh_30_1` (AK-230 stand-in), `helm` fires `ssm_launcher` (`launcher_rack` holds 4 MEDIUM / LARGE, internal stations). RWS / VLS / canisters drawn only. Radar: `radar_surface` (`air_surface_search` meko / visby, `surface_search` osa, `radar_offset` at the drawn antenna); `narcosub` `sonar_passive`. Narcosub `submarine`: max_depth 12, crush 30 (ESTIMATE).
 
+- Kilo (`kilo`; basis: en.wikipedia.org/wiki/Kilo-class_submarine = double hull, steel pressure hull; thicknesses unpublished, all ESTIMATE). Tiers 30 / 30 / 30 / top 20 / bottom 30; `sink_at` 0.5, `list_max` 20; plates, all `curved`, whole mesh nodes bound (`def_sockets.py plates kilo` = report):
+
+| plate | layers | nodes |
+|---|---|---|
+| `pressure_hull` | rha 30 | `01_HULL_*` |
+| `casing` | rha 6, hull 0.3 | `04_UPPER_DECK` |
+| `sail` | rha 8, hull 0.3 | `05_SAIL` |
+| `masts` | rha 4, hull 0.15 | `08_*` .. `11_*` |
+| `hatches` | rha 10, hull 0.15 | `20_*` `21_*` |
+| `control_surfaces` | rha 12, hull 0.1 | `12_*` .. `15_*` planes + rudders |
+| `fittings` | rha 3, hull 0.15 | `06_SAIL_fixtures`, `18_*`, `23_*`, `24_*` |
+| `running_gear` | cast 15, hull 0.1 | `16_PROPELLER`, `17_SHAFT_fairing` |
+
+- Unbound decals: `07_*`, `17_HULL_white_markings`, `19_*`, `22_*` => tier value.
+- Pools (boxes y -2.9..2.6 inside the pressure hull, half-width = 0.8 x hull half-width; left = +x), health ESTIMATE:
+
+| pool | count | health | box z / note |
+|---|---:|---:|---|
+| `compartment {fwd,mid,aft}_{left,right}` | 6 | 90 | 10..34 / -12..10 / -33..-12 |
+| `engine {diesel,electric}` | 2 | 80 | -22..-12 / -32..-23 |
+| `propeller main` | 1 | 50 | under `16_PROPELLER` |
+| `rudder main` | 1 | 40 | under `14_*` / `15_*` |
+| `fuel tanks_{left,right}` | 2 | 60 | -10..8 |
+| `ammo torpedo_room` | 1 | 80 (rha 10) | 18..33 |
+| `optics periscope` | 1 | 20 | on `10_MAST_periscope`, above waterline |
+| `ballast {fore,aft}` | 2 | 80 | y -4.2..-3.0; 12..32 / -30..-12 |
+
+- Flood: 3 of 6 compartments = 0.5 sinks; one side lost = list. One engine of 2 lost = speed 0.5; propeller or rudder lost (1 pool) = speed / turn 0. Gametest `KiloSystemsGameTest`.
+
 - Added panes (`mh60l` `ah_6` `ch47` `mv22`): source meshes had no glass there (open frames); quads measured from the silhouettes, tint material `glass_armor:<id>`; positions approximate. Gap: blasts do not chip glazing-only sets; `ah_6` side bubble, `ch47` / `mh60l` side windows unmodelled.
 - Slope: mesh value declared (M1A2 glacis 75 / T-90 UFP 63 / T-84 glacis 78.5 vs real ~82 / 68 / ~68); lower front plates negative.
 - Estimates (no public figure): Humvee hood / fender / roof / rear / floor, M1A2 `hull_nose` / `turret_side` / `turret_roof` / `turret_bustle` / `turret_rear`, T-90 `lfp` 115 / hull roof / belly, M1129 + Centauro plate mm (tuned to the coarse tier), Bob Semple roof / belly / turret, Merkava 4 all plates (public turret front 600-1030 / 750-1340 disagrees with 250-300 / 450-500), T-84 base los = published totals x ~0.7 KE / 0.5 CE.
@@ -556,6 +585,7 @@ that type adds — there is no nested `data` object.
 | `combinedassault:landing_gear` | adds `drag_k` |
 | `combinedassault:airbrake` | adds `drag_k` |
 | `combinedassault:flaps` | notched deflection = part xRot; §4.6 |
+| `combinedassault:control_surface` | part xRot follows pitch / roll / yaw input; §4.6 |
 | `combinedassault:weapon_bay` | a bay that opens before its weapons fire |
 | `combinedassault:missile_holder` | a pylon; adds `accepts`, `capacity` |
 | `combinedassault:weapon` | a crewed weapon station |
@@ -681,6 +711,9 @@ Entry: string (one weapon id) or object. Array form REMOVED: ammo kinds = one we
 | | `stall_shift` | float | `3` | stall AoA lowered by this at full deflection, degrees |
 | | `max_speed` | float | `2.0` | b/t; faster => retracts to 0 |
 |  |  |  |  | every `flaps` part of a fixed-wing vehicle is used (terms = mean); keys `]` down / `[` up (driver) |
+| `control_surface` | `pitch` / `roll` / `yaw` | float | `0` | part xRot degrees per full input, signed; full = \|pitch\|+\|roll\|+\|yaw\| > 0; xRot = clamp(pitch·p + roll·r + yaw·y, ±full) |
+| | `rot_info.x_rot_speed` | float | `full/3` | °/t (full travel 0.15 s); needs no power |
+|  |  |  |  | inputs as `stick_pitch` / `stick_roll` / `pedals` (+ = forward / right / right pedal), after dead band; no driver or no power => 0; every part of a fixed-wing vehicle driven; helicopter: pitch + roll only; drawn by [part clip](#part-clips) `<part id>` |
 | `weapon_bay` | `need_power` | bool | `true` | `false`: hand-worked; no power needed, probe access node toggles (M1129 roof hatches) |
 | `linked_hinge` | `link` | string | — | switchable part id (door, weapon_bay, landing_gear); required |
 | | `open_x_rot` / `open_y_rot` | float | `0` | part pitch/yaw while the link is on |
@@ -872,6 +905,7 @@ glTF animations, scrubbed by part progress p ∈ [0,1], never played on a clock:
 | --- | --- |
 | switchable (`door`, hatch, `landing_gear`, `weapon_bay`, `airbrake`, …) | → on ? 1 : 0 at 1/span per s, per tick, both sides; span = the part's longest clip |
 | `flaps` | deflection / deepest notch |
+| `control_surface` | 0.5 + deflection / (2 × full); keys at -full, 0 (0.5), +full |
 | `linked_hinge` | rotation / open rotation (server hinge speed; collision and picture agree) |
 | `weapon`, clip `<part id>.fire` | time since current weapon's last shot / clip length; `shoot_interval` < 50 ms in a sustained burst => time into the round's cycle at `shoot_interval` (one cycle per round); 50..100 ms fires every 2 ticks; never fired => 1 (end key = rest) |
 | `weapon`, clip `<part id>.reload` | current weapon's reload progress; idle => 0; no `.unjam` clip => max with jam clear progress |

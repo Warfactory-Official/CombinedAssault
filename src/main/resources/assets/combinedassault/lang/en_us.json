@@ -254,6 +254,7 @@
   "part.combinedassault.fpv_camera": "Nose Camera",
   "part.combinedassault.hardpoint": "Hardpoint",
   "part.combinedassault.flaps": "Flaps",
+  "part.combinedassault.control_surface": "Control surface",
   "loadout.combinedassault.button": "Loadout: %s",
   "loadout.combinedassault.--": "None",
   "loadout.combinedassault.plain": "Plain",

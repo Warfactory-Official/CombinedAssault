@@ -19,6 +19,7 @@ public final class OffSystemDefs {
             Map.entry("vessel_vehicle", "naval"), Map.entry("ship", "naval"),
             Map.entry("rotary_wing_vehicle", "aircraft"), Map.entry("fixed_wing_vehicle", "aircraft"),
             Map.entry("thrust", "aircraft"), Map.entry("variable_sweep", "aircraft"), Map.entry("flaps", "aircraft"),
+            Map.entry("control_surface", "aircraft"),
             Map.entry("airbrake", "aircraft"), Map.entry("radar", "radar"), Map.entry("payload", "uav"));
 
     private OffSystemDefs() {

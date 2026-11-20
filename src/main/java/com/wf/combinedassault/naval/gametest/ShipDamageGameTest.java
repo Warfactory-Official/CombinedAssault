@@ -45,7 +45,7 @@ public class ShipDamageGameTest {
                     if (boat.getZRot() > -1.0f) {
                         helper.fail("port compartment flooded: roll " + boat.getZRot() + ", expected negative list");
                     }
-                    if (boat.isRemoved() || boat.getHealth() <= 0) {
+                    if (boat.isRemoved() || boat.isDestroyed()) {
                         helper.fail("one of four compartments sank the hull");
                     }
                     HullComponents pools = boat.hullComponents();
@@ -63,8 +63,9 @@ public class ShipDamageGameTest {
                 })
                 .thenIdle(700)
                 .thenExecute(() -> {
-                    if (!boat.isRemoved() && boat.getHealth() > 0) {
-                        helper.fail("every compartment lost, still afloat after 700 ticks: y " + boat.getY());
+                    if (!boat.isRemoved() && !boat.isDestroyed()) {
+                        helper.fail("every compartment lost, not destroyed after 700 ticks: y " + boat.getY()
+                                + " health " + boat.getHealth() + " afloat " + boat.afloat());
                     }
                 })
                 .thenExecute(() -> discard(boat))

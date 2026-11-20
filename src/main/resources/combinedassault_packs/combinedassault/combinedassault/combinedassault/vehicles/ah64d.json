@@ -31,6 +31,8 @@
     },
     "with_warning_receiver": true,
     "parts": [
+        {"id": "right_stabilator", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 30, "roll": 0, "yaw": 0, "rot_info": {"x_rot_speed": 1}},
+        {"id": "left_stabilator", "name": "part.combinedassault.control_surface", "type": "combinedassault:control_surface", "is_seat": false, "pitch": 30, "roll": 0, "yaw": 0, "rot_info": {"x_rot_speed": 1}},
         {
             "id": "sighting_system",
             "crew_roles": [

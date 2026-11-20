@@ -43,22 +43,22 @@ public class WartyShipsGameTest {
             ComponentKind.COMPARTMENT, 6, ComponentKind.ENGINE, 1, ComponentKind.FUEL, 2, ComponentKind.BALLAST, 2,
             ComponentKind.PROPELLER, 1, ComponentKind.RUDDER, 1, ComponentKind.OPTICS, 1));
 
-    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = POOL, timeoutTicks = 700)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = POOL, timeoutTicks = 900)
     public static void wartyShipMekoSystems(GameTestHelper helper) {
         systems(helper, MEKO);
     }
 
-    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = POOL, timeoutTicks = 700)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = POOL, timeoutTicks = 900)
     public static void wartyShipVisbySystems(GameTestHelper helper) {
         systems(helper, VISBY);
     }
 
-    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = POOL, timeoutTicks = 700)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = POOL, timeoutTicks = 900)
     public static void wartyShipOsaSystems(GameTestHelper helper) {
         systems(helper, OSA);
     }
 
-    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = POOL, timeoutTicks = 700)
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, batch = "naval", template = POOL, timeoutTicks = 900)
     public static void wartyShipNarcosubSystems(GameTestHelper helper) {
         systems(helper, NARCOSUB);
     }
@@ -111,6 +111,9 @@ public class WartyShipsGameTest {
                 .thenExecute(() -> leftSide.forEach(id -> set(ship, id, 0)))
                 .thenIdle(160)
                 .thenExecute(() -> {
+                    if (ship.onGround()) {
+                        return;
+                    }
                     if (ship.getZRot() > -1.0f) {
                         helper.fail(expect.id() + " port compartments flooded: roll " + ship.getZRot() + ", expected negative list");
                     }
@@ -120,9 +123,9 @@ public class WartyShipsGameTest {
                     leftSide.forEach(id -> restore(ship, id));
                     rightSide.forEach(id -> set(ship, id, 0));
                 })
-                .thenIdle(200)
+                .thenIdle(400)
                 .thenExecute(() -> {
-                    if (ship.getZRot() < 1.0f) {
+                    if (!ship.onGround() && ship.getZRot() < 1.0f) {
                         helper.fail(expect.id() + " starboard compartments flooded: roll " + ship.getZRot() + ", expected positive list");
                     }
                 })

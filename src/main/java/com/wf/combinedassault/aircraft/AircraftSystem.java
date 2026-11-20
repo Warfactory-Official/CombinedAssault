@@ -7,8 +7,10 @@ import com.wf.combinedassault.aircraft.data.FixedWingVehicleData;
 import com.wf.combinedassault.aircraft.data.FixedWingVehicleDataPojo;
 import com.wf.combinedassault.aircraft.data.RotaryWingVehicleData;
 import com.wf.combinedassault.aircraft.data.RotaryWingVehicleDataPojo;
+import com.wf.combinedassault.aircraft.gametest.AircraftHitModelGameTest;
 import com.wf.combinedassault.aircraft.gametest.AircraftPartsGameTest;
 import com.wf.combinedassault.aircraft.gametest.CrashGameTest;
+import com.wf.combinedassault.aircraft.gametest.ControlSurfaceGameTest;
 import com.wf.combinedassault.aircraft.gametest.FlapsGameTest;
 import com.wf.combinedassault.aircraft.gametest.LevelTrimGameTest;
 import com.wf.combinedassault.aircraft.gametest.WingLossGameTest;
@@ -36,10 +38,12 @@ public final class AircraftSystem implements CombinedAssaultSystem {
     @Override
     public void register(IEventBus modBus, ModContainer container) {
         GameTestSetup.testsNeeding(modBus, Set.of("uav"), FlapsGameTest.class, WingLossGameTest.class);
-        GameTestSetup.tests(modBus, AircraftPartsGameTest.class, CrashGameTest.class, LevelTrimGameTest.class);
+        GameTestSetup.tests(modBus, AircraftPartsGameTest.class, CrashGameTest.class, LevelTrimGameTest.class,
+                ControlSurfaceGameTest.class, AircraftHitModelGameTest.class);
         BuiltinPartUnits.add(AircraftPartTypes.THRUST);
         BuiltinPartUnits.add(AircraftPartTypes.VARIABLE_SWEEP);
         BuiltinPartUnits.add(AircraftPartTypes.FLAPS);
+        BuiltinPartUnits.add(AircraftPartTypes.CONTROL_SURFACE);
         BuiltinPartUnits.add(AircraftPartTypes.AIRBRAKE);
         AircraftContent.ENTITIES.register(modBus);
         container.registerConfig(ModConfig.Type.COMMON, AircraftConfig.SPEC, "combinedassault-aircraft.toml");
