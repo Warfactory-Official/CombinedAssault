@@ -63,6 +63,12 @@ public class RotaryWingVehicle extends AbstractVehicle
     public static final float ROT_FRICTION = 0.1f;
     public float mainRotorForce = 1.4f * PhysicsHelper.GRAVITY * physicsEngine.mass;
     public float ceiling = 256;
+    public float ceilingHard;
+
+    @Override
+    public double flameoutY() {
+        return AirLimits.hard(ceiling, ceilingHard);
+    }
     public float xRotSpeedAcceleration = 1f;
     public float xRotSpeedMax = 4;
     public float yRotSpeedAcceleration = 1;
@@ -285,8 +291,8 @@ public class RotaryWingVehicle extends AbstractVehicle
         // Wreck: rigid body only; airborne spin as upstream.
         // Sling load: rope pull at the hook would swing the airframe; controller holds rates, not attitude.
         physicsEngine.lockCenterRot = !isDestroyed() && !coupledBehind().isEmpty();
-        physicsEngine.yawRotOnly = false;
-        float restPitch = getXRot(), restRoll = getZRot();
+        // Skids down: slope ease (below) owns pitch / roll.
+        physicsEngine.yawRotOnly = !isDestroyed() && onGround();
         if (isDestroyed()) {
             if (!onGround()) {
                 setYRot(getYRot() + 10);
@@ -325,6 +331,9 @@ public class RotaryWingVehicle extends AbstractVehicle
         }
         // Air thins above y=64: engine + blade efficiency taper from there to ceiling.
         double scaleAir = position().y < 64 ? 1 : Math.pow(Math.max(0, ceiling - position().y), 0.2) / Math.pow(ceiling - 64, 0.2);
+        if (position().y > flameoutY() && airSpeed.y > 0) {
+            airSpeed = new Vec3(airSpeed.x, 0, airSpeed.z);
+        }
         boolean arcade = AircraftConfig.get().arcadeFlightModel();
         double tiltCompensation = arcade ? aerodynamics.liftTiltCompensation((float) vP.y) : 1.0;
         Vec3 force = vP.scale(scale * scaleAir * mainRotorForce * tiltCompensation);
@@ -481,13 +490,19 @@ public class RotaryWingVehicle extends AbstractVehicle
         zRotSpeed = Math.signum(zRotSpeed) * (Math.max(0, Math.abs(zRotSpeed) - ROT_FRICTION));
 
         if (onGround()) {
-            // Contacts own pitch / roll (terrain slope); cyclic authority = rotor lift / weight.
-            float authority = Mth.clamp((float) (force.y / (physicsEngine.mass * PhysicsHelper.GRAVITY)), 0, 1);
-            setXRot(restPitch + Mth.wrapDegrees(getXRot() - restPitch) * authority);
-            setZRot(restRoll + Mth.wrapDegrees(getZRot() - restRoll) * authority);
+            // yawRotOnly => contacts never pitch / roll the hull: CH-47 dropped 50 deg nose-down rested on its nose
+            // corner indefinitely. Eased to the terrain under the hull, released as rotor lift reaches weight. Free body
+            // on the ground FORBIDDEN: gearless hulls rest on their colliders (CH-47 2.65 deg nose up, cargo bay off).
+            float keep = GROUND_LEVEL_EASE + (1 - GROUND_LEVEL_EASE)
+                    * Mth.clamp((float) (force.y / (physicsEngine.mass * PhysicsHelper.GRAVITY)), 0, 1);
+            GroundSlope slope = GroundSlope.under(this);
+            setXRot(slope.pitch() + (getXRot() - slope.pitch()) * keep);
+            setZRot(slope.roll() + (getZRot() - slope.roll()) * keep);
         }
         return force;
     }
+
+    private static final float GROUND_LEVEL_EASE = 0.7f;
 
     /** Rotor disc damping of contact spin in flight. TODO estimate. */
     private static final float LIVE_SPIN_RETENTION = 0.85f;

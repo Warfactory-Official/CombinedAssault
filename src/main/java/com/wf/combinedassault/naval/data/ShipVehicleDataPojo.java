@@ -68,6 +68,16 @@ public class ShipVehicleDataPojo extends BaseVehicleDataPojo {
         @SerializedName("submarine")
         public Submarine submarine;
 
+        @SerializedName("sink_at")
+        public double sinkAt = 0.6;
+
+        /** {@code < 0}: half the draft. */
+        @SerializedName("flood_draft")
+        public double floodDraft = -1;
+
+        @SerializedName("list_max")
+        public double listMax = 20.0;
+
         /** {@code [x, y, z, radius]} per screw. */
         @SerializedName("propellers")
         public List<double[]> propellers = List.of();
@@ -90,6 +100,10 @@ public class ShipVehicleDataPojo extends BaseVehicleDataPojo {
 
         @SerializedName("dive_angle")
         public double diveAngle = 12.0;
+
+        /** {@code <= 0}: 1.5 x {@code crush_depth}. */
+        @SerializedName("implode_depth")
+        public double implodeDepth;
 
     }
 

@@ -29,6 +29,13 @@ public enum ComponentKind {
     /** Anti-torque: yaw authority; lost => torque yaws the airframe. */
     TAIL_ROTOR("tail_rotor", "TAIL", 200, 6),
     WING("wing", "WING", 240, 8),
+    PROPELLER("propeller", "PROP", 200, 6),
+    /** Steering gear: lost => no turning authority. */
+    RUDDER("rudder", "RUD", 200, 6),
+    /** Watertight space: breached => floods; see {@code ShipVehicle}. */
+    COMPARTMENT("compartment", "COMP", 240, 8),
+    /** Submarine ballast/trim tanks: holed => depth cannot be held or recovered. */
+    BALLAST("ballast", "BLST", 240, 8),
     CREW("crew", "CREW", 0, 0),
     GENERIC("generic", "", 0, 0);
 
@@ -61,12 +68,12 @@ public enum ComponentKind {
 
     /** Ground mobility (scales {@link VehicleMobility}); ROTOR/WING excluded: losing them isn't slower driving. */
     public boolean isMobility() {
-        return this == TRACK || this == WHEEL || this == ENGINE;
+        return this == TRACK || this == WHEEL || this == ENGINE || this == PROPELLER;
     }
 
     /** Loss pulls the vehicle to one side. */
     public boolean steers() {
-        return this == TRACK || this == WHEEL;
+        return this == TRACK || this == WHEEL || this == RUDDER;
     }
 
     /**

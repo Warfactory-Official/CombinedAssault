@@ -20,6 +20,7 @@ public class RotaryWingVehicleData extends BaseVehicleData<RotaryWingVehicle> {
 
     public float mainRotorForce = 13720f;
     public float ceiling = 256;
+    public float ceilingHard;
     public float xRotSpeedAcceleration = 1f;
     public float xRotSpeedMax = 4;
     public float yRotSpeedAcceleration = 1;
@@ -66,6 +67,7 @@ public class RotaryWingVehicleData extends BaseVehicleData<RotaryWingVehicle> {
         super.build(pojo);
         this.mainRotorForce = pojo.attributes.mainRotorForce;
         this.ceiling = pojo.attributes.ceiling;
+        this.ceilingHard = pojo.attributes.ceilingHard;
         this.xRotSpeedAcceleration = pojo.attributes.xRotSpeedAcceleration;
         this.xRotSpeedMax = pojo.attributes.xRotSpeedMax;
         this.yRotSpeedAcceleration = pojo.attributes.yRotSpeedAcceleration;
@@ -83,6 +85,7 @@ public class RotaryWingVehicleData extends BaseVehicleData<RotaryWingVehicle> {
     public void inject(RotaryWingVehicle vehicle) {
         vehicle.mainRotorForce = this.mainRotorForce;
         vehicle.ceiling = this.ceiling;
+        vehicle.ceilingHard = this.ceilingHard;
         vehicle.xRotSpeedAcceleration = this.xRotSpeedAcceleration;
         vehicle.xRotSpeedMax = this.xRotSpeedMax;
         vehicle.yRotSpeedAcceleration = this.yRotSpeedAcceleration;

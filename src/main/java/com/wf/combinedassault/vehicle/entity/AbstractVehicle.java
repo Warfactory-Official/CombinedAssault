@@ -355,6 +355,11 @@ public abstract class AbstractVehicle extends ContainerCraft
     /** Damage to systems that are hull geometry rather than parts; see {@link #hullComponents()}. */
     @Nullable
     private HullComponents hullComponents;
+    /** Engines flame out above this y. */
+    public double flameoutY() {
+        return Double.POSITIVE_INFINITY;
+    }
+
     /** {@link VehicleSystems#engineWorks}: engine cells (empty: none) of {@link #engineCellPools}. */
     public final List<VehicleSystems.Cell> engineCells = new ArrayList<>();
     @Nullable
@@ -592,7 +597,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             float targetYRot = entityData.get(Y_ROT);
             float targetZRot = entityData.get(Z_ROT);
             if (targetXRot != lerpXRot || targetYRot != lerpYRot || targetZRot != lerpZRot) {
-                this.lerpRotSteps = 3;
+                this.lerpRotSteps = reportSteps(1);
             }
             this.lerpXRot = targetXRot;
             this.lerpYRot = targetYRot;
@@ -1413,9 +1418,15 @@ public abstract class AbstractVehicle extends ContainerCraft
             physicsRestTicks++;
             return false;
         }
-        // Train-wide phase: a heartbeat wakes the bodies it is coupled to for 20 ticks, theirs woke it back
-        // (parked train never slept).
-        return level().isClientSide() || (level().getGameTime() + TowLinks.head(this).getId()) % REST_SOLVE_INTERVAL != 0;
+        return level().isClientSide() || !heartbeat();
+    }
+
+    /**
+     * Train-wide phase (head's age; entity id / game time: trace differs per run): own phases => each heartbeat woke
+     * the coupled bodies for 20 ticks, theirs woke it back, parked train never slept.
+     */
+    private boolean heartbeat() {
+        return TowLinks.head(this).tickCount % REST_SOLVE_INTERVAL == 0;
     }
 
     /** Solve skipped but for the heartbeat. */
@@ -4615,7 +4626,11 @@ public abstract class AbstractVehicle extends ContainerCraft
                 || VehicleHarness.isHarnessed(this)) {
             return false;
         }
-        physicsRestTicks = 0;
+        // Still train member: joins the step, count kept. Restarted => tractor and trailer woke each other by turns,
+        // parked train never slept.
+        if (!((towLink() != null || !TowLinks.towedBy(this).isEmpty()) && atRest())) {
+            physicsRestTicks = 0;
+        }
         Vec3 movement = getDeltaMovement();
         physicsEngine.noteDrive(movement, movement);
         physicsEngine.sampleBuoyancy();

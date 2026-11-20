@@ -1,6 +1,7 @@
 package com.wf.combinedassault.aircraft.gametest;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.dynamics.PhysicsHelper;
 import com.wf.combinedassault.aircraft.FixedWingVehicle;
 import com.wf.combinedassault.aircraft.WingLoss;
 import com.wf.combinedassault.dynamics.part.LandingGearUnit;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 import java.util.Optional;
 
-/** Vehicles into an obsidian post (off-centre hit) and into a dirt pad (dive, skid, drop); wreck fall, rollover, coast-down, stall, settle, ground attitude. */
+/** Vehicles into an obsidian post (off-centre hit) and into a dirt pad (dive, skid, drop); wreck fall, rollover, coast-down, stall, settle, ground attitude, propeller, flying wing. */
 @PrefixGameTestTemplate(false)
 public class CrashGameTest {
 
@@ -201,6 +202,22 @@ public class CrashGameTest {
         step(helper, -8, MI24);
     }
 
+    /** Nose gear on a 1-block ledge: stance follows it (A-10: 13 deg), then rolls back off unbraked. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
+    public static void aPlaneOnGearSettlesOnAStep(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos at = helper.absolutePos(BlockPos.ZERO).offset(LANE_X - 14 * LANE_PITCH, 120, 0);
+        double[] pitch = {0};
+        loose(helper, -14, A10, 2, 0, 160, v -> {
+            ledge(level, at, Blocks.STONE.defaultBlockState());
+            v.setDeltaMovement(0, 0, 0);
+        }, (v, y) -> pitch[0] = Math.max(pitch[0], -v.getXRot()), v -> {
+            ledge(level, at, Blocks.AIR.defaultBlockState());
+            return pitch[0] < 8 || v.physicsEngine.angularVelocity.length() > 0.005
+                    ? String.format(Locale.ROOT, "nose up %.1f spin %.4f", pitch[0], v.physicsEngine.angularVelocity.length()) : null;
+        });
+    }
+
     @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void aHelicopterDroppedNoseDownLevelsOut(GameTestHelper helper) {
         loose(helper, -9, MH60L, 2, 0, 160, v -> {
@@ -223,11 +240,69 @@ public class CrashGameTest {
         }, v -> roll[0] > 1 ? String.format(Locale.ROOT, "roll %.1f", roll[0]) : null);
     }
 
+    /** Alternate ticks jet / propeller at 2 x {@code propeller_speed}: half the thrust. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
+    public static void aPropellerPullsLessAtSpeed(GameTestHelper helper) {
+        double speed = 0.6;
+        double[] gain = new double[2];
+        int[] tick = {0};
+        loose(helper, -11, A10, 0, 0, 41, CrashGameTest::fullPower, (v, y) -> {
+            FixedWingVehicle plane = (FixedWingVehicle) v;
+            gain[tick[0] & 1] += tick[0] == 0 ? 0 : v.getDeltaMovement().horizontalDistance() - speed;
+            plane.propellerSpeed = (++tick[0] & 1) == 0 ? 0 : (float) (speed * PhysicsHelper.TICKS_PER_SECOND / 2);
+            v.setDeltaMovement(v.getLookAngle().multiply(1, 0, 1).normalize().scale(speed));
+        }, v -> {
+            double lost = (gain[0] - gain[1]) / 20 / PhysicsHelper.accelerationPerTick(((FixedWingVehicle) v).thrust, v.physicsEngine.mass);
+            return lost < 0.3 || lost > 0.6 ? String.format(Locale.ROOT, "thrust share lost %.2f", lost) : null;
+        });
+    }
+
+    /** Parked at full power, rudder held: turns only in the slipstream. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
+    public static void aPropellerSlipstreamGivesTheRudderBite(GameTestHelper helper) {
+        float[] yaw = new float[3];
+        int[] tick = {0};
+        loose(helper, -12, A10, 0, 0, 80, CrashGameTest::fullPower, (v, y) -> {
+            ((FixedWingVehicle) v).propellerWash = tick[0] < 40 ? 0 : 13;
+            v.wakeForStep();
+            v.controlUnit.leftYaw = true;
+            v.setDeltaMovement(0, v.getDeltaMovement().y, 0);
+            yaw[tick[0] < 40 ? 0 : tick[0] == 40 ? 1 : 2] = v.getYRot();
+            tick[0]++;
+        }, v -> Math.abs(Mth.wrapDegrees(yaw[1] - yaw[0])) > 0.5f || Math.abs(Mth.wrapDegrees(yaw[2] - yaw[1])) < 2
+                ? String.format(Locale.ROOT, "yaw %.1f, %.1f, %.1f", yaw[0], yaw[1], yaw[2]) : null);
+    }
+
+    /** 15 deg sideslip, hands off, alternate ticks fin / no fin: drag rudders turn it slower and cost more speed. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
+    public static void aFlyingWingWeathercocksOnItsDragRudders(GameTestHelper helper) {
+        double speed = 2;
+        double[] yaw = new double[2], lost = new double[2];
+        float[] heading = {0};
+        int[] tick = {0};
+        loose(helper, -13, A10, 60, 0, 41, v -> {
+            cruise(v, speed);
+            v.controlUnit.stick = true;
+            ((FixedWingVehicle) v).yTurnRate = 0.5f;
+        }, (v, y) -> {
+            if (tick[0] > 0) {
+                yaw[tick[0] & 1] += Mth.wrapDegrees(v.getYRot() - heading[0]);
+                lost[tick[0] & 1] += speed - v.getDeltaMovement().length();
+            }
+            ((FixedWingVehicle) v).directionalStability = (++tick[0] & 1) == 0 ? 1 : 0;
+            v.setXRot(0);
+            v.setZRot(0);
+            v.setDeltaMovement(Vec3.directionFromRotation(0, v.getYRot() + 15).scale(speed));
+            heading[0] = v.getYRot();
+        }, v -> yaw[0] * yaw[1] <= 0 || Math.abs(yaw[1]) > Math.abs(yaw[0]) / 2 || Math.abs(yaw[1]) > 0.5 * 20 * 1.01 || lost[1] <= lost[0]
+                ? String.format(Locale.ROOT, "yaw fin %.1f wing %.1f, speed lost fin %.3f wing %.3f", yaw[0], yaw[1], lost[0], lost[1]) : null);
+    }
+
     /** Nose half over a 1-block ledge: rests pitched onto both levels. */
     private static void step(GameTestHelper helper, int lane, ResourceLocation id) {
         ServerLevel level = helper.getLevel();
         BlockPos at = helper.absolutePos(BlockPos.ZERO).offset(LANE_X + lane * LANE_PITCH, 120, 0);
-        loose(helper, lane, id, 1, 0, 160, v -> {
+        loose(helper, lane, id, 2, 0, 160, v -> {
             ledge(level, at, Blocks.STONE.defaultBlockState());
             v.setDeltaMovement(0, 0, 0);
         }, (v, y) -> {
@@ -418,6 +493,12 @@ public class CrashGameTest {
             }
         }
         return hole;
+    }
+
+    private static void fullPower(AbstractVehicle v) {
+        v.setEnergy(v.energyInfo.capacityUnits());
+        v.setPower(100);
+        ((FixedWingVehicle) v).setThrottleLevel(100);
     }
 
     private static void cruise(AbstractVehicle v, double speed) {

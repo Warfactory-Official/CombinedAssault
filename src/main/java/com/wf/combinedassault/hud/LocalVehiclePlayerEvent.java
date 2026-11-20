@@ -31,7 +31,10 @@ public class LocalVehiclePlayerEvent {
         }
         Entity entity = event.getCamera().getEntity();
         if (entity.equals(LocalVehiclePlayer.instance().getPlayer())) {
-            if (entity.getVehicle() instanceof AbstractVehicle vehicle
+            if (LocalVehiclePlayer.instance().periscope()) {
+                event.setFOV(WORLD_FOV_DYNAMICS.update((float) magnificationToFov(
+                        LocalVehiclePlayer.instance().periscopeMagnification(), event.getFOV())));
+            } else if (entity.getVehicle() instanceof AbstractVehicle vehicle
                     && LocalVehiclePlayer.instance().sightUnit() instanceof WeaponUnit weaponUnit) {
                 float fov;
                 float divisor = StationAds.divisor(weaponUnit, (float) event.getFOV(), (float) event.getPartialTick());

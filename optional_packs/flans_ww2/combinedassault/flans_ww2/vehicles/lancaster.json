@@ -17,6 +17,8 @@
     "x_turn_rate": 1.5,
     "y_turn_rate": 2.2,
     "z_turn_rate": 4.0,
+    "propeller_speed": 36.9,
+    "propeller_wash": 12.9,
     "ground_pitch": 6.44
   },
   "physics_info": {

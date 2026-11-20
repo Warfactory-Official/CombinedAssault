@@ -2,10 +2,12 @@ package com.wf.combinedassault.radar;
 
 import com.wf.combinedassault.camo.CamoLayer;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
+import com.wf.combinedassault.naval.ShipVehicle;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.wflib.recon.api.Signature;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 
 /**
@@ -37,6 +39,16 @@ final class VehicleSignature {
     private static final float GROUND_SEISMIC = 0.02f;
     /** Radiating-radar EM signature; EMCON gates emission, not this constant. */
     private static final float RADAR_EM = 2.0f;
+    /** Sail top above waterline mark, blocks; sub deeper than this is radar-invisible. */
+    private static final float MAST_DEPTH = 4.0f;
+    /** Matches ShipHydrodynamics.SUBMERGED_DEPTH. */
+    private static final float SUBMERGED_DEPTH = 1.0f;
+    /** Submerged machinery noise fraction (rafted, no exhaust). */
+    private static final float SUBMERGED_MACHINERY = 0.3f;
+    /** Blocks depth at which cavitation is halved. */
+    private static final float CAVITATION_QUENCH_DEPTH = 20.0f;
+    /** Ship mass (kg) at noise scale 1 = kilo. */
+    private static final float REFERENCE_SHIP_MASS = 60000.0f;
 
     private VehicleSignature() {
     }
@@ -53,7 +65,9 @@ final class VehicleSignature {
 
         float heat = Math.min(1.0f, Math.max(0.0f, vehicle.getEngineSpeed()) / MAX_ENGINE_SPEED);
         float thermal = HULL_THERMAL * projected * REFERENCE_AREA + ENGINE_THERMAL * heat;
-        float acoustic = ENGINE_ACOUSTIC * heat + cavitation(vehicle);
+        float acoustic = vehicle instanceof ShipVehicle ship
+                ? shipAcoustic(ship, heat)
+                : ENGINE_ACOUSTIC * heat + cavitation(vehicle);
         float seismic = vehicle.onGround()
                 ? (float) (GROUND_SEISMIC * surface * 0.25 * vehicle.getDeltaMovement().length())
                 : 0.0f;
@@ -63,6 +77,42 @@ final class VehicleSignature {
         float attenuation = camoAttenuation(vehicle, surface);
         return new Signature(Math.max(0.0f, rcs * attenuation), seismic,
                 Math.max(0.0f, thermal * attenuation), acoustic, em);
+    }
+
+    /**
+     * @return radiated noise of a hull. machinery (damped submerged) + prop cavitation ~ (speed/own max)^2,
+     * quenched with depth (pressure raises inception speed); times (mass/REFERENCE_SHIP_MASS)^(1/4).
+     */
+    private static float shipAcoustic(ShipVehicle ship, float heat) {
+        if (!inWater(ship)) {
+            return ENGINE_ACOUSTIC * heat;
+        }
+        float depth = ship.isSubmarine() ? Math.max(0.0f, ship.depth()) : 0.0f;
+        boolean under = depth > SUBMERGED_DEPTH;
+        double max = under ? ship.params().maxSpeedSubmerged : ship.params().maxSpeedForward;
+        double dx = ship.getX() - ship.xo;
+        double dz = ship.getZ() - ship.zo;
+        float fraction = (float) Mth.clamp(Math.sqrt(dx * dx + dz * dz) / Math.max(1.0e-3, max), 0.0, 1.0);
+        float machinery = ENGINE_ACOUSTIC * heat * (under ? SUBMERGED_MACHINERY : 1.0f);
+        float cavitation = CAVITATION_ACOUSTIC * fraction * fraction / (1.0f + depth / CAVITATION_QUENCH_DEPTH);
+        float size = (float) Math.pow(Math.max(1.0, ship.physicsEngine.mass) / REFERENCE_SHIP_MASS, 0.25);
+        return (machinery + cavitation) * size;
+    }
+
+    /** @return hull in water: a ship's own sea contact (origin can sit at the surface), else fluid at the block. */
+    static boolean inWater(AbstractVehicle vehicle) {
+        if (vehicle instanceof ShipVehicle ship) {
+            return ship.isSubmarine() || ship.environment().afloat;
+        }
+        return vehicle.level().getFluidState(vehicle.blockPosition()).is(FluidTags.WATER);
+    }
+
+    /**
+     * @return radar-opaque: submarine under its mast. Waterline mark deeper than {@link #MAST_DEPTH} =>
+     * nothing above the surface. Sonar ignores this flag.
+     */
+    static boolean hiddenFromRadar(AbstractVehicle vehicle) {
+        return vehicle instanceof ShipVehicle ship && ship.isSubmarine() && ship.depth() > MAST_DEPTH;
     }
 
     /**
@@ -134,7 +184,8 @@ final class VehicleSignature {
             return false;
         }
         for (PartUnit<?> part : vehicle.getPartUnits()) {
-            if (part instanceof RadarUnit radar && radar.isOn() && radar.getReconRole().emits()) {
+            if (part instanceof RadarUnit radar && radar.isOn() && radar.getReconRole().emits()
+                    && ReconBridge.inWater(vehicle.level(), radar.worldRadarPosition()) == ReconBridge.isSonar(radar)) {
                 return true;
             }
         }

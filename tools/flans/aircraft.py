@@ -565,6 +565,11 @@ class Aircraft(convert.Vehicle):
              "x_turn_rate": 0.8 if big else 1.5 if mid else 2.0,
              "y_turn_rate": 1.2 if big else 2.2 if mid else 3.0,
              "z_turn_rate": 2.0 if big else 4.0 if mid else 7.0}
+        if not self.jet:
+            # TODO estimates: fade from 0.6 x constant-thrust top speed (top x 0.84), never under liftoff; wash = half liftoff.
+            # Every Flan prop is a tractor; a pusher takes no wash.
+            a["propeller_speed"] = round(max(0.6 * np.sqrt(thrust / k_min), np.sqrt(v_lo2)), 1)
+            a["propeller_wash"] = round(0.5 * np.sqrt(v_lo2), 1)
         return a, round(friction)
 
     def write_aircraft_files(self, out_root, model_rl):

@@ -1,5 +1,8 @@
 package com.wf.combinedassault.naval;
 
+import com.wf.combinedassault.ballistics.component.ComponentKind;
+import com.wf.combinedassault.ballistics.component.HullComponents;
+import com.wf.combinedassault.ballistics.component.NodeSystems;
 import com.wf.combinedassault.ballistics.component.VehicleMobility;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 import com.wf.combinedassault.naval.client.ShipVehicleContext;
@@ -52,6 +55,8 @@ public class ShipVehicle extends AbstractVehicle
     private static final int CRUSH_INTERVAL = 20;
     /** Share of max health a crush hit takes, per interval. */
     private static final float CRUSH_DAMAGE = 0.02f;
+    /** Crush damage at {@code implode_depth} as a multiple of the rate at {@code crush_depth}, minus one. */
+    private static final float IMPLODE_RAMP = 9.0f;
     /** Smoothing of the tick-cost readout. */
     private static final double COST_SMOOTHING = 0.05;
     private static final double STUCK_SMOOTHING = 0.2;
@@ -246,6 +251,7 @@ public class ShipVehicle extends AbstractVehicle
         controls.dive = controlUnit.down;
         controls.rise = controlUnit.up;
         controls.power = hasPower() ? getPower() / 100.0 * strain() : 0.0;
+        tickCompartments();
         controls.speedScale = mobility.speedScale();
         controls.turnScale = mobility.turnScale();
         if (!hasPower()) {
@@ -353,10 +359,10 @@ public class ShipVehicle extends AbstractVehicle
         entityData.set(AGROUND, groundedTicks >= 20);
     }
 
-    /** Throttle and rudder persist after the keys lift; a held order is live input. */
+    /** Throttle and rudder persist after the keys lift; a held order is live input. Flooding never sleeps: the sink timer runs in tickMove. */
     @Override
     protected boolean controlsNeutral() {
-        return super.controlsNeutral() && model.throttle == 0 && model.rudder == 0
+        return super.controlsNeutral() && model.throttle == 0 && model.rudder == 0 && controls.flood <= 0
                 && Math.abs(model.yawRate) < YAW_REST
                 && (!params.submarine || Math.abs(model.depth - model.depthSetting) < DEPTH_REST);
     }
@@ -375,6 +381,34 @@ public class ShipVehicle extends AbstractVehicle
         return environment.afloat;
     }
 
+    private void tickCompartments() {
+        HullComponents pools = hullComponents();
+        double flooded = 0, side = 0, ballast = 0;
+        int compartments = 0, tanks = 0;
+        for (int i = 0, n = pools.size(); i < n; i++) {
+            ComponentKind kind = pools.kind(i);
+            if (kind == ComponentKind.COMPARTMENT) {
+                double lost = 1.0 - pools.effectiveness(i);
+                flooded += lost;
+                side += lost * switch (NodeSystems.side(pools.id(i))) {
+                    case LEFT -> -1.0;
+                    case RIGHT -> 1.0;
+                    default -> 0.0;
+                };
+                compartments++;
+            } else if (kind == ComponentKind.BALLAST) {
+                ballast += pools.effectiveness(i);
+                tanks++;
+            }
+        }
+        controls.flood = compartments == 0 ? 0 : flooded / compartments;
+        controls.list = flooded <= 0 ? 0 : side / flooded;
+        controls.ballast = tanks == 0 ? 1.0 : ballast / tanks;
+        if (model.sunk(params, controls) && !level().isClientSide()) {
+            interceptKill();
+        }
+    }
+
     private void tickSubmarine() {
         if (model.submerged) {
             for (Entity passenger : getPassengers()) {
@@ -383,11 +417,15 @@ public class ShipVehicle extends AbstractVehicle
                 }
             }
         }
+        if (model.imploded(params)) {
+            interceptKill();
+            return;
+        }
         if (model.crushed(params) && tickCount % CRUSH_INTERVAL == 0) {
-            float damage = Math.max(getMaxHealth() * CRUSH_DAMAGE, 1.0f);
+            float damage = Math.max(getMaxHealth() * CRUSH_DAMAGE * (1.0f + IMPLODE_RAMP * (float) model.crushFraction(params)), 1.0f);
             float health = getHealth() - damage;
             if (health <= 0) {
-                hurt(level().damageSources().drown(), getMaxHealth());
+                interceptKill();
             } else {
                 setHealth(health);
             }

@@ -161,7 +161,7 @@ SI: mass kg, force N. Per tick `Δv = F / (mass × 400)`.
 | `center` | Vec3 | `center_of_mass` socket, else volume centroid of the solid colliders (rest pose); `suspension` wheels present => y lowered halfway to their mean frame height (never raised) | centre of mass, blocks, vehicle frame. Aircraft: ahead of the main-gear box's front face, else a nose-up touch rests on the tail for good (pitch eases level only under `atan(0.5/depth)`). Inertia: uniform density over the solid colliders ([§6.5](#65-colliders)) about this point |
 | `can_destroy_block` | bool | `false` | |
 | `can_tumble` | bool | `true` | `false` (or config `tumbling = false`) => no spin from impacts or rams; sprung hulls snap level past 75° when config `selfRighting` |
-| `radar_cross_section` | float | `1` | |
+| `radar_cross_section` | float | `1` | detection range x; signature = area x rcs^4. Submarine deeper than the sail (waterline mark > 4 blocks) is radar-opaque; sonar unaffected. Ship noise ~ (speed/own max)^2 / (1 + depth/20) x (mass/60 t)^0.25 + machinery (x0.3 submerged) |
 | `destroy_explosion_velocity` | float | `0.5` | |
 
 ### 3.6 `defense_stats`
@@ -249,21 +249,87 @@ Zone: `name`, `min` / `max` (glTF model coords, part at rest), `ke` (> 0), `ce` 
 
 Shipped plate sets: `humvee`, `m113`, `m1129`, `centauro`, `bob_semple`, `m1a2`, `t90`, `t84`, `merkava`; every outer hull / turret face bound, residual clutter = soft `*_fittings` / `curved` plate (`hull` 0.15, rha 4). Unbound by design: tracks, wheels, `*_back`, `interior_*`, `hit_*`, enclosed faces.
 - Soft skin (doors, glass, hatches, ramps, fenders, skirts, thin sheet) `hull` 0.15; structural shell 1.
-- Glazing-only plate sets (no hull faces => blasts, `damage_threshold`, wear stay stock; `HullProfile.hullDefined`); all curved => no chip decals except `window` side plates:
+- Aircraft: coarse tiers = thin skin (2 mm RHAe, mq9 1; ESTIMATE) + glazing plates + sourced plates; all curved => no chip decals except `window` side plates:
 
-| vehicle | plate: glass | faces |
+| vehicle | plates | faces |
 | --- | --- | --- |
-| `a10` | `canopy` laminated 38 | dark texels of node `canopy` |
-| `av8b` `f22a` `f35a` `su33` `su47` `tornado` | `canopy` laminated 20 | same |
-| `b2a` `c5` | `canopy` laminated 20 | dark body-mesh window faces (14 / 26) |
-| `ah64d` `mi24` | `canopy` + `window` laminated 40 | `glass_decor` faces (renamed `glass`: `decor` token = not a hit surface) |
-| `ka52` | `canopy` laminated 40 | body faces texel (214,236,255) |
-| `w3` | `canopy` laminated 12 | nose cluster of body |
-| `mh60l` | `window` glass 6 (cabin doors), `windshield` laminated 12 | doors; windshield = added quads |
-| `ah_6` | `windshield` laminated 8 | added quads |
-| `ch47` | `windshield` laminated 12 | added quads |
-| `mv22` | `windshield` + `window` laminated 20 | added quads |
-| `m983` | `windshield` + `window` laminated 12 | glass material faces |
+| `a10` | `tub` rha 34 (Ti 38 x 0.9), `canopy` laminated 38 | cockpit shell below the canopy line; dark texels of node `canopy` |
+| `av8b` `f22a` `f35a` `su33` `su47` `tornado` `b2a` `c5` | `canopy` laminated 20 | dark texels / body-mesh window faces |
+| `ah64d` | `crew_tub` nera 20 (ESTIMATE, stands in for boron carbide), `canopy` + `window` laminated 40 | cockpit sides |
+| `mi24` | `cockpit_side` rha 10, `canopy` + `window` laminated 40 | cockpit sides |
+| `ka52` | `crew_tub` rha 17 (Ti approximated), `canopy` laminated 40 | crew tub |
+| `mh60l` | `crew_seat` nera 15 (ESTIMATE), `window` glass 6, `windshield` laminated 12 | seat region |
+| `ah_6` `ch47` `w3` `mv22` `mq9` | glazing only (`mq9` none) | no sourced armour |
+
+- Aircraft hit modules (`tools/aircraft_hits.py`): `hit_engine_*` per real engine, `hit_fuel_*`, `hit_ammo_*`; positions = mesh features where drawn, else ESTIMATE. Engines: A-10 2, AV-8B 1, F-22 2, F-35 1, Su-33 2, Su-47 2, Tornado 2, C-5 4 (on the wings), B-2 4 (centre body), MQ-9 1, V-22 2 (nacelles), helicopters 1-2.
+- Engines: thrust x mean engine pool effectiveness; stops only when every engine pool BROKEN.
+- Module under a drawn wing node (`--parent wing_left`) => pool 0 when that wing pool is shed (C-5 engines + wing tanks). Jets: engines under `body` => discrete.
+- Weapons on a wing: part `on_system` = wing pool; missile station whose pose lies on / <= 1.5 m under a spent wing's node box => round lost, station refuses loading (MQ-9 pylons without splitting the holder).
+
+- Riverine (`riverine`; basis: en.wikipedia.org/wiki/Patrol_Boat,_River = PBR Mk II: GRP hull, ceramic vs .30 cal at gun tubs + coxswain, 1/4 in steel on coxswain flat): tiers 6 / 6 / 6 / top 4 / bottom 6 ESTIMATE; plates:
+
+| plate | layer | faces |
+|---|---|---|
+| `cabin_side` `cabin_front` `cabin_quarter` | rha 6.35 (1/4 in, sourced) | `CABIN_*_ARMOR*` |
+| `gun_tub` | rha 10 ESTIMATE (ceramic stand-in, .30 AP) | `MOUNT_*` |
+| `hull_skin` | aluminium 8 ESTIMATE (no GRP material) | `HULL` |
+| `deck` | aluminium 4 ESTIMATE, hull 0.3 | `DECK` |
+| `jet_housing` | aluminium 6 ESTIMATE | `PROPULSION` |
+| `collar` `canopy` | rha 2 / 1 ESTIMATE, hull 0.15 | inflatable tube, fabric |
+| `fittings` | rha 3 ESTIMATE, hull 0.15 | rest; `FITTINGS_STERN_ARMOR.*` (degenerate) + `collider_*` unbound |
+
+- Riverine hit nodes (pool id = `<system> <unit>`; side token for list must sit in the unit): `hit_engine` 60, `hit_fuel_{port,starboard}` 30, `hit_ammo` 30, `hit_rudder` 25, `hit_prop_{left,right}` 30, `hit_comp_{bow,left,right,stern}` 45 (health ESTIMATE; boxes below waterline y 0.18-0.36 inside the V hull, measured from `HULL` rings). 4 compartments + `sink_at` 0.6 => 3 lost sinks, 2 lost lists.
+- `VehicleMobility`: `engine` / `propeller` / `rudder` pools averaged per kind (n pools: one lost = 1/n); riverine has 1 engine, 1 rudder, 2 propellers.
+
+- Nimitz (`nimitz`; basis: en.wikipedia.org/wiki/Nimitz-class_aircraft_carrier = Kevlar over vital spaces + HY-80 / HY-100 at magazines / machinery, flight deck ~1-2 in). Tiers front 25 / side 63 / rear 25 / top 38 / bottom 30 ESTIMATE; `sink_at` 0.75, `list_max` 12 ESTIMATE (hard to sink); plates, all `curved`:
+
+| plate | layers | faces |
+|---|---|---|
+| `belt` | rha 63 (HY-80 figure) + spall_liner 100 (4 in Kevlar, reported; costs 0 pen) | hull meshes, centroid z -124..117 |
+| `hull_plating` | rha 25 ESTIMATE | hull meshes, bow / stern |
+| `flight_deck` | rha 38 ESTIMATE (1.5 in), hull 0.5 | `06_FLIGHT_DECK`, `11_JBD_*` |
+| `elevator` `island` | rha 25 ESTIMATE, hull 0.3 | `10_ELEVATOR_*`, `12_ISLAND_base` |
+| `bridge` | rha 12 ESTIMATE, hull 0.15 | `13_BRIDGE_level_*` |
+| `fittings` | rha 3 ESTIMATE, hull 0.15 | mast, radars, comms, galleries, supports, catwalks, emplacements, `19_*` |
+| `running_gear` | cast 25 ESTIMATE, hull 0.1 | screws, rudders |
+
+- Unbound: `14_ISLAND_markings` (decals over hull / island => tier value).
+- Hit nodes (boxes ESTIMATE, below waterline inside the hull; `tools/internal/aircraft_views/ship.py nimitz out.png`):
+
+| pool | count | health | rha | box |
+|---|---|---|---|---|
+| `compartment b<1-8>_{left,right}` | 16 | 700 | 0 | 8 bays z -148..146, x 1..14, y -9..-1.8 |
+| `engine mmr<1,2>_{left,right}` | 4 | 800 | 63 | z -122..-68 |
+| `engine reactor_{left,right}` | 2 | 1000 | 100 | z -62..-14 |
+| `ammo {fwd,aft}` | 2 | 800 | 100 | z 78..108 / -146..-126 |
+| `fuel jp5_{left,right}` / `hangar` | 3 | 600 / 400 | 3 | z 36..72; hangar y 8..15 |
+| `propeller {left,right}_{outer,inner}` | 4 | 500 | 0 | hub r 2.8 at z -167.5, under `04_SHAFT_*` |
+| `rudder {left,right}` | 2 | 500 | 0 | under `05_RUDDER_*` |
+| `optics bridge` / `mast` | 2 | 300 | 1 | under `13_BRIDGE_level_2` / `15_MAIN_MAST` |
+
+- Flood: 12 of 16 compartments lost = 0.75 sinks; 8 one-sided = list 0.5 / 0.75 x 12 = 8 deg. Speed = mean(6 engine pools) x mean(4 propeller pools); turn = mean(2 rudders): one propeller lost = 0.75.
+
+- Warty ships (`tools/internal/stage_warty_ships.py`: model + def + plates + pools regenerated from `~/models/warty/*_Blender_glTF.zip`; hand edits lost). Sources already at real length, no floating parts (components welded at 0.1 b), 0 junk removed; staging = root yaw +90 (bow -X -> +Z), degenerate tris dropped, tris wound against their normals flipped (narcosub 4 / 14, osa 0 / 42). Atlas 2048 x 2048 kept. Mass = displacement / 50 (nimitz / kilo ratio), speed from published kn, every figure below ESTIMATE unless a basis is named:
+
+| ship | length | waterline / draft | speed b/t (kn) | `sink_at` / `list_max` | tiers f/s/r/t/b | plates | pools |
+|---|---:|---|---|---|---|---:|---:|
+| `meko_a200` | 121 (121 real) | 4.3 / 4.25 | 0.75 (29) | 0.6 / 18 | 8/8/8/6/8 | 12 | 21 |
+| `visby` | 72.7 (72.7) | 2.2 / 2.2 | 0.9 (35) | 0.5 / 22 | 3/3/3/2/3 | 7 | 19 |
+| `osa` | 38.6 (38.6) | 1.65 / 1.55 | 0.98 (38) | 0.5 / 25 | 6/6/6/4/6 | 8 | 25 |
+| `narcosub` | 22.6 (~22) | 2.18 / 2.14 | 0.26 surf (10) / 0.15 sub (6) | 0.45 / 25 | 3/3/3/2/3 | 7 | 14 |
+
+- Plates, all `curved`, whole mesh nodes bound (0 unbound; `def_sockets.py plates <id>` = report):
+
+| ship | plate: layers | faces |
+|---|---|---|
+| `meko_a200` | `hull_plating` rha 8; `magazine_liner` rha 8 + spall_liner 25 (Kevlar liner figure from the brief); `superstructure` rha 6; `cic_liner` rha 6 + spall_liner 25; `bridge` rha 6 hull 0.3; `deck` rha 8 hull 0.5; `hangar` rha 6 hull 0.3; `gun_mount` rha 15 hull 0.3; `rws` rha 6; `launchers` rha 5; `fittings` rha 3 hull 0.15; `running_gear` cast 12 | liners = box splits of `HULL` (x +-9, y 3..10.3, z 28..48) / `SUPERSTRUCTURE` (z 5..23) |
+| `visby` | `hull_sandwich` laminated 4 + gap 0.03 + laminated 4 (CFRP skins over PVC core; skins ESTIMATE); `deck_sandwich` / `superstructure` laminated 3 + gap + 3; `bridge` laminated 6; `gun_mount` aluminium 6; `fittings` rha 2; `running_gear` aluminium 8 | brittle plates: wear + chips per id |
+| `osa` | `hull_plating` rha 6; `superstructure` / `bridge` aluminium 8 (Al-Mg alloy superstructure, thickness ESTIMATE); `deck` rha 4; `gun_turret` rha 10; `launcher` aluminium 4; `fittings` rha 3; `running_gear` cast 10 | |
+| `narcosub` | `hull_grp` laminated 8 (GRP); `deck_grp` / `wheelhouse` laminated 6; `glazing` glass 6; `hatches` aluminium 3; `fittings` rha 2; `running_gear` aluminium 6 | |
+
+- Pools (unit = pool suffix; compartments `<bay>_left|right` or `bow` / `stern`, boxes y below waterline, half-width = 0.8 x hull half-width from the HULL mesh): `compartment` 8 / 8 / 8 / 6 (health 110 / 75 / 60 / 25), `engine` 3 / 2 / 3 / 1, `fuel` 2 / 2 / 2 / 2, `ammo` 2 / 1 / 4 / 0 (MEKO magazines rha 10), `propeller` 2 / 2 (waterjet pairs, 4 sockets) / 3 / 1, `rudder` 2 / 2 (waterjet steering) / 3 / 1, `optics` 2 / 2 / 2 / 1, `ballast` fore + aft on `narcosub`. Order meko / visby / osa / narcosub.
+- Flood: meko 5 of 8 = 0.625 sinks (4 = 0.5 survives); visby / osa 4 of 8 = 0.5 sinks; narcosub 3 of 6 = 0.5 sinks (2 survives); one side lost (3 / 3 / 3 / 2 pools) = list to that side. `engine` / `propeller` / `rudder` pools averaged per kind: one of n lost costs 1/n, all lost stops.
+- Weapons: `meko_a200` `main_gun` = `cannon_127mm`; `visby` `gun_57mm` = `giat_30` (no 57 mm weapon def: stand-in); `osa` `gun_fwd` / `gun_aft` = `gsh_30_1` (AK-230 stand-in), `helm` fires `ssm_launcher` (`launcher_rack` holds 4 MEDIUM / LARGE, internal stations). RWS / VLS / canisters drawn only. Radar: `radar_surface` (`air_surface_search` meko / visby, `surface_search` osa, `radar_offset` at the drawn antenna); `narcosub` `sonar_passive`. Narcosub `submarine`: max_depth 12, crush 30 (ESTIMATE).
 
 - Added panes (`mh60l` `ah_6` `ch47` `mv22`): source meshes had no glass there (open frames); quads measured from the silhouettes, tint material `glass_armor:<id>`; positions approximate. Gap: blasts do not chip glazing-only sets; `ah_6` side bubble, `ch47` / `mh60l` side windows unmodelled.
 - Slope: mesh value declared (M1A2 glacis 75 / T-90 UFP 63 / T-84 glacis 78.5 vs real ~82 / 68 / ~68); lower front plates negative.
@@ -435,7 +501,7 @@ Both ground types also take a top-level `landing_gear_part_id` where applicable.
 | `z_rot_input_step` | float | `0.2` |
 | `air_drag_k_min` | float | `2` | N per (b/s)² |
 | `air_drag_k_max` | float | `8` | N per (b/s)² |
-| `lift_to_drag_k` | float | `6` |
+| `lift_to_drag_k` | float | `6` | lift coefficient at AoA 10° = `lift_to_drag_k + 20/angle_of_attack_max`; linear, 0 at AoA −3°, past `angle_of_attack_min/max` decays e^−excess |
 | `angle_of_attack_min` | float | `-10` |
 | `angle_of_attack_max` | float | `25` |
 | `x_rot_input_drag_k` | float | `1` |
@@ -445,7 +511,10 @@ Both ground types also take a top-level `landing_gear_part_id` where applicable.
 | `x_turn_rate` | float | `2` |
 | `y_turn_rate` | float | `3` |
 | `z_turn_rate` | float | `8` |
-| `vtol_turn_rate` | float | `0` | hover pitch/roll floor: share of `x/z_turn_rate` × power × \|sin(thrust part pitch)\| (reaction controls); needs `thrust_part_id`. Hover: `thrust` > 9.8 × mass |
+| `directional_stability` | float | `1` | fin share of weathercock + side force; rest flown by drag rudders: ≤ `y_turn_rate`, drag as yaw input (`y_rot_input_drag_k`). Flying wing ~`0.2` |
+| `propeller_speed` | float | `0` | m/s; `thrust` holds to this airspeed, then × `propeller_speed` / airspeed (constant power) => top `∛(thrust·propeller_speed/k_min)`. `0` = jet |
+| `propeller_wash` | float | `0` | m/s; slipstream over the tail at full power, added to airspeed for pitch / yaw authority (`turn_rate_by_speed`). Pusher: `0` |
+| `vtol_turn_rate` | float | `0` | hover pitch/roll floor: share of `x/z_turn_rate` × power × \|sin(thrust part pitch)\| (reaction controls); needs `thrust_part_id`. Thrust part past 45° down, airborne, throttle keys idle (arcade model): throttle trims to hold height. Hover: `thrust` > 9.8 × mass |
 | `vortex_offsets` | Vec3[] | `[]` |
 | `exhausts` | array | `[]` | jet nozzles, client effect only; entry keys below |
 | `aerobatic_smoke_offsets` | Vec3[] | `[]` |
@@ -522,6 +591,9 @@ that type adds — there is no nested `data` object.
 | `turn_out` | string | none | seat: its turned-out seat (a seat with `hatch`); `turn_out` key (`.`) moves between them; turning in closes the hatch unless another occupied seat has it. Unknown / hatchless id => load error |
 | `ride_frame` | string | node-only | part-less seat: its `seat` socket rides another part's frame (turret) => seat, view, periscope, look clamp and operator yaw follow that frame. Derived from the socket |
 | `entry_via` | string | none | seat: `entry` part that also leads to it without gating it (gunner boards through the commander hatch). Unknown / non-switchable id => load error |
+| `periscope_yaw` | float | `45` | seat: periscope / binocular look limit, ± deg about the hull (`180` = all round) |
+| `periscope_zoom` | float[] | `[1]` | seat: magnification steps (`switch_scope` cycles). `length > 1` without a `sight` socket => binoculars: same toggle, eye = seat `view` |
+| `periscope_depth` | float | none | seat, ship: deepest `depth` (blocks) the periscope works; deeper => toggle falls back to the seat view. Any OPTICS cell `failed` on the vehicle => same |
 | `view_hide` | string[] | `[]` | seat: base-model nodes (subtree) hidden while its rider is in first person. Each drawn subtree wholly within 1.5 m of one of the seat's `seat` / `view` / `sight` sockets, else load error. Last rung after an eye move (`/combinedassault camaudit`, `SightlineGameTest`) |
 | `crew_roles` | enum[] | derived | `driver`, `gunner`, `commander`, `loader`; gate stations under server config `crew.required`; driver seat always. Absent => seat 0 `driver` (+ `gunner` if a weapon station), other weapon seat `gunner`, else `commander`. Driver = first occupied `driver` seat (`crew.required` off: none occupied => seat 0 drives too); boarding takes an empty `driver` seat first; free seat probe node boards that seat |
 | `display_id` | id | — | |
@@ -630,6 +702,7 @@ Entry: string (one weapon id) or object. Array form REMOVED: ammo kinds = one we
 | | `max_scan_distance` | float | `256` |
 | | `anti_ground` | bool | `false` |
 | | `ui_hide` | bool | `false` |
+| | `radar_offset` | Vec3 | none | sensor position, vehicle frame (like `periscope_offset`); none => part frame node, else hull origin. Antenna in water => radar silent + not radiating; `radar_type` containing `sonar` => transducer must be in water (ships: origin below surface) |
 | | `recon_role` | enum | `NODE` (upper case). `NODE` sweeps and shares, `RECEIVER` listens only and stays dark, `BOTH` does both |
 
 ---
@@ -743,7 +816,7 @@ Vehicle def `display` block; client only.
 | field | notes |
 | --- | --- |
 | `icon` | slot texture; `tools/model_icon.py <rig>` renders it from the model |
-| `controller` | `assets/<ns>/animation_controllers/<id>.json`; graph nodes `merge`, `blend`, `layered_blend`, `additive`, `script`, `bone_binding`. Ground `special_bindings` sources: `left_wheel_rotation` / `right_wheel_rotation` (param = radius; belt travel of the first left / right `track` loop; tracked + half-track), `throttle_pedal`, `brake_pedal`, `handbrake` (0..1, eased 0.12 s), `gear_lever_x` / `gear_lever_z` (degrees, transmission `lever`; H gate: crosses at N's x). Aircraft sources (eased 0.15 s): `stick_pitch` (+ fwd), `stick_roll` (+ right), `pedals` (+ right pedal fwd; rotary: yaw rate / `yRotSpeedMax`), -1..1; `throttle_lever` (fixed wing, 0..1 over 0..100·thrustK), `collective` (rotary, 0..1). Angle = source·multiplier + `offset`, then `min`/`max`. Missing bones skipped |
+| `controller` | `assets/<ns>/animation_controllers/<id>.json`; graph nodes `merge`, `blend`, `layered_blend`, `additive`, `script`, `bone_binding`. Ground `special_bindings` sources: `left_wheel_rotation` / `right_wheel_rotation` (param = radius; belt travel of the first left / right `track` loop; tracked + half-track), `throttle_pedal`, `brake_pedal`, `handbrake` (0..1, eased 0.12 s), `gear_lever_x` / `gear_lever_z` (degrees, transmission `lever`; H gate: crosses at N's x). Aircraft sources (eased 0.15 s): `stick_pitch` (+ fwd), `stick_roll` (+ right), `pedals` (+ right pedal fwd; rotary: yaw rate / `yRotSpeedMax`), -1..1; `throttle_lever` (fixed wing, 0..1 over 0..100·thrustK), `collective` (rotary, 0..1). Angle = source·multiplier + `offset`, then `min`/`max`; rows on same bone+axis sum (stabilator = pitch + roll). Missing bones skipped |
 | `engine` | engine audio ([§6.10](#610-audio)) |
 | `cabin_muffle` | 0..1, default `0`: outside sound low-passed for a first-person rider of a protected seat; own door open x0.25, others x(1 - 0.5 open fraction) |
 | `tab_index` | creative tab order |
@@ -872,6 +945,10 @@ Node frame => its part: a node under a part's `part`/`pitch` frame is that part'
 | `wing` | WING | 12 | wing, tail, control surface; pool per `side` (`left wing` / `right wing`). Sided pool 0 => its drawn nodes shed as debris (topmost per pool, subtree with it), that side 0 lift, roll toward it 7°/tick per b/t; live wing cutting a block collision box at >= 0.4 b/t => pool 0. Unsided pool: lift only on airframes with no sided ones |
 | `engine` | ENG | 12 | BROKEN => engine will not run |
 | `fuel` / `ammo` / `optics` | FUEL / AMMO / OPT | 8 / 8 / 6 | |
+| `propeller` | PROP | 10 | ship speed (mean per kind, x engine mean) |
+| `rudder` | RUD | 10 | ship turn authority only |
+| `compartment` | COMP | 12 | loss => flood ([§13.1](#131-attributes)); side from `left` / `right` in pool id |
+| `ballast` | BLST | 12 | submarine depth hold |
 
 `tools/gen_hulls.py <vehicle> --hit-cylinder a,b [--sides 12] [--material rubber]`: circumscribed prism `hit_surface` per node (tyres: tread detail = noise; figures: memory `ywzj-vehicle-hit-geometry`).
 
@@ -950,7 +1027,7 @@ Role nodes read at load (rest pose, vehicle frame). Each fills a vehicle def key
 | `seat` | part | node-only | origin = rider eye (first-person eye absent `view`); yaw. None: part origin |
 | `dismount` | part | part `dismount_offset` | origin |
 | `view` | part | node-only | origin = first-person eye. Weapon without: part pivot |
-| `sight` | part | node-only; weapon: `handling: manual` => ADS eye; other seat: periscope camera, OPERATOR + `magnification_change` toggled (seat change resets) (look clamped ±45° yaw, -10..15° pitch, about the seat's `ride_frame` else hull) | origin |
+| `sight` | part | node-only; weapon: `handling: manual` => ADS eye; other seat: periscope camera, OPERATOR + `magnification_change` toggled (seat change resets) (look clamped `periscope_yaw` (±45°), -10..15° pitch, about the seat's `ride_frame` else hull) | origin |
 | `sight_lens` | part | none: lens mesh of the station `optic` (weapon only); drawn | the mesh itself |
 | `bolt` | part | part `bolts` (by `index`) | origin = breech, +Z = bore, Z scale = `barrel_length` |
 | `eject` | part | part `ejects` (by its bolt's `index`; 0..n-1) | origin = case port, +Z = throw, Z scale = speed (blocks/s); pitch frame, rest pose (recoil clips ignored) |
@@ -1300,10 +1377,22 @@ forced to 0 for every ship.
 | `shallow_drag` | float | `2` | drag multiplier reached at zero clearance |
 | `submarine` | object | absent | present makes the hull a submarine: |
 | `submarine.max_depth` | float | `40` | deepest setting, blocks below the surface |
-| `submarine.crush_depth` | float | `60` | past this the hull loses 2% of its health a second |
+| `submarine.crush_depth` | float | `60` | past this the hull loses health: 2%/s at the line, ramping to 20%/s at `implode_depth` |
+| `submarine.implode_depth` | float | 1.5 x `crush_depth` | past this the hull is destroyed at once |
 | `submarine.dive_rate` | float | `0.15` | blocks per tick the setting moves while space or shift is held |
 | `submarine.max_speed_submerged` | float | `0.4` | replaces `max_speed_forward` once the hull is under |
 | `submarine.dive_angle` | float | `12` | pitch adopted while changing depth |
+
+Flooding (hull pools, [§6.6](#66-hit-geometry) kinds `compartment`, `ballast`, `propeller`, `rudder`):
+
+| field | type | default | notes |
+| --- | --- | --- | --- |
+| `sink_at` | float | `0.6` | flood level (mean lost effectiveness of `compartment` pools) past which the hull sinks to the seabed; 600 ticks sunk => destroyed |
+| `flood_draft` | float | half the draft | blocks the hull settles at `sink_at`, linear below |
+| `list_max` | float | `20` | degrees of list at `sink_at`, all flooding on one side; side from a `left`/`right` token in the pool id |
+
+- `propeller`, `engine` pools scale speed; `rudder` pools scale turning only.
+- `ballast` pools: effectiveness < 1 => depth drifts down at `0.5 x dive_rate x (1 - e)` and rise slows by `e`; `e < 0.5` => the setting is no longer capped at `max_depth`.
 
 ### 13.2 Controls and readouts
 
@@ -1331,7 +1420,9 @@ A `deck` bone makes the ship a carrier: vehicles that park on it ride it and sle
 Emplacements are ordinary `mount_points`; torpedo tubes are a `missile_holder` feeding a
 `combinedassault:missile` weapon, and WFLib' torpedo items are in the `missile/medium` tag.
 The shipped hulls are `riverine` (patrol boat, 3 gun stations), `nimitz` (carrier, six `#naval_emplacement`
-points, a flight deck) and `kilo` (submarine, six tubes).
+points, a flight deck), `kilo` (submarine, six tubes), `meko_a200` (frigate, 127 mm), `visby` (corvette, 57 mm gun),
+`osa` (missile boat, 2 twin guns + 4 launcher housings) and `narcosub` (semi-submersible, unarmed).
+Speed: 1 kn = 0.0257 b/t (kilo 0.31 = 12 kn, nimitz 0.77 = 30 kn).
 
 ---
 

@@ -63,6 +63,23 @@ Install: `python3 tools/blender/build_addon.py` -> `build/combinedassault_tools.
 - Deviation is two-sided: meshes carry coincident back-face duplicates, so a plate binds both copies (a hit reads whichever the BVH meets first).
 - Box selects by centroid: thick volumes catch inner faces; check the report's coherence / deviation.
 
+## Aircraft hit geometry (`tools/aircraft_hits.py`, `aircraft_flaps.py`)
+
+| task | command |
+|---|---|
+| list drawn / hit nodes with world bounds | `aircraft_hits.py info <vehicle>` |
+| wing out of a fused hull mesh | `aircraft_hits.py wings <vehicle> --cut X [--cut-right X] [--node body] [--zrange ZLO ZHI] [--ymax Y] [--no-cap]` |
+| hit module (engine / fuel / ammo) | `aircraft_hits.py hit <vehicle> NAME --system engine --box x0,y0,z0,x1,y1,z1 [--side] [--unit] [--health] [--rha] [--parent NODE]` |
+| flap on a wing node | `aircraft_flaps.py flap <vehicle> --wing NODE --name left_flap --hinge x0,y0,z0,x1,y1,z1 [--chord C] [--deflection D] [--ymin/--ymax]`; then `aircraft_flaps_part.py <vehicle> [--stages 0,15,30]` once |
+| proofs | `tools/internal/aircraft_views/{plan,zoom,parts}.py` |
+| ship proof (drawn grey, hit boxes coloured, waterline) | `aircraft_views/ship.py <vehicle> out.png [--only HULL,DECK,..]` |
+
+- Model frame: left = +x, nose +z; body node world = identity; wing node world rotation = identity (`aircraft_flaps.py`; hinge-parented wings su33 / tornado: carve in world, write wing-local).
+- `wings`: triangles clipped on x = +-cut (attributes interpolated), planar caps both sides (ear clip; convex hull fallback). Nacelles / pylons beyond the cut ride with the wing.
+- `flap`: end key of clip `flaps` = `--deflection` = deepest `stages` entry; trailing edge DOWN both sides. Mount frame under the wing node => flap sheds with the wing.
+- Flap hinge gap not capped.
+- Ships: `hit` unchanged (`--unit` names the pool, `--side` ignored for compartments). Warty drops (`meko_a200`, `visby`, `osa`, `narcosub`): `tools/internal/stage_warty_ships.py` = stage + def + `gen_hulls` main hull + plates + pools in one run (tables in the script, numbers in vehicle-pack-format §3.7). Mesh frame may be rotated (riverine root yaw 90): `info` / `hit --box` / proofs use world model frame; `def_sockets.positions` is raw.
+
 ## Blockbench plugin (`tools/blockbench/combinedassault.js`)
 
 Install: Blockbench 5.1 desktop > File > Plugins > Load Plugin from File. Menu and side panel CombinedAssault.

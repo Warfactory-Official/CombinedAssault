@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -86,7 +87,7 @@ public final class ReconBridge {
 
         // Sonar: listening-only still registers as sensor (unlike radar, where RECEIVER registers nothing).
         boolean sonar = isSonar(unit);
-        boolean sensing = (role.emits() || sonar) && (!sonar || inWater(level, unit.worldRadarPosition()));
+        boolean sensing = (role.emits() || sonar) && inWater(level, unit.worldRadarPosition()) == sonar;
         if (sensing) {
             // Re-key on gameTime % SWEEP_TICKS == 1, not == 0: listener order vs the net's own tick is
             // unfixed, so re-keying exactly on the sweep boundary can replace the handle right after its due
@@ -236,8 +237,11 @@ public final class ReconBridge {
         return type != null && type.toLowerCase(Locale.ROOT).contains(SONAR_TYPE);
     }
 
-    /** A hull sonar hears nothing with its transducer in the air, however powered the hull is. */
-    private static boolean inWater(ServerLevel level, Vec3 at) {
+    /**
+     * Sonar transducer in air hears nothing; radar antenna in water radiates nothing (surfaced-only mast).
+     * {@code sensing} requires {@code inWater == sonar}.
+     */
+    static boolean inWater(Level level, Vec3 at) {
         return level.getFluidState(BlockPos.containing(at)).is(FluidTags.WATER);
     }
 

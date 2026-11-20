@@ -3,7 +3,9 @@
     "attributes": {
         "thrust": 18300,
         "thrust_k": 1,
-        "ceiling": 512,
+        "propeller_speed": 30,
+        "ceiling": 650,
+        "ceiling_hard": 900,
         "x_rot_input_step": 0.3,
         "y_rot_input_step": 0.4,
         "z_rot_input_step": 0.15,

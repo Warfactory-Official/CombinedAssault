@@ -85,7 +85,19 @@ public abstract class ContainerCraft extends Entity implements ContainerEntity, 
         this.lerpX = pX;
         this.lerpY = pY;
         this.lerpZ = pZ;
-        this.lerpSteps = pPosRotationIncrements;
+        this.lerpSteps = reportSteps(0);
+    }
+
+    private final int[] lastReport = new int[2];
+
+    /**
+     * Steps toward a report re-armed every tick trail the server by steps - 1 ticks of travel; a stop is drawn over
+     * ~2 x steps. On-time reports => 2; late => 3 (jitter). Was 3 always. TODO: buffered interpolation.
+     */
+    protected int reportSteps(int channel) {
+        int gap = tickCount - lastReport[channel];
+        lastReport[channel] = tickCount;
+        return gap <= 1 ? 2 : 3;
     }
 
     /** What the server last said about where this is, which is what a rider's frame is derived from. */

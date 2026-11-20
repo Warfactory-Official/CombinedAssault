@@ -174,6 +174,9 @@ public final class VehicleSystems {
 
     /** No ENGINE cell (emplacement, trailer) => true; false only when every engine cell failed. Cells kept per pool set ({@link #cells}: 5 us a call). */
     public static boolean engineWorks(AbstractVehicle vehicle) {
+        if (vehicle.getY() > vehicle.flameoutY()) {
+            return false;
+        }
         HullComponents pools = vehicle.hullComponents();
         if (vehicle.engineCellPools != pools) {
             vehicle.engineCells.clear();

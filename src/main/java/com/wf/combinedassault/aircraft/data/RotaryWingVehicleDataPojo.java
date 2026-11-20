@@ -20,6 +20,9 @@ public class RotaryWingVehicleDataPojo extends BaseVehicleDataPojo {
         @SerializedName("ceiling")
         public float ceiling = 256;
 
+        @SerializedName("ceiling_hard")
+        public float ceilingHard;
+
         @SerializedName("x_rot_speed_acceleration")
         public float xRotSpeedAcceleration;
 

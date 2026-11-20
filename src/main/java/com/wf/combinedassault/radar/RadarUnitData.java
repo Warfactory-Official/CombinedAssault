@@ -2,6 +2,7 @@ package com.wf.combinedassault.radar;
 
 import com.wf.combinedassault.vehicle.part.data.RotatableUnitData;
 import com.wf.combinedassault.vehicle.pojo.ReconRole;
+import net.minecraft.world.phys.Vec3;
 
 public class RadarUnitData extends RotatableUnitData {
 
@@ -11,6 +12,7 @@ public class RadarUnitData extends RotatableUnitData {
     protected boolean antiGround;
     protected boolean uiHide;
     protected ReconRole reconRole = ReconRole.NODE;
+    protected Vec3 radarOffset;
 
     public RadarUnitData(String id) {
         super(id);
@@ -24,6 +26,7 @@ public class RadarUnitData extends RotatableUnitData {
         this.antiGround = pojo.antiGround;
         this.uiHide = pojo.uiHide;
         this.reconRole = pojo.reconRole == null ? ReconRole.NODE : pojo.reconRole;
+        this.radarOffset = pojo.radarOffset;
     }
 
     public String getRadarType() {
@@ -44,6 +47,10 @@ public class RadarUnitData extends RotatableUnitData {
 
     public boolean isUiHide() {
         return uiHide;
+    }
+
+    public Vec3 getRadarOffset() {
+        return radarOffset;
     }
 
     public ReconRole getReconRole() {

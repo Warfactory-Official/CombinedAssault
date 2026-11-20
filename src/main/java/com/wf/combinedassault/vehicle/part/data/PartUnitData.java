@@ -32,6 +32,10 @@ public class PartUnitData {
     protected Vec3 ownerViewOffset = null;
     @Nullable
     protected Vec3 periscopeOffset;
+    protected float periscopeYaw;
+    protected float[] periscopeZoom;
+    @Nullable
+    protected Float periscopeDepth;
     protected String sensor;
     protected List<CrewRole> crewRoles;
     protected String needsOn;
@@ -79,6 +83,9 @@ public class PartUnitData {
         this.passengerCanUseItem = pojo.passengerCanUseItem;
         this.ownerViewOffset = pojo.ownerViewOffset;
         this.periscopeOffset = pojo.periscopeOffset;
+        this.periscopeYaw = pojo.periscopeYaw;
+        this.periscopeZoom = pojo.periscopeZoom.clone();
+        this.periscopeDepth = pojo.periscopeDepth;
         this.crewRoles = pojo.crewRoles;
         this.needsOn = pojo.needsOn;
         this.hatch = pojo.hatch;
@@ -250,6 +257,24 @@ public class PartUnitData {
     @Nullable
     public Vec3 getPeriscopeOffset() {
         return periscopeOffset;
+    }
+
+    /** Periscope socket, or zoom steps at the seat's own eye (binoculars). */
+    public boolean hasPeriscope() {
+        return periscopeOffset != null || periscopeZoom.length > 1;
+    }
+
+    public float getPeriscopeYaw() {
+        return periscopeYaw;
+    }
+
+    public float[] getPeriscopeZoom() {
+        return periscopeZoom;
+    }
+
+    @Nullable
+    public Float getPeriscopeDepth() {
+        return periscopeDepth;
     }
 
     public Vec3 getPivotOffset() {

@@ -8,7 +8,8 @@
             {"offset": [0.675, 2.19, -12.62], "radius": 0.35, "smoke": 0.1},
             {"offset": [-0.675, 2.19, -12.62], "radius": 0.35, "smoke": 0.1}
         ],
-        "ceiling": 512,
+        "ceiling": 800,
+        "ceiling_hard": 900,
         "x_rot_input_step": 0.2,
         "y_rot_input_step": 0.5,
         "z_rot_input_step": 0.2,
@@ -44,6 +45,7 @@
     },
     "with_warning_receiver": true,
     "parts": [
+        {"id": "flaps", "name": "part.combinedassault.flaps", "type": "combinedassault:flaps", "is_seat": false, "stages": [0.0, 15.0, 30.0], "rot_info": {"x_rot_speed": 1}},
         {
             "id": "sighting_system",
             "name": "sighting_system",

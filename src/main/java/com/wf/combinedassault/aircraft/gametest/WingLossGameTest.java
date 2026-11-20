@@ -37,6 +37,8 @@ public class WingLossGameTest {
     private static final int LANE_X = -2100;
     private static final int LANE_PITCH = 96;
     private static final double CRUISE = 1.5;
+    /** Nose up (MC pitch < 0): MQ-9 level-flight AoA at {@link #CRUISE} ~5.2 deg. */
+    private static final float TRIM_PITCH = -5.2f;
     private static final int FLY_TICKS = 20;
 
     /** Twin MQ-9s at cruise; one loses its left wing => debris, no left lift, rolls left wing down, sinks faster. */
@@ -132,11 +134,17 @@ public class WingLossGameTest {
                 .thenSucceed();
     }
 
+    /** Held at trim attitude: lift ~ weight, so a lost wing shows as sink. */
     private static void cruise(FixedWingVehicle v) {
         v.setEnergy(v.energyInfo.capacityUnits());
         v.setPower(100);
-        v.throttleLevel = 100;
-        v.setDeltaMovement(v.getLookAngle().scale(CRUISE));
+        v.setThrottleLevel(100);
+        v.autopilotControl = true;
+        v.controlUnit.xRot = TRIM_PITCH;
+        v.controlUnit.yRot = v.getYRot();
+        Vec3 heading = v.getLookAngle().multiply(1, 0, 1).normalize();
+        v.setXRot(TRIM_PITCH);
+        v.setDeltaMovement(heading.scale(CRUISE));
     }
 
     private static int pool(FixedWingVehicle v, String id) {

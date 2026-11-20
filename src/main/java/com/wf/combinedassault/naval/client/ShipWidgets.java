@@ -131,13 +131,15 @@ public final class ShipWidgets {
                     float bottom = top + GAUGE_H;
                     ground(canvas, x, y, bottom, "ui.combinedassault.helm.depth");
                     ShipHydrodynamics.Params params = ship.params();
-                    double crush = Math.max(1.0, params.crushDepth);
+                    double crush = Math.max(1.0, params.implodeDepth);
                     double perBlock = GAUGE_H / crush;
                     float rated = top + Math.round(Math.min(params.maxDepth, crush) * perBlock);
+                    float crushLine = top + Math.round(Math.min(params.crushDepth, crush) * perBlock);
                     canvas.fill(x, top, x + GAUGE_W, rated, TRACK);
                     canvas.fill(x, rated, x + GAUGE_W, bottom, TRACK_WARN);
                     canvas.fill(x, top, x + GAUGE_W, top + 1, SCALE);
                     canvas.fill(x - 3, rated, x + GAUGE_W + 3, rated + 1, CaDraw.AMBER);
+                    canvas.fill(x - 3, crushLine, x + GAUGE_W + 3, crushLine + 1, CaDraw.RED);
                     canvas.fill(x - 3, bottom, x + GAUGE_W + 3, bottom + 1, CaDraw.RED);
                     for (int mark = 10; mark < crush; mark += 10) {
                         float at = top + Math.round(mark * perBlock);

@@ -3,7 +3,6 @@ package com.wf.combinedassault.radar;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.recon.api.*;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
@@ -38,9 +37,9 @@ final class VehicleTargetSource implements TargetSource {
                 vehicle.getX() - vehicle.xo, vehicle.getY() - vehicle.yo, vehicle.getZ() - vehicle.zo,
                 SignatureProviders.of(vehicle), CountermeasureProviders.of(vehicle), emcon,
                 // No transponder: scoreboard team name != faction UUID identity code; faking one matches nothing.
-                0L, false,
+                0L, VehicleSignature.hiddenFromRadar(vehicle),
                 // Surface contact with water => sonar target even when not submerged (surface-ship case).
-                vehicle.level().getFluidState(vehicle.blockPosition()).is(FluidTags.WATER));
+                VehicleSignature.inWater(vehicle));
     }
 
     /** Registered at priority 0: bottom of SignatureProvider chain, overridable by pack/addon. */

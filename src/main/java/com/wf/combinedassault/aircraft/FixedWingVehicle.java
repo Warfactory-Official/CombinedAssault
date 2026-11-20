@@ -1,10 +1,7 @@
 package com.wf.combinedassault.aircraft;
 
-import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.ballistics.component.ComponentDamage;
-import net.minecraft.world.phys.AABB;
-import com.wf.wflib.physics.api.BodyState;
-import com.wf.wflib.geom.api.OBB;
+import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.ballistics.component.HullComponents;
 import com.wf.combinedassault.aircraft.client.FixedWingVehicleContext;
 import com.wf.combinedassault.aircraft.client.FixedWingVehicleDisplay;
@@ -73,6 +70,7 @@ public class FixedWingVehicle extends AbstractVehicle
     public float thrust = 8000f;
     public float thrustK = 1.5f;
     public float ceiling = 512;
+    public float ceilingHard;
     public float xRotInputStep = 0.2f;
     public float yRotInputStep = 0.5f;
     public float zRotInputStep = 0.2f;
@@ -90,6 +88,9 @@ public class FixedWingVehicle extends AbstractVehicle
     public float yTurnRate = 3;
     public float zTurnRate = 8;
     public float vtolTurnRate = 0;
+    public float propellerSpeed = 0;
+    public float directionalStability = 1;
+    public float propellerWash = 0;
     public List<Vec3> vortexOffsets;
     public List<Vec3> aerobaticSmokeOffsets;
     public List<Exhaust> exhausts = List.of();
@@ -273,8 +274,8 @@ public class FixedWingVehicle extends AbstractVehicle
         Vector3f[] axes;
         // gear feet resting: onGround(); groundedOrOnDeck() tests the block under the origin (> 1 block up on tall gear)
         boolean onGround = onGround() || groundedOrOnDeck();
-        // Stance (below) owns pitch / roll only with every foot down; propped (hull on a vehicle, a ledge, a slope,
-        // gear leg severed) => free. Latched until it rolls or flies: stance re-engaging at rest lifts the feet again.
+        // Stance (below) owns pitch / roll only with the gear down; propped (hull on a vehicle, a ledge, gear leg
+        // severed) => free. Latched until it rolls or flies: stance re-engaging at rest lifts the feet again.
         if (!onGround || getDeltaMovement().horizontalDistanceSqr() > TAXI * TAXI) {
             propped = false;
         }
@@ -355,7 +356,8 @@ public class FixedWingVehicle extends AbstractVehicle
             }
             if (!(controlUnit.leftYaw || controlUnit.rightYaw)) {
                 double yDiff = aimVec.dot(leftDirection);
-                yRotInput = (float) (Math.signum(yDiff) * Math.min(1, Math.abs(yDiff) * yRotInputStep * 40));
+                // Dead band: float noise held the rudder off zero, so the fin (weathercock) never acted.
+                yRotInput = (float) (Math.signum(yDiff) * Math.min(1, Math.max(0, Math.abs(yDiff) - AIM_YAW_DEAD) * yRotInputStep * 40));
             }
             if (!(controlUnit.left || controlUnit.right)) {
                 float yRotDiff = VectorUtil.vecToRot(forwardDirection).y - controlUnit.yRot;
@@ -397,13 +399,19 @@ public class FixedWingVehicle extends AbstractVehicle
         }
         float power = (float) (throttleLevel / 100 * getPower() / 100 * strain());
         // Props / proprotors (rotor systems) carry the thrust.
-        float thrust = this.thrust * power * VehicleRotors.of(this).lift() * VehicleSystems.engineScale(this);
+        float propulsion = power * VehicleRotors.of(this).lift() * VehicleSystems.engineScale(this)
+                * AirLimits.thrust(position().y, AirLimits.scaled(ceiling), flameoutY());
+        double advance = getDeltaMovement().dot(forwardDirection) * PhysicsHelper.TICKS_PER_SECOND;
+        float thrust = this.thrust * propulsion * (propellerSpeed > 0 && advance > propellerSpeed ? (float) (propellerSpeed / advance) : 1);
         double a = PhysicsHelper.accelerationPerTick(thrust, mass);
         Vec3 thrustDirection = onGround ? new Vec3(forwardDirection.x, 0, forwardDirection.z).normalize() : forwardDirection;
         if (thrustUnit != null) {
             thrustDirection = thrustUnit.worldVec();
         }
         airSpeed = airSpeed.add(thrustDirection.scale(a));
+        if (position().y > flameoutY() && airSpeed.y > 0) {
+            airSpeed = new Vec3(airSpeed.x, 0, airSpeed.z);
+        }
         // angle of attack
         double angelX = VectorUtil.angleBetween(airSpeed, upDirection) - Math.PI / 2;
         // air drag
@@ -432,10 +440,15 @@ public class FixedWingVehicle extends AbstractVehicle
         // tail/rudder force
         double angelY = VectorUtil.angleBetween(airSpeed, leftDirection) - Math.PI / 2;
         double at = airSpeed.dot(forwardDirection);
-        double ft = at * at * PhysicsHelper.TICKS_PER_SECOND_SQUARED * 8 * k * Math.sin(angelY);
+        double ft = at * at * PhysicsHelper.TICKS_PER_SECOND_SQUARED * 8 * k * Math.sin(angelY) * directionalStability;
         airSpeed = airSpeed.add(leftDirection.scale(PhysicsHelper.accelerationPerTick(ft, mass)));
+        // Drag rudders fly the yaw stability a fin does not give (rad/tick).
+        double yawAuthority = Math.toRadians(Math.min(yTurnRate, scaleAir * al * turnRateBySpeed * yTurnRate)) / load();
+        double augmented = yawAuthority <= 0 ? 0 : Mth.clamp(
+                scaleAir * al * turnRateBySpeed * -(VectorUtil.angleBetween(airSpeed, leftDirection) - Math.PI / 2) / 5
+                        * (1 - directionalStability), -yawAuthority, yawAuthority) * (1 - Math.abs(yRotInput));
         double controlDrag = (Math.abs(xRotInput) * xRotInputDragK
-                + Math.abs(yRotInput) * yRotInputDragK
+                + (Math.abs(yRotInput) + (yawAuthority <= 0 ? 0 : Math.abs(augmented) / yawAuthority)) * yRotInputDragK
                 + Math.abs(zRotInput) * zRotInputDragK
                 + (landingGear != null ? landingGear.level() * landingGear.getDragK() : 0)
                 + (airbrakeUnit != null ? airbrakeUnit.level() * airbrakeUnit.getDragK() : 0)
@@ -447,8 +460,17 @@ public class FixedWingVehicle extends AbstractVehicle
         al = airSpeed.length();
         Quaternionf q = rotYXZ();
         double ke = scaleAir * al * turnRateBySpeed;
-        double rcs = thrustUnit == null ? 0
-                : vtolTurnRate * power * Math.abs(Math.sin(Math.toRadians(thrustUnit.getXRot())));
+        double keTail = ke + scaleAir * propellerWash / PhysicsHelper.TICKS_PER_SECOND * propulsion * turnRateBySpeed;
+        double hover = thrustUnit == null ? 0 : Math.abs(Math.sin(Math.toRadians(thrustUnit.getXRot())));
+        double rcs = vtolTurnRate * power * hover;
+        if (hover > HOVER_HOLD && !onGround && !(controlUnit.forward || controlUnit.backward)
+                && (getDriver() != null || autopilotControl) && AircraftConfig.get().arcadeFlightModel()) {
+            // Nozzles down, throttle untouched: trims to hold height (helicopter collective rule).
+            float delta = aerodynamics.altitudeHoldDelta((float) (airSpeed.y - physicsEngine.G));
+            if (delta != 0) {
+                setThrottleLevel(Mth.clamp(getThrottleLevel() + delta * 100f, 0f, 100f));
+            }
+        }
         // Commanded rates are unladen: cargo inertia divides them.
         double inertia = 1 / load();
         // Weight on the ground resists the surfaces: authority = stall-angle lift / weight (current lift: see stance below).
@@ -468,12 +490,12 @@ public class FixedWingVehicle extends AbstractVehicle
         pressure = Math.min(1, pressure * pressure);
         if (xRotInput != 0) {
             // Stalled elevator: authority falls with the excess.
-            double d = Math.max(Math.min(xTurnRate, ke * xTurnRate) * Math.cos(Math.toRadians(stalled)) * (stance ? 1 : unloaded),
+            double d = Math.max(Math.min(xTurnRate, keTail * xTurnRate) * Math.cos(Math.toRadians(stalled)) * (stance ? 1 : unloaded),
                     rcs * xTurnRate);
             q.rotateX((float) Math.toRadians(xRotInput * d * inertia));
         }
         if (yRotInput != 0) {
-            double d0 = Math.min(yTurnRate, ke * yTurnRate);
+            double d0 = Math.min(yTurnRate, keTail * yTurnRate);
             double d1 = yRotInput * d0;
             double d2 = Math.toDegrees(VectorUtil.angleBetween(airSpeed, leftDirection) - Math.PI / 2);
             double d3 = Math.min(1, 2 / Math.abs(d2));
@@ -482,10 +504,11 @@ public class FixedWingVehicle extends AbstractVehicle
                 r1 += yRotInput * yTurnRate / 2f * power * Math.abs(thrustUnit.worldRot().x - getXRot()) / 90;
             }
             q.rotateY((float) Math.toRadians(r1 * inertia));
-        } else {
-            // No yaw input: weathercocks back toward the airspeed heading.
+        }
+        if (Math.abs(yRotInput) < 1) {
+            // Fin weathercock, fading as the rudder is held over.
             double d = VectorUtil.angleBetween(airSpeed, leftDirection) - Math.PI / 2;
-            q.rotateY((float) (ke * -d / 5));
+            q.rotateY((float) (ke * -d / 5 * directionalStability * (1 - Math.abs(yRotInput)) + augmented));
         }
         // Stall spin: nose-down airspeed yaws further into the stall.
         Vec3 downDirection = upDirection.scale(-1);
@@ -505,11 +528,12 @@ public class FixedWingVehicle extends AbstractVehicle
         if (stance) {
             // yawRotOnly => contacts never pitch / roll the hull: look-up 10 deg sat an A-10 on its tail at 0.07 b/t,
             // landed one parked at -10. Gear stance eases to ground_pitch (pre-rewrite AUTO_LEVEL_EASE), released as lift at
-            // the stall angle reaches weight (current lift: ease held AoA down, never flew). TODO: ease toward the ground slope.
+            // the stall angle reaches weight (current lift: ease held AoA down, never flew).
             float keep = GEAR_LEVEL_EASE + (1 - GEAR_LEVEL_EASE) * unloaded;
-            float rest = (float) Math.toRadians(-groundPitch);
+            float rest = (float) Math.toRadians(groundSlope.pitch() - groundPitch);
+            float bank = (float) Math.toRadians(groundSlope.roll());
             rot.x = rest + (rot.x - rest) * keep;
-            rot.z *= keep;
+            rot.z = bank + (rot.z - bank) * keep;
         }
         setXRot((float) Math.toDegrees(rot.x));
         setYRot((float) Math.toDegrees(-rot.y));
@@ -519,6 +543,11 @@ public class FixedWingVehicle extends AbstractVehicle
         setYawInput(yRotInput);
         setRollInput(zRotInput);
         return force;
+    }
+
+    @Override
+    public double flameoutY() {
+        return AirLimits.hard(ceiling, ceilingHard);
     }
 
     private float airDensityScale() {
@@ -540,15 +569,25 @@ public class FixedWingVehicle extends AbstractVehicle
         return Math.sqrt(physicsEngine.mass * PhysicsHelper.GRAVITY / (perF * k)) / PhysicsHelper.TICKS_PER_SECOND;
     }
 
-    /** Lift force at angle of attack {@code degreeX}: linear to the (flap-lowered) stall angle, decaying past it. */
+    /**
+     * Lift force at angle of attack {@code degreeX}: 0 at {@link #ZERO_LIFT_AOA}, linear to the (flap-lowered) stall angle,
+     * decaying past either end.
+     */
     public double lift(double f, double degreeX, double liftToDragK, float scaleAir) {
         double stall = angleOfAttackMax - flaps(Flap.STALL_SHIFT);
-        if (degreeX >= angleOfAttackMin && degreeX <= stall) {
-            return f * (liftToDragK * (1 + flaps(Flap.LIFT_GAIN)) + 2 * scaleAir * degreeX / stall);
-        }
-        double exceed = degreeX > stall ? degreeX - stall : angleOfAttackMin - degreeX;
-        return f * liftToDragK * Math.exp(-1 * exceed);
+        double edge = Mth.clamp(degreeX, angleOfAttackMin, stall);
+        double perDegree = (liftToDragK + 2 * scaleAir * LIFT_REF_AOA / angleOfAttackMax) * (1 + flaps(Flap.LIFT_GAIN))
+                / (LIFT_REF_AOA - ZERO_LIFT_AOA);
+        return f * perDegree * (edge - ZERO_LIFT_AOA) * Math.exp(-Math.abs(degreeX - edge));
     }
+
+    /**
+     * Cambered wing. Fleet trim at top speed AoA 0.3-1.8 (av8b, mv22 < 0) => full-throttle level nose ~ level flight.
+     * lift_to_drag_k as AoA-0 lift FORBIDDEN: 2-7x weight at top speed => level nose climbs.
+     */
+    private static final double ZERO_LIFT_AOA = -3;
+    /** Pack `lift_to_drag_k` tuning point: rotation attitude; lift here == old curve => takeoff runs unchanged. */
+    private static final double LIFT_REF_AOA = 10;
 
     private enum Flap { LIFT_GAIN, STALL_SHIFT, DRAG }
 
@@ -737,38 +776,32 @@ public class FixedWingVehicle extends AbstractVehicle
 
     private static final int GROUND_RUN_SETTLED = 10;
 
-    /** Blocks under a gear foot within which it stands. */
+    /** Blocks under the lowest gear foot within which the airframe stands. */
     private static final double FOOT_REST = 0.3;
     /** b/t horizontal: rolling, not parked. */
     private static final double TAXI = 0.1;
     private boolean propped;
 
-    /** Every landing gear foot over a block collision box within {@link #FOOT_REST}, none severed; or riding a deck. */
+    private static final GroundSlope LEVEL = new GroundSlope(0, 0, 0, true);
+    private GroundSlope groundSlope = LEVEL;
+
+    /** Every gear foot over ground, the lowest within {@link #FOOT_REST} of it, none severed; or riding a deck. */
     private boolean standsOnGear() {
+        groundSlope = LEVEL;
         if (deckCarrierId() >= 0 || harnessCarrierId() >= 0) {
             return true;
         }
-        OBB hull = getMainCubeOBB().obb();
-        Vector3f at = new Vector3f();
-        boolean any = false;
         for (PartUnit<?> unit : getPartUnits()) {
-            if (!(unit instanceof LandingGearUnit gear) || gear.isDetached()) {
-                continue;
-            }
-            if (ComponentDamage.severed(gear)) {
+            if (unit instanceof LandingGearUnit gear && !gear.isDetached() && ComponentDamage.severed(gear)) {
                 return false;
             }
-            for (int i = 0; i < gear.footCount(); i++) {
-                hull.rotation().transform(at.set(gear.foot(i)));
-                double x = hull.centerX() + at.x, y = hull.centerY() + at.y, z = hull.centerZ() + at.z;
-                if (!level().getBlockCollisions(null, new AABB(x - BodyState.FOOT, y - FOOT_REST, z - BodyState.FOOT,
-                        x + BodyState.FOOT, y + BodyState.FOOT, z + BodyState.FOOT)).iterator().hasNext()) {
-                    return false;
-                }
-                any = true;
-            }
         }
-        return any;
+        GroundSlope slope = GroundSlope.under(this);
+        if (!slope.footed() || !(slope.gap() < FOOT_REST)) {
+            return false;
+        }
+        groundSlope = slope;
+        return true;
     }
 
     /** Aerodynamic damping of contact spin on a flying airframe. TODO estimate; scale with airspeed. */
@@ -780,6 +813,10 @@ public class FixedWingVehicle extends AbstractVehicle
     private static final float WEATHERVANE = 0.004f;
     /** Stalled nose-drop rate at 90 deg past the stall angle and lift-off dynamic pressure, of {@code xTurnRate}. TODO estimate. */
     private static final float STALL_PITCH = 1f;
+    /** sin(nozzle pitch) past which hands-off throttle holds height. TODO estimate. */
+    private static final double HOVER_HOLD = 0.7;
+    /** sin(0.25 deg): aim error under which mouse-aim leaves the rudder centred. */
+    private static final double AIM_YAW_DEAD = 0.0044;
     /** Tail damps the weathervane swing. TODO estimate. */
     private static final float WRECK_SPIN_RETENTION = 0.97f;
 

@@ -26,6 +26,14 @@ public final class ShipHydrodynamics {
     private static final double MAX_TAU = 2400.0;
     /** Heave accel ceiling: dropped hull falls, doesn't snap to its line. */
     private static final double MAX_HEAVE_ACCEL = 4.0 * G;
+    /** Ticks a hull past {@code sinkAt} takes to be written off. */
+    private static final int SUNK_AFTER = 600;
+    /** Flooded hull's sink speed ceiling, blocks/tick. */
+    private static final double MAX_SINK_SPEED = 0.08;
+    /** Depth a submarine drifts down per tick at zero ballast, as a share of {@code diveRate}. */
+    private static final double BALLAST_DRIFT = 0.5;
+    /** Ballast effectiveness under which the hull sinks past {@code maxDepth}. */
+    private static final double BALLAST_LOST = 0.5;
     /** Depth past which submarine counts as under (speed + air). */
     private static final double SUBMERGED_DEPTH = 1.0;
     /** Per-axis velocity delta since last write, above which the world (contact/push) is taken to have
@@ -61,6 +69,10 @@ public final class ShipHydrodynamics {
         public double diveRate = 0.15;          // blocks/tick
         public double maxSpeedSubmerged = 0.4;  // blocks/tick
         public double diveAngle = 12.0;         // deg at full dive error
+        public double implodeDepth = 90.0;      // blocks
+        public double sinkAt = 0.6;             // flood level past which the hull goes down
+        public double floodDraft = 2.0;         // blocks the hull settles at sinkAt
+        public double listMax = 20.0;           // deg of list at sinkAt, fully lopsided
     }
 
     public static final class Controls {
@@ -74,6 +86,12 @@ public final class ShipHydrodynamics {
         /** Component-damage scales from {@code VehicleMobility}. */
         public double speedScale = 1.0;
         public double turnScale = 1.0;
+        /** Flooded fraction of the watertight compartments, 0..1. */
+        public double flood;
+        /** Flood weighted by side, -1 port .. +1 starboard; sign of the list. */
+        public double list;
+        /** Ballast-tank effectiveness, 0..1; below 1 a submarine cannot hold its depth. */
+        public double ballast = 1.0;
     }
 
     /** What the sea probe found under the hull this tick. */
@@ -218,11 +236,20 @@ public final class ShipHydrodynamics {
         w = wNew;
 
         // Heave: critically-damped spring onto waterline; afloat => no engine gravity.
-        double target = env.surfaceY - p.waterline - depthSetting;
+        double settle = p.floodDraft * Math.min(1.0, c.flood / Math.max(1.0e-6, p.sinkAt));
+        double target = env.surfaceY - p.waterline - depthSetting - settle;
+        boolean sinking = c.flood >= p.sinkAt;
+        if (sinking) {
+            double bed = Double.isNaN(env.waterDepth) ? 64.0 : env.waterDepth;
+            target = env.surfaceY - bed - p.waterline + p.draft;
+        }
         double omega = 2.0 * Math.PI / Math.max(1.0, p.heavePeriod * TICKS_PER_SECOND);
         double heave = omega * omega * (target - pose.y) - 2.0 * omega * pose.vy;
         heave = clamp(heave, -MAX_HEAVE_ACCEL, MAX_HEAVE_ACCEL);
         double vy = pose.vy + heave;
+        if (sinking) {
+            vy = Math.max(vy, -MAX_SINK_SPEED);
+        }
 
         // Compose in the new frame.
         double newYaw = Math.toRadians(pose.yaw + got);
@@ -240,9 +267,13 @@ public final class ShipHydrodynamics {
         double rollTarget = clamp(-p.heel * yawRate * TICKS_PER_SECOND * speedFactor, -MAX_HEEL, MAX_HEEL);
         double pitchTarget = clamp(-p.trim * clamp(thrust / Math.max(1.0e-6, accel * (1.0 + LINEAR_DRAG)), -1, 1),
                 -MAX_TRIM, MAX_TRIM);
-        if (p.submarine) {
+        if (p.submarine && !sinking) {
             double error = target - pose.y;
             pitchTarget += p.diveAngle * clamp(-error / 4.0, -1, 1);
+        }
+        rollTarget += c.list * p.listMax * Math.min(1.0, c.flood / Math.max(1.0e-6, p.sinkAt));
+        if (sinking) {
+            pitchTarget -= p.listMax * 0.5;
         }
         settleAttitude(p, c, pose, pitchTarget, rollTarget);
     }
@@ -271,9 +302,10 @@ public final class ShipHydrodynamics {
         if (c.dive && !c.rise) {
             depthSetting += p.diveRate;
         } else if (c.rise && !c.dive) {
-            depthSetting -= p.diveRate;
+            depthSetting -= p.diveRate * c.ballast;
         }
-        double deepest = p.maxDepth;
+        depthSetting += (1.0 - c.ballast) * p.diveRate * BALLAST_DRIFT;
+        double deepest = c.ballast < BALLAST_LOST ? Double.POSITIVE_INFINITY : p.maxDepth;
         if (!Double.isNaN(env.waterDepth)) {
             deepest = Math.min(deepest, env.waterDepth - p.draft - p.minKeelClearance);
         }
@@ -291,6 +323,23 @@ public final class ShipHydrodynamics {
 
     public boolean crushed(Params p) {
         return p.submarine && depth > p.crushDepth;
+    }
+
+    /** Flooded hull settled on the seabed: stays down. */
+    public boolean sunk(Params p, Controls c) {
+        sinkTicks = c.flood >= p.sinkAt ? sinkTicks + 1 : 0;
+        return sinkTicks > SUNK_AFTER;
+    }
+
+    private int sinkTicks;
+
+    public boolean imploded(Params p) {
+        return p.submarine && depth > p.implodeDepth;
+    }
+
+    /** Share of the crush band descended, 0 at {@code crushDepth}, 1 at {@code implodeDepth}. */
+    public double crushFraction(Params p) {
+        return clamp((depth - p.crushDepth) / Math.max(1.0e-6, p.implodeDepth - p.crushDepth), 0, 1);
     }
 
     static double clamp(double v, double lo, double hi) {

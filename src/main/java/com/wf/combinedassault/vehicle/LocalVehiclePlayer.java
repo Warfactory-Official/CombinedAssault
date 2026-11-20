@@ -3,7 +3,10 @@ package com.wf.combinedassault.vehicle;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.aircraft.FixedWingVehicle;
 import com.wf.combinedassault.aircraft.RotaryWingVehicle;
+import com.wf.combinedassault.ballistics.component.ComponentKind;
 import com.wf.combinedassault.dynamics.PhysicsEngine;
+import com.wf.combinedassault.hud.HudCache;
+import com.wf.combinedassault.naval.ShipVehicle;
 import com.wf.combinedassault.radar.RadarConfig;
 import com.wf.combinedassault.render.shader.OverloadHandler;
 import com.wf.combinedassault.uav.fpv.FpvFlight;
@@ -63,7 +66,6 @@ public class LocalVehiclePlayer {
     private static final float WHEEL_FADE_OUT = 0.08F;
     private static final float HEAD_RECENTRE = 0.6F;
     /** Periscope field: head yaw / pitch limits, deg. */
-    private static final float PERISCOPE_YAW = 45;
     private static final float PERISCOPE_UP = -10;
     private static final float PERISCOPE_DOWN = 15;
     private static final float HELI_PITCH = 30;
@@ -80,6 +82,7 @@ public class LocalVehiclePlayer {
     public float playerLocalXRot;
     public float playerLocalYRot;
     public boolean periscopeOn;
+    private int periscopeStep;
     /** FPV mouse turn since the last input sample, body frame, deg ({@link ControlUnit#turnX} axes). */
     public float fpvTurnX;
     public float fpvTurnY;
@@ -346,7 +349,7 @@ public class LocalVehiclePlayer {
                     }
                     boolean periscope = periscope();
                     vehicleRot.rotateY((float) Math.toRadians(-(periscope
-                            ? Mth.clamp(playerLocalYRot, -PERISCOPE_YAW, PERISCOPE_YAW) : playerLocalYRot)));
+                            ? Mth.clamp(playerLocalYRot, -periscopeYaw(), periscopeYaw()) : playerLocalYRot)));
                     vehicleRot.rotateX((float) Math.toRadians(periscope
                             ? Mth.clamp(playerLocalXRot, PERISCOPE_UP, PERISCOPE_DOWN) : playerLocalXRot));
                     Vector3f rot = new Vector3f();
@@ -486,6 +489,7 @@ public class LocalVehiclePlayer {
         boolean enter = this.seat == null && seat != null;
         if (seat != this.seat) {
             periscopeOn = false;
+            periscopeStep = 0;
         }
         if (seat == null) {
             AbstractVehicle left = this.vehicle;
@@ -577,7 +581,7 @@ public class LocalVehiclePlayer {
     }
 
     public boolean periscopeSeat() {
-        return seat != null && seat.partUnit.getData().getPeriscopeOffset() != null;
+        return seat != null && seat.partUnit.getData().hasPeriscope();
     }
 
     /** Sight unit has a {@code sight} screen: magnification key toggles OPERATOR <-> SCOPE, scope key zooms. */
@@ -588,9 +592,35 @@ public class LocalVehiclePlayer {
                         && sight.getId().equals(s.part));
     }
 
-    /** OPERATOR through the seat's periscope; magnification key toggles, seat change resets. */
+    /** OPERATOR through the seat's periscope; magnification key toggles, seat change resets. Unusable (too deep, optics broken) => the seat's own view. */
     public boolean periscope() {
-        return viewType == ViewType.OPERATOR && periscopeOn && periscopeSeat();
+        return viewType == ViewType.OPERATOR && periscopeOn && periscopeSeat() && periscopeUsable();
+    }
+
+    private boolean periscopeUsable() {
+        Float depth = seat.partUnit.getData().getPeriscopeDepth();
+        if (depth != null && vehicle instanceof ShipVehicle ship && ship.depth() > depth) {
+            return false;
+        }
+        for (HudCache.SystemCell cell : HudCache.systems(vehicle)) {
+            if (cell.cell().kind() == ComponentKind.OPTICS && cell.cell().failed()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private float periscopeYaw() {
+        return seat.partUnit.getData().getPeriscopeYaw();
+    }
+
+    public float periscopeMagnification() {
+        float[] zoom = seat.partUnit.getData().getPeriscopeZoom();
+        return zoom[periscopeStep % zoom.length];
+    }
+
+    public void stepPeriscopeZoom() {
+        periscopeStep = (periscopeStep + 1) % seat.partUnit.getData().getPeriscopeZoom().length;
     }
 
     /** OPERATOR look relative to the hull; {@link #lensUav} OPERATOR = lens camera, world-frame look like third person. */
@@ -773,7 +803,7 @@ public class LocalVehiclePlayer {
                 return true;
             }
         }
-        float zoom = lensSight() ? getWeaponUnit().getZoom() : 1;
+        float zoom = lensSight() ? getWeaponUnit().getZoom() : periscope() ? periscopeMagnification() : 1;
         float fX = (float) (pXRot * 0.15F / zoom);
         float fY = (float) (pYRot * 0.15F / zoom);
         Quaternionf rot;
@@ -973,6 +1003,7 @@ public class LocalVehiclePlayer {
     public void clear() {
         seat = null;
         periscopeOn = false;
+        periscopeStep = 0;
         vehicle = null;
         serverEntities.clear();
         missiles.clear();

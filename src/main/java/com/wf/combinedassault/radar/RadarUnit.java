@@ -57,12 +57,15 @@ public class RadarUnit extends RotatableUnit<RadarUnitData> {
         this.scanSectorAngle = data.getScanSectorAngle();
         this.maxScanDistance = data.getMaxScanDistance();
         this.on = true;
+        if (data.getRadarOffset() != null) {
+            this.radarOffset = data.getRadarOffset();
+        }
     }
 
     @Override
     public void buildStructure(Map<VehicleCubeGroup, VehicleCubeGroup> vehicleCubeGroupCopy) {
         super.buildStructure(vehicleCubeGroupCopy);
-        if (structureGroup != null) {
+        if (structureGroup != null && data.getRadarOffset() == null) {
             this.radarOffset = structureGroup.pivotOffset;
         }
     }

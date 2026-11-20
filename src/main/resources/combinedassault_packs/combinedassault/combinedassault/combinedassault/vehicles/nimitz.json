@@ -17,7 +17,9 @@
         "heave_period": 6.0,
         "righting_rate": 1.0,
         "min_keel_clearance": 2.0,
-        "shallow_drag": 2.0
+        "shallow_drag": 2.0,
+        "sink_at": 0.75,
+        "list_max": 12.0
     },
     "max_health": 1500,
     "view_info": {
@@ -38,11 +40,21 @@
         "can_tumble": false
     },
     "armor": {
-        "front": 80,
-        "side": 60,
-        "rear": 60,
-        "top": 25,
-        "bottom": 30
+        "front": 25,
+        "side": 63,
+        "rear": 25,
+        "top": 38,
+        "bottom": 30,
+        "plates": {
+            "belt": {"curved": true, "layers": [{"mm": 63, "mat": "rha"}, {"mm": 100, "mat": "spall_liner"}]},
+            "hull_plating": {"curved": true, "layers": [{"mm": 25, "mat": "rha"}]},
+            "flight_deck": {"curved": true, "hull": 0.5, "layers": [{"mm": 38, "mat": "rha"}]},
+            "elevator": {"curved": true, "hull": 0.3, "layers": [{"mm": 25, "mat": "rha"}]},
+            "island": {"curved": true, "hull": 0.3, "layers": [{"mm": 25, "mat": "rha"}]},
+            "bridge": {"curved": true, "hull": 0.15, "layers": [{"mm": 12, "mat": "rha"}]},
+            "fittings": {"curved": true, "hull": 0.15, "layers": [{"mm": 3, "mat": "rha"}]},
+            "running_gear": {"curved": true, "hull": 0.1, "layers": [{"mm": 25, "mat": "cast"}]}
+        }
     },
     "storage": {
         "slots": 216
@@ -90,13 +102,29 @@
             "id": "helm",
             "name": "helm",
             "type": "combinedassault:generic",
-            "is_seat": true
+            "is_seat": true,
+            "periscope_yaw": 180,
+            "periscope_zoom": [1, 4, 10]
         },
         {
             "id": "bridge_2",
             "name": "bridge",
             "type": "combinedassault:generic",
-            "is_seat": true
+            "is_seat": true,
+            "periscope_yaw": 180,
+            "periscope_zoom": [1, 4, 10]
+        },
+        {
+            "id": "radar_air_search",
+            "name": "radar_air_search",
+            "type": "combinedassault:radar",
+            "is_seat": false,
+            "radar_offset": [0, 28, 0],
+            "radar_type": "air_surface_search",
+            "scan_sector_angle": 360,
+            "max_scan_distance": 1024,
+            "anti_ground": true,
+            "recon_role": "BOTH"
         }
     ],
     "model": "combinedassault:models/ships/nimitz/nimitz.glb",

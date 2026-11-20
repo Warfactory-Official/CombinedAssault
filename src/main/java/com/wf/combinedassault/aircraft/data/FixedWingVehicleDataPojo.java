@@ -33,6 +33,9 @@ public class FixedWingVehicleDataPojo extends BaseVehicleDataPojo {
         @SerializedName("ceiling")
         public float ceiling = 512;
 
+        @SerializedName("ceiling_hard")
+        public float ceilingHard;
+
         @SerializedName("x_rot_input_step")
         public float xRotInputStep = 0.2f;
 
@@ -81,6 +84,21 @@ public class FixedWingVehicleDataPojo extends BaseVehicleDataPojo {
 
         @SerializedName("z_turn_rate")
         public float zTurnRate = 8;
+
+        /**
+         * Fin share of yaw stability (weathercock, side force); the rest is flown by drag rudders: rate-limited by
+         * {@code y_turn_rate}, charged as yaw input drag. Flying wing ~0.2.
+         */
+        @SerializedName("directional_stability")
+        public float directionalStability = 1;
+
+        /** m/s; {@code thrust} holds to this airspeed, then falls as 1 / airspeed (constant power). 0 = jet. */
+        @SerializedName("propeller_speed")
+        public float propellerSpeed = 0;
+
+        /** m/s; slipstream over the tail at full power: added to airspeed for pitch / yaw authority. */
+        @SerializedName("propeller_wash")
+        public float propellerWash = 0;
 
         /** Hover pitch/roll authority from reaction controls, x/z_turn_rate share at full power, nozzles vertical. */
         @SerializedName("vtol_turn_rate")

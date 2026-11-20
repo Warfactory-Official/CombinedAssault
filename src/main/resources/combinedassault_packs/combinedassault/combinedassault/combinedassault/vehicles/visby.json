@@ -1,0 +1,212 @@
+{
+    "type": "combinedassault:ship",
+    "attributes": {
+        "waterline": 2.2,
+        "draft": 2.2,
+        "max_speed_forward": 0.9,
+        "max_speed_backward": 0.3,
+        "acceleration_time": 15,
+        "throttle_rate": 0.5,
+        "rudder_rate": 1.0,
+        "turn_rate": 7.0,
+        "turn_lag": 1.0,
+        "low_speed_turn": 0.3,
+        "drift": 0.2,
+        "heel": 0.6,
+        "trim": 2.0,
+        "heave_period": 3.5,
+        "righting_rate": 4.0,
+        "min_keel_clearance": 1.0,
+        "shallow_drag": 2.0,
+        "sink_at": 0.5,
+        "flood_draft": 1.0,
+        "list_max": 22.0
+    },
+    "max_health": 450,
+    "view_info": {
+        "third_person_distance": 50,
+        "third_person_distance_zoomed": 1
+    },
+    "energy_info": {
+        "energy_capacity": 8000,
+        "energy_consumption_per_tick": 0.05
+    },
+    "defense_stats": {
+        "damage_threshold": 20,
+        "impact_multiplier": 0.3
+    },
+    "armor": {
+        "front": 3,
+        "side": 3,
+        "rear": 3,
+        "top": 2,
+        "bottom": 3,
+        "plates": {
+            "hull_sandwich": {
+                "curved": true,
+                "layers": [
+                    {
+                        "mm": 4,
+                        "mat": "laminated"
+                    },
+                    {
+                        "gap": 0.03
+                    },
+                    {
+                        "mm": 4,
+                        "mat": "laminated"
+                    }
+                ]
+            },
+            "deck_sandwich": {
+                "curved": true,
+                "hull": 0.5,
+                "layers": [
+                    {
+                        "mm": 3,
+                        "mat": "laminated"
+                    },
+                    {
+                        "gap": 0.025
+                    },
+                    {
+                        "mm": 3,
+                        "mat": "laminated"
+                    }
+                ]
+            },
+            "superstructure": {
+                "curved": true,
+                "hull": 0.8,
+                "layers": [
+                    {
+                        "mm": 3,
+                        "mat": "laminated"
+                    },
+                    {
+                        "gap": 0.025
+                    },
+                    {
+                        "mm": 3,
+                        "mat": "laminated"
+                    }
+                ]
+            },
+            "bridge": {
+                "curved": true,
+                "hull": 0.3,
+                "layers": [
+                    {
+                        "mm": 6,
+                        "mat": "laminated"
+                    }
+                ]
+            },
+            "gun_mount": {
+                "curved": true,
+                "hull": 0.3,
+                "layers": [
+                    {
+                        "mm": 6,
+                        "mat": "aluminium"
+                    }
+                ]
+            },
+            "fittings": {
+                "curved": true,
+                "hull": 0.15,
+                "layers": [
+                    {
+                        "mm": 2,
+                        "mat": "rha"
+                    }
+                ]
+            },
+            "running_gear": {
+                "curved": true,
+                "hull": 0.1,
+                "layers": [
+                    {
+                        "mm": 8,
+                        "mat": "aluminium"
+                    }
+                ]
+            }
+        }
+    },
+    "physics_info": {
+        "mass": 12800,
+        "radar_cross_section": 0.8,
+        "can_tumble": false
+    },
+    "storage": {
+        "slots": 54
+    },
+    "parts": [
+        {
+            "id": "helm",
+            "name": "helm",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "pose": "drive",
+            "periscope_yaw": 180,
+            "periscope_zoom": [
+                1,
+                3
+            ]
+        },
+        {
+            "id": "officer",
+            "name": "officer",
+            "type": "combinedassault:generic",
+            "is_seat": true,
+            "pose": "sit"
+        },
+        {
+            "id": "gun_57mm",
+            "name": "gun_57mm",
+            "type": "combinedassault:weapon",
+            "crew_roles": [
+                "gunner"
+            ],
+            "max_health": 120,
+            "pose": "stand",
+            "operator_on_weapon_unit": false,
+            "fire_control_sensor_type": "eo",
+            "optical_sight_type": "operator",
+            "crosshair_style": "cross",
+            "zoom_max": 8,
+            "rot_info": {
+                "x_rot_speed": 4,
+                "y_rot_speed": 6,
+                "need_power": false
+            },
+            "weapons": [
+                "combinedassault:giat_30"
+            ]
+        },
+        {
+            "id": "radar_surface",
+            "name": "radar_surface",
+            "type": "combinedassault:radar",
+            "is_seat": false,
+            "radar_offset": [
+                0,
+                16.5,
+                4.5
+            ],
+            "radar_type": "air_surface_search",
+            "scan_sector_angle": 360,
+            "max_scan_distance": 640,
+            "anti_ground": true,
+            "recon_role": "BOTH"
+        }
+    ],
+    "model": "combinedassault:models/ships/visby/visby.glb",
+    "display": {
+        "cabin_muffle": 0.5,
+        "icon": "combinedassault:textures/slot/visby.png",
+        "tab_index": 704,
+        "description": ""
+    }
+}

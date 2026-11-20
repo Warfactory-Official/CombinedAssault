@@ -106,6 +106,8 @@ public class InputHandler {
                     instance.periscopeOn = !instance.periscopeOn;
                 } else if (matchesKey(SWITCH_VIEW, key, scanCode)) {
                     instance.switchViewType(null);
+                } else if (matchesKey(SWITCH_SCOPE, key, scanCode) && instance.periscope()) {
+                    instance.stepPeriscopeZoom();
                 } else if (matchesKey(SWITCH_SCOPE, key, scanCode)) {
                     if (instance.lensUav() && weaponUnit != null) {
                         if (instance.lensSight()) {

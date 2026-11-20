@@ -1,0 +1,13 @@
+{
+    "type": "combinedassault:missile",
+    "name": "Missile launcher",
+    "recoil": 0,
+    "shoot_interval": 1500,
+    "max_capacity": 4,
+    "missile_holder": "launcher_rack",
+    "x_rot_max": 25,
+    "x_rot_min": -5,
+    "y_rot_max": 20,
+    "y_rot_min": -20,
+    "holder_only": true
+}

@@ -65,6 +65,17 @@ public class PartUnitPojo {
     @SerializedName("periscope_offset")
     public Vec3 periscopeOffset = null;
 
+    @SerializedName("periscope_yaw")
+    public float periscopeYaw = 45;
+
+    /** Magnification steps, first = initial. */
+    @SerializedName("periscope_zoom")
+    public float[] periscopeZoom = {1};
+
+    /** Ship: deepest {@code depth} (blocks) the periscope works at; absent => any. */
+    @SerializedName("periscope_depth")
+    public Float periscopeDepth = null;
+
     /** Seat: weapon part whose sight this seat may look through and slew (spotter / WSO); fires nothing. */
     @SerializedName("sensor")
     public String sensor = null;

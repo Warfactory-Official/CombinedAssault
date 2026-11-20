@@ -309,7 +309,8 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
     }
 
     public Vec3 worldPeriscopePosition(float partialTick) {
-        return worldPosition(data.getPeriscopeOffset(), partialTick);
+        return data.getPeriscopeOffset() != null ? worldPosition(data.getPeriscopeOffset(), partialTick)
+                : worldOwnerViewPosition(partialTick);
     }
 
     /**

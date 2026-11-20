@@ -3,6 +3,7 @@ package com.wf.combinedassault.radar;
 import com.google.gson.annotations.SerializedName;
 import com.wf.combinedassault.vehicle.part.data.RotatableUnitPojo;
 import com.wf.combinedassault.vehicle.pojo.ReconRole;
+import net.minecraft.world.phys.Vec3;
 
 public class RadarUnitPojo extends RotatableUnitPojo {
 
@@ -20,6 +21,9 @@ public class RadarUnitPojo extends RotatableUnitPojo {
 
     @SerializedName("ui_hide")
     public boolean uiHide = false;
+
+    @SerializedName("radar_offset")
+    public Vec3 radarOffset = null;
 
     @SerializedName("recon_role")
     public ReconRole reconRole = ReconRole.NODE;

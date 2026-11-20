@@ -44,6 +44,8 @@ public class ShipVehicleData extends BaseVehicleData<ShipVehicle> {
         params.rightingRate = a.rightingRate;
         params.minKeelClearance = a.minKeelClearance;
         params.shallowDrag = a.shallowDrag;
+        params.sinkAt = a.sinkAt;
+        params.listMax = a.listMax;
         ShipVehicleDataPojo.Submarine sub = a.submarine;
         params.submarine = sub != null;
         if (sub != null) {
@@ -52,6 +54,7 @@ public class ShipVehicleData extends BaseVehicleData<ShipVehicle> {
             params.diveRate = sub.diveRate;
             params.maxSpeedSubmerged = sub.maxSpeedSubmerged;
             params.diveAngle = sub.diveAngle;
+            params.implodeDepth = sub.implodeDepth > 0 ? sub.implodeDepth : sub.crushDepth * 1.5;
         }
         propellers = a.propellers.stream().map(p -> {
             if (p.length != 4) {
@@ -62,6 +65,7 @@ public class ShipVehicleData extends BaseVehicleData<ShipVehicle> {
         if (params.draft < 0 && mainCubeOBB != null) {
             params.draft = params.waterline - (mainCubeOBB.offset().y - mainCubeOBB.obb().extents().y);
         }
+        params.floodDraft = a.floodDraft >= 0 ? a.floodDraft : Math.max(0, params.draft) * 0.5;
     }
 
     @Override

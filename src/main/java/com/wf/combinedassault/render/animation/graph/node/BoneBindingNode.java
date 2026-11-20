@@ -152,9 +152,9 @@ public class BoneBindingNode implements PoseNode {
             }
 
             switch (axis) {
-                case 0 -> data.rotX = angle;
-                case 1 -> data.rotY = angle;
-                case 2 -> data.rotZ = angle;
+                case 0 -> data.rotX += angle;
+                case 1 -> data.rotY += angle;
+                case 2 -> data.rotZ += angle;
             }
         }
 

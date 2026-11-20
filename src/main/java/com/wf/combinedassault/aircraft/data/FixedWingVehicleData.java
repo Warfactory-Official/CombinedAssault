@@ -22,6 +22,7 @@ public class FixedWingVehicleData extends BaseVehicleData<FixedWingVehicle> {
     public float thrust = 8000f;
     public float thrustK = 1.5f;
     public float ceiling = 512;
+    public float ceilingHard;
     public float xRotInputStep = 0.2f;
     public float yRotInputStep = 0.5f;
     public float zRotInputStep = 0.2f;
@@ -39,6 +40,9 @@ public class FixedWingVehicleData extends BaseVehicleData<FixedWingVehicle> {
     public float yTurnRate = 3;
     public float zTurnRate = 8;
     public float vtolTurnRate = 0;
+    public float propellerSpeed = 0;
+    public float directionalStability = 1;
+    public float propellerWash = 0;
     public List<Vec3> vortexOffsets;
     public List<Vec3> aerobaticSmokeOffsets;
     public List<Exhaust> exhausts;
@@ -80,6 +84,7 @@ public class FixedWingVehicleData extends BaseVehicleData<FixedWingVehicle> {
         this.thrust = pojo.attributes.thrust;
         this.thrustK = pojo.attributes.thrustK;
         this.ceiling = pojo.attributes.ceiling;
+        this.ceilingHard = pojo.attributes.ceilingHard;
         this.xRotInputStep = pojo.attributes.xRotInputStep;
         this.yRotInputStep = pojo.attributes.yRotInputStep;
         this.zRotInputStep = pojo.attributes.zRotInputStep;
@@ -97,6 +102,9 @@ public class FixedWingVehicleData extends BaseVehicleData<FixedWingVehicle> {
         this.yTurnRate = pojo.attributes.yTurnRate;
         this.zTurnRate = pojo.attributes.zTurnRate;
         this.vtolTurnRate = pojo.attributes.vtolTurnRate;
+        this.propellerSpeed = pojo.attributes.propellerSpeed;
+        this.directionalStability = pojo.attributes.directionalStability;
+        this.propellerWash = pojo.attributes.propellerWash;
         this.vortexOffsets = pojo.attributes.vortexOffsets;
         this.exhausts = List.copyOf(pojo.attributes.exhausts);
         for (int i = 0; i < exhausts.size(); i++) {
@@ -120,6 +128,7 @@ public class FixedWingVehicleData extends BaseVehicleData<FixedWingVehicle> {
         vehicle.thrust = this.thrust;
         vehicle.thrustK = this.thrustK;
         vehicle.ceiling = this.ceiling;
+        vehicle.ceilingHard = this.ceilingHard;
         vehicle.xRotInputStep = this.xRotInputStep;
         vehicle.yRotInputStep = this.yRotInputStep;
         vehicle.zRotInputStep = this.zRotInputStep;
@@ -137,6 +146,9 @@ public class FixedWingVehicleData extends BaseVehicleData<FixedWingVehicle> {
         vehicle.yTurnRate = this.yTurnRate;
         vehicle.zTurnRate = this.zTurnRate;
         vehicle.vtolTurnRate = this.vtolTurnRate;
+        vehicle.propellerSpeed = this.propellerSpeed;
+        vehicle.directionalStability = this.directionalStability;
+        vehicle.propellerWash = this.propellerWash;
         vehicle.vortexOffsets = this.vortexOffsets;
         vehicle.aerobaticSmokeOffsets = this.aerobaticSmokeOffsets;
         vehicle.exhausts = this.exhausts;

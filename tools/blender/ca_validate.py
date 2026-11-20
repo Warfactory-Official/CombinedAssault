@@ -22,7 +22,7 @@ except ImportError:  # plain module: jsonedit lives in tools/
 # Must equal the game's vocabularies; test_combinedassault_tools.py parses the Java sources and compares.
 # ComponentKind names but crew, generic.
 SYSTEMS = ["hull", "engine", "track", "wheel", "turret", "barrel", "fuel", "ammo", "optics", "rotor",
-           "tail_rotor", "wing"]
+           "tail_rotor", "wing", "propeller", "rudder", "compartment", "ballast"]
 # NodeRole SOCKET kind.
 SOCKET_FIELDS = ["seat", "dismount", "view", "sight", "sight_lens", "bolt", "eject", "era", "slat", "mount_point", "hitch", "towable",
                  "axle", "exhaust", "vortex", "smoke", "afterburner", "camera", "camera_zoomed", "light", "cargo_bay",
