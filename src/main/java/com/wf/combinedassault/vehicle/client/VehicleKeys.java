@@ -28,13 +28,17 @@ public class VehicleKeys {
     public static final KeyMapping FUNCTIONAL_RIGHT = key("functional_right", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT);
     public static final KeyMapping TOGGLE_ENGINE = key("toggle_engine", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_I);
     public static final KeyMapping TOGGLE_LANDING_GEAR = key("toggle_landing_gear", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_G);
-    public static final KeyMapping TOGGLE_AIRBRAKE = key("toggle_airbrake", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_CONTROL);
+    public static final KeyMapping TOGGLE_AIRBRAKE = key("toggle_airbrake", Domain.AIR, GLFW.GLFW_KEY_Z);
     public static final KeyMapping TOGGLE_CARGO_DOOR = key("toggle_cargo_door", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Y);
-    public static final KeyMapping FLAPS_DOWN = key("flaps_down", Domain.AIR, GLFW.GLFW_KEY_RIGHT_BRACKET);
-    public static final KeyMapping FLAPS_UP = key("flaps_up", Domain.AIR, GLFW.GLFW_KEY_LEFT_BRACKET);
-    public static final KeyMapping SHIFT_UP = key("shift_up", Domain.GROUND, GLFW.GLFW_KEY_RIGHT_BRACKET);
-    public static final KeyMapping SHIFT_DOWN = key("shift_down", Domain.GROUND, GLFW.GLFW_KEY_LEFT_BRACKET);
-    public static final KeyMapping TOGGLE_HOVER_MODE = key("toggle_hover_mode", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z);
+    public static final KeyMapping FLAPS_DOWN = key("flaps_down", Domain.AIR, GLFW.GLFW_KEY_UNKNOWN);
+    public static final KeyMapping FLAPS_UP = key("flaps_up", Domain.AIR, GLFW.GLFW_KEY_UNKNOWN);
+    public static final KeyMapping SHIFT_UP = key("shift_up", Domain.GROUND, GLFW.GLFW_KEY_UNKNOWN);
+    public static final KeyMapping SHIFT_DOWN = key("shift_down", Domain.GROUND, GLFW.GLFW_KEY_UNKNOWN);
+    public static final KeyMapping TOGGLE_HOVER_MODE = key("toggle_hover_mode", Domain.ROTARY, GLFW.GLFW_KEY_Z);
+    /** Held with the wheel: flaps (aircraft) / gear shift (ground). Direct keys: flaps_*, shift_*. */
+    public static final KeyMapping WHEEL_ADJUST = key("wheel_adjust", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_CONTROL);
+    /** Held with the wheel: VTOL nozzle. Direct keys: functional_up / functional_down. */
+    public static final KeyMapping WHEEL_VECTOR = key("wheel_vector", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT);
     public static final KeyMapping TOGGLE_RADAR = key("toggle_radar", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_3);
     public static final KeyMapping RADAR_SCOPE = key("radar_scope", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_SEMICOLON);
     public static final KeyMapping RADAR_RANGE_UP = key("radar_range_up", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_EQUAL);
@@ -48,7 +52,7 @@ public class VehicleKeys {
     public static final KeyMapping MAGNIFICATION_CHANGE = key("magnification_change", InputConstants.Type.MOUSE, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
     public static final KeyMapping FIRE_CONTROL_LOCK = key("fire_control_lock", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R);
     public static final KeyMapping PRESET_COORDINATE_INPUT = key("preset_coordinate_input", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_N);
-    public static final KeyMapping DECOY_FLARE_LAUNCH = key("decoy_flare_launch", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT);
+    public static final KeyMapping DECOY_FLARE_LAUNCH = key("decoy_flare_launch", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_CAPS_LOCK);
     public static final KeyMapping SMOKE_GRENADE_LAUNCH = key("smoke_grenade_launch", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H);
     public static final KeyMapping TOGGLE_SEEKER = key("toggle_seeker", InputConstants.Type.MOUSE, GLFW.GLFW_MOUSE_BUTTON_MIDDLE);
     public static final KeyMapping TOGGLE_WEAPON_BAY = key("toggle_weapon_bay", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_U);
@@ -72,7 +76,7 @@ public class VehicleKeys {
 
     private static final KeyMapping[] ALL_KEYS = {
             FORWARD, BACKWARD, LEFT, RIGHT, UP, DOWN, LEFT_YAW, RIGHT_YAW, FUNCTIONAL_UP, FUNCTIONAL_DOWN, FUNCTIONAL_LEFT, FUNCTIONAL_RIGHT,
-            TOGGLE_ENGINE, TOGGLE_LANDING_GEAR, TOGGLE_AIRBRAKE, TOGGLE_CARGO_DOOR, FLAPS_DOWN, FLAPS_UP, SHIFT_UP, SHIFT_DOWN, TOGGLE_HOVER_MODE, TOGGLE_RADAR, RADAR_SCOPE, RADAR_RANGE_UP, RADAR_RANGE_DOWN, CYCLE_SIGHT_MODE,
+            TOGGLE_ENGINE, TOGGLE_LANDING_GEAR, TOGGLE_AIRBRAKE, TOGGLE_CARGO_DOOR, FLAPS_DOWN, FLAPS_UP, SHIFT_UP, SHIFT_DOWN, WHEEL_ADJUST, WHEEL_VECTOR, TOGGLE_HOVER_MODE, TOGGLE_RADAR, RADAR_SCOPE, RADAR_RANGE_UP, RADAR_RANGE_DOWN, CYCLE_SIGHT_MODE,
             MAIN_WEAPON_SHOOT, SECONDARY_WEAPON_SHOOT, SECONDARY_WEAPON_SWITCH, SWITCH_AMMO,
             MAGNIFICATION_CHANGE, FIRE_CONTROL_LOCK, PRESET_COORDINATE_INPUT, DECOY_FLARE_LAUNCH, SMOKE_GRENADE_LAUNCH, TOGGLE_SEEKER, TOGGLE_WEAPON_BAY,
             SWITCH_VIEW, SWITCH_SCOPE, FREE_CAMERA, OPEN_INVENTORY, LEAVE_VEHICLE, INSPECT_VEHICLE, OPEN_PARACHUTE,
@@ -81,7 +85,7 @@ public class VehicleKeys {
 
     /** In game; ground and air keys share defaults without a conflict between them. */
     private enum Domain implements IKeyConflictContext {
-        GROUND, AIR;
+        GROUND, AIR, ROTARY;
 
         @Override
         public boolean isActive() {

@@ -22,6 +22,7 @@ import com.wf.wflib.damage.api.ThreatKind;
 import dev.engine_room.flywheel.api.event.EndClientResourceReloadEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -234,6 +235,9 @@ public final class HitFx {
             HullComponents pools = vehicle.hullComponents();
             for (int i = 0; i < pools.size(); i++) {
                 float max = pools.maxHealth(i);
+                if (max > 0 && pools.kind(i) == ComponentKind.FUEL) {
+                    drip(level, vehicle, 1 - pools.health(i) / (max * ComponentState.PRISTINE.minRatio));
+                }
                 if (max > 0 && pools.health(i) < DAMAGED * max) {
                     emit(level, vehicle, pools.kind(i), pools.health(i) < BROKEN * max);
                 }
@@ -296,6 +300,19 @@ public final class HitFx {
         }
         AABB box = vehicle.getBoundingBox();
         return new Vec3(box.getCenter().x, box.maxY, box.getCenter().z);
+    }
+
+    /** Leaking tank: drops from its site, more of them the deeper below PRISTINE ({@code depth} 0..1). */
+    private static void drip(ClientLevel level, AbstractVehicle vehicle, float depth) {
+        if (depth <= 0 || vehicle.getEnergy() <= 0) {
+            return;
+        }
+        int drops = (RANDOM.nextFloat() < depth ? 1 : 0) + (depth > 0.5F ? 1 : 0);
+        Vec3 at = site(vehicle, ComponentKind.FUEL);
+        for (int i = 0; i < drops; i++) {
+            level.addParticle(ParticleTypes.FALLING_HONEY, at.x + RANDOM.nextGaussian() * 0.2, at.y,
+                    at.z + RANDOM.nextGaussian() * 0.2, 0, 0, 0);
+        }
     }
 
     private static void smoke(ClientLevel level, Vec3 at, int rgb, int n) {

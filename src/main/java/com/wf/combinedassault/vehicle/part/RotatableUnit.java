@@ -3,6 +3,7 @@ package com.wf.combinedassault.vehicle.part;
 import com.mojang.math.Axis;
 import com.wf.combinedassault.ballistics.component.ComponentDamage;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
+import com.wf.combinedassault.dynamics.structure.VehicleCubeOBB;
 import com.wf.combinedassault.pack.sync.SyncDataSerializers;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.audio.HullLoop;
@@ -115,7 +116,10 @@ public class RotatableUnit<T extends RotatableUnitData> extends PartUnit<T> {
     @OnlyIn(Dist.CLIENT)
     protected void tickParticle() {
         if (isDestroyed() && !vehicle.isDestroyed() && vehicle.tickCount % 20 == 0) {
-            ParticleUtil.spawnWreckageSmoke(vehicle.level(), OBB.toAABB(List.of(getLargestCube().obb())), 5);
+            VehicleCubeOBB cube = getLargestCube();
+            if (cube != null) {
+                ParticleUtil.spawnWreckageSmoke(vehicle.level(), OBB.toAABB(List.of(cube.obb())), 5);
+            }
         }
     }
 

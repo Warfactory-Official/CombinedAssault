@@ -42,7 +42,7 @@ public class VehicleSystemsGameTest {
             return;
         }
         List<String> labels = VehicleSystems.cells(vehicle).stream().map(VehicleSystems.Cell::label).toList();
-        if (!labels.equals(List.of("HULL", "ENG", "GUN ANTI", "GUN LOAD", "L-TR", "R-TR", "TRRT"))) {
+        if (!labels.equals(List.of("HULL", "ENG", "GUN ANTI", "GUN LOAD", "L-TR", "R-TR", "TRRT", "FUEL"))) {
             helper.fail("m1a2 cells " + labels);
             return;
         }
@@ -51,7 +51,7 @@ public class VehicleSystemsGameTest {
             return;
         }
         List<String> truckLabels = VehicleSystems.cells(truck).stream().map(VehicleSystems.Cell::label).toList();
-        if (!truckLabels.equals(List.of("HULL", "ENG", "L-WHL", "R-WHL"))) {
+        if (!truckLabels.equals(List.of("HULL", "ENG", "L-WHL", "R-WHL", "FUEL"))) {
             helper.fail("m983 cells " + truckLabels + ", hit nodes " + (truck.hits() == null ? "none"
                     : truck.hits().model().nodes().stream().filter(n -> n.kind() != null)
                     .map(n -> n.mesh().name() + "=" + n.systemId() + (n.part() == null ? "" : "@" + n.part())).toList()));
@@ -210,14 +210,53 @@ public class VehicleSystemsGameTest {
         return null;
     }
 
+    /** Leak grows with depth below PRISTINE: none at full health, more at 0.1 than at 0.6. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    public static void aDamagedTankLeaksFasterTheDeeperTheDamage(GameTestHelper helper) {
+        AbstractVehicle vehicle = spawn(helper, TANK);
+        if (vehicle == null) {
+            return;
+        }
+        float[] ratios = {1.0f, 0.6f, 0.1f};
+        float[] lost = new float[ratios.length];
+        leakWindow(helper, vehicle, ratios, lost, 0);
+    }
+
+    private static void leakWindow(GameTestHelper helper, AbstractVehicle vehicle, float[] ratios, float[] lost, int i) {
+        vehicle.setEnergy(vehicle.energyInfo.capacityUnits());
+        HullComponents pools = vehicle.hullComponents();
+        for (int p = 0; p < pools.size(); p++) {
+            if (pools.kind(p) == ComponentKind.FUEL) {
+                pools.setHealth(p, pools.maxHealth(p) * ratios[i]);
+            }
+        }
+        float start = vehicle.getEnergy();
+        helper.runAfterDelay(60, () -> {
+            lost[i] = start - vehicle.getEnergy();
+            if (i + 1 < ratios.length) {
+                leakWindow(helper, vehicle, ratios, lost, i + 1);
+            } else if (lost[0] != 0 || lost[1] <= 0 || lost[2] <= lost[1] * 3) {
+                helper.fail("fuel lost in 60 ticks at health " + java.util.Arrays.toString(ratios) + " = "
+                        + java.util.Arrays.toString(lost));
+            } else {
+                helper.succeed();
+            }
+        });
+    }
+
     @Nullable
     private static AbstractVehicle spawn(GameTestHelper helper, ResourceLocation id) {
+        return spawn(helper, id, 1);
+    }
+
+    @Nullable
+    private static AbstractVehicle spawn(GameTestHelper helper, ResourceLocation id, int x) {
         Optional<BaseVehicleData> data = CommonAssetsManager.vehicleDataManager().getVehicleData(id);
         if (data.isEmpty()) {
             helper.fail("the test vehicle " + id + " is not in the roster");
             return null;
         }
-        BlockPos at = helper.absolutePos(new BlockPos(1, 2, 1));
+        BlockPos at = helper.absolutePos(new BlockPos(x, 2, 1));
         AbstractVehicle vehicle = data.get().construct(helper.getLevel(),
                 new Vec3(at.getX() + 0.5, at.getY(), at.getZ() + 0.5), 0, 0);
         vehicle.setDisplayId(id);

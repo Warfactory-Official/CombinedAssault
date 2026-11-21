@@ -34,6 +34,8 @@ public final class PhysicsTelemetry {
     private static long tickStart;
     private static int islands, bodies, contacts;
     private static boolean async;
+    /** lastTick() holds the last stepped tick: resting vehicles step on a heartbeat, the rest would re-read it. */
+    private static RigidStep.Tick lastSeen;
     private static int vehicles, resting, towed;
 
     private static double frameMs;
@@ -74,7 +76,8 @@ public final class PhysicsTelemetry {
         }
         tickMs[cursor] = (System.nanoTime() - tickStart) / 1.0e6;
         RigidStep.Tick tick = RigidStep.lastTick();
-        boolean stepped = tick != null && tick.totalNanos() > 0;
+        boolean stepped = tick != null && tick != lastSeen && tick.totalNanos() > 0;
+        lastSeen = tick;
         stepUs[cursor] = stepped ? tick.totalNanos() / 1000.0 : 0;
         for (int i = 0; i < stageUs.length; i++) {
             stageUs[i][cursor] = stepped ? tick.stageNanos()[i] / 1000.0 : 0;

@@ -981,7 +981,7 @@ Node frame => its part: a node under a part's `part`/`pitch` frame is that part'
 | `rotor` | ROTR | 12 | thrust, translational lift, attitude authority; BROKEN => no lift, stops spinning |
 | `wing` | WING | 12 | wing, tail, control surface; pool per `side` (`left wing` / `right wing`). Sided pool 0 => its drawn nodes shed as debris (topmost per pool, subtree with it), that side 0 lift, roll toward it 7°/tick per b/t; live wing cutting a block collision box at >= 0.4 b/t => pool 0. Unsided pool: lift only on airframes with no sided ones |
 | `engine` | ENG | 12 | BROKEN => engine will not run |
-| `fuel` / `ammo` / `optics` | FUEL / AMMO / OPT | 8 / 8 / 6 | |
+| `fuel` / `ammo` / `optics` | FUEL / AMMO / OPT | 8 / 8 / 6 | `fuel`: leak, worst pool: x = 1 - ratio / 0.85, loss/tick = `energy_capacity` x x^2 / 800 (empty in 40 s at 0; 0 at ratio >= 0.85; fuel type only); drips at the pool node |
 | `propeller` | PROP | 10 | ship speed (mean per kind, x engine mean) |
 | `rudder` | RUD | 10 | ship turn authority only |
 | `compartment` | COMP | 12 | loss => flood ([§13.1](#131-attributes)); side from `left` / `right` in pool id |

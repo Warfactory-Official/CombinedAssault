@@ -29,6 +29,8 @@ public final class CaHudPresets {
     static void registerWidgets() {
         add("ammo_list", p -> new AmmoList());
         add("weapon_list", p -> new WeaponList());
+        add("binding_hint", p -> new BindingHint(p.expr("if", "true"), p.template("label"), p.template("modifier"),
+                java.util.stream.Stream.of("key", "key2").filter(p::has).map(p::template).toList()));
         add("hit_marker", p -> new HitWidgets.HitMarker());
         add("hit_panel", p -> new HitWidgets.HitPanel());
         add("aim_reticle", p -> new AimWidgets.AimReticle(p.expr("color")));

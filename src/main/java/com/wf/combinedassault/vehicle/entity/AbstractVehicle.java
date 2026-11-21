@@ -7,6 +7,8 @@ import com.wf.combinedassault.ballistics.DamageSystem;
 import com.wf.combinedassault.ballistics.VehicleBlastResolver;
 import com.wf.combinedassault.ballistics.VehicleExplosion;
 import com.wf.combinedassault.ballistics.addon.AddonArmorLayer;
+import com.wf.combinedassault.ballistics.component.ComponentKind;
+import com.wf.combinedassault.ballistics.component.ComponentState;
 import com.wf.combinedassault.ballistics.component.HullComponents;
 import com.wf.combinedassault.ballistics.component.VehicleSystems;
 import com.wf.combinedassault.ballistics.hit.ClipRig;
@@ -1247,6 +1249,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             // able to spin up its traverse. What a harness skips is the solve, not the housekeeping;
             // a merely parked vehicle skips both, but it also wakes the moment its engine starts.
             tickEnergy();
+            tickFuelLeak();
             tickPower();
             tickEngineSpeed();
             // Housekeeping above still runs while resting; only the solve is worth skipping.
@@ -1364,6 +1367,35 @@ public abstract class AbstractVehicle extends ContainerCraft
         if (energy <= 0) {
             // A dry tank forgets what was in it, which is the only way to change fuels without
             // draining one by hand.
+            setFuelFluid(Fluids.EMPTY);
+        }
+    }
+
+    /** Tank empty from a pool at 0 health in this many ticks; leak = capacity x x^2 / this, x = depth below PRISTINE. */
+    private static final float LEAK_TICKS = 40 * 20;
+
+    private void tickFuelLeak() {
+        if (level().isClientSide() || isElectric() || !EnergySystem.active() || EnergyConfig.get().infiniteFuel()) {
+            return;
+        }
+        float energy = rawEnergy();
+        HullComponents pools = hullComponents();
+        if (energy <= 0 || pools.isEmpty()) {
+            return;
+        }
+        float ratio = 1;
+        for (int i = 0; i < pools.size(); i++) {
+            if (pools.kind(i) == ComponentKind.FUEL && pools.maxHealth(i) > 0) {
+                ratio = Math.min(ratio, pools.health(i) / pools.maxHealth(i));
+            }
+        }
+        float x = 1 - ratio / ComponentState.PRISTINE.minRatio;
+        if (x <= 0) {
+            return;
+        }
+        energy = Math.max(0, energy - energyInfo.capacityUnits() * x * x / LEAK_TICKS);
+        setEnergy(energy);
+        if (energy <= 0) {
             setFuelFluid(Fluids.EMPTY);
         }
     }

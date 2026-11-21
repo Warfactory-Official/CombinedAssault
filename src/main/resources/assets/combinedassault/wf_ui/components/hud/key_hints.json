@@ -63,9 +63,10 @@
             "key": "key.combinedassault.up.desc"
           },
           {
-            "type": "key_hint",
+            "type": "combinedassault:binding_hint",
             "if": "local.driver && vehicle.manual",
             "label": "{tr:hud.combinedassault.hint.shift}",
+            "modifier": "key.combinedassault.wheel_adjust.desc",
             "key": "key.combinedassault.shift_up.desc",
             "key2": "key.combinedassault.shift_down.desc"
           },
@@ -118,11 +119,20 @@
             "key": "key.combinedassault.toggle_airbrake.desc"
           },
           {
-            "type": "key_hint",
+            "type": "combinedassault:binding_hint",
             "if": "local.driver && fixed_wing.present",
             "label": "{tr:hud.combinedassault.hint.flaps}",
+            "modifier": "key.combinedassault.wheel_adjust.desc",
             "key": "key.combinedassault.flaps_down.desc",
             "key2": "key.combinedassault.flaps_up.desc"
+          },
+          {
+            "type": "combinedassault:binding_hint",
+            "if": "local.driver && fixed_wing.nozzle == fixed_wing.nozzle",
+            "label": "{tr:hud.combinedassault.hint.nozzle}",
+            "modifier": "key.combinedassault.wheel_vector.desc",
+            "key": "key.combinedassault.functional_up.desc",
+            "key2": "key.combinedassault.functional_down.desc"
           },
           {
             "type": "key_hint",

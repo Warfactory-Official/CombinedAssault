@@ -42,7 +42,7 @@ import java.util.Map;
  * Light nodes -> GemRender spots at the last published pose (one frame behind the turret); not yet drawn => rest
  * pose. Light node absent from the drawn model (part mount graft) => nearest drawn ancestor's pose x rest offset.
  * Key: driver -> {@code HEAD}, other crew -> {@code SEARCH}; a vehicle with one group -> that group.
- * Aux key: {@code HIGH} else {@code TAXI}; nav key: {@code NAV}; driver only.
+ * Held key: {@code HIGH} else {@code TAXI}; nav key: {@code NAV}; driver only.
  * <p>{@link AbstractVehicle#irSights()} stations -> IR sight illuminator along the gun; own station: wflib draws
  * it at the sight camera.
  */
@@ -51,11 +51,6 @@ public final class VehicleLights {
 
     public static final KeyMapping TOGGLE = new KeyMapping("key.combinedassault.toggle_lights.desc",
             KeyConflictContext.IN_GAME, KeyModifier.NONE, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_BACKSLASH,
-            "key.category.combinedassault");
-
-    /** Driver: ground {@code HIGH}, aircraft {@code TAXI}. */
-    public static final KeyMapping TOGGLE_AUX = new KeyMapping("key.combinedassault.toggle_aux_lights.desc",
-            KeyConflictContext.IN_GAME, KeyModifier.NONE, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_BRACKET,
             "key.category.combinedassault");
 
     /** Driver: {@code NAV}. */
@@ -83,42 +78,62 @@ public final class VehicleLights {
     @SubscribeEvent
     public static void onRegisterKeys(RegisterKeyMappingsEvent event) {
         event.register(TOGGLE);
-        event.register(TOGGLE_AUX);
         event.register(TOGGLE_NAV);
     }
+
+    /** Ticks {@link #TOGGLE} is held before it switches the strong beam instead of the normal one. */
+    private static final int HOLD_TICKS = 8;
+    private static int held;
+    private static boolean strongSent;
 
     @SubscribeEvent
     public static void onTick(ClientTickEvent.Post event) {
         while (TOGGLE.consumeClick()) {
-            LocalPlayer player = Minecraft.getInstance().player;
-            if (player == null || player.isSpectator() || !(player.getVehicle() instanceof AbstractVehicle vehicle)) {
-                continue;
-            }
-            boolean head = VehicleLight.has(vehicle, VehicleLight.Kind.HEAD);
-            boolean search = VehicleLight.has(vehicle, VehicleLight.Kind.SEARCH);
-            if (!head && !search) {
-                continue;
-            }
-            boolean driver = vehicle.getControllingPassenger() == player;
-            VehicleLight.Kind kind = head && (driver || !search) ? VehicleLight.Kind.HEAD : VehicleLight.Kind.SEARCH;
-            PacketDistributor.sendToServer(new LightToggleMessage(vehicle.getId(), kind));
+            // State is read from isDown.
         }
-        driverToggle(TOGGLE_AUX, VehicleLight.Kind.HIGH, VehicleLight.Kind.TAXI);
-        driverToggle(TOGGLE_NAV, VehicleLight.Kind.NAV, VehicleLight.Kind.NAV);
+        if (TOGGLE.isDown()) {
+            held++;
+            if (held == HOLD_TICKS) {
+                strongSent = true;
+                driverToggle(VehicleLight.Kind.HIGH, VehicleLight.Kind.TAXI);
+            }
+        } else {
+            if (held > 0 && !strongSent) {
+                toggleNormal();
+            }
+            held = 0;
+            strongSent = false;
+        }
+        while (TOGGLE_NAV.consumeClick()) {
+            driverToggle(VehicleLight.Kind.NAV, VehicleLight.Kind.NAV);
+        }
     }
 
-    /** First of {@code first}, {@code second} the ridden vehicle has. */
-    private static void driverToggle(KeyMapping key, VehicleLight.Kind first, VehicleLight.Kind second) {
-        while (key.consumeClick()) {
-            LocalPlayer player = Minecraft.getInstance().player;
-            if (player == null || player.isSpectator() || !(player.getVehicle() instanceof AbstractVehicle vehicle)
-                    || vehicle.getControllingPassenger() != player) {
-                continue;
-            }
-            VehicleLight.Kind kind = VehicleLight.has(vehicle, first) ? first : second;
-            if (VehicleLight.has(vehicle, kind)) {
-                PacketDistributor.sendToServer(new LightToggleMessage(vehicle.getId(), kind));
-            }
+    private static void toggleNormal() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || player.isSpectator() || !(player.getVehicle() instanceof AbstractVehicle vehicle)) {
+            return;
+        }
+        boolean head = VehicleLight.has(vehicle, VehicleLight.Kind.HEAD);
+        boolean search = VehicleLight.has(vehicle, VehicleLight.Kind.SEARCH);
+        if (!head && !search) {
+            return;
+        }
+        boolean driver = vehicle.getControllingPassenger() == player;
+        VehicleLight.Kind kind = head && (driver || !search) ? VehicleLight.Kind.HEAD : VehicleLight.Kind.SEARCH;
+        PacketDistributor.sendToServer(new LightToggleMessage(vehicle.getId(), kind));
+    }
+
+    /** First of {@code first}, {@code second} the ridden vehicle has; driver only. */
+    private static void driverToggle(VehicleLight.Kind first, VehicleLight.Kind second) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || player.isSpectator() || !(player.getVehicle() instanceof AbstractVehicle vehicle)
+                || vehicle.getControllingPassenger() != player) {
+            return;
+        }
+        VehicleLight.Kind kind = VehicleLight.has(vehicle, first) ? first : second;
+        if (VehicleLight.has(vehicle, kind)) {
+            PacketDistributor.sendToServer(new LightToggleMessage(vehicle.getId(), kind));
         }
     }
 

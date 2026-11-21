@@ -78,7 +78,7 @@ public class InputHandler {
     }
 
     private static boolean matchesKey(KeyMapping mapping, int key, int scanCode) {
-        return mapping.matches(key, scanCode) || mapping.matchesMouse(key);
+        return !mapping.isUnbound() && (mapping.matches(key, scanCode) || mapping.matchesMouse(key));
     }
 
     private static void handleVehicleAction(int key, int scanCode, int action) {
@@ -130,7 +130,7 @@ public class InputHandler {
                     sendToggleEngine(vehicle);
                 } else if (matchesKey(TOGGLE_LANDING_GEAR, key, scanCode)) {
                     sendToggleLandingGear(vehicle);
-                } else if (matchesKey(TOGGLE_AIRBRAKE, key, scanCode)) {
+                } else if (vehicle instanceof FixedWingVehicle && matchesKey(TOGGLE_AIRBRAKE, key, scanCode)) {
                     sendToggleAirbrake(vehicle);
                 } else if (matchesKey(TOGGLE_CARGO_DOOR, key, scanCode)) {
                     sendToggleCargoDoor(vehicle);
@@ -151,7 +151,7 @@ public class InputHandler {
                     if (weaponUnit != null) {
                         weaponUnit.getCurrentWeapon().ifPresent(AbstractVehicleWeapon::openCoordinateInputScreen);
                     }
-                } else if (matchesKey(TOGGLE_HOVER_MODE, key, scanCode)) {
+                } else if (vehicle instanceof RotaryWingVehicle && matchesKey(TOGGLE_HOVER_MODE, key, scanCode)) {
                     sendToggleHoverMode(vehicle);
                 } else if (matchesKey(TOGGLE_RADAR, key, scanCode)) {
                     if (weaponUnit != null) {
@@ -337,8 +337,9 @@ public class InputHandler {
                 controlUnit.down = DOWN.isDown();
                 controlUnit.leftYaw = LEFT_YAW.isDown();
                 controlUnit.rightYaw = RIGHT_YAW.isDown();
-                controlUnit.functionalUp = FUNCTIONAL_UP.isDown();
-                controlUnit.functionalDown = FUNCTIONAL_DOWN.isDown();
+                controlUnit.functionalUp = FUNCTIONAL_UP.isDown() || nozzleSteps > 0;
+                controlUnit.functionalDown = FUNCTIONAL_DOWN.isDown() || nozzleSteps < 0;
+                nozzleSteps -= Integer.signum(nozzleSteps);
                 controlUnit.functionalLeft = FUNCTIONAL_LEFT.isDown();
                 controlUnit.functionalRight = FUNCTIONAL_RIGHT.isDown();
                 if (vehicle instanceof GroundVehicle ground) {
@@ -412,6 +413,9 @@ public class InputHandler {
         }
     }
 
+    /** Alt + wheel nozzle steps pending, one per input tick: + up, - down. */
+    private static int nozzleSteps;
+
     @SubscribeEvent
     public static void onKey(InputEvent.MouseScrollingEvent event) {
         var mc = Minecraft.getInstance();
@@ -426,12 +430,37 @@ public class InputHandler {
         if (LocalVehiclePlayer.instance().onVehicle()) {
             AbstractVehicle vehicle = LocalVehiclePlayer.instance().vehicle;
             boolean previous = event.getScrollDeltaY() < 0;
+            if (WHEEL_ADJUST.isDown() && scrollStep(vehicle, player, previous)) {
+                event.setCanceled(true);
+                return;
+            }
+            if (WHEEL_VECTOR.isDown() && vehicle instanceof FixedWingVehicle fixed && fixed.thrustUnit != null) {
+                nozzleSteps += previous ? -1 : 1;
+                event.setCanceled(true);
+                return;
+            }
             if (vehicle.getOwnOperatorUnit(player) instanceof WeaponUnit) {
                 PacketDistributor.sendToServer(new ClientVehicleSwitchWeapon(vehicle.getId(), ClientVehicleSwitchWeapon.WeaponSwitchType.PRIMARY, previous));
                 // Cancel: vanilla scroll would otherwise cycle the hotbar slot too.
                 event.setCanceled(true);
             }
         }
+    }
+
+    /** Ctrl + wheel: up = flaps up / shift up, down = flaps down / shift down. False: nothing to adjust here. */
+    private static boolean scrollStep(AbstractVehicle vehicle, LocalPlayer player, boolean down) {
+        if (vehicle instanceof FixedWingVehicle) {
+            sendFlapStep(vehicle, down ? 1 : -1);
+            return true;
+        }
+        if (vehicle instanceof GroundVehicle ground && ground.transmission != null) {
+            if (!ground.automatic() && player.equals(vehicle.controlUnit.getOperator())
+                    && !ground.selectGear(down ? -1 : 1)) {
+                LocalVehiclePlayer.instance().sendMessage("tips.gear.reverse_moving");
+            }
+            return true;
+        }
+        return false;
     }
 
     private static void handleShoot(AbstractVehicle vehicle, LocalPlayer player) {
