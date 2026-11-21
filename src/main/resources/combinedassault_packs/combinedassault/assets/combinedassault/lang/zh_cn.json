@@ -81,6 +81,7 @@
   "entity.combinedassault.mim104": "MIM-104 爱国者拖车",
   "hitch.combinedassault.fifth_wheel": "牵引鞍座",
   "hitch.combinedassault.pintle": "拖钩",
+  "hitch.combinedassault.tow_rope": "拖绳",
   "hitch.combinedassault.lunette": "牵引环",
   "entity.combinedassault.assault_boat": "突击艇",
   "combinedassault.b2a": "B-2A 幽灵",
@@ -182,5 +183,11 @@
   "part.combinedassault.launcher_rack": "发射架",
   "part.combinedassault.radar_surface": "搜索雷达",
   "part.combinedassault.sonar_passive": "被动声呐",
-  "vehicle.weapon.ssm_launcher": "导弹发射装置"
+  "vehicle.weapon.ssm_launcher": "导弹发射装置",
+  "combinedassault.tunnelbore": "隧道钻机",
+  "entity.combinedassault.tunnelbore": "隧道钻机",
+  "part.combinedassault.tunnelbore.suspension_left": "左履带",
+  "part.combinedassault.tunnelbore.suspension_right": "右履带",
+  "part.combinedassault.tunnelbore.drill": "钻头",
+  "vehicle.weapon.drill": "旋转钻头"
 }

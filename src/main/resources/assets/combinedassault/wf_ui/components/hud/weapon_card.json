@@ -89,9 +89,19 @@
                             "color": "#ffff6040"
                           },
                           "else": {
-                            "type": "text",
-                            "text": "{primary.ammo} / {primary.capacity}",
-                            "color": "$ammo"
+                            "type": "when",
+                            "if": "primary.tool",
+                            "then": {
+                              "type": "when",
+                              "if": "primary.working",
+                              "then": {"type": "text", "text": "ACTIVE", "color": "#ff60ff60"},
+                              "else": {"type": "text", "text": "STOWED", "color": "$dim"}
+                            },
+                            "else": {
+                              "type": "text",
+                              "text": "{primary.ammo} / {primary.capacity}",
+                              "color": "$ammo"
+                            }
                           }
                         }
                       }
@@ -104,15 +114,22 @@
                       "child": {"type": "ammo_glyph", "size": 8}
                     },
                     {
+                      "type": "when",
+                      "if": "!primary.tool",
+                      "then": {
                       "type": "text",
                       "text": "{primary.round}",
                       "color": "$dim",
                       "max_width": "max(8, ($status || primary.capacity >= 100 ? 28 : primary.capacity >= 10 ? 40 : 50) - 10 * min(primary.round_variant_count, 3))"
+                      }
                     }
                   ]
                 }
               },
               {
+                "type": "when",
+                "if": "!primary.tool",
+                "then": {
                 "type": "place",
                 "x": 5,
                 "y": 31,
@@ -124,6 +141,7 @@
                   "fill": "$ammo_bar",
                   "back": "$well"
                 }
+              }
               },
               {
                 "type": "when",

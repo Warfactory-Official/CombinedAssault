@@ -19,6 +19,9 @@ public final class TowSolver {
     /** deg tractor<->trailer at fifth-wheel stops; past this = cab-and-trailer collision (jackknife). */
     public static final double JACKKNIFE_LIMIT = 78.0;
 
+    /** deg towed heading may differ from the tractor's on a cable; past it the towed vehicle would wrap round the tractor. */
+    public static final double CABLE_YAW_LIMIT = 100.0;
+
     /** Blocks over nominal length => break; a step finding a coupling this far open leaves it out. */
     public static final double BREAK_MARGIN = 4.0;
 

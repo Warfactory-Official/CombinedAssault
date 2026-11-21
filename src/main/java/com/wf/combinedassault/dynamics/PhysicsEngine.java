@@ -43,7 +43,7 @@ public class PhysicsEngine {
     /** Block cells pressed per tick, summed, before a jammed hull grinds through. */
     private static final int STUCK_DESTROY_THRESHOLD = 10;
     /** Hardness at or above which the vehicle cannot break the block. */
-    static final float UNBREAKABLE_HARDNESS = 20.0F;
+    public static final float UNBREAKABLE_HARDNESS = 20.0F;
     /** Most cells queued from one refused rotation (merged geometry). */
     private static final int MAX_ROTATION_RAM_CELLS = 27;
     /** Approach speed into blocking cells, b/t: pressing, not resting against. */

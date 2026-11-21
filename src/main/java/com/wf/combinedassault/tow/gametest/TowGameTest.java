@@ -106,6 +106,85 @@ public class TowGameTest {
         });
     }
 
+    /** Any ground vehicle gets the default rope; the howitzer's weight, not a cap, is what slows it. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
+    public static void aHumveeDragsAHowitzerOnItsRope(GameTestHelper helper) {
+        Lane lane = lane(helper, 13);
+        Train train = couple(helper, lane, TowMode.CABLE, CombinedAssault.modLocation("humvee"), TowInfo.ROPE_ID,
+                CombinedAssault.modLocation("m777"));
+        if (train == null) {
+            return;
+        }
+        Lane soloLane = lane(helper, 17);
+        AbstractVehicle solo = spawn(helper, soloLane, CombinedAssault.modLocation("humvee"), 0);
+        ArmorStand[] soloDriver = new ArmorStand[1];
+        double[] peak = new double[2];
+        Vec3[] start = new Vec3[1];
+        drive(helper, lane, train.tractor, 40, 160, tractor -> {
+            if (start[0] == null) {
+                start[0] = train.trailer.position();
+                soloDriver[0] = driver(soloLane.level, solo);
+            }
+            tractor.controlUnit.forward = true;
+            solo.controlUnit.reset();
+            solo.controlUnit.setOperator(soloDriver[0]);
+            solo.controlUnit.forward = true;
+            peak[0] = Math.max(peak[0], tractor.getDeltaMovement().horizontalDistance());
+            peak[1] = Math.max(peak[1], solo.getDeltaMovement().horizontalDistance());
+        }, () -> {
+            double moved = train.trailer.position().distanceTo(start[0]);
+            boolean towed = TowLinks.isTowed(train.trailer);
+            soloDriver[0].discard();
+            release(lane, train.tractor, train.trailer);
+            release(soloLane, solo);
+            if (!towed || moved < 5 || peak[0] > 0.7 * peak[1]) {
+                helper.fail(String.format(Locale.ROOT, "towed %s, howitzer moved %.1f, loaded peak %.3f, solo peak %.3f b/t (want < 0.7x solo)",
+                        towed, moved, peak[0], peak[1]));
+            }
+        });
+    }
+
+    /** Cable pairs collide; hitch pairs overlap by design. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    public static void aCablePairCollidesButAHitchPairOverlaps(GameTestHelper helper) {
+        Train cable = couple(helper, lane(helper, 14), TowMode.CABLE, CombinedAssault.modLocation("humvee"),
+                TowInfo.ROPE_ID, CombinedAssault.modLocation("m777"));
+        if (cable == null) {
+            return;
+        }
+        boolean cableCollides = cable.tractor.collidesWith(cable.trailer) && cable.trailer.collidesWith(cable.tractor);
+        release(lane(helper, 14), cable.tractor, cable.trailer);
+        Train hitch = couple(helper, lane(helper, 15), TowMode.HITCH);
+        if (hitch == null) {
+            return;
+        }
+        boolean hitchCollides = hitch.tractor.collidesWith(hitch.trailer) || hitch.trailer.collidesWith(hitch.tractor);
+        release(lane(helper, 15), hitch.tractor, hitch.trailer);
+        if (!cableCollides || hitchCollides) {
+            helper.fail("cable pair collides " + cableCollides + " (want true), hitch pair collides " + hitchCollides + " (want false)");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** No towable block at all: a ground vehicle still takes a cable. */
+    @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 100)
+    public static void anyGroundVehicleTakesACable(GameTestHelper helper) {
+        Lane lane = lane(helper, 16);
+        Train train = couple(helper, lane, TowMode.CABLE, CombinedAssault.modLocation("humvee"), TowInfo.ROPE_ID,
+                CombinedAssault.modLocation("m1a2"));
+        if (train == null) {
+            return;
+        }
+        boolean towed = TowLinks.isTowed(train.trailer);
+        release(lane, train.tractor, train.trailer);
+        if (!towed) {
+            helper.fail("m1a2 declares no towable block and did not take the rope");
+            return;
+        }
+        helper.succeed();
+    }
+
     /** Before: tractor awake while towing, each heartbeat woke the other half: 2 solves a tick for good. */
     @GameTest(templateNamespace = CombinedAssault.MOD_ID, template = TEMPLATE, timeoutTicks = 400)
     public static void aParkedTrainSleeps(GameTestHelper helper) {
@@ -367,9 +446,9 @@ public class TowGameTest {
             helper.fail("the tractor is missing a hitch");
             return;
         }
-        // centauro declares no towing at all => NOT_TOWABLE.
-        if (TowLinks.check(tractor, car, fifthWheel, TowMode.HITCH, false) != TowLinks.Refusal.NOT_TOWABLE) {
-            helper.fail("a vehicle that declares no towing should refuse as NOT_TOWABLE");
+        // centauro declares no towing: cable by default, so a rigid coupling is WRONG_MODE.
+        if (TowLinks.check(tractor, car, fifthWheel, TowMode.HITCH, false) != TowLinks.Refusal.WRONG_MODE) {
+            helper.fail("a vehicle that declares no towing should refuse a rigid coupling as WRONG_MODE");
             return;
         }
         // Trailer spawned beyond hitch reach => OUT_OF_REACH.
@@ -559,7 +638,13 @@ public class TowGameTest {
 
     @Nullable
     private static Train couple(GameTestHelper helper, Lane lane, TowMode mode, String hitchId, ResourceLocation towed) {
-        AbstractVehicle tractor = spawn(helper, lane, TRACTOR, 0);
+        return couple(helper, lane, mode, TRACTOR, hitchId, towed);
+    }
+
+    @Nullable
+    private static Train couple(GameTestHelper helper, Lane lane, TowMode mode, ResourceLocation tractorId, String hitchId,
+                                ResourceLocation towed) {
+        AbstractVehicle tractor = spawn(helper, lane, tractorId, 0);
         HitchInfo hitch = tractor.towing.hitch(hitchId);
         if (hitch == null) {
             helper.fail("the tractor declares no " + hitchId + "; check its towing block");

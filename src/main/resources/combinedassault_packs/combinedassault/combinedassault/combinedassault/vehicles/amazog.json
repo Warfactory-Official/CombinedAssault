@@ -1,5 +1,10 @@
 {
     "type": "combinedassault:rotary_wing_vehicle",
+    "towing": {
+        "towable": {
+            "cable": false
+        }
+    },
     "attributes": {
         "main_rotor_force": 216,
         "x_rot_speed_acceleration": 2.0,

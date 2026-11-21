@@ -1,13 +1,13 @@
 {
   "use": ["combinedassault:hud"],
   "root": {"type": "stack", "children": [
-    {"type": "place", "x": "floor(ui.width / 2) - 83", "y": "ui.height - 22gu - 4", "pivot": "bottom_right",
-      "child": {"type": "column", "gap": 2, "align": "end", "children": [
+    {"type": "place", "x": 4, "y": "ui.height - 4", "pivot": "bottom_left",
+      "child": {"type": "transform", "scale": 1.1, "pivot": "bottom_left", "child": {"type": "column", "gap": 2, "align": "start", "children": [
         {"type": "when", "if": "vehicle.radio", "then": {"type": "combinedassault:hud/radio"}},
         {"type": "combinedassault:hud/crew"}
-      ]}},
+      ]}}},
     {"type": "when", "if": "!local.third_person", "then": {"type": "combinedassault:hud/compass"}},
-    {"type": "when", "if": "!vehicle.none", "then": {"type": "combinedassault:hud/systems"}},
+    {"type": "combinedassault:hud/systems"},
     {"type": "combinedassault:hud/alerts"},
     {"type": "when", "if": "station.present", "then": {"type": "combinedassault:hud/station"}},
     {"type": "when", "if": "local.radar_full", "then": {"type": "stack", "children": [
@@ -15,10 +15,10 @@
       {"type": "place", "x": "ui.width - 140", "y": "ui.height / 2", "child": {"type": "combinedassault:vehicle_schematic", "length": 22, "hull_up": true}}
     ]}},
     {"type": "place", "x": "ui.width - 4", "y": "ui.height - 9 - (station.present && station.weapon_count > 0 ? 44 : 0)",
-      "pivot": "bottom_right", "child": {"type": "column", "gap": 2, "align": "end", "children": [
+      "pivot": "bottom_right", "child": {"type": "transform", "scale": 1.2, "pivot": "bottom_right", "child": {"type": "column", "gap": 2, "align": "end", "children": [
         {"type": "combinedassault:hud/key_hints_weapons"},
         {"type": "transform", "scale": 0.75, "pivot": "bottom_right", "child": {"type": "combinedassault:ammo_list"}}
-      ]}},
+      ]}}},
     {"type": "place", "x": "ui.width - floor(ui.width / 8)", "y": "ui.height / 2 + floor(ui.height / 5)",
       "child": {"type": "combinedassault:hit_panel"}},
     {"type": "when", "if": "local.wheel_driver && local.wheel_alpha > 0", "then": {"type": "stack", "children": [

@@ -90,6 +90,8 @@ public final class ShipHydrodynamics {
         public double list;
         /** Ballast-tank effectiveness, 0..1; below 1 a submarine cannot hold its depth. */
         public double ballast = 1.0;
+        /** false => depth order unbounded by {@code maxDepth} (seabed still bounds). */
+        public boolean depthCaps = true;
     }
 
     /** What the sea probe found under the hull this tick. */
@@ -302,7 +304,7 @@ public final class ShipHydrodynamics {
             depthSetting -= p.diveRate * c.ballast;
         }
         depthSetting += (1.0 - c.ballast) * p.diveRate * BALLAST_DRIFT;
-        double deepest = c.ballast < BALLAST_LOST ? Double.POSITIVE_INFINITY : p.maxDepth;
+        double deepest = c.ballast < BALLAST_LOST || !c.depthCaps ? Double.POSITIVE_INFINITY : p.maxDepth;
         if (!Double.isNaN(env.waterDepth)) {
             deepest = Math.min(deepest, env.waterDepth - p.draft - p.minKeelClearance);
         }

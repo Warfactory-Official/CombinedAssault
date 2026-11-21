@@ -11,6 +11,7 @@ import com.wf.combinedassault.naval.trial.TrialProfile;
 import com.wf.combinedassault.pack.IAnimationEntity;
 import com.wf.combinedassault.pack.IAnimationInstance;
 import com.wf.combinedassault.pack.client.vehicle.VehicleDisplay;
+import com.wf.combinedassault.vehicle.VehicleConfig;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.pojo.AimContext;
@@ -251,6 +252,7 @@ public class ShipVehicle extends AbstractVehicle
         controls.dive = controlUnit.down;
         controls.rise = controlUnit.up;
         controls.power = hasPower() ? getPower() / 100.0 * strain() : 0.0;
+        controls.depthCaps = VehicleConfig.server().depthCaps();
         tickCompartments();
         controls.speedScale = mobility.speedScale();
         controls.turnScale = mobility.turnScale();
@@ -438,6 +440,9 @@ public class ShipVehicle extends AbstractVehicle
                     living.setAirSupply(living.getMaxAirSupply());
                 }
             }
+        }
+        if (!controls.depthCaps) {
+            return;
         }
         if (model.imploded(params)) {
             interceptKill();

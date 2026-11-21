@@ -267,14 +267,14 @@ public final class VehicleCapture {
         p[7] = axle.y;
         p[8] = axle.z;
         s.entityRotation.transform(s.couplingLateral.set(1, 0, 0));
+        Vector3f own = s.entityRotation.transform(new Vector3f(0, 0, 1));
+        Vector3f lead = tractor.rotYXZ().transform(new Vector3f(0, 0, 1));
+        // Coupling behind the axle => towed tail-first.
+        double flip = towable.offset.z < towable.axle.z ? Math.PI : 0;
+        float yaw = (float) Mth.wrapDegrees(Math.toDegrees(Math.atan2(own.x, own.z) + flip - Math.atan2(lead.x, lead.z)));
+        s.couplingYaw = (float) Math.toRadians(yaw);
+        s.couplingYawLimit = (float) Math.toRadians(mode == TowMode.HITCH ? TowSolver.JACKKNIFE_LIMIT : TowSolver.CABLE_YAW_LIMIT);
         if (mode == TowMode.HITCH) {
-            Vector3f own = s.entityRotation.transform(new Vector3f(0, 0, 1));
-            Vector3f lead = tractor.rotYXZ().transform(new Vector3f(0, 0, 1));
-            // Coupling behind the axle => towed tail-first.
-            double flip = towable.offset.z < towable.axle.z ? Math.PI : 0;
-            float yaw = (float) Mth.wrapDegrees(Math.toDegrees(Math.atan2(own.x, own.z) + flip - Math.atan2(lead.x, lead.z)));
-            s.couplingYaw = (float) Math.toRadians(yaw);
-            s.couplingYawLimit = (float) Math.toRadians(TowSolver.JACKKNIFE_LIMIT);
             Quaternionf leadRotation = tractor.rotYXZ();
             leadRotation.transform(s.couplingRollAxis.set(0, 0, 1));
             Vector3f leadUp = leadRotation.transform(new Vector3f(0, 1, 0));

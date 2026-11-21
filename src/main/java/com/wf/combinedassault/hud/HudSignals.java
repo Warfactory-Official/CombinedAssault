@@ -9,6 +9,7 @@ import com.wf.combinedassault.radar.WarningReceiver;
 import com.wf.combinedassault.uav.fpv.client.FpvKeys;
 import com.wf.combinedassault.uav.fpv.payload.FpvPayloadTypes;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
+import com.wf.combinedassault.vehicle.VehicleConfig;
 import com.wf.combinedassault.vehicle.client.VehicleKeys;
 import com.wf.combinedassault.vehicle.drive.Transmission;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
@@ -18,6 +19,7 @@ import com.wf.combinedassault.vehicle.entity.WheeledVehicle;
 import com.wf.combinedassault.vehicle.light.VehicleLight;
 import com.wf.combinedassault.vehicle.pojo.WarnType;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.VehicleTool;
 import com.wf.combinedassault.pack.VehicleWeaponTypes;
 import com.wf.combinedassault.weapon.VehicleLoadedWeapon;
 import com.wf.combinedassault.weapon.VehicleMissile;
@@ -76,7 +78,7 @@ public final class HudSignals {
         Signals.text(SYSTEM, "label", 8, HudCache.SystemCell::label);
         Signals.num(SYSTEM, "state", HudCache.SystemCell::state);
         Signals.num(SYSTEM, "ratio", HudCache.SystemCell::ratio);
-        Signals.text(SEAT, "name", 32, HudCache::seatName);
+        Signals.text(SEAT, "name", 16, HudCache::seatName);
         Signals.bool(SEAT, "occupied", seat -> seat.passengerId != null && seat.passengerId >= 0);
         flight();
         ship();
@@ -120,12 +122,19 @@ public final class HudSignals {
         Signals.text(VEHICLE, "gear", 2, v -> v instanceof GroundVehicle g && g.transmission != null
                 ? Transmission.label(g.getGear()) : "");
         Signals.bool(VEHICLE, "lights", v -> !VehicleLight.of(v).isEmpty());
+        Signals.bool(VEHICLE, "engine", AbstractVehicle::isEngineOn);
+        Signals.bool(VEHICLE, "handbrake", v -> v instanceof GroundVehicle g && (g.getPedals() & GroundVehicle.HANDBRAKE) != 0);
+        Signals.bool(VEHICLE, "light_head", v -> (v.lightsOn() & VehicleLight.Kind.HEAD.bit()) != 0);
+        Signals.bool(VEHICLE, "light_high", v -> (v.lightsOn() & VehicleLight.Kind.HIGH.bit()) != 0);
+        Signals.bool(VEHICLE, "light_nav", v -> (v.lightsOn() & VehicleLight.Kind.NAV.bit()) != 0);
+        Signals.bool(VEHICLE, "light_search", v -> (v.lightsOn() & VehicleLight.Kind.SEARCH.bit()) != 0);
         Signals.bool(VEHICLE, "hitches", v -> !v.towing.hitches.isEmpty());
         Signals.bool(VEHICLE, "ship", v -> v instanceof ShipVehicle);
         Signals.items(VEHICLE, "systems", HudCache::systems, SYSTEM);
         Signals.num(VEHICLE, "system_count", v -> HudCache.systems(v).size());
         Signals.bool(VEHICLE, "rotary", v -> v instanceof RotaryWingVehicle);
         Signals.items(VEHICLE, "seats", v -> v.seats, SEAT);
+        Signals.num(VEHICLE, "seat_count", v -> v.seats.size());
         Signals.bool(VEHICLE, "rwr", v -> v.warningReceiver != null);
         Signals.bool(VEHICLE, "missile_incoming", v -> warned(v.warningReceiver, WarnType.MISSILE_LAUNCH));
         Signals.bool(VEHICLE, "being_locked", v -> warned(v.warningReceiver, WarnType.RADAR_LOCK));
@@ -215,6 +224,8 @@ public final class HudSignals {
         Signals.num(subject, "reload", AbstractVehicleWeapon::getReloadTime);
         Signals.num(subject, "reload_max", w -> w.getData().getReload() == null ? 0 : w.getData().getReload().getTime());
         Signals.bool(subject, "reloading", w -> w.getReloadTime() > 0);
+        Signals.bool(subject, "tool", w -> w instanceof VehicleTool);
+        Signals.bool(subject, "working", w -> w instanceof VehicleTool t && t.spinning());
         Signals.text(subject, "round", 24, w -> HudCache.roundLabel(shownRound(w)));
         Signals.items(subject, "round_variants", w -> HudCache.roundVariants(shownRound(w)), AmmoGlyph.VARIANT);
         Signals.num(subject, "round_variant_count", w -> HudCache.roundVariants(shownRound(w)).size());
@@ -292,7 +303,7 @@ public final class HudSignals {
         Signals.bool(SHIP, "afloat", ShipVehicle::afloat);
         Signals.bool(SHIP, "aground", ShipVehicle::aground);
         Signals.bool(SHIP, "shallow", ShipVehicle::shallow);
-        Signals.bool(SHIP, "crush", s -> s.isSubmarine() && s.depth() > s.params().crushDepth);
+        Signals.bool(SHIP, "crush", s -> s.isSubmarine() && VehicleConfig.server().depthCaps() && s.depth() > s.params().crushDepth);
         Signals.bool(SHIP, "power", AbstractVehicle::hasPower);
         Signals.text(SHIP, "order", 32, s -> HudCache.translate(order(s.throttle())));
     }

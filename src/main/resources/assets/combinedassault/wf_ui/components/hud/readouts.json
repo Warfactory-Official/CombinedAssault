@@ -28,10 +28,14 @@
       {"type": "combinedassault:hud/chip", "value": {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.fuel(vehicle.fuel_seconds|clockh)}", "color": "$white", "shadow": true, "scale": 0.75}}
     ]}},
     {"type": "when", "if": "local.driver && fixed_wing.present", "then": {"type": "row", "gap": 3, "children": [
-      {"type": "combinedassault:hud/chip", "value": {"type": "row", "children": [{"type": "text", "text": "{tr:ui.vehicle_rotary_wing.throttle_level}", "color": "$white", "shadow": true, "scale": 0.75}, {"type": "when", "if": "fixed_wing.brake", "then": {"type": "text", "text": "{tr:ui.brake}", "color": "$red", "shadow": true, "scale": 0.75}, "else": {"type": "when", "if": "trunc(fixed_wing.throttle) <= 100", "then": {"type": "text", "text": "{trunc(fixed_wing.throttle)}", "color": "$white", "shadow": true, "scale": 0.75}, "else": {"type": "text", "text": "{tr:ui.war_emergency_power}", "color": "$red", "shadow": true, "scale": 0.75}}}]}},
+      {"type": "combinedassault:hud/chip", "value": {"type": "row", "children": [{"type": "text", "text": "{tr:ui.vehicle_rotary_wing.throttle_level}", "color": "$white", "shadow": true, "scale": 0.75}, {"type": "when", "if": "fixed_wing.brake", "then": {"type": "text", "text": "{tr:ui.brake}", "color": "$red", "shadow": true, "scale": 0.75}, "else": {"type": "when", "if": "trunc(fixed_wing.throttle) <= 100", "then": {"type": "text", "text": "{trunc(fixed_wing.throttle)}", "color": "$white", "shadow": true, "scale": 0.75}, "else": {"type": "text", "text": "{tr:ui.war_emergency_power}", "color": "$red", "shadow": true, "scale": 0.75}}}, {"type": "sized", "w": 3, "h": 1}, {"type": "combinedassault:hud/aircraft_status"}]}},
       {"type": "combinedassault:hud/chip", "value": {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.altitude(trunc(vehicle.altitude))}", "color": "$white", "shadow": true, "scale": 0.75}},
       {"type": "combinedassault:hud/chip", "value": {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.fuel(vehicle.fuel_seconds|clockh)}", "color": "$white", "shadow": true, "scale": 0.75}}
     ]}},
+    {"type": "when", "if": "local.driver && !fixed_wing.present && (!vehicle.none || vehicle.lights)", "then": {"type": "combinedassault:hud/chip", "value": {"type": "combinedassault:hud/vehicle_status"}}},
+    {"type": "when", "if": "local.driver && ship.present", "then": {"type": "combinedassault:hud/chip", "value": {"type": "row", "children": [
+      {"type": "text", "text": "{tr:ui.vehicle_rotary_wing.throttle_level}", "color": "$white", "shadow": true, "scale": 0.75},
+      {"type": "text", "text": "{round(ship.throttle * 100)}", "color": "ship.throttle < -0.05 ? $amber : $white", "shadow": true, "scale": 0.75}]}}},
     {"type": "when", "if": "local.driver && vehicle.transmission", "then": {"type": "combinedassault:hud/chip", "value": {"type": "text", "text": "{tr:hud.combinedassault.gear(vehicle.gear)}", "color": "$white", "shadow": true, "scale": 0.75}}}
   ]}
 }

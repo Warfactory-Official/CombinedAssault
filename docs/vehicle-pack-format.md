@@ -505,7 +505,7 @@ Both ground types also take a top-level `landing_gear_part_id` where applicable.
 | field | type | default | notes |
 | --- | --- | --- | --- |
 | `main_rotor_force` | float | `13720` | N |
-| `ceiling` | float | `256` | |
+| `ceiling` | float | `256` | server `heightCaps = false` => ignored |
 | `x_rot_speed_acceleration` / `_max` | float | — | pitch rate authority and cap |
 | `y_rot_speed_acceleration` / `_max` | float | — | yaw |
 | `z_rot_speed_acceleration` / `_max` | float | — | roll |
@@ -521,7 +521,7 @@ Both ground types also take a top-level `landing_gear_part_id` where applicable.
 | --- | --- | --- |
 | `thrust` | float | `8000` | N |
 | `thrust_k` | float | `1.5` |
-| `ceiling` | float | `512` |
+| `ceiling` | float | `512` | server `heightCaps = false` => ignored |
 | `x_rot_input_step` | float | `0.2` |
 | `y_rot_input_step` | float | `0.5` |
 | `z_rot_input_step` | float | `0.2` |
@@ -753,6 +753,7 @@ Rounds have no recipes in CA or WFLib; crafting = pack (GregTech).
 | `combinedassault:missile` | [5.4](#54-missile) |
 | `combinedassault:decoy_flare` | flare key |
 | `combinedassault:laser` | `power` (rated wflib laser damage/tick, `1`), `range` (`96`), `energy_per_tick` (vehicle energy, `0.0005`); no ammo/reload; one beam tick per shot, first entity on the aim line |
+| `combinedassault:tool` | `dig` (collider `dig.id`, required), `mode` (`hold` fire key held; `toggle` press starts, next press stops), `energy_per_tick` (`0`); no ammo / reload / round; mines while working, engine on only ([§6.5](#65-colliders)); card shows ACTIVE / STOWED, no ammo or round row, no muzzle effects; selecting another weapon stops it. Part: `weapon` with no aim frames (fixed), `operator_on_weapon_unit: false` |
 
 ### 5.2 Fields every weapon has
 
@@ -846,7 +847,7 @@ Vehicle def `display` block; client only.
 | field | notes |
 | --- | --- |
 | `icon` | slot texture; `tools/model_icon.py <rig>` renders it from the model |
-| `controller` | `assets/<ns>/animation_controllers/<id>.json`; graph nodes `merge`, `blend`, `layered_blend`, `additive`, `script`, `bone_binding`. Ground `special_bindings` sources: `left_wheel_rotation` / `right_wheel_rotation` (param = radius; belt travel of the first left / right `track` loop; tracked + half-track), `throttle_pedal`, `brake_pedal`, `handbrake` (0..1, eased 0.12 s), `gear_lever_x` / `gear_lever_z` (degrees, transmission `lever`; H gate: crosses at N's x). Aircraft sources (eased 0.15 s): `stick_pitch` (+ fwd), `stick_roll` (+ right), `pedals` (+ right pedal fwd; rotary: yaw rate / `yRotSpeedMax`), -1..1; `throttle_lever` (fixed wing, 0..1 over 0..100·thrustK), `collective` (rotary, 0..1). Angle = source·multiplier + `offset`, then `min`/`max`; rows on same bone+axis sum (stabilator = pitch + roll). Missing bones skipped |
+| `controller` | `assets/<ns>/animation_controllers/<id>.json`; graph nodes `merge`, `blend`, `layered_blend`, `additive`, `script`, `bone_binding`. Ground `special_bindings` sources: `left_wheel_rotation` / `right_wheel_rotation` (param = radius; belt travel of the first left / right `track` loop; tracked + half-track), `tool_spin` (any vehicle; degrees, param = deg/s at full speed, default 360; eases up 1.2 s / down 2 s while the selected `tool` weapon works), `throttle_pedal`, `brake_pedal`, `handbrake` (0..1, eased 0.12 s), `gear_lever_x` / `gear_lever_z` (degrees, transmission `lever`; H gate: crosses at N's x). Aircraft sources (eased 0.15 s): `stick_pitch` (+ fwd), `stick_roll` (+ right), `pedals` (+ right pedal fwd; rotary: yaw rate / `yRotSpeedMax`), -1..1; `throttle_lever` (fixed wing, 0..1 over 0..100·thrustK), `collective` (rotary, 0..1). Angle = source·multiplier + `offset`, then `min`/`max`; rows on same bone+axis sum (stabilator = pitch + roll). Missing bones skipped |
 | `engine` | engine audio ([§6.10](#610-audio)) |
 | `cabin_muffle` | 0..1, default `0`: outside sound low-passed for a first-person rider of a protected seat; own door open x0.25, others x(1 - 0.5 open fraction) |
 | `tab_index` | creative tab order |
@@ -930,7 +931,12 @@ Role `collider`: a mesh node, the convex solid it bounds, in its frame. Collisio
 | `deck` | bool | `false` | others may stand / park / drive on it (wheels probe it; tilted piece = oriented box, lip <= 1 climbable) |
 | `world` | bool | `true` | false => vehicles only: blocks, hill fill, providers pass through. Ramp opened past the ground (C-5, CH-47: lip under the ground, no lift of the carrier) |
 | `name` | string | node name | readout label |
+| `dig` | object | absent | block-breaking zone, selected by a `tool` weapon ([§5.1](#51-type)); `{id, tool, level, speed, drops}` below |
 
+- `dig`: `id` string (required); `tool` `pickaxe` (default) / `axe` / `shovel` / `hoe` / `none`; `level` vanilla tier `wood` / `stone` / `iron` (default) / `gold` / `diamond` / `netherite`; `speed` float `6` (destroy speed on blocks `tool` is right for, others `1`); `drops` bool `true` (loot rolled against the tier's tool, only where harvestable).
+- Dig zone: cells within 0.35 of the box mined by vanilla progress `speed / hardness / 30` per tick (`/ 100` unharvestable, hardness 0 instant); cracks shown, decay 0.05 / tick off-zone. Wall (never mined, hull still collides): hardness < 0 or >= 20, `requiresCorrectToolForDrops` + tier-incorrect, WarForge `excavationVerdict` refusing (operator's faction; no player operator => outsider; claim rules follow wflib `excavationsRespectClaims`).
+- Zone collides with nothing itself (`solid: false`): the hull's other colliders stop the vehicle at the block, the tool eats it. Pad the box past the drawn head (front, sides) so edge angles do not snag; keep its bottom above the ground plane (floor cells inside reach are mined).
+- No `genHulls` extras => hand-made, kept through regeneration.
 - Every collider a convex flat-faced solid; checked on load, the bad face named. Closure unchecked: T-junction fine, missing face = hole. Mesh with >1 primitive => one face per primitive (CoACD quads); else coplanar triangles merged.
 - Compound: ground supports = downward faces (normal y < -0.3) of every solid `body` collider; other solid pieces posed in the main hull's frame. Turn geometry uses the `body` colliders' Z extent (not the main piece).
 - Debug view (`/combinedassault debug true` / inspect key): colliders white, solid if the solve meets the world through it; hit surface faint, `hit` modules, rotor discs.
@@ -1407,9 +1413,9 @@ forced to 0 for every ship.
 | `min_keel_clearance` | float | `1` | blocks under the keel below which the water reads as shallow |
 | `shallow_drag` | float | `2` | drag multiplier reached at zero clearance |
 | `submarine` | object | absent | present makes the hull a submarine: |
-| `submarine.max_depth` | float | `40` | deepest setting, blocks below the surface |
+| `submarine.max_depth` | float | `40` | deepest setting, blocks below the surface; server `depthCaps = false` => unbounded (seabed still stops it) |
 | `submarine.crush_depth` | float | `60` | past this the hull loses health: 2%/s at the line, ramping to 20%/s at `implode_depth` |
-| `submarine.implode_depth` | float | 1.5 x `crush_depth` | past this the hull is destroyed at once |
+| `submarine.implode_depth` | float | 1.5 x `crush_depth` | past this the hull is destroyed at once; `crush_depth` / `implode_depth` ignored when `depthCaps = false` |
 | `submarine.dive_rate` | float | `0.15` | blocks per tick the setting moves while space or shift is held |
 | `submarine.max_speed_submerged` | float | `0.4` | replaces `max_speed_forward` once the hull is under |
 | `submarine.dive_angle` | float | `12` | pitch adopted while changing depth |
@@ -1495,13 +1501,16 @@ that says nothing here cannot tow and cannot be towed.
 | `modes` | enum[] | `["hitch"]` | which couplings this point makes: `hitch`, `cable`, `sling` |
 | `accepts` | string[] | `[]` | vehicle ids, or `#tag` against the towed vehicle's own tags. Empty accepts anything towable |
 | `max_mass` | float | `0` | heaviest train this point will take, kg. Zero is no limit |
-| `cable_length` | float | `8` | blocks of cable (or sling) paid out |
+| `cable_length` | float | `8` | sling: blocks paid out. Cable: cap; paid out = distance at couple time, min 3. Cable coupling also stops the towed heading 100 deg off the tractor's |
+
+Ground vehicles without a cable hitch get `tow_rope`: `cable`, 8 blocks, rear of the hull, no `max_mass`.
 
 ### 14.2 `towable` — what can pull this vehicle
 
 | field | type | default | notes |
 | --- | --- | --- | --- |
-| `enabled` | bool | `false` | opt-in, like `mountable` |
+| `enabled` | bool | `false` | opt-in for `hitch` / `sling`; ground vehicles + aircraft take a cable regardless |
+| `cable` | bool | `true` | `false` => never cable-towed (drones) |
 | `tags` | string[] | `[]` | names a hitch can match with `#tag` |
 | `modes` | enum[] | `["cable"]` | which couplings this vehicle accepts |
 | `stowed_by` | string | none | switchable part id that must be off to couple; on => `NOT_STOWED`, tip `tips.tow.not_stowed`; deploying while towed refused |

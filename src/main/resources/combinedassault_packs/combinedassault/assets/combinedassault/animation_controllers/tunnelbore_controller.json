@@ -1,0 +1,22 @@
+{
+    "name": "tunnelbore_controller",
+    "parameters": {},
+    "graph": {
+        "type": "merge",
+        "inputs": [
+            {
+                "type": "bone_binding",
+                "special_bindings": [
+                    {
+                        "bones": [
+                            "drill_bit"
+                        ],
+                        "source": "tool_spin",
+                        "axis": "z",
+                        "param": 540
+                    }
+                ]
+            }
+        ]
+    }
+}

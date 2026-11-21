@@ -12,7 +12,8 @@ public final class VehicleConfig {
     }
 
     public record Server(double crewLoaderReloadMultiplier, List<String> thirdPersonClasses, List<String> thirdPersonAllow,
-                         List<String> thirdPersonDeny, int leadLoadTicks, int altitudeViewFloor) {
+                         List<String> thirdPersonDeny, int leadLoadTicks, int altitudeViewFloor, boolean heightCaps,
+                         boolean depthCaps) {
     }
 
     static final ModConfigSpec COMMON_SPEC;
@@ -31,10 +32,12 @@ public final class VehicleConfig {
     private static final ModConfigSpec.ConfigValue<List<? extends String>> THIRD_PERSON_DENY;
     private static final ModConfigSpec.IntValue LEAD_LOAD_TICKS;
     private static final ModConfigSpec.IntValue ALTITUDE_VIEW_FLOOR;
+    private static final ModConfigSpec.BooleanValue HEIGHT_CAPS;
+    private static final ModConfigSpec.BooleanValue DEPTH_CAPS;
     private static final ModConfigSpec.BooleanValue AUTOMATIC_ONLY;
     private static final ModConfigSpec.IntValue BREACH_SECONDS;
     private static volatile Common common = new Common(false, 1.0, true, true, true, 1.0);
-    private static volatile Server server = new Server(0.6, List.of("ground", "aircraft", "naval"), List.of(), List.of(), 40, 0);
+    private static volatile Server server = new Server(0.6, List.of("ground", "aircraft", "naval"), List.of(), List.of(), 40, 0, true, true);
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -69,6 +72,14 @@ public final class VehicleConfig {
                 .defineListAllowEmpty("allow", List.of(), () -> "", value -> value instanceof String);
         THIRD_PERSON_DENY = builder.comment("Vehicle ids refused regardless of class or allow.")
                 .defineListAllowEmpty("deny", List.of(), () -> "", value -> value instanceof String);
+        builder.pop();
+        builder.push("limits");
+        HEIGHT_CAPS = builder.comment("Aircraft ceilings bind (pack ceiling / ceiling_hard x ceilingRatio): air thins, engines flame out.",
+                        "false = no altitude limit.")
+                .define("heightCaps", true);
+        DEPTH_CAPS = builder.comment("Submarine max_depth, crush_depth and implode_depth bind.",
+                        "false = dive to the seabed, no crush damage.")
+                .define("depthCaps", true);
         builder.pop();
         builder.push("transmission");
         AUTOMATIC_ONLY = builder.comment("Every gearbox shifts itself, whatever its pack transmission.shift says.")
@@ -118,7 +129,7 @@ public final class VehicleConfig {
         } else if (spec == SERVER_SPEC) {
             server = new Server(CREW_LOADER_RELOAD_MULTIPLIER.get(), List.copyOf(THIRD_PERSON_CLASSES.get()),
                     List.copyOf(THIRD_PERSON_ALLOW.get()), List.copyOf(THIRD_PERSON_DENY.get()), LEAD_LOAD_TICKS.get(),
-                    ALTITUDE_VIEW_FLOOR.get());
+                    ALTITUDE_VIEW_FLOOR.get(), HEIGHT_CAPS.get(), DEPTH_CAPS.get());
         }
     }
 }

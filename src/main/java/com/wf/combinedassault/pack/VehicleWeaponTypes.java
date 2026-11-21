@@ -30,6 +30,10 @@ public class VehicleWeaponTypes {
         );
 
         register(
+                "tool", json -> GsonUtil.GSON.fromJson(json, VehicleToolWeaponData.class), VehicleTool::new
+        );
+
+        register(
                 "spray_pod", json -> GsonUtil.GSON.fromJson(json, VehicleSprayPodWeaponData.class), VehicleSprayPod::new
         );
 

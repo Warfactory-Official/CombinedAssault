@@ -5,6 +5,7 @@ import com.wf.combinedassault.hud.HudCache;
 import com.wf.combinedassault.hud.HudSubjects;
 import com.wf.combinedassault.naval.ShipHydrodynamics;
 import com.wf.combinedassault.naval.ShipVehicle;
+import com.wf.combinedassault.vehicle.VehicleConfig;
 import com.wf.gemrender.ui.Canvas;
 import com.wf.gemrender.ui.TextBuffer;
 import com.wf.wflib.ui.api.*;
@@ -145,7 +146,8 @@ public final class ShipWidgets {
                         float at = top + Math.round(mark * perBlock);
                         canvas.fill(x, at, x + 4, at + 1, SCALE);
                     }
-                    int colour = depth > params.crushDepth ? CaDraw.RED : depth > params.maxDepth ? CaDraw.AMBER : CaDraw.WHITE;
+                    boolean caps = VehicleConfig.server().depthCaps();
+                    int colour = caps && depth > params.crushDepth ? CaDraw.RED : caps && depth > params.maxDepth ? CaDraw.AMBER : CaDraw.WHITE;
                     float ordered = top + Math.round(Math.max(0, Math.min(1, ship.depthSetting() / crush)) * GAUGE_H);
                     canvas.fill(x + GAUGE_W, ordered - 1, x + GAUGE_W + 4, ordered + 2, LABEL);
                     float at = top + Math.round(Math.max(0, Math.min(1, depth / crush)) * GAUGE_H);

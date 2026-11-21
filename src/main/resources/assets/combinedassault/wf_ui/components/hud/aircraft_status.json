@@ -1,0 +1,16 @@
+{
+  "use": ["combinedassault:hud"],
+  "root": {"type": "row", "gap": 4, "children": [
+    {"type": "image", "texture": "combinedassault:textures/ui/status_engine.png", "w": 8, "h": 8, "tint": "vehicle.engine ? $white : #50ffffff"},
+    {"type": "combinedassault:hud/light_icon"},
+    {"type": "image", "texture": "combinedassault:textures/ui/status_gear.png", "w": 8, "h": 8, "tint": "fixed_wing.gear_up ? #50ffffff : $white"},
+    {"type": "when", "if": "fixed_wing.nozzle == fixed_wing.nozzle", "then": {"type": "image", "texture": "combinedassault:textures/ui/status_vtol.png", "w": 8, "h": 8, "tint": "(fixed_wing.nozzle > 1 || fixed_wing.nozzle < -1) ? $white : #50ffffff"}},
+    {"type": "when", "if": "fixed_wing.flaps == fixed_wing.flaps", "then": {"type": "sized", "w": 8, "h": 8, "child": {"type": "stack", "children": [
+      {"type": "place", "x": 0, "y": 3, "child": {"type": "rect", "w": 5, "h": 1.5, "color": "fixed_wing.flaps > 0.02 ? $white : #50ffffff"}},
+      {"type": "place", "x": 5, "y": 3, "child": {"type": "transform", "rotate": "fixed_wing.flaps * 40", "pivot": "left",
+        "child": {"type": "rect", "w": 3, "h": 1.5, "color": "fixed_wing.flaps > 0.02 ? $white : #50ffffff"}}}
+    ]}}},
+    {"type": "image", "texture": "combinedassault:textures/ui/status_airbrake.png", "w": 8, "h": 8, "tint": "fixed_wing.airbrake ? $white : #50ffffff"},
+    {"type": "when", "if": "fixed_wing.bays > 0", "then": {"type": "when", "if": "fixed_wing.bay_open", "then": {"type": "image", "texture": "combinedassault:textures/ui/status_bay_open.png", "w": 8, "h": 8, "tint": "$white"}, "else": {"type": "image", "texture": "combinedassault:textures/ui/status_bay_closed.png", "w": 8, "h": 8, "tint": "#50ffffff"}}}
+    ]}
+}

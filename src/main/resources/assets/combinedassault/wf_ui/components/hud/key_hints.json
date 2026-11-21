@@ -8,7 +8,7 @@
     "then": {
       "type": "place",
       "x": 4,
-      "y": "ui.height - 6",
+      "y": "ui.height - 8 - 1.1 * (max(0, min(5, vehicle.seat_count) * 13 - 4) + (vehicle.radio ? 11 : 0))",
       "pivot": "bottom_left",
       "child": {
         "type": "column",
@@ -34,18 +34,6 @@
           },
           {
             "type": "key_hint",
-            "if": "local.sight_screen_seat",
-            "label": "{tr:hud.combinedassault.hint.gun_sight}",
-            "key": "key.combinedassault.magnification_change.desc"
-          },
-          {
-            "type": "key_hint",
-            "if": "local.periscope_seat",
-            "label": "{tr:hud.combinedassault.hint.periscope}",
-            "key": "key.combinedassault.magnification_change.desc"
-          },
-          {
-            "type": "key_hint",
             "if": "!local.scope",
             "label": "{tr:hud.combinedassault.hint.view}",
             "key": "key.combinedassault.switch_view.desc"
@@ -67,20 +55,6 @@
             "if": "local.driver && !vehicle.none",
             "label": "{tr:hud.combinedassault.hint.engine}",
             "key": "key.combinedassault.toggle_engine.desc"
-          },
-          {
-            "type": "key_hint",
-            "if": "local.driver && vehicle.ground",
-            "label": "{tr:hud.combinedassault.hint.drive}",
-            "key": "key.combinedassault.forward.desc",
-            "key2": "key.combinedassault.backward.desc"
-          },
-          {
-            "type": "key_hint",
-            "if": "local.driver && vehicle.ground",
-            "label": "{tr:hud.combinedassault.hint.steer}",
-            "key": "key.combinedassault.left.desc",
-            "key2": "key.combinedassault.right.desc"
           },
           {
             "type": "key_hint",
@@ -149,6 +123,18 @@
             "label": "{tr:hud.combinedassault.hint.flaps}",
             "key": "key.combinedassault.flaps_down.desc",
             "key2": "key.combinedassault.flaps_up.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "local.driver && fixed_wing.bays > 0",
+            "label": "{tr:hud.combinedassault.hint.bay}",
+            "key": "key.combinedassault.toggle_weapon_bay.desc"
+          },
+          {
+            "type": "key_hint",
+            "if": "local.driver && !vehicle.none",
+            "label": "{tr:hud.combinedassault.hint.vehicle_lock}",
+            "key": "key.combinedassault.cycle_lock.desc"
           }
         ]
       }

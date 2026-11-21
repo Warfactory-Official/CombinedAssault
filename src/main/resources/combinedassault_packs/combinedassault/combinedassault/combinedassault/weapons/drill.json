@@ -1,0 +1,9 @@
+{
+  "type": "combinedassault:tool",
+  "name": "vehicle.weapon.drill",
+  "dig": "drill",
+  "mode": "hold",
+  "shoot_interval": 50,
+  "max_capacity": 1,
+  "energy_per_tick": 0.05
+}

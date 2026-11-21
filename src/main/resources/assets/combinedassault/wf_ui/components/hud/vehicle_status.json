@@ -1,0 +1,68 @@
+{
+ "use": [
+  "combinedassault:hud"
+ ],
+ "root": {
+  "type": "row",
+  "gap": 4,
+  "children": [
+   {
+    "type": "when",
+    "if": "!vehicle.none",
+    "then": {
+     "type": "image",
+     "texture": "combinedassault:textures/ui/status_engine.png",
+     "w": 8,
+     "h": 8,
+     "tint": "vehicle.engine ? $white : #50ffffff"
+    }
+   },
+   {
+    "type": "when",
+    "if": "vehicle.wheeled",
+    "then": {
+     "type": "image",
+     "texture": "combinedassault:textures/ui/status_handbrake.png",
+     "w": 8,
+     "h": 8,
+     "tint": "vehicle.handbrake ? $red : #50ffffff"
+    }
+   },
+   {
+    "type": "combinedassault:hud/light_icon"
+   },
+   {
+    "type": "when",
+    "if": "vehicle.ship",
+    "then": {
+     "type": "row",
+     "gap": 4,
+     "children": [
+      {
+       "type": "when",
+       "if": "vehicle.lights",
+       "then": {
+        "type": "image",
+        "texture": "combinedassault:textures/ui/status_nav.png",
+        "w": 8,
+        "h": 8,
+        "tint": "vehicle.light_nav ? $white : #50ffffff"
+       }
+      },
+      {
+       "type": "when",
+       "if": "vehicle.lights",
+       "then": {
+        "type": "image",
+        "texture": "combinedassault:textures/ui/status_search.png",
+        "w": 8,
+        "h": 8,
+        "tint": "vehicle.light_search ? $white : #50ffffff"
+       }
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

@@ -109,6 +109,7 @@
   "entity.combinedassault.mim104": "MIM-104 Patriot trailer",
   "hitch.combinedassault.fifth_wheel": "fifth wheel",
   "hitch.combinedassault.pintle": "pintle hook",
+  "hitch.combinedassault.tow_rope": "tow rope",
   "hitch.combinedassault.lunette": "lunette ring",
   "entity.combinedassault.assault_boat": "Assault Boat",
   "combinedassault.b2a": "B-2A Spirit",
@@ -226,5 +227,11 @@
   "part.combinedassault.launcher_rack": "Launcher rack",
   "part.combinedassault.radar_surface": "Search radar",
   "part.combinedassault.sonar_passive": "Passive sonar",
-  "vehicle.weapon.ssm_launcher": "Missile launcher"
+  "vehicle.weapon.ssm_launcher": "Missile launcher",
+  "combinedassault.tunnelbore": "Tunnel Bore",
+  "entity.combinedassault.tunnelbore": "Tunnel Bore",
+  "part.combinedassault.tunnelbore.suspension_left": "Left track",
+  "part.combinedassault.tunnelbore.suspension_right": "Right track",
+  "part.combinedassault.tunnelbore.drill": "Drill",
+  "vehicle.weapon.drill": "Rotary drill"
 }

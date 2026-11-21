@@ -41,7 +41,7 @@ public final class CaHudPresets {
         add("optical_scope", p -> new ScopeWidgets.OpticalScope());
         add("scope_sight", p -> new ScopeWidgets.ScopeSight(p.expr("color")));
         add("engagement_envelope", p -> new ScopeWidgets.EngagementEnvelope(p.expr("color")));
-        add("vehicle_schematic", p -> new ScopeWidgets.VehicleSchematic(p.number("length", 0), p.flag("hull_up", false), p.flag("systems", false)));
+        add("vehicle_schematic", p -> new ScopeWidgets.VehicleSchematic(p.number("length", 0), p.expr("fit", "0"), p.flag("hull_up", false), p.flag("systems", false)));
         add("debug_dump", p -> new DebugDump());
         add("mfd_situation", p -> new MfdWidgets.Situation(p.number("w"), p.number("h")));
         add("mfd_adi", p -> new MfdWidgets.Adi(p.number("w"), p.number("h")));

@@ -330,7 +330,7 @@ public class RotaryWingVehicle extends AbstractVehicle
             scale *= Math.min(2, Math.max(1, -dVV / 0.05));
         }
         // Air thins above y=64: engine + blade efficiency taper from there to ceiling.
-        double scaleAir = position().y < 64 ? 1 : Math.pow(Math.max(0, ceiling - position().y), 0.2) / Math.pow(ceiling - 64, 0.2);
+        double scaleAir = AirLimits.density(position().y, AirLimits.ceiling(ceiling), 0.2);
         if (position().y > flameoutY() && airSpeed.y > 0) {
             airSpeed = new Vec3(airSpeed.x, 0, airSpeed.z);
         }

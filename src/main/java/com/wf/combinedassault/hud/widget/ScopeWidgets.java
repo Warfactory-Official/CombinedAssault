@@ -202,14 +202,15 @@ public final class ScopeWidgets {
      * Top-down hull schematic rotated to the operator's traverse, one baked sprite per part bone
      * ({@link SchematicSprites}); own station blue, damage steps yellow/orange/red, destroyed red. Boxes while the
      * model has no sprites. {@code length} = max drawn length (default 50), reached at {@link #REFERENCE_BLOCKS};
-     * shorter hulls draw at {@code length * ln(1+L)/ln(1+REFERENCE_BLOCKS)}; {@code hullUp} keeps the hull's nose up instead of following the traverse.
+     * {@code fit} > 0 (px): longest side drawn at exactly {@code fit}, linear; else shorter hulls draw at {@code length * ln(1+L)/ln(1+REFERENCE_BLOCKS)}; {@code hullUp} keeps the hull's nose up instead of following the traverse.
      */
-    public record VehicleSchematic(float length, boolean hullUp, boolean systems) implements WidgetDef {
+    public record VehicleSchematic(float length, String fit, boolean hullUp, boolean systems) implements WidgetDef {
         static final float REFERENCE_BLOCKS = 40.0f;
 
         @Override
         public Widget create(Binder binder) {
             SubjectRef<AbstractVehicle> vehicleRef = binder.subject(HudSubjects.VEHICLE);
+            NumProp fitProp = binder.num(fit);
             return new Plain() {
                 private final Vector3f axisX = new Vector3f();
                 private final Vector3f axisZ = new Vector3f();
@@ -242,7 +243,9 @@ public final class ScopeWidgets {
                     if (sheet.state() == SchematicSprites.Sheet.State.READY) {
                         blocks = Math.max(4.0f, sheet.result().extent());
                     }
-                    float shown = (length > 0 ? length : 50.0f) * Math.min(1.0f, (float) (Math.log1p(blocks) / Math.log1p(REFERENCE_BLOCKS)));
+                    float fitted = (float) fitProp.get(ev);
+                    float shown = fitted > 0 ? fitted
+                            : (length > 0 ? length : 50.0f) * Math.min(1.0f, (float) (Math.log1p(blocks) / Math.log1p(REFERENCE_BLOCKS)));
                     float scale = shown / 10.0f / blocks;
                     Player player = LocalVehiclePlayer.instance().getPlayer();
                     PartUnit<?> own = vehicle.getOwnOperatorUnit(player);

@@ -328,7 +328,7 @@ public class BaseVehicleData<T extends AbstractVehicle> {
         List<ConvexHull> bodyHulls = new ArrayList<>();
         for (ModelRig.Collider collider : rig.colliders()) {
             VehicleCubeOBB built = VehicleCubeOBB.init(frameGroups.get(collider.frame()), collider.hull(), collider.deck(),
-                    new HullTag(collider.name(), collider.solid(), collider.world()));
+                    new HullTag(collider.name(), collider.solid(), collider.world())).withDig(collider.dig());
             hasDeckGeometry |= collider.deck();
             if (collider.frame() != ModelRig.BODY) {
                 continue;

@@ -87,4 +87,20 @@ class ShipHydrodynamicsTest {
         assertTrue(m.imploded(p));
         assertFalse(m.imploded(params(false)));
     }
+
+    @Test
+    void theDepthOrderStopsAtMaxDepthUnlessCapsAreOff() {
+        ShipHydrodynamics.Params p = params(true);
+        ShipHydrodynamics capped = new ShipHydrodynamics();
+        ShipHydrodynamics.Controls c = new ShipHydrodynamics.Controls();
+        c.dive = true;
+        run(capped, p, level(p), c, 1000);
+        assertEquals(p.maxDepth, capped.depthSetting, 1e-9);
+
+        ShipHydrodynamics free = new ShipHydrodynamics();
+        c.depthCaps = false;
+        run(free, p, level(p), c, 1000);
+        assertTrue(free.depthSetting > p.maxDepth + 10, "setting " + free.depthSetting);
+        assertTrue(free.depthSetting <= sea().waterDepth - p.draft - p.minKeelClearance, "seabed still bounds " + free.depthSetting);
+    }
 }

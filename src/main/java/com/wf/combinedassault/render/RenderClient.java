@@ -17,7 +17,10 @@ import com.wf.combinedassault.render.handler.RenderLivingHandler;
 import com.wf.combinedassault.render.particle.*;
 import com.wf.combinedassault.render.shader.ModShaders;
 import com.wf.combinedassault.render.shader.OverloadHandler;
+import com.wf.combinedassault.debug.DebugCommands;
+import com.wf.combinedassault.debug.PhysicsTelemetry;
 import com.wf.combinedassault.render.util.CollisionMeshRenderer;
+import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import com.wf.combinedassault.vehicle.VehicleContent;
 import com.wf.combinedassault.vehicle.util.VectorUtil;
 import com.wf.wflib.core.api.WFSystems;
@@ -48,6 +51,8 @@ final class RenderClient {
         NeoForge.EVENT_BUS.register(RenderLivingHandler.class);
         NeoForge.EVENT_BUS.register(OverloadHandler.class);
         NeoForge.EVENT_BUS.register(CollisionMeshRenderer.class);
+        NeoForge.EVENT_BUS.register(PhysicsTelemetry.class);
+        NeoForge.EVENT_BUS.addListener(RegisterClientCommandsEvent.class, DebugCommands::register);
         NeoForge.EVENT_BUS.register(VehicleRender.class);
         NeoForge.EVENT_BUS.register(VectorUtil.class);
     }

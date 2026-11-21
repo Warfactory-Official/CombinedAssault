@@ -1010,6 +1010,13 @@ public abstract class AbstractVehicle extends ContainerCraft
         this.seats.clear();
         this.vehicleCubeOBBs.addAll(vehicleStruct.obbs());
         this.mainCubeOBB = vehicleStruct.mainCubeOBB();
+        if (mainCubeOBB != null) {
+            if (this instanceof GroundVehicle) {
+                this.towing = vehicleData.getTowing().forGround(mainCubeOBB);
+            } else if (this instanceof FixedWingVehicle || this instanceof RotaryWingVehicle) {
+                this.towing = vehicleData.getTowing().forAircraft(mainCubeOBB);
+            }
+        }
         this.structureLength = vehicleData.getStructureLength();
         this.bodyDepth = vehicleData.getBodyDepth();
         BaseVehicleData.PartUnitsAndSeats partUnitsAndSeats = vehicleData.createPartUnits(this);
@@ -1743,6 +1750,12 @@ public abstract class AbstractVehicle extends ContainerCraft
     @Override
     public List<OBB> getOBBs() {
         return activeOBBs;
+    }
+
+    /** Every collider piece, body then parts, posed as of {@link #updateOBBs}; the OBB list's order. */
+    public List<VehicleCubeOBB> colliderPieces() {
+        updateOBBs();
+        return allCubeOBBs == null ? List.of() : allCubeOBBs;
     }
 
     @Nullable
@@ -3503,7 +3516,7 @@ public abstract class AbstractVehicle extends ContainerCraft
     boolean hullContacts(AbstractVehicle vehicle) {
         boolean deck = vehicle.carrierLink().carrier() == this || carrierLink.carrier() == vehicle
                 || standsOnDeckOf(vehicle, this) || standsOnDeckOf(this, vehicle);
-        return !deck && !carriedBy(this, vehicle) && !carriedBy(vehicle, this) && !TowLinks.sameTrain(this, vehicle)
+        return !deck && !carriedBy(this, vehicle) && !carriedBy(vehicle, this) && !TowLinks.overlaps(this, vehicle)
                 && !(vehicle instanceof VehiclePart part && part.leaving(this)) && !(this instanceof VehiclePart part && part.leaving(vehicle));
     }
 

@@ -1,7 +1,9 @@
 package com.wf.combinedassault.ballistics.hit;
 
 import com.google.gson.JsonObject;
+import com.wf.combinedassault.dynamics.dig.DigSpec;
 import com.wf.wflib.physics.api.ConvexHull;
+import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Comparator;
 import org.joml.Matrix4f;
@@ -18,7 +20,7 @@ import java.util.*;
  */
 public record ModelRig(List<Frame> frames, int[] nodeFrame, List<Collider> colliders) {
 
-    private static final Set<String> COLLIDER_KEYS = Set.of("main", "deck", "solid", "world", "name", "hit");
+    private static final Set<String> COLLIDER_KEYS = Set.of("main", "deck", "solid", "world", "name", "hit", "dig");
     /** Vertex weld and coplanarity, blocks. */
     private static final float WELD = 1.0e-4f;
     private static final float PLANE = 1.0e-4f;
@@ -34,7 +36,7 @@ public record ModelRig(List<Frame> frames, int[] nodeFrame, List<Collider> colli
 
     /** @param world false => vehicles only: blocks, hill fill, providers pass through (ramp lip below the ground) */
     public record Collider(int frame, String node, ConvexHull hull, boolean main, boolean deck, boolean solid, boolean world,
-                           String name) {
+                           String name, @Nullable DigSpec dig) {
     }
 
     public static final int BODY = 0;
@@ -132,7 +134,8 @@ public record ModelRig(List<Frame> frames, int[] nodeFrame, List<Collider> colli
                     meta.has("deck") && meta.get("deck").getAsBoolean(),
                     !meta.has("solid") || meta.get("solid").getAsBoolean(),
                     !meta.has("world") || meta.get("world").getAsBoolean(),
-                    meta.has("name") ? meta.get("name").getAsString() : node.name()));
+                    meta.has("name") ? meta.get("name").getAsString() : node.name(),
+                    meta.has("dig") ? DigSpec.parse(meta.getAsJsonObject("dig"), source + ": collider " + node.name()) : null));
         }
         if (colliders.stream().filter(Collider::main).count() > 1) {
             throw new IllegalArgumentException(source + ": more than one main collider");

@@ -1,0 +1,6 @@
+{
+  "use": ["combinedassault:hud"],
+  "root": {"type": "when", "if": "vehicle.lights", "then": {"type": "when", "if": "vehicle.light_high",
+    "then": {"type": "image", "texture": "combinedassault:textures/ui/status_light_high.png", "w": 8, "h": 8, "tint": "#ff5aa8ff"},
+    "else": {"type": "image", "texture": "combinedassault:textures/ui/status_light_head.png", "w": 8, "h": 8, "tint": "vehicle.light_head ? $white : #50ffffff"}}}
+}

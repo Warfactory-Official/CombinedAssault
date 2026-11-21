@@ -2,7 +2,6 @@ package com.wf.combinedassault.render.util;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.wf.combinedassault.vehicle.client.VehicleKeys;
 import com.wf.wflib.core.api.client.DebugGate;
 import com.wf.wflib.physics.api.ChunkCollisionCache;
 import com.wf.wflib.physics.api.SectionCollision;
@@ -12,7 +11,6 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -42,6 +40,10 @@ public final class CollisionMeshRenderer {
 
         private final String label;
 
+        public String label() {
+            return label;
+        }
+
         Mode(String label) {
             this.label = label;
         }
@@ -66,23 +68,19 @@ public final class CollisionMeshRenderer {
         return mode;
     }
 
+    public static Mode next() {
+        return MODES[(mode.ordinal() + 1) % MODES.length];
+    }
+
+    public static void setMode(Mode next) {
+        mode = next;
+        if (mode == Mode.OFF) {
+            CollisionMeshDebug.clear();
+        }
+    }
+
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
-        while (VehicleKeys.TOGGLE_COLLISION_DEBUG.consumeClick()) {
-            if (!DebugGate.allowed()) {
-                mode = Mode.OFF;
-                continue;
-            }
-            mode = MODES[(mode.ordinal() + 1) % MODES.length];
-            if (mode == Mode.OFF) {
-                CollisionMeshDebug.clear();
-            }
-            Minecraft minecraft = Minecraft.getInstance();
-            if (minecraft.player != null) {
-                minecraft.player.displayClientMessage(
-                        Component.literal("Vehicle collision overlay: " + mode.label), true);
-            }
-        }
         if (mode == Mode.OFF || !DebugGate.allowed()) {
             return;
         }

@@ -8,6 +8,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,9 @@ public final class TowLinks {
 
     /** Blocks. */
     public static final double COUPLE_REACH = 3.5;
+
+    /** Cable paid out = distance at couple time (no slack to swing on), floored here, capped by the hitch's {@code cable_length}. */
+    private static final double MIN_CABLE = 3.0;
 
     /** Retry period, ticks. */
     private static final int RELINK_INTERVAL = 10;
@@ -188,9 +192,24 @@ public final class TowLinks {
         return mass;
     }
 
-    /** Tractor+trailer hulls deliberately overlap (fifth-wheel: trailer nose over tractor's rear axle) => same-train pairs must not push each other apart. */
-    public static boolean sameTrain(AbstractVehicle one, AbstractVehicle other) {
-        return one != other && head(one) == head(other);
+    /** Joined by hitch / sling links only: hulls deliberately overlap (fifth-wheel: trailer nose over the tractor's rear axle) => no mutual push. A cable anywhere between => collide. */
+    public static boolean overlaps(AbstractVehicle one, AbstractVehicle other) {
+        return rigidAncestor(one, other) || rigidAncestor(other, one);
+    }
+
+    private static boolean rigidAncestor(AbstractVehicle towed, AbstractVehicle ancestor) {
+        AbstractVehicle at = towed;
+        for (int guard = 0; guard < 16; guard++) {
+            TowLink link = at.towLink();
+            if (link == null || link.mode() == TowMode.CABLE) {
+                return false;
+            }
+            at = link.tractor();
+            if (at == ancestor) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Must not sleep: towed by a tractor that's moving, airborne, or gone. Tractor: its own motion decides (parked train stepped every tick otherwise). */
@@ -280,7 +299,8 @@ public final class TowLinks {
         if (check(tractor, towed, hitch, mode, false) != Refusal.NONE) {
             return false;
         }
-        double cable = mode.rope() ? hitch.cableLength : 0;
+        double cable = mode == TowMode.CABLE ? Mth.clamp(hitchPoint(tractor, hitch).distanceTo(attachPoint(towed, mode)),
+                MIN_CABLE, hitch.cableLength) : mode.rope() ? hitch.cableLength : 0;
         TowLink link = new TowLink(tractor, hitch.id, mode, cable);
         towed.setTowLink(link);
         towed.setPendingTow(null);

@@ -1,5 +1,6 @@
 package com.wf.combinedassault.dynamics.structure;
 
+import com.wf.combinedassault.dynamics.dig.DigSpec;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.geom.api.OBB;
 import com.wf.wflib.physics.api.ConvexHull;
@@ -30,6 +31,9 @@ public class VehicleCubeOBB implements HullPiece {
     private ConvexHull hull;
     /** What this piece is. Never null: an untagged cube gets {@link HullTag#DEFAULT}. */
     private HullTag tag = HullTag.DEFAULT;
+    /** Block-breaking zone this piece is, or null. */
+    @Nullable
+    private DigSpec dig;
     public VehicleCubeGroup group;
     private boolean deck;
     private final Vector3f localCenter = new Vector3f();
@@ -81,6 +85,7 @@ public class VehicleCubeOBB implements HullPiece {
         this.group = origin.group;
         this.hull = origin.hull;
         this.tag = origin.tag;
+        this.dig = origin.dig;
         this.deck = origin.deck;
         this.initSpacing();
         this.offset = origin.offset;
@@ -133,6 +138,16 @@ public class VehicleCubeOBB implements HullPiece {
     @Override
     public ConvexHull hull() {
         return hull;
+    }
+
+    @Nullable
+    public DigSpec dig() {
+        return dig;
+    }
+
+    public VehicleCubeOBB withDig(@Nullable DigSpec dig) {
+        this.dig = dig;
+        return this;
     }
 
     /** This piece's tag and whether it is solid. Never null. */

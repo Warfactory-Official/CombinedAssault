@@ -8,6 +8,7 @@ import com.wf.combinedassault.vehicle.part.PartUnit;
 import com.wf.combinedassault.vehicle.part.RotatableUnit;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
 import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
+import com.wf.combinedassault.weapon.VehicleTool;
 import com.wf.combinedassault.weapon.VehicleWeaponAgent;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import net.minecraft.util.Mth;
@@ -19,6 +20,9 @@ public class VehicleContext<E extends AbstractVehicle> extends EntityContext<E> 
 
     /** Ground covered in one frame past which this is a teleport, not a roll, in blocks. */
     private static final double MAX_STEP = 2.0;
+    /** Seconds to full {@code tool_spin} speed, and back to rest. */
+    private static final float SPIN_UP = 1.2f;
+    private static final float SPIN_DOWN = 2.0f;
 
     /** Set the first time a binding asks for the roll, so a vehicle with no wheels never measures one. */
     private boolean rolls;
@@ -37,6 +41,9 @@ public class VehicleContext<E extends AbstractVehicle> extends EntityContext<E> 
         super.tick();
         if (rolls) {
             advanceRoll();
+        }
+        if (spins) {
+            advanceSpin(frameSeconds());
         }
     }
 
@@ -66,8 +73,34 @@ public class VehicleContext<E extends AbstractVehicle> extends EntityContext<E> 
         return (float) (rolled / (2 * Math.PI * radius) * 360.0 % 360.0);
     }
 
+    /** Whether the {@code tool_spin} binding was asked: measured only then. */
+    private boolean spins;
+    private float spinEase;
+    private float spinDegrees;
+    /** Degrees per second at full speed: the binding's param. */
+    private float spinRate = 360f;
+
+    private void advanceSpin(float seconds) {
+        boolean on = false;
+        for (PartUnit<?> part : entity.getPartUnits()) {
+            if (part instanceof WeaponUnit unit && unit.getCurrentWeapon().orElse(null) instanceof VehicleTool tool && tool.spinning()) {
+                on = true;
+                break;
+            }
+        }
+        spinEase = Mth.clamp(spinEase + (on ? seconds / SPIN_UP : -seconds / SPIN_DOWN), 0f, 1f);
+        spinDegrees = (spinDegrees + spinEase * spinRate * seconds) % 360f;
+    }
+
     @Override
     public float getBindingValue(String source, Float param) {
+        if ("tool_spin".equals(source)) {
+            spins = true;
+            if (param != null) {
+                spinRate = param;
+            }
+            return spinDegrees;
+        }
         if ("wheel_rotation".equals(source)) {
             rolls = true;
             return getWheelDegrees(param != null ? param : 0.5f);

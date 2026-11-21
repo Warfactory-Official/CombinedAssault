@@ -34,7 +34,7 @@
   "parts": [
     {
       "id": "suspension_left",
-      "name": "part.flans_utility.tunnelbore.suspension_left",
+      "name": "part.combinedassault.tunnelbore.suspension_left",
       "type": "combinedassault:track",
       "is_seat": false,
       "spring_stiffness": 240000,
@@ -47,7 +47,7 @@
     },
     {
       "id": "suspension_right",
-      "name": "part.flans_utility.tunnelbore.suspension_right",
+      "name": "part.combinedassault.tunnelbore.suspension_right",
       "type": "combinedassault:track",
       "is_seat": false,
       "spring_stiffness": 240000,
@@ -66,12 +66,27 @@
       "crew_roles": [
         "driver"
       ]
+    },
+    {
+      "id": "drill",
+      "name": "part.combinedassault.tunnelbore.drill",
+      "type": "combinedassault:weapon",
+      "crew_roles": [
+        "driver"
+      ],
+      "operator_on_weapon_unit": false,
+      "rot_info": {
+        "need_power": false
+      },
+      "weapons": [
+        "combinedassault:drill"
+      ]
     }
   ],
-  "model": "flans_utility:models/vehicle/tunnelbore/tunnelbore.glb",
+  "model": "combinedassault:models/ground/tunnelbore/tunnelbore.glb",
   "display": {
     "tab_index": 900,
-    "icon": "flans_utility:textures/slot/tunnelbore.png",
+    "icon": "combinedassault:textures/slot/tunnelbore.png",
     "engine": {
       "start": {
         "event": "combinedassault:lav150_engine_start",
@@ -148,8 +163,9 @@
     },
     "cabin_muffle": 0.8,
     "track": {
-      "model": "flans_utility:models/effect/tunnelbore_track_link.glb",
+      "model": "combinedassault:models/effect/tunnelbore_track_link.glb",
       "module_length": 0.15
-    }
+    },
+    "controller": "combinedassault:tunnelbore_controller"
   }
 }

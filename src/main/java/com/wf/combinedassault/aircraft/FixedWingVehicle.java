@@ -196,14 +196,8 @@ public class FixedWingVehicle extends AbstractVehicle
             if (flapUnits.isEmpty()) {
                 player.displayClientMessage(Component.translatable("tips.no_flaps"), true);
             } else if (hasPower()) {
-                boolean moved = false;
                 for (FlapUnit flap : flapUnits) {
-                    moved |= flap.step(message.flapStep);
-                }
-                if (moved) {
-                    FlapUnit flap = flapUnits.get(0);
-                    player.displayClientMessage(Component.translatable("tips.flaps", flap.getStage(),
-                            flap.stageCount() - 1), true);
+                    flap.step(message.flapStep);
                 }
             }
         }
@@ -551,8 +545,7 @@ public class FixedWingVehicle extends AbstractVehicle
     }
 
     private float airDensityScale() {
-        float scale = position().y < 64 ? 1 : (float) (Math.pow(Math.max(0, ceiling - position().y), 0.5) / Math.pow(ceiling - 64, 0.5));
-        return Math.max(0.001f, scale);
+        return Math.max(0.001f, (float) AirLimits.density(position().y, AirLimits.ceiling(ceiling), 0.5));
     }
 
     /** Blocks/tick at which stall-angle lift == weight (current flaps, wing loss, altitude); gear stance releases at the same point. */

@@ -55,7 +55,7 @@
     "count": 1,
     "components": {
       "minecraft:custom_data": {
-        "CombinedAssaultId": "flans_utility:tunnelbore"
+        "CombinedAssaultId": "combinedassault:tunnelbore"
       }
     }
   },
