@@ -54,6 +54,10 @@ public class ScreenInfo {
     @SerializedName("scope_toggle")
     public boolean scopeToggle = true;
 
+    /** Transparent canvas (clear alpha 0): symbology over a glass pane; the slot mesh must be alpha-blended. */
+    @SerializedName("overlay")
+    public boolean overlay;
+
     /** Pages in cycle order; null => this entry is the only page. */
     @SerializedName("pages")
     @Nullable

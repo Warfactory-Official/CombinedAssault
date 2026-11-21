@@ -2,7 +2,7 @@
     "armor": {"front": 2, "side": 2, "rear": 2, "top": 2, "bottom": 2, "plates": {"canopy": {"curved": true, "hull": 0.15, "layers": [{"mm": 20, "mat": "laminated"}]}}},
     "type": "combinedassault:fixed_wing_vehicle",
     "attributes": {
-        "thrust": 170000,
+        "thrust": 288000,
         "thrust_k": 1.5,
         "exhausts": [
             {"offset": [1.175, 2.165, -7], "radius": 0.44, "smoke": 0.35},
@@ -15,7 +15,7 @@
         "z_rot_input_step": 0.2,
         "air_drag_k_min": 49,
         "air_drag_k_max": 196,
-        "lift_to_drag_k": 3,
+        "lift_to_drag_k": 3.74,
         "x_rot_input_drag_k": 1.0,
         "y_rot_input_drag_k": 0.25,
         "z_rot_input_drag_k": 0.125,
@@ -211,8 +211,9 @@
         }
     ],
     "screens": {
-        "ipv": {"pages": [{"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 14.0}]},
-        "gauges": {"layout": "combinedassault:su33_gauges", "kind": "mfd", "max_fps": 30}
+        "ipv": {"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30},
+        "gauges": {"layout": "combinedassault:su33_gauges", "kind": "mfd", "max_fps": 30},
+        "hud": {"layout": "combinedassault:hud_su33", "kind": "mfd", "max_fps": 30, "overlay": true}
     },
     "model": "combinedassault:models/aircraft/su33/su33.glb",
     "display": {

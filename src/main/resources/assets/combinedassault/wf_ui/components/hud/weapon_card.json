@@ -1,11 +1,10 @@
 {
   "constants": {
-    "tab_w": "floor(130 / count) + (index < mod(130, count) ? 1 : 0)",
-    "active": "index == station.active_index",
     "ammo": "primary.ammo == 0 ? #ffff6040 : primary.ammo <= floor(primary.capacity / 4) ? #ddffaa00 : $text",
     "ammo_bar": "primary.ammo == 0 ? #ffff6040 : primary.ammo <= floor(primary.capacity / 4) ? #ddffaa00 : $text",
     "heat": "primary.temp >= 450 ? #ffff5020 : primary.temp >= 150 ? #ffffa030 : $dim",
-    "status": "primary.reloading || primary.jammed || primary.changing > 0"
+    "status": "primary.reloading || primary.jammed || primary.changing > 0",
+    "side": "secondary.present || independent.present"
   },
   "use": [
     "combinedassault:hud"
@@ -23,252 +22,223 @@
         "scale": 0.75,
         "pivot": "bottom_right",
         "child": {
-          "type": "sized",
-          "w": 130,
-          "h": 58,
-          "child": {
-            "type": "stack",
-            "children": [
-              {
-                "type": "box",
-                "background": "$panel",
-                "border": "$edge",
-                "min_width": 130,
-                "min_height": 58
-              },
-              {
-                "type": "place",
-                "x": 5,
-                "y": 5,
-                "child": {
-                  "type": "text",
-                  "text": "{primary.name}",
-                  "color": "$text",
-                  "max_width": 86
-                }
-              },
-              {
-                "type": "place",
-                "x": 5,
-                "y": 18,
-                "child": {
-                  "type": "row",
-                  "gap": 2,
-                  "children": [
-                    {
-                      "type": "when",
-                      "if": "primary.jammed",
-                      "then": {
-                        "type": "when",
-                        "if": "primary.clearing > 0",
-                        "then": {
-                          "type": "text",
-                          "text": "CLEAR {primary.clearing * 100}%",
-                          "color": "#ffffaa00"
-                        },
-                        "else": {
-                          "type": "text",
-                          "text": "JAMMED",
-                          "color": "blink(0.5) ? #ffff6040 : #ff802010"
-                        }
-                      },
-                      "else": {
-                        "type": "when",
-                        "if": "primary.changing > 0",
-                        "then": {
-                          "type": "text",
-                          "text": "BARREL {primary.changing * 100}%",
-                          "color": "#ffffaa00"
-                        },
-                        "else": {
+          "type": "column",
+          "gap": 3,
+          "align": "end",
+          "children": [
+            {
+              "type": "combinedassault:weapon_list"
+            },
+            {
+              "type": "sized",
+              "w": 130,
+              "h": 44,
+              "child": {
+                "type": "stack",
+                "children": [
+                  {
+                    "type": "box",
+                    "background": "$panel",
+                    "border": "$edge",
+                    "min_width": 130,
+                    "min_height": 44
+                  },
+                  {
+                    "type": "place",
+                    "x": 5,
+                    "y": 18,
+                    "child": {
+                      "type": "row",
+                      "gap": 2,
+                      "children": [
+                        {
                           "type": "when",
-                          "if": "primary.reloading",
+                          "if": "primary.jammed",
                           "then": {
-                            "type": "text",
-                            "text": "RELOADING",
-                            "color": "#ffff6040"
-                          },
-                          "else": {
                             "type": "when",
-                            "if": "primary.tool",
+                            "if": "primary.clearing > 0",
                             "then": {
-                              "type": "when",
-                              "if": "primary.working",
-                              "then": {"type": "text", "text": "ACTIVE", "color": "#ff60ff60"},
-                              "else": {"type": "text", "text": "STOWED", "color": "$dim"}
+                              "type": "text",
+                              "text": "CLEAR {primary.clearing * 100}%",
+                              "color": "#ffffaa00"
                             },
                             "else": {
                               "type": "text",
-                              "text": "{primary.ammo} / {primary.capacity}",
-                              "color": "$ammo"
+                              "text": "JAMMED",
+                              "color": "blink(0.5) ? #ffff6040 : #ff802010"
                             }
-                          }
-                        }
-                      }
-                    },
-                    {
-                      "type": "repeat",
-                      "items": "primary.round_variants",
-                      "gap": 1,
-                      "max": 3,
-                      "child": {"type": "ammo_glyph", "size": 8}
-                    },
-                    {
-                      "type": "when",
-                      "if": "!primary.tool",
-                      "then": {
-                      "type": "text",
-                      "text": "{primary.round}",
-                      "color": "$dim",
-                      "max_width": "max(8, ($status || primary.capacity >= 100 ? 28 : primary.capacity >= 10 ? 40 : 50) - 10 * min(primary.round_variant_count, 3))"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "type": "when",
-                "if": "!primary.tool",
-                "then": {
-                "type": "place",
-                "x": 5,
-                "y": 31,
-                "child": {
-                  "type": "bar",
-                  "w": 68.8,
-                  "h": 3,
-                  "value": "primary.capacity > 0 ? primary.ammo / primary.capacity : 0",
-                  "fill": "$ammo_bar",
-                  "back": "$well"
-                }
-              }
-              },
-              {
-                "type": "when",
-                "if": "primary.barrel",
-                "then": {
-                  "type": "place",
-                  "x": 5,
-                  "y": 35,
-                  "child": {
-                    "type": "column",
-                    "gap": 0,
-                    "children": [
-                      {
-                        "type": "bar",
-                        "w": 68.8,
-                        "h": 2,
-                        "value": "clamp(primary.heat, 0, 1)",
-                        "fill": "$heat",
-                        "back": "$well"
-                      },
-                      {
-                        "type": "bar",
-                        "w": 68.8,
-                        "h": 1,
-                        "value": "primary.wear",
-                        "fill": "$dim",
-                        "back": "#00000000"
-                      }
-                    ]
-                  }
-                }
-              },
-              {
-                "type": "when",
-                "if": "secondary.present",
-                "then": {
-                  "type": "combinedassault:hud/weapon_side",
-                  "weapon": "secondary",
-                  "y": 5
-                }
-              },
-              {
-                "type": "when",
-                "if": "independent.present",
-                "then": {
-                  "type": "combinedassault:hud/weapon_side",
-                  "weapon": "independent",
-                  "y": 25
-                }
-              },
-              {
-                "type": "place",
-                "x": 0,
-                "y": 58,
-                "pivot": "bottom_left",
-                "child": {
-                  "type": "repeat",
-                  "items": "station.weapons",
-                  "align": "end",
-                  "child": {
-                    "type": "sized",
-                    "w": "$tab_w",
-                    "h": "$active ? 19 : 14",
-                    "child": {
-                      "type": "stack",
-                      "children": [
-                        {
-                          "type": "rect",
-                          "w": "$tab_w",
-                          "h": "$active ? 19 : 14",
-                          "color": "$active ? $panel_lit : $panel"
-                        },
-                        {
-                          "type": "rect",
-                          "w": "$tab_w",
-                          "h": 1,
-                          "color": "$white"
-                        },
-                        {
-                          "type": "when",
-                          "if": "$active",
-                          "then": {
-                            "type": "place",
-                            "x": 1,
-                            "y": 1,
-                            "child": {
-                              "type": "rect",
-                              "w": "$tab_w - 2",
-                              "h": 1,
-                              "color": "$white"
+                          },
+                          "else": {
+                            "type": "when",
+                            "if": "primary.changing > 0",
+                            "then": {
+                              "type": "text",
+                              "text": "BARREL {primary.changing * 100}%",
+                              "color": "#ffffaa00"
+                            },
+                            "else": {
+                              "type": "when",
+                              "if": "primary.reloading",
+                              "then": {
+                                "type": "text",
+                                "text": "RELOADING",
+                                "color": "#ffff6040"
+                              },
+                              "else": {
+                                "type": "when",
+                                "if": "primary.tool",
+                                "then": {
+                                  "type": "when",
+                                  "if": "primary.working",
+                                  "then": {
+                                    "type": "text",
+                                    "text": "ACTIVE",
+                                    "color": "#ff60ff60"
+                                  },
+                                  "else": {
+                                    "type": "text",
+                                    "text": "STOWED",
+                                    "color": "$dim"
+                                  }
+                                },
+                                "else": {
+                                  "type": "text",
+                                  "text": "{primary.ammo} / {primary.capacity}",
+                                  "color": "$ammo"
+                                }
+                              }
                             }
                           }
                         },
                         {
-                          "type": "when",
-                          "if": "index > 0",
-                          "then": {
-                            "type": "place",
-                            "x": 0,
-                            "y": 1,
-                            "child": {
-                              "type": "rect",
-                              "w": 1,
-                              "h": "$active ? 17 : 12",
-                              "color": "$white"
-                            }
-                          }
-                        },
-                        {
-                          "type": "place",
-                          "x": 3,
-                          "y": "$active ? 5 : 2",
+                          "type": "repeat",
+                          "items": "primary.round_variants",
+                          "gap": 1,
+                          "max": 3,
                           "child": {
+                            "type": "ammo_glyph",
+                            "size": 8
+                          }
+                        },
+                        {
+                          "type": "when",
+                          "if": "!primary.tool",
+                          "then": {
                             "type": "text",
-                            "text": "{weapon.name}",
-                            "color": "$active ? $text : $dim",
-                            "shadow": true,
-                            "max_width": "$tab_w - 4"
+                            "text": "{primary.round}",
+                            "color": "$dim",
+                            "max_width": "max(8, (($side) ? ($status || primary.capacity >= 100 ? 28 : primary.capacity >= 10 ? 40 : 50) : 70) - 10 * min(primary.round_variant_count, 3))"
                           }
                         }
                       ]
                     }
+                  },
+                  {
+                    "type": "when",
+                    "if": "!primary.tool",
+                    "then": {
+                      "type": "place",
+                      "x": 5,
+                      "y": 31,
+                      "child": {
+                        "type": "when",
+                        "if": "$side",
+                        "then": {
+                          "type": "bar",
+                          "w": 68.8,
+                          "h": 3,
+                          "value": "primary.capacity > 0 ? primary.ammo / primary.capacity : 0",
+                          "fill": "$ammo_bar",
+                          "back": "$well"
+                        },
+                        "else": {
+                          "type": "bar",
+                          "w": 120,
+                          "h": 3,
+                          "value": "primary.capacity > 0 ? primary.ammo / primary.capacity : 0",
+                          "fill": "$ammo_bar",
+                          "back": "$well"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "type": "when",
+                    "if": "primary.barrel",
+                    "then": {
+                      "type": "place",
+                      "x": 5,
+                      "y": 35,
+                      "child": {
+                        "type": "column",
+                        "gap": 0,
+                        "children": [
+                          {
+                            "type": "when",
+                            "if": "$side",
+                            "then": {
+                              "type": "bar",
+                              "w": 68.8,
+                              "h": 2,
+                              "value": "clamp(primary.heat, 0, 1)",
+                              "fill": "$heat",
+                              "back": "$well"
+                            },
+                            "else": {
+                              "type": "bar",
+                              "w": 120,
+                              "h": 2,
+                              "value": "clamp(primary.heat, 0, 1)",
+                              "fill": "$heat",
+                              "back": "$well"
+                            }
+                          },
+                          {
+                            "type": "when",
+                            "if": "$side",
+                            "then": {
+                              "type": "bar",
+                              "w": 68.8,
+                              "h": 1,
+                              "value": "primary.wear",
+                              "fill": "$dim",
+                              "back": "#00000000"
+                            },
+                            "else": {
+                              "type": "bar",
+                              "w": 120,
+                              "h": 1,
+                              "value": "primary.wear",
+                              "fill": "$dim",
+                              "back": "#00000000"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "when",
+                    "if": "secondary.present",
+                    "then": {
+                      "type": "combinedassault:hud/weapon_side",
+                      "weapon": "secondary",
+                      "y": 5
+                    }
+                  },
+                  {
+                    "type": "when",
+                    "if": "independent.present",
+                    "then": {
+                      "type": "combinedassault:hud/weapon_side",
+                      "weapon": "independent",
+                      "y": 25
+                    }
                   }
-                }
+                ]
               }
-            ]
-          }
+            }
+          ]
         }
       }
     }

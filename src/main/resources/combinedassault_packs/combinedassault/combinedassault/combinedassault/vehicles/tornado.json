@@ -2,7 +2,7 @@
     "armor": {"front": 2, "side": 2, "rear": 2, "top": 2, "bottom": 2, "plates": {"canopy": {"curved": true, "hull": 0.15, "layers": [{"mm": 20, "mat": "laminated"}]}}},
     "type": "combinedassault:fixed_wing_vehicle",
     "attributes": {
-        "thrust": 130000,
+        "thrust": 229000,
         "thrust_k": 1.5,
         "exhausts": [
             {"offset": [0.515, 1.98, -10.3], "radius": 0.37, "smoke": 0.4},
@@ -15,7 +15,7 @@
         "z_rot_input_step": 0.2,
         "air_drag_k_min": 39,
         "air_drag_k_max": 156,
-        "lift_to_drag_k": 3,
+        "lift_to_drag_k": 3.78,
         "x_rot_input_drag_k": 1.0,
         "y_rot_input_drag_k": 0.25,
         "z_rot_input_drag_k": 0.125,
@@ -257,10 +257,11 @@
         }
     ],
     "screens": {
-        "crpmd": {"pages": [{"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_tgp", "kind": "sight", "part": "sighting_system", "max_fps": 30, "scope_toggle": false, "objective": 4.4}]},
+        "crpmd": {"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30},
         "rhwr": {"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30},
         "gauges": {"layout": "combinedassault:tornado_gauges", "kind": "mfd", "max_fps": 30},
-        "engine": {"layout": "combinedassault:tornado_engine", "kind": "mfd", "max_fps": 30}
+        "engine": {"layout": "combinedassault:tornado_engine", "kind": "mfd", "max_fps": 30},
+        "hud": {"layout": "combinedassault:hud_tornado", "kind": "mfd", "max_fps": 30, "overlay": true}
     },
     "model": "combinedassault:models/aircraft/tornado/tornado.glb",
     "display": {

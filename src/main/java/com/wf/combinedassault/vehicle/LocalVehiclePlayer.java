@@ -908,6 +908,12 @@ public class LocalVehiclePlayer {
         if (fpv != null && viewType == ViewType.OPERATOR) {
             return vehicle.rotYXZ(partialTick).rotateX((float) Math.toRadians(-fpv.cameraTilt()));
         }
+        if (aircraftCockpit() && !periscope() && seat.partUnit != null) {
+            PartUnit<?> unit = seat.partUnit;
+            return (unit instanceof WeaponUnit ? vehicle.rotYXZ(partialTick) : unit.rideRotation(partialTick))
+                    .rotateY((float) Math.toRadians(-playerLocalYRot))
+                    .rotateX((float) Math.toRadians(playerLocalXRot));
+        }
         return cameraRotationO().slerp(cameraRotation(), partialTick);
     }
 

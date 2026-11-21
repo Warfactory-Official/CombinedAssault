@@ -2,7 +2,7 @@
     "armor": {"front": 2, "side": 2, "rear": 2, "top": 2, "bottom": 2, "plates": {"canopy": {"curved": true, "hull": 0.15, "layers": [{"mm": 20, "mat": "laminated"}]}}},
     "type": "combinedassault:fixed_wing_vehicle",
     "attributes": {
-        "thrust": 308000,
+        "thrust": 963000,
         "thrust_k": 1,
         "exhausts": [
             {"offset": [3.5, 3.05, -11.4], "radius": 0.35, "smoke": 0.15},
@@ -17,7 +17,7 @@
         "z_rot_input_step": 0.1,
         "air_drag_k_min": 100,
         "air_drag_k_max": 400,
-        "lift_to_drag_k": 8,
+        "lift_to_drag_k": 7.81,
         "x_rot_input_drag_k": 1.0,
         "y_rot_input_drag_k": 1.0,
         "directional_stability": 0.2,

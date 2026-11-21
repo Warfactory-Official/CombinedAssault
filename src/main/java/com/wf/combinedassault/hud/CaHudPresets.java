@@ -28,6 +28,7 @@ public final class CaHudPresets {
 
     static void registerWidgets() {
         add("ammo_list", p -> new AmmoList());
+        add("weapon_list", p -> new WeaponList());
         add("hit_marker", p -> new HitWidgets.HitMarker());
         add("hit_panel", p -> new HitWidgets.HitPanel());
         add("aim_reticle", p -> new AimWidgets.AimReticle(p.expr("color")));
@@ -45,6 +46,8 @@ public final class CaHudPresets {
         add("debug_dump", p -> new DebugDump());
         add("mfd_situation", p -> new MfdWidgets.Situation(p.number("w"), p.number("h")));
         add("mfd_adi", p -> new MfdWidgets.Adi(p.number("w"), p.number("h")));
+        add("mfd_hud", p -> new MfdWidgets.Hud(p.number("w"), p.number("h"), p.number("deg")));
+        add("mfd_hud_tapes", p -> new MfdWidgets.HudTapes(p.number("w"), p.number("h"), p.number("deg")));
         add("range_scale", p -> new RangeScale(p.number("w"), p.expr("near"), p.expr("far"), p.expr("max"),
                 p.expr("mark", "0/0"), p.expr("track", "0"), p.expr("scale", "0"), p.expr("band"), p.expr("mark_color"),
                 p.expr("label")));

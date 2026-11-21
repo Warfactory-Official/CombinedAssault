@@ -14,7 +14,7 @@
       {"type": "place", "x": "ui.width - 140", "y": "ui.height / 2", "child": {"type": "combinedassault:radar_full"}},
       {"type": "place", "x": "ui.width - 140", "y": "ui.height / 2", "child": {"type": "combinedassault:vehicle_schematic", "length": 22, "hull_up": true}}
     ]}},
-    {"type": "place", "x": "ui.width - 4", "y": "ui.height - 9 - (station.present && station.weapon_count > 0 ? 44 : 0)",
+    {"type": "place", "x": "ui.width - 4", "y": "ui.height - 9 - (station.present && station.weapon_count > 0 ? (45 + 15 * min(station.weapon_count, 5)) * 0.75 : 0)",
       "pivot": "bottom_right", "child": {"type": "transform", "scale": 1.2, "pivot": "bottom_right", "child": {"type": "column", "gap": 2, "align": "end", "children": [
         {"type": "combinedassault:hud/key_hints_weapons"},
         {"type": "transform", "scale": 0.75, "pivot": "bottom_right", "child": {"type": "combinedassault:ammo_list"}}

@@ -1,0 +1,106 @@
+{
+ "scaling": "absolute",
+ "size": [
+  128,
+  154
+ ],
+ "use": [
+  "combinedassault:hud"
+ ],
+ "constants": {
+  "fg": "#ff7dff9a",
+  "warn": "#ffffb02e",
+  "alarm": "#ffff4a3a"
+ },
+ "root": {
+  "type": "stack",
+  "children": [
+   {
+    "type": "combinedassault:mfd_hud_tapes",
+    "w": 128,
+    "h": 154,
+    "deg": 8.685
+   },
+   {
+    "type": "place",
+    "x": 64.0,
+    "y": 38.5,
+    "child": {
+     "type": "when",
+     "if": "mfd.launch",
+     "then": {
+      "type": "text",
+      "text": "MISSILE",
+      "color": "blink(0.25) ? $alarm : #00000000",
+      "scale": 1.1
+     },
+     "else": {
+      "type": "when",
+      "if": "mfd.lock",
+      "then": {
+       "type": "text",
+       "text": "LOCK",
+       "color": "$warn",
+       "scale": 1.0
+      }
+     }
+    },
+    "pivot": "top"
+   },
+   {
+    "type": "place",
+    "x": 1.07,
+    "y": 130.47,
+    "child": {
+     "type": "when",
+     "if": "fixed_wing.gear_up",
+     "then": {
+      "type": "text",
+      "text": "",
+      "color": "$fg",
+      "scale": 0.75
+     },
+     "else": {
+      "type": "text",
+      "text": "GEAR",
+      "color": "$warn",
+      "scale": 0.9
+     }
+    }
+   },
+   {
+    "type": "place",
+    "x": 74.67,
+    "y": 116.57,
+    "child": {
+     "type": "when",
+     "if": "station.weapon_count > 0",
+     "then": {
+      "type": "text",
+      "text": "{primary.name}",
+      "color": "$fg",
+      "scale": 0.8,
+      "max_width": 70
+     }
+    },
+    "pivot": "top_right"
+   },
+   {
+    "type": "place",
+    "x": 78.93,
+    "y": 116.03,
+    "child": {
+     "type": "when",
+     "if": "station.weapon_count > 0",
+     "then": {
+      "type": "text",
+      "text": "{primary.ammo}",
+      "color": "primary.ammo == 0 ? $alarm : $fg",
+      "scale": 0.9
+     }
+    },
+    "pivot": "top_left"
+   }
+  ]
+ }
+}

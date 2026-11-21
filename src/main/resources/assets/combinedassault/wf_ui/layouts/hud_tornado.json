@@ -1,0 +1,185 @@
+{
+ "scaling": "absolute",
+ "size": [
+  120,
+  141
+ ],
+ "use": [
+  "combinedassault:hud"
+ ],
+ "constants": {
+  "fg": "#ff7dff9a",
+  "warn": "#ffffb02e",
+  "alarm": "#ffff4a3a"
+ },
+ "root": {
+  "type": "stack",
+  "children": [
+   {
+    "type": "combinedassault:mfd_hud",
+    "w": 120,
+    "h": 141,
+    "deg": 4.892
+   },
+   {
+    "type": "place",
+    "x": 1.0,
+    "y": 70.27,
+    "child": {
+     "type": "text",
+     "text": "{trunc(mfd.ias)}",
+     "color": "$fg",
+     "scale": 1.0
+    }
+   },
+   {
+    "type": "place",
+    "x": 1.0,
+    "y": 82.02,
+    "child": {
+     "type": "text",
+     "text": "M {mfd.mach|.2}",
+     "color": "$fg",
+     "scale": 0.75
+    }
+   },
+   {
+    "type": "place",
+    "x": 119,
+    "y": 70.27,
+    "child": {
+     "type": "text",
+     "text": "{trunc(vehicle.altitude - 63)}",
+     "color": "$fg",
+     "scale": 1.0
+    },
+    "pivot": "top_right"
+   },
+   {
+    "type": "place",
+    "x": 119,
+    "y": 82.02,
+    "child": {
+     "type": "when",
+     "if": "mfd.agl < 300",
+     "then": {
+      "type": "text",
+      "text": "R {trunc(mfd.agl)}",
+      "color": "$fg",
+      "scale": 0.75
+     },
+     "else": {
+      "type": "text",
+      "text": "{trunc(vehicle.vspeed)}",
+      "color": "$fg",
+      "scale": 0.75
+     }
+    },
+    "pivot": "top_right"
+   },
+   {
+    "type": "place",
+    "x": 1.0,
+    "y": 97.68,
+    "child": {
+     "type": "text",
+     "text": "G {local.g|.1}",
+     "color": "local.overload ? $warn : $fg",
+     "scale": 0.75
+    }
+   },
+   {
+    "type": "place",
+    "x": 60.0,
+    "y": 35.25,
+    "child": {
+     "type": "when",
+     "if": "mfd.launch",
+     "then": {
+      "type": "text",
+      "text": "MISSILE",
+      "color": "blink(0.25) ? $alarm : #00000000",
+      "scale": 1.1
+     },
+     "else": {
+      "type": "when",
+      "if": "mfd.lock",
+      "then": {
+       "type": "text",
+       "text": "LOCK",
+       "color": "$warn",
+       "scale": 1.0
+      }
+     }
+    },
+    "pivot": "top"
+   },
+   {
+    "type": "place",
+    "x": 1.0,
+    "y": 119.46,
+    "child": {
+     "type": "when",
+     "if": "fixed_wing.gear_up",
+     "then": {
+      "type": "text",
+      "text": "",
+      "color": "$fg",
+      "scale": 0.75
+     },
+     "else": {
+      "type": "text",
+      "text": "GEAR",
+      "color": "$warn",
+      "scale": 0.9
+     }
+    }
+   },
+   {
+    "type": "place",
+    "x": 119,
+    "y": 119.46,
+    "child": {
+     "type": "text",
+     "text": "THR {trunc(fixed_wing.throttle)}",
+     "color": "fixed_wing.throttle > 100 ? $warn : $fg",
+     "scale": 0.75
+    },
+    "pivot": "top_right"
+   },
+   {
+    "type": "place",
+    "x": 60.0,
+    "y": 121.42,
+    "child": {
+     "type": "when",
+     "if": "station.weapon_count > 0",
+     "then": {
+      "type": "text",
+      "text": "{primary.name}",
+      "color": "$fg",
+      "scale": 0.8,
+      "max_width": 100
+     }
+    },
+    "pivot": "top"
+   },
+   {
+    "type": "place",
+    "x": 60.0,
+    "y": 131.21,
+    "child": {
+     "type": "when",
+     "if": "station.weapon_count > 0",
+     "then": {
+      "type": "text",
+      "text": "{primary.ammo}",
+      "color": "primary.ammo == 0 ? $alarm : $fg",
+      "scale": 0.9
+     }
+    },
+    "pivot": "top"
+   }
+  ]
+ }
+}

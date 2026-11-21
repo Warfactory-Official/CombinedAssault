@@ -231,7 +231,7 @@ public final class HudCache {
         return name;
     }
 
-    /** Station weapons in tab order (other kits' left out), agents resolved to the weapon they currently carry. */
+    /** Station weapons the select key cycles (other kits' and salvo followers left out), agents resolved to the weapon they currently carry. */
     public static List<AbstractVehicleWeapon<?>> weapons(WeaponUnit unit) {
         long frame = UiHud.frame();
         if (unit == weaponsFor && frame == weaponsFrame) {
@@ -241,15 +241,16 @@ public final class HudCache {
         weaponsFrame = frame;
         WEAPONS.clear();
         add(unit, unit.weapons);
-        add(unit, unit.secondaryWeapons);
-        add(unit, unit.independentWeapons);
+        if (WEAPONS.isEmpty()) {
+            add(unit, unit.secondaryWeapons);
+        }
         return WEAPONS;
     }
 
     private static void add(WeaponUnit unit, List<? extends AbstractVehicleWeapon<?>> list) {
         for (int i = 0; i < list.size(); i++) {
             AbstractVehicleWeapon<?> weapon = list.get(i);
-            if (!unit.carries(weapon)) {
+            if (!unit.carries(weapon) || unit.salvo(weapon).getFirst() != weapon) {
                 continue;
             }
             if (weapon instanceof VehicleWeaponAgent agent) {

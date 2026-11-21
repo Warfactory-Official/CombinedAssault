@@ -10,6 +10,8 @@ import com.wf.wflib.ui.api.SubjectRef;
 import com.wf.wflib.ui.api.UiEval;
 import com.wf.wflib.ui.api.Widget;
 import com.wf.wflib.ui.api.WidgetDef;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 
 /** Aircraft display widgets; each fills its declared {@code w} x {@code h}. */
 public final class MfdWidgets {
@@ -228,6 +230,199 @@ public final class MfdWidgets {
                     c.popClip();
                 }
             };
+        }
+    }
+    /**
+     * Glass-pane symbology: heading tape, roll-stabilised pitch ladder, flight path marker (drift / flight path
+     * angle against the nose), boresight. Ladder + marker conformal: {@code unitsPerDegree} = layout units one degree
+     * subtends from the eye at the pane (nose line = pane centre).
+     */
+    public record Hud(float w, float h, float unitsPerDegree) implements WidgetDef {
+        private static final float TAPE_DEG = 28;
+        private static final float TAPE_UNITS_PER_DEG = 1.6f;
+
+        @Override
+        public Widget create(Binder binder) {
+            SubjectRef<MfdView> mfdRef = binder.subject(MfdView.SUBJECT);
+            return new Sized(w, h) {
+                @Override
+                public void draw(UiEval ev, float x, float y, float bw, float bh) {
+                    MfdView view = mfdRef.get(ev);
+                    if (view == null) {
+                        return;
+                    }
+                    symbology(ev.canvas, text, view, ev.partialTick, x, y, w, h, unitsPerDegree);
+                }
+            };
+        }
+
+        static void symbology(Canvas c, TextBuffer text, MfdView view, float partialTick, float x, float y, float w, float h, float k) {
+            AbstractVehicle vehicle = view.vehicle();
+            double heading = view.heading(partialTick);
+            float cx = x + w / 2;
+            float cy = y + h * 0.54f;
+            tape(c, text, cx, y, heading);
+            float pitch = -vehicle.getViewXRot(partialTick);
+            float roll = vehicle.getViewZRot(partialTick);
+            float fpmLimit = Math.min(w, h) * 0.3f;
+            float reach = w * 0.30f;
+            c.pushClip(x, cy - h * 0.27f, x + w, cy + h * 0.27f);
+            c.push().translate(cx, cy).rotate((float) Math.toRadians(-roll)).translate(0, pitch * k);
+            float hz = w * 0.46f;
+            c.line(-hz, 0, -w * 0.1f, 0, 0.9f, FG);
+            c.line(w * 0.1f, 0, hz, 0, 0.9f, FG);
+            for (int d = -30; d <= 30; d += 5) {
+                if (d == 0) {
+                    continue;
+                }
+                float ly = -d * k;
+                float half = d % 10 == 0 ? reach : reach * 0.5f;
+                float gap = w * 0.09f;
+                if (d > 0) {
+                    c.line(-half, ly, -gap, ly, 0.8f, FG);
+                    c.line(gap, ly, half, ly, 0.8f, FG);
+                    c.line(-half, ly, -half, ly + 2.5f, 0.8f, FG);
+                    c.line(half, ly, half, ly + 2.5f, 0.8f, FG);
+                } else {
+                    c.dashed(-half, ly, -gap, ly, 0.8f, 3, 2, FG);
+                    c.dashed(gap, ly, half, ly, 0.8f, 3, 2, FG);
+                    c.line(-half, ly, -half, ly - 2.5f, 0.8f, FG);
+                    c.line(half, ly, half, ly - 2.5f, 0.8f, FG);
+                }
+                if (d % (k >= 6 ? 5 : 10) == 0) {
+                    text.clear().append(Math.abs(d));
+                    labelAt(c, text, -half - 6, ly, 0.8f);
+                    labelAt(c, text, half + 6, ly, 0.8f);
+                }
+            }
+            Vec3 v = vehicle.getDeltaMovement();
+            double horizontal = Math.hypot(v.x, v.z);
+            if (v.lengthSqr() > 0.0025) {
+                double course = Math.toDegrees(Math.atan2(v.x, -v.z));
+                float drift = (float) Mth.wrapDegrees(course - heading);
+                float path = (float) Math.toDegrees(Math.atan2(v.y, horizontal));
+                float fx = Mth.clamp(drift * k, -fpmLimit, fpmLimit);
+                float fy = Mth.clamp((pitch - path) * k, -fpmLimit, fpmLimit);
+                c.ring(fx, fy, 3, 0.9f, FG);
+                c.line(fx - 9, fy, fx - 3, fy, 0.9f, FG);
+                c.line(fx + 3, fy, fx + 9, fy, 0.9f, FG);
+                c.line(fx, fy - 3, fx, fy - 7, 0.9f, FG);
+            }
+            c.pop();
+            c.popClip();
+            // Boresight (waterline).
+            c.line(cx - 7, cy, cx - 3, cy, 0.9f, FG);
+            c.line(cx + 3, cy, cx + 7, cy, 0.9f, FG);
+            c.fill(cx - 0.6f, cy - 0.6f, cx + 0.6f, cy + 0.6f, FG);
+        }
+
+        static void tape(Canvas c, TextBuffer text, float cx, float y, double heading) {
+            c.pushClip(cx - TAPE_DEG * TAPE_UNITS_PER_DEG - 6, y, cx + TAPE_DEG * TAPE_UNITS_PER_DEG + 6, y + 20);
+            int first = (int) Math.floor((heading - TAPE_DEG) / 5) * 5;
+            for (int d = first; d <= heading + TAPE_DEG; d += 5) {
+                float tx = cx + (float) (d - heading) * TAPE_UNITS_PER_DEG;
+                boolean major = Math.floorMod(d, 10) == 0;
+                c.line(tx, y + 14, tx, y + (major ? 9 : 11.5f), 0.8f, FG);
+                if (major) {
+                    int deg = Math.floorMod(d, 360);
+                    CharSequence s = deg % 90 == 0 ? CARDINAL[deg / 90] : digits(text, deg / 10, 2);
+                    labelAt(c, s, tx, y + 5, 0.8f);
+                }
+            }
+            c.popClip();
+            c.line(cx, y + 15, cx - 2.5f, y + 19, 0.9f, FG);
+            c.line(cx, y + 15, cx + 2.5f, y + 19, 0.9f, FG);
+            c.frame(cx - 9, y + 20, cx + 9, y + 29, 0.8f, FG);
+            labelAt(c, digits(text, (int) Math.floorMod(Math.round(heading), 360L), 3), cx, y + 24.5f, 0.85f);
+        }
+
+        static CharSequence digits(TextBuffer text, int value, int width) {
+            return text.clear().append(value, width, '0', false);
+        }
+
+        static void labelAt(Canvas c, CharSequence s, float cx, float cy, float scale) {
+            c.push().translate(cx, cy).scale(scale);
+            c.textCentred(s, 0, -4, FG, false);
+            c.pop();
+        }
+    }
+
+    /**
+     * {@link Hud} symbology plus climb-rate scale (left, fixed range, moving arrow), radar-altitude tape (right,
+     * scrolling, fixed arrow) and pitch / roll boxes.
+     */
+    public record HudTapes(float w, float h, float unitsPerDegree) implements WidgetDef {
+        private static final float CLIMB_MIN = -8;
+        private static final float CLIMB_MAX = 26;
+        private static final float AGL_SPAN = 120;
+
+        @Override
+        public Widget create(Binder binder) {
+            SubjectRef<MfdView> mfdRef = binder.subject(MfdView.SUBJECT);
+            return new Sized(w, h) {
+                @Override
+                public void draw(UiEval ev, float x, float y, float bw, float bh) {
+                    MfdView view = mfdRef.get(ev);
+                    if (view == null) {
+                        return;
+                    }
+                    Canvas c = ev.canvas;
+                    Hud.symbology(c, text, view, ev.partialTick, x, y, w, h, unitsPerDegree);
+                    AbstractVehicle vehicle = view.vehicle();
+                    float top = y + h * 0.3f;
+                    float bottom = y + h * 0.68f;
+                    float mid = (top + bottom) / 2;
+                    float lx = x + w * 0.12f;
+                    float rx = x + w * 0.88f;
+                    c.line(lx, top, lx, bottom, 0.9f, FG);
+                    c.line(rx, top, rx, bottom, 0.9f, FG);
+                    float climb = (float) (vehicle.getDeltaMovement().y * 20);
+                    for (int v = (int) CLIMB_MIN; v <= CLIMB_MAX; v += 2) {
+                        float ty = bottom - (v - CLIMB_MIN) / (CLIMB_MAX - CLIMB_MIN) * (bottom - top);
+                        boolean major = v % 8 == 0;
+                        c.line(lx - (major ? 3.5f : 2), ty, lx, ty, 0.8f, FG);
+                        if (major) {
+                            Hud.labelAt(c, text.clear().append(v), lx - 10, ty, 0.8f);
+                        }
+                    }
+                    float ay = bottom - (Mth.clamp(climb, CLIMB_MIN, CLIMB_MAX) - CLIMB_MIN) / (CLIMB_MAX - CLIMB_MIN) * (bottom - top);
+                    arrow(c, lx + 1, ay, 1);
+                    float agl = (float) view.agl();
+                    float perUnit = (bottom - top) / (2 * AGL_SPAN);
+                    c.pushClip(rx - 1, top, rx + 16, bottom);
+                    for (int v = (int) Math.floor((agl - AGL_SPAN) / 10) * 10; v <= agl + AGL_SPAN; v += 10) {
+                        float ty = mid - (v - agl) * perUnit;
+                        boolean major = Math.floorMod(v, 100) == 0;
+                        c.line(rx, ty, rx + (major ? 3.5f : Math.floorMod(v, 50) == 0 ? 3 : 2), ty, 0.8f, FG);
+                        if (major && v >= 0) {
+                            Hud.labelAt(c, text.clear().append(v), rx + 11, ty, 0.8f);
+                        }
+                    }
+                    c.popClip();
+                    arrow(c, rx - 1, mid, -1);
+                    Hud.labelAt(c, "CLIMB", lx + 4, y + 36, 0.9f);
+                    Hud.labelAt(c, "AGL", rx - 4, y + 36, 0.9f);
+                    float cx = x + w / 2;
+                    Hud.labelAt(c, "SPD", cx - w * 0.1f, y + 36, 0.9f);
+                    Hud.labelAt(c, text.clear().append((int) view.ias()), cx + w * 0.1f, y + 36, 1f);
+                    float by = y + h - 9;
+                    float pitch = -vehicle.getViewXRot(ev.partialTick);
+                    float roll = vehicle.getViewZRot(ev.partialTick);
+                    box(c, text, "PITCH ", Math.round(pitch), cx - w * 0.3f, by, w * 0.28f);
+                    box(c, text, "ROLL ", Math.round(roll), cx + w * 0.02f, by, w * 0.28f);
+                }
+            };
+        }
+
+        private static void arrow(Canvas c, float x, float y, int dir) {
+            c.line(x, y, x + 3 * dir, y - 3, 0.9f, FG);
+            c.line(x, y, x + 3 * dir, y + 3, 0.9f, FG);
+        }
+
+        private static void box(Canvas c, TextBuffer text, String name, int value, float x, float y, float width) {
+            c.frame(x, y, x + width, y + 8, 0.8f, FG);
+            text.clear().append(name).append(value);
+            Hud.labelAt(c, text, x + width / 2, y + 4, 0.8f);
         }
     }
 }

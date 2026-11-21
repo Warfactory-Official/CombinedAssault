@@ -9,6 +9,6 @@
     {"type": "combinedassault:hud/weapon_card"},
     {"type": "when", "if": "!local.radar_full", "then": {"type": "place", "x": "ui.width / 2 + 128", "y": "ui.height - 80", "child": {"type": "combinedassault:radar_scopes"}}},
     {"type": "when", "if": "vehicle.rwr && !local.radar_full",
-      "then": {"type": "place", "x": "ui.width - 40", "y": "ui.height - 180", "child": {"type": "combinedassault:rwr"}}}
+      "then": {"type": "place", "x": "ui.width - 40", "y": "ui.height - 140 - (station.weapon_count > 0 ? (45 + 15 * min(station.weapon_count, 5)) * 0.75 : 0)", "child": {"type": "combinedassault:rwr"}}}
   ]}
 }

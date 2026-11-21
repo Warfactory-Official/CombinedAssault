@@ -2,7 +2,7 @@
     "armor": {"front": 2, "side": 2, "rear": 2, "top": 2, "bottom": 2, "plates": {"canopy": {"curved": true, "hull": 0.15, "layers": [{"mm": 20, "mat": "laminated"}]}}},
     "type": "combinedassault:fixed_wing_vehicle",
     "attributes": {
-        "thrust": 210000,
+        "thrust": 266000,
         "thrust_k": 1.35,
         "exhausts": [
             {"offset": [0.675, 2.19, -12.62], "radius": 0.35, "smoke": 0.1},
@@ -15,7 +15,7 @@
         "z_rot_input_step": 0.2,
         "air_drag_k_min": 40,
         "air_drag_k_max": 160,
-        "lift_to_drag_k": 3,
+        "lift_to_drag_k": 4.79,
         "x_rot_input_drag_k": 1.0,
         "y_rot_input_drag_k": 0.25,
         "z_rot_input_drag_k": 0.125,
@@ -197,7 +197,8 @@
         "upper": {"pages": [{"layout": "combinedassault:mfd_stores", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_sa", "kind": "mfd", "max_fps": 30}]},
         "right": {"pages": [{"layout": "combinedassault:mfd_flight", "kind": "mfd", "max_fps": 30}, {"layout": "combinedassault:mfd_caution", "kind": "mfd", "max_fps": 30}]},
         "ufd_left": {"layout": "combinedassault:ufd_caution", "kind": "mfd", "max_fps": 30},
-        "ufd_right": {"layout": "combinedassault:ufd_fuel", "kind": "mfd", "max_fps": 30}
+        "ufd_right": {"layout": "combinedassault:ufd_fuel", "kind": "mfd", "max_fps": 30},
+        "hud": {"layout": "combinedassault:hud_f22a", "kind": "mfd", "max_fps": 30, "overlay": true}
     },
     "model": "combinedassault:models/aircraft/f22a/f22a.glb",
     "display": {

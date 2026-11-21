@@ -60,7 +60,7 @@ public final class GemScreens {
             state.textures[i] = info.kind == ScreenInfo.Kind.SIGHT
                     ? SightScreens.texture(state, i, frame.width(), frame.height())
                     : WorldScreens.texture(state.views[i], UiLayouts.get(info.layout), state.views[i],
-                    distance, frame.width(), frame.height(), info.unitsWidth, info.maxFps);
+                    distance, frame.width(), frame.height(), info.unitsWidth, info.maxFps, info.overlay ? 0 : 0xFF000000);
             if (state.textures[i] != null) {
                 state.views[i].refresh(partialTick);
                 any = true;
