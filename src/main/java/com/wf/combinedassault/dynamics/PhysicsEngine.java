@@ -436,6 +436,10 @@ public class PhysicsEngine {
         }
     }
 
+    public boolean breaking() {
+        return breakingEnabled();
+    }
+
     private boolean breakingEnabled() {
         return canDestroyBlock && VehicleSettings.current().canDestroyBlock();
     }

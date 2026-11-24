@@ -4658,6 +4658,7 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     /** Tick thread, before the level's {@link PhysicsStep}: controllers edit velocity and yaw; buoyancy sampled live. */
     private void prepareStep() {
+        TreeRam.clear(this);
         applyVelocityDeadband();
         Vec3 before = getDeltaMovement();
         tickMove();
