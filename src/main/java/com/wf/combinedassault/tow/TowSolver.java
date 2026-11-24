@@ -2,7 +2,7 @@ package com.wf.combinedassault.tow;
 
 import com.wf.combinedassault.cargo.VehicleParachute;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.wflib.physics.step.RigidStep;
+import com.wf.wflib.physics.api.PhysicsStep;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
@@ -49,7 +49,7 @@ public final class TowSolver {
         if (towed.isEmpty()) {
             return;
         }
-        boolean regions = RigidStep.regionHost() != null;
+        boolean regions = PhysicsStep.regionHost() != null;
         for (AbstractVehicle vehicle : new ArrayList<>(towed)) {
             if (!regions || onMain(vehicle)) {
                 settle(vehicle);

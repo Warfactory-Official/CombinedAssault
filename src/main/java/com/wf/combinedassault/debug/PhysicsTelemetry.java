@@ -3,7 +3,7 @@ package com.wf.combinedassault.debug;
 import com.wf.combinedassault.tow.TowLinks;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.physics.api.PhysicsSettings;
-import com.wf.wflib.physics.step.RigidStep;
+import com.wf.wflib.physics.api.PhysicsStep;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.MinecraftServer;
@@ -15,8 +15,8 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import java.util.Locale;
 
 /**
- * On-screen physics profile, integrated server only (RigidStep + tick counters are JVM statics).
- * Costs nothing while off: RigidStep stage timers are gated on its stats flag.
+ * On-screen physics profile, integrated server only (PhysicsStep + tick counters are JVM statics).
+ * Costs nothing while off: PhysicsStep stage timers are gated on its stats flag.
  */
 public final class PhysicsTelemetry {
 
@@ -28,14 +28,14 @@ public final class PhysicsTelemetry {
 
     private static final double[] tickMs = new double[WINDOW];
     private static final double[] stepUs = new double[WINDOW];
-    private static final double[][] stageUs = new double[RigidStep.STAGES.length][WINDOW];
+    private static final double[][] stageUs = new double[PhysicsStep.STAGES.length][WINDOW];
     private static int cursor;
     private static int filled;
     private static long tickStart;
     private static int islands, bodies, contacts;
     private static boolean async;
     /** lastTick() holds the last stepped tick: resting vehicles step on a heartbeat, the rest would re-read it. */
-    private static RigidStep.Tick lastSeen;
+    private static PhysicsStep.Tick lastSeen;
     private static int vehicles, resting, towed;
 
     private static double frameMs;
@@ -47,8 +47,8 @@ public final class PhysicsTelemetry {
     private record Report(double tickAvg, double tickMax, double stepAvg, double stepMax, double[] stageAvg, double[] stageMax,
                           int islands, int bodies, int contacts, boolean async, int vehicles, int resting, int towed,
                           boolean live) {
-        static final Report EMPTY = new Report(0, 0, 0, 0, new double[RigidStep.STAGES.length],
-                new double[RigidStep.STAGES.length], 0, 0, 0, false, 0, 0, 0, false);
+        static final Report EMPTY = new Report(0, 0, 0, 0, new double[PhysicsStep.STAGES.length],
+                new double[PhysicsStep.STAGES.length], 0, 0, 0, false, 0, 0, 0, false);
     }
 
     public static boolean enabled() {
@@ -57,7 +57,7 @@ public final class PhysicsTelemetry {
 
     public static void set(boolean enable) {
         on = enable;
-        RigidStep.setStats(enable);
+        PhysicsStep.setStats(enable);
         cursor = filled = 0;
         report = Report.EMPTY;
     }
@@ -75,7 +75,7 @@ public final class PhysicsTelemetry {
             return;
         }
         tickMs[cursor] = (System.nanoTime() - tickStart) / 1.0e6;
-        RigidStep.Tick tick = RigidStep.lastTick();
+        PhysicsStep.Tick tick = PhysicsStep.lastTick();
         boolean stepped = tick != null && tick != lastSeen && tick.totalNanos() > 0;
         lastSeen = tick;
         stepUs[cursor] = stepped ? tick.totalNanos() / 1000.0 : 0;
@@ -156,13 +156,13 @@ public final class PhysicsTelemetry {
             graphics.drawString(mc.font, mc.hasSingleplayerServer() ? "waiting for a stepped tick" : "integrated server only", 4, y, 0xFFFFAA00);
             return;
         }
-        String[] lines = new String[RigidStep.STAGES.length + 5];
+        String[] lines = new String[PhysicsStep.STAGES.length + 5];
         int l = 0;
         lines[l++] = String.format(Locale.ROOT, "server tick %.2f avg / %.2f max ms (budget 50)", r.tickAvg(), r.tickMax());
         lines[l++] = String.format(Locale.ROOT, "step %.0f avg / %.0f max us  [%s, %d threads, %s narrowphase]", r.stepAvg(), r.stepMax(),
                 r.async() ? "async" : "sync", settings.threads(), settings.nativeNarrowphase() ? "native" : "java");
-        for (int i = 0; i < RigidStep.STAGES.length; i++) {
-            lines[l++] = String.format(Locale.ROOT, "  %-9s %7.0f avg %7.0f max us  %4.1f%%", RigidStep.STAGES[i], r.stageAvg()[i],
+        for (int i = 0; i < PhysicsStep.STAGES.length; i++) {
+            lines[l++] = String.format(Locale.ROOT, "  %-9s %7.0f avg %7.0f max us  %4.1f%%", PhysicsStep.STAGES[i], r.stageAvg()[i],
                     r.stageMax()[i], r.stepAvg() > 0 ? 100 * r.stageAvg()[i] / r.stepAvg() : 0);
         }
         lines[l++] = String.format(Locale.ROOT, "last step: %d islands, %d bodies, %d contacts", r.islands(), r.bodies(), r.contacts());

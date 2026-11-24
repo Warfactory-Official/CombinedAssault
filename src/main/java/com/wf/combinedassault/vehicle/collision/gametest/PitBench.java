@@ -34,7 +34,7 @@ import java.util.Optional;
 
 /**
  * Mixed vehicles thrown into a walled pit, one per {@link #STAGGER} ticks; {@code [pit]} rows every {@link #ROW}
- * ticks, one summary; {@code [pit] KICK} per upward kick, {@code FAST} per speed spike, {@code WALL} per hull into a wall, {@code SINK} per row with a pair deeper than {@link #SINK}, {@code ESCAPE} per hull out, {@code STATS} ({@link RigidStep#drainStats}, all seeds) per seed-0 row. {@code -Pbench=pit} sync solve,
+ * ticks, one summary; {@code [pit] KICK} per upward kick, {@code FAST} per speed spike, {@code WALL} per hull into a wall, {@code SINK} per row with a pair deeper than {@link #SINK}, {@code ESCAPE} per hull out, {@code STATS} ({@link PhysicsStep#drainStats}, all seeds) per seed-0 row. {@code -Pbench=pit} sync solve,
  * {@code -Pbench=pit_async} async; filter containing {@code shadow} => pair-cache hits diffed (skews timing).
  */
 @GameTestHolder(ClimbBench.NAMESPACE)

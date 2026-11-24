@@ -8,7 +8,7 @@ import com.wf.combinedassault.deck.pojo.MountPointInfo;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.core.api.ServerTicks;
 import com.wf.wflib.core.api.TickOrder;
-import com.wf.wflib.physics.step.RigidStep;
+import com.wf.wflib.physics.api.PhysicsStep;
 import com.wf.wflib.physics.api.DeckSnapshot;
 import com.wf.wflib.physics.api.TickClock;
 import net.minecraft.server.level.ServerLevel;
@@ -57,7 +57,7 @@ public final class RailCompat {
 
     /** Non-self-ticking riders: self-tick keeps interpolation, skip => carrier rolls out from under them. */
     private static void tickCarried(ServerLevel level) {
-        boolean regions = RigidStep.regionHost() != null;
+        boolean regions = PhysicsStep.regionHost() != null;
         for (FlatcarCarrier carrier : FlatcarCarrier.loaded()) {
             if (carrier.level() != level || carrier.harnessedVehicles().isEmpty()) {
                 continue;

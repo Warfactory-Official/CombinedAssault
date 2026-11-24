@@ -57,7 +57,6 @@ import com.wf.combinedassault.tow.TowMode;
 import com.wf.combinedassault.tow.TowSolver;
 import com.wf.wflib.core.api.HitRouter;
 import com.wf.wflib.physics.api.RegionHost;
-import com.wf.wflib.physics.step.RigidStep;
 import com.wf.combinedassault.uav.UavCamera;
 import com.wf.combinedassault.uav.autonomy.VehicleDrone;
 import com.wf.combinedassault.uav.fpv.payload.FpvPayloadTypes;
@@ -1192,7 +1191,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             }
             VehicleMounts.tickPending(this);
             TowLinks.tickPending(this);
-            RegionHost regions = RigidStep.regionHost();
+            RegionHost regions = PhysicsStep.regionHost();
             if (regions != null) {
                 int region = regions.currentRegion();
                 tickRegion = region;
@@ -3544,7 +3543,7 @@ public abstract class AbstractVehicle extends ContainerCraft
             return;
         }
         if (pEntity instanceof AbstractVehicle) {
-            // RigidStep owns vehicle pairs.
+            // PhysicsStep owns vehicle pairs.
             return;
         }
         OBB mainCubeOBB = getMainCubeOBB().obb();
