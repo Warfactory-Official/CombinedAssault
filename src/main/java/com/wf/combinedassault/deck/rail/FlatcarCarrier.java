@@ -16,6 +16,7 @@ import org.joml.Quaternionf;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * IR stock as a {@link HarnessCarrier}. IR entity is a {@code ModdedEntity} wrapping a UMC {@code CustomEntity}
@@ -31,17 +32,16 @@ public final class FlatcarCarrier implements HarnessCarrier {
     private final WeakReference<ModdedEntity> entity;
     private final UUID uuid;
     private final int id;
-    private final DeckSnapshot snapshot = new DeckSnapshot();
-    private final Quaternionf rotation = new Quaternionf();
-    private final List<AbstractVehicle> carried = new ArrayList<>();
-    // Snapshot cache keyed on pose, not tick: IR-vs-load tick order unknown; tick-keyed cache would
+    private final List<AbstractVehicle> carried = new CopyOnWriteArrayList<>();
+
+    /** Immutable once published: children on several region threads share one carrier. */
+    private record Pose(DeckSnapshot snapshot, double x, double y, double z, float yaw, float pitch, float roll) {
+    }
+
+    // Cached on pose, not tick: IR-vs-load tick order unknown; tick-keyed cache would
     // serve a stale pose to whichever runs first.
-    private double lastX = Double.NaN;
-    private double lastY = Double.NaN;
-    private double lastZ = Double.NaN;
-    private float lastYaw = Float.NaN;
-    private float lastPitch = Float.NaN;
-    private float lastRoll = Float.NaN;
+    private volatile Pose pose = new Pose(new DeckSnapshot(), Double.NaN, Double.NaN, Double.NaN, Float.NaN,
+            Float.NaN, Float.NaN);
 
     private FlatcarCarrier(ModdedEntity entity) {
         this.entity = new WeakReference<>(entity);
@@ -68,33 +68,29 @@ public final class FlatcarCarrier implements HarnessCarrier {
     }
 
     /** Repose on change only. Lazy not pushed: IR doesn't know this exists; must be right whichever entity ticks first. */
-    private void refresh() {
+    private Pose refresh() {
         EntityMoveableRollingStock stock = stock();
         Vec3d at = stock.getPosition();
         float yaw = stock.getRotationYaw();
         float pitch = stock.getRotationPitch();
         float roll = stock.getRotationRoll();
-        if (at.x == lastX && at.y == lastY && at.z == lastZ
-                && yaw == lastYaw && pitch == lastPitch && roll == lastRoll) {
-            return;
+        Pose last = pose;
+        if (at.x == last.x && at.y == last.y && at.z == last.z
+                && yaw == last.yaw && pitch == last.pitch && roll == last.roll) {
+            return last;
         }
-        lastX = at.x;
-        lastY = at.y;
-        lastZ = at.z;
-        lastYaw = yaw;
-        lastPitch = pitch;
-        lastRoll = roll;
-        DeckFrame.fromEulerYXZ(yaw, pitch, roll, rotation);
+        Quaternionf rotation = DeckFrame.fromEulerYXZ(yaw, pitch, roll, new Quaternionf());
 
         // Downstream reads box count only; zero boxes => treated as not yet posed.
         EntityRollingStockDefinition definition = stock.getDefinition();
         float halfWidth = (float) (definition.getWidth(stock.gauge) / 2.0);
         float halfLength = (float) (definition.getLength(stock.gauge) / 2.0);
         float height = (float) definition.getHeight(stock.gauge);
+        DeckSnapshot snapshot = new DeckSnapshot();
         fill(snapshot.boxBuffer(1), halfWidth, height, halfLength);
         fill(snapshot.deckBoxBuffer(1), halfWidth, height, halfLength);
-
         snapshot.set(rotation, yaw, at.x, at.y, at.z, 1, 1);
+        return pose = new Pose(snapshot, at.x, at.y, at.z, yaw, pitch, roll);
     }
 
     /** {@code boxes[]} layout: min xyz then max xyz, local to pivot. */
@@ -113,8 +109,7 @@ public final class FlatcarCarrier implements HarnessCarrier {
 
     @Override
     public DeckSnapshot deckSnapshot() {
-        refresh();
-        return snapshot;
+        return refresh().snapshot;
     }
 
     @Override
@@ -148,10 +143,8 @@ public final class FlatcarCarrier implements HarnessCarrier {
 
     @Override
     public Vec3 position() {
-        if (entity.get() != null) {
-            refresh();
-        }
-        return new Vec3(lastX, lastY, lastZ);
+        Pose p = entity.get() != null ? refresh() : pose;
+        return new Vec3(p.x, p.y, p.z);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.wf.combinedassault.ballistics;
 
+import com.wf.wflib.core.api.HitRouter;
 import com.wf.combinedassault.ballistics.addon.AddonPhysics;
 import com.wf.combinedassault.ballistics.addon.AddonStrike;
 import com.wf.combinedassault.ballistics.addon.IntegralEra;
@@ -136,6 +137,10 @@ public final class VehicleBlastResolver {
         if (vehicle.level().isClientSide() || vehicle.ignoreExplosion(source)) {
             return;
         }
+        if (HitRouter.foreign(vehicle.level(), vehicle)) {
+            HitRouter.defer(vehicle.level(), vehicle, () -> resolve(vehicle, source, aef, payload, centre));
+            return;
+        }
         float size = aef != null ? aef.size : ((ExplosionAccessor) source).getRadius();
         Entity direct = source.getDirectSourceEntity();
         Entity causing = source.getIndirectSourceEntity();
@@ -145,6 +150,10 @@ public final class VehicleBlastResolver {
     /** Burst inside the hull (a {@code post_pen} round past its entry plate): no plate between, crew and modules direct. */
     public static void interior(AbstractVehicle vehicle, @Nullable Entity shooter, BlastPayload payload, Vec3 centre) {
         if (vehicle.level().isClientSide() || payload.blast() == null) {
+            return;
+        }
+        if (HitRouter.foreign(vehicle.level(), vehicle)) {
+            HitRouter.defer(vehicle.level(), vehicle, () -> interior(vehicle, shooter, payload, centre));
             return;
         }
         run(vehicle, null, shooter, null, payload, centre, sizeForKg(payload.blast().tntKg()));

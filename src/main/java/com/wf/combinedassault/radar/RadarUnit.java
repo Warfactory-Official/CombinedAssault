@@ -41,6 +41,8 @@ public class RadarUnit extends RotatableUnit<RadarUnitData> {
     private boolean yRotAdd = true;
     private boolean xRotAdd = true;
     private boolean on;
+    /** Own vehicle's thread only. */
+    ReconBridge.Registration recon;
     private final ThreadPoolExecutor radarExecutor = new ThreadPoolExecutor(
             4,
             4,

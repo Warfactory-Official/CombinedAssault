@@ -8,10 +8,15 @@ import com.wf.combinedassault.deck.pojo.MountPointInfo;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.core.api.ServerTicks;
 import com.wf.wflib.core.api.TickOrder;
+import com.wf.wflib.physics.step.RigidStep;
+import com.wf.wflib.physics.api.DeckSnapshot;
+import com.wf.wflib.physics.api.TickClock;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.fml.ModList;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Vehicles strapped to IR stock. Inert without IR: nothing registers, {@link FlatcarCarrier} never loads.
@@ -52,9 +57,33 @@ public final class RailCompat {
 
     /** Non-self-ticking riders: self-tick keeps interpolation, skip => carrier rolls out from under them. */
     private static void tickCarried(ServerLevel level) {
+        boolean regions = RigidStep.regionHost() != null;
         for (FlatcarCarrier carrier : FlatcarCarrier.loaded()) {
-            if (carrier.level() == level && !carrier.harnessedVehicles().isEmpty()) {
+            if (carrier.level() != level || carrier.harnessedVehicles().isEmpty()) {
+                continue;
+            }
+            if (regions) {
+                applyOffRegion(carrier);
+            } else {
                 VehicleHarness.applyChildren(carrier, true);
+            }
+        }
+    }
+
+    /** Region-owned ticking children pose themselves in their own tick ({@code follow}); iterates the copy-on-write snapshot. */
+    private static void applyOffRegion(FlatcarCarrier carrier) {
+        DeckSnapshot deck = carrier.deckSnapshot();
+        if (deck.count() == 0) {
+            return;
+        }
+        long gameTime = TickClock.now(carrier.level());
+        List<AbstractVehicle> children = carrier.harnessedVehicles();
+        for (AbstractVehicle child : children) {
+            if (VehicleHarness.stale(carrier, child)) {
+                children.remove(child);
+                VehicleHarness.dropStale(carrier, child);
+            } else if (child.tickRegion() < 0 || child.lastTickTime() < gameTime - 1) {
+                VehicleHarness.applyChild(child, deck, true, gameTime);
             }
         }
     }

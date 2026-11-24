@@ -2,6 +2,7 @@ package com.wf.combinedassault.tow;
 
 import com.wf.combinedassault.cargo.VehicleParachute;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.wflib.physics.step.RigidStep;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
@@ -48,17 +49,40 @@ public final class TowSolver {
         if (towed.isEmpty()) {
             return;
         }
+        boolean regions = RigidStep.regionHost() != null;
         for (AbstractVehicle vehicle : new ArrayList<>(towed)) {
-            TowLink link = vehicle.towLink();
-            if (link == null) {
-                continue;
+            if (!regions || onMain(vehicle)) {
+                settle(vehicle);
             }
-            AbstractVehicle tractor = link.tractor();
-            HitchInfo hitch = link.hitch();
-            if (hitch == null || vehicle.isRemoved() || tractor.isRemoved() || vehicle.level() != tractor.level()
-                    || !check(tractor, vehicle, link, hitch)) {
-                TowLinks.uncouple(vehicle);
-            }
+        }
+    }
+
+    /**
+     * Vehicle tick, region thread, region host bound: pairs ticked in one region settle here (pose is last step's, and
+     * only this thread moves either end). Tractor in another partition => not settled, the step holds the towed body.
+     */
+    public static void tickOwn(AbstractVehicle vehicle, int region) {
+        TowLink link = vehicle.towLink();
+        if (region >= 0 && link != null && link.tractor().tickRegion() == region) {
+            settle(vehicle);
+        }
+    }
+
+    private static boolean onMain(AbstractVehicle vehicle) {
+        TowLink link = vehicle.towLink();
+        return vehicle.tickRegion() < 0 && (link == null || link.tractor().tickRegion() < 0);
+    }
+
+    private static void settle(AbstractVehicle vehicle) {
+        TowLink link = vehicle.towLink();
+        if (link == null) {
+            return;
+        }
+        AbstractVehicle tractor = link.tractor();
+        HitchInfo hitch = link.hitch();
+        if (hitch == null || vehicle.isRemoved() || tractor.isRemoved() || vehicle.level() != tractor.level()
+                || !check(tractor, vehicle, link, hitch)) {
+            TowLinks.uncouple(vehicle);
         }
     }
 

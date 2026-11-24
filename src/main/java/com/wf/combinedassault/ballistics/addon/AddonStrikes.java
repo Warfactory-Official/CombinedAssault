@@ -21,18 +21,43 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Strike results waiting for the projectile's own {@code hurt} call, which {@code DamageSystem} reads.
- * Server thread only; anything not taken dies at the end of the tick.
+ * Any thread (region workers, level post); an entry dies at the first server tick end after its stamp.
  */
 public final class AddonStrikes {
 
+    /** Bumped at server tick end; entries stamped below it expire. */
+    private static volatile long epoch;
+
+    /** Entry stamped {@link #epoch} at put; cleared by tick end without a window in which a concurrent put is lost. */
+    private static final class Expiring<K, V> {
+        private record Stamped<V>(long epoch, V value) {
+        }
+
+        private final ConcurrentHashMap<K, Stamped<V>> map = new ConcurrentHashMap<>();
+
+        void put(K key, V value) {
+            map.put(key, new Stamped<>(epoch, value));
+        }
+
+        @Nullable
+        V get(K key) {
+            Stamped<V> held = map.isEmpty() ? null : map.get(key);
+            return held == null ? null : held.value;
+        }
+
+        void expire(long now) {
+            if (!map.isEmpty()) {
+                map.values().removeIf(held -> held.epoch < now);
+            }
+        }
+    }
+
     /** Key = {@code StrikeContext.key()}: projectile entity (identity equals) or round key (boxed long). */
-    private static final Map<Object, AddonStrike.Result> PENDING = new HashMap<>();
+    private static final Expiring<Object, AddonStrike.Result> PENDING = new Expiring<>();
 
     /**
      * A shaped charge's or EFP's strike on a vehicle this tick: what the panels did to it, for the warhead's own
@@ -41,18 +66,18 @@ public final class AddonStrikes {
     public record Jet(AddonStrike.Result result, ThreatKind kind, float caliberMm) {
     }
 
-    private static final Map<AbstractVehicle, Jet> JETS = new IdentityHashMap<>();
+    private static final Expiring<AbstractVehicle, Jet> JETS = new Expiring<>();
 
     private AddonStrikes() {
     }
 
     @Nullable
     public static Jet jet(AbstractVehicle vehicle) {
-        return JETS.isEmpty() ? null : JETS.get(vehicle);
+        return JETS.get(vehicle);
     }
 
     /** What the round's own hit would have done to the hull, priced as the jet's incoming damage. */
-    private static final Map<AbstractVehicle, Float> CONTACT = new IdentityHashMap<>();
+    private static final Expiring<AbstractVehicle, Float> CONTACT = new Expiring<>();
 
     public static void contact(AbstractVehicle vehicle, float damage) {
         CONTACT.put(vehicle, damage);
@@ -61,7 +86,7 @@ public final class AddonStrikes {
     /** Null: no round hit this vehicle this tick. */
     @Nullable
     public static Float contact(AbstractVehicle vehicle) {
-        return CONTACT.isEmpty() ? null : CONTACT.get(vehicle);
+        return CONTACT.get(vehicle);
     }
 
     public static void put(Object key, AddonStrike.Result result) {
@@ -71,14 +96,15 @@ public final class AddonStrikes {
     /** Kept to tick end: one round can {@code hurt} twice (TACZ splits armour-piercing damage). */
     @Nullable
     public static AddonStrike.Result get(@Nullable Object key) {
-        return key == null || PENDING.isEmpty() ? null : PENDING.get(key);
+        return key == null ? null : PENDING.get(key);
     }
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
-        PENDING.clear();
-        JETS.clear();
-        CONTACT.clear();
+        long now = ++epoch;
+        PENDING.expire(now);
+        JETS.expire(now);
+        CONTACT.expire(now);
     }
 
     /** WFLib missiles and shells; TACZ rounds via taczwf. */

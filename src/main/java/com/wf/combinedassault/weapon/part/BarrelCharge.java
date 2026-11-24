@@ -13,6 +13,7 @@ import com.wf.combinedassault.weapon.pojo.Bolt;
 import com.wf.wflib.fire.api.FireType;
 import com.wf.wflib.fire.api.WFFire;
 import com.wf.wflib.grenade.api.*;
+import com.wf.wflib.core.api.HitRouter;
 import com.wf.wflib.probe.api.ProbeActions;
 import com.wf.wflib.probe.api.ProbeInventory;
 import net.minecraft.resources.ResourceLocation;
@@ -65,6 +66,10 @@ public final class BarrelCharge {
         @Nullable
         ThrownCharge charge;
         int burn;
+        /** Set by the thread that ran {@link #step}: entry finished, main removes it. */
+        volatile boolean done;
+        /** A routed {@link #step} is queued to the vehicle's owner. */
+        volatile boolean inFlight;
 
         Pending(ServerLevel level, UUID vehicle, int unit, int bolt, ItemStack look, ChargeSpec spec,
                 @Nullable UUID owner) {
@@ -176,34 +181,56 @@ public final class BarrelCharge {
         Iterator<Pending> it = PENDING.iterator();
         while (it.hasNext()) {
             Pending p = it.next();
-            if (!(p.level.getEntity(p.vehicle) instanceof AbstractVehicle vehicle) || vehicle.isDestroyed()
-                    || p.unit >= vehicle.getPartUnits().size()
-                    || !(vehicle.getPartUnits().get(p.unit) instanceof WeaponUnit unit)
-                    || p.bolt >= unit.getBolts().size()) {
+            if (p.done) {
+                it.remove();
+            } else if (!(p.level.getEntity(p.vehicle) instanceof AbstractVehicle vehicle)) {
                 if (p.charge != null) {
-                    p.charge.discard();
+                    ThrownCharge charge = p.charge;
+                    HitRouter.apply(p.level, charge, charge::discard);
                 }
                 it.remove();
-                continue;
-            }
-            Vec3[] muzzle = muzzle(unit, unit.getBolts().get(p.bolt));
-            Vec3 inBore = muzzle[0].subtract(muzzle[1].scale(DEPTH));
-            if (p.charge == null) {
-                if (--p.fuse > 0) {
-                    continue;
+            } else if (!p.inFlight) {
+                if (HitRouter.foreign(p.level, vehicle)) {
+                    p.inFlight = true;
+                    HitRouter.defer(p.level, vehicle, () -> {
+                        step(p, vehicle);
+                        p.inFlight = false;
+                    });
+                } else {
+                    step(p, vehicle);
                 }
-                Entity owner = p.owner == null ? null : p.level.getEntity(p.owner);
-                p.charge = ThrownCharge.react(p.level, inBore, p.look, p.spec, muzzle[1], owner, null, true);
-                unit.setHealth(0);
             }
-            if (p.charge.isRemoved() || p.charge.phase() != ThrownCharge.Phase.REACTING) {
-                it.remove();
-                continue;
+        }
+    }
+
+    /** On the vehicle's owner: mutates the weapon part, crew, the charge. */
+    private static void step(Pending p, AbstractVehicle vehicle) {
+        if (vehicle.isDestroyed() || p.unit >= vehicle.getPartUnits().size()
+                || !(vehicle.getPartUnits().get(p.unit) instanceof WeaponUnit unit)
+                || p.bolt >= unit.getBolts().size()) {
+            if (p.charge != null) {
+                p.charge.discard();
             }
-            p.charge.holdAt(inBore, muzzle[1]);
-            if (p.burn++ % 10 == 0) {
-                burnLoader(vehicle, p.charge);
+            p.done = true;
+            return;
+        }
+        Vec3[] muzzle = muzzle(unit, unit.getBolts().get(p.bolt));
+        Vec3 inBore = muzzle[0].subtract(muzzle[1].scale(DEPTH));
+        if (p.charge == null) {
+            if (--p.fuse > 0) {
+                return;
             }
+            Entity owner = p.owner == null ? null : p.level.getEntity(p.owner);
+            p.charge = ThrownCharge.react(p.level, inBore, p.look, p.spec, muzzle[1], owner, null, true);
+            unit.setHealth(0);
+        }
+        if (p.charge.isRemoved() || p.charge.phase() != ThrownCharge.Phase.REACTING) {
+            p.done = true;
+            return;
+        }
+        p.charge.holdAt(inBore, muzzle[1]);
+        if (p.burn++ % 10 == 0) {
+            burnLoader(vehicle, p.charge);
         }
     }
 

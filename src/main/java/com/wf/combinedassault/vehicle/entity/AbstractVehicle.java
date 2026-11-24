@@ -54,6 +54,10 @@ import com.wf.combinedassault.tow.TowInfo;
 import com.wf.combinedassault.tow.TowLink;
 import com.wf.combinedassault.tow.TowLinks;
 import com.wf.combinedassault.tow.TowMode;
+import com.wf.combinedassault.tow.TowSolver;
+import com.wf.wflib.core.api.HitRouter;
+import com.wf.wflib.physics.api.RegionHost;
+import com.wf.wflib.physics.step.RigidStep;
 import com.wf.combinedassault.uav.UavCamera;
 import com.wf.combinedassault.uav.autonomy.VehicleDrone;
 import com.wf.combinedassault.uav.fpv.payload.FpvPayloadTypes;
@@ -318,7 +322,7 @@ public abstract class AbstractVehicle extends ContainerCraft
     private double lastFall;
     /** Set while this vehicle is on the end of someone's hitch or cable. */
     @Nullable
-    private TowLink towLink;
+    private volatile TowLink towLink;
     /** A coupling read back from a save whose tractor has not been found yet. */
     @Nullable
     private TowLinks.Pending pendingTow;
@@ -432,6 +436,8 @@ public abstract class AbstractVehicle extends ContainerCraft
     private int harnessDwell;
     /** Game time this vehicle last ticked, which says whether its old pose has been taken yet. */
     private long lastTickTime = Long.MIN_VALUE;
+    /** Region whose thread last ticked this; -1 main thread. Written only under a region host. */
+    private volatile int tickRegion = -1;
     /** The ride this vehicle takes from a deck it stands on while awake. */
     private final DeckCarry deckCarry = new DeckCarry();
     /** Vehicles asleep on this one. */
@@ -1186,6 +1192,12 @@ public abstract class AbstractVehicle extends ContainerCraft
             }
             VehicleMounts.tickPending(this);
             TowLinks.tickPending(this);
+            RegionHost regions = RigidStep.regionHost();
+            if (regions != null) {
+                int region = regions.currentRegion();
+                tickRegion = region;
+                TowSolver.tickOwn(this, region);
+            }
             if (cargoHold != null) {
                 cargoHold.tick();
             }
@@ -1563,6 +1575,10 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     @Override
     public boolean hurt(@NotNull DamageSource damageSource, float amount) {
+        if (HitRouter.foreign(level(), this)) {
+            HitRouter.defer(level(), this, () -> hurt(damageSource, amount));
+            return true;
+        }
         VehicleAttackEvent __VehicleAttackEvent = new VehicleAttackEvent(this, damageSource, amount);
         NeoForge.EVENT_BUS.post(__VehicleAttackEvent);
         if (__VehicleAttackEvent.isCanceled()) {
@@ -2351,6 +2367,10 @@ public abstract class AbstractVehicle extends ContainerCraft
 
     @Override
     public void blast(ExplosionAEF explosion, BlastPayload payload, Vec3 centre) {
+        if (HitRouter.foreign(level(), this)) {
+            HitRouter.defer(level(), this, () -> blast(explosion, payload, centre));
+            return;
+        }
         VehicleBlastResolver.resolve(this, explosion.compat, explosion, payload, centre);
     }
 
@@ -4050,6 +4070,10 @@ public abstract class AbstractVehicle extends ContainerCraft
         if (!entityData.get(DECK_LOCAL_ROTATION).equals(rotation, 1.0e-5f)) {
             entityData.set(DECK_LOCAL_ROTATION, new Quaternionf(rotation));
         }
+    }
+
+    public int tickRegion() {
+        return tickRegion;
     }
 
     public long lastTickTime() {

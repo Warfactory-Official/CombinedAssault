@@ -238,21 +238,33 @@ public final class VehicleHarness {
         long gameTime = TickClock.now(carrier.level());
         for (int i = children.size() - 1; i >= 0; i--) {
             AbstractVehicle child = children.get(i);
-            VehicleHarness harness = child.harness();
-            if (harness == null || harness.carrier != carrier || child.isRemoved()
-                    || child.level() != carrier.level()) {
+            if (stale(carrier, child)) {
                 children.remove(i);
-                if (harness != null && harness.carrier == carrier) {
-                    detach(child, false);
-                }
+                dropStale(carrier, child);
                 continue;
             }
-            // A child that is not ticking at all is still posed here, or its carrier sails out from
-            // under it.
-            boolean ticking = child.lastTickTime() >= gameTime - 1;
-            if (!deferToOwnTick || !ticking || child.lastTickTime() == gameTime) {
-                harness.apply(child, deck);
-            }
+            applyChild(child, deck, deferToOwnTick, gameTime);
+        }
+    }
+
+    /** No longer the carrier's child: caller removes it from the carrier's list, then {@link #dropStale}. */
+    public static boolean stale(HarnessCarrier carrier, AbstractVehicle child) {
+        VehicleHarness harness = child.harness();
+        return harness == null || harness.carrier != carrier || child.isRemoved() || child.level() != carrier.level();
+    }
+
+    public static void dropStale(HarnessCarrier carrier, AbstractVehicle child) {
+        VehicleHarness harness = child.harness();
+        if (harness != null && harness.carrier == carrier) {
+            detach(child, false);
+        }
+    }
+
+    /** Non-{@link #stale} child. A child that is not ticking at all is still posed here, or its carrier sails out from under it. */
+    public static void applyChild(AbstractVehicle child, DeckSnapshot deck, boolean deferToOwnTick, long gameTime) {
+        boolean ticking = child.lastTickTime() >= gameTime - 1;
+        if (!deferToOwnTick || !ticking || child.lastTickTime() == gameTime) {
+            child.harness().apply(child, deck);
         }
     }
 

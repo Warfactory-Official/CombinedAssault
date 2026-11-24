@@ -15,6 +15,8 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /** Couples vehicles + persists across reload. Towed vehicle holds the link (names its tractor) => train is a chain, walkable front-to-back by {@link TowSolver}. */
 public final class TowLinks {
@@ -40,8 +42,8 @@ public final class TowLinks {
     /** Giveup horizon, ticks; counts only while the tractor's chunk holds loaded entities. */
     private static final int RELINK_TIMEOUT = 20 * 60;
 
-    /** Towed vehicles per level; what the solve iterates. */
-    private static final Map<Level, List<AbstractVehicle>> TOWED = new IdentityHashMap<>();
+    /** Towed vehicles per level; what the solve iterates. Copy-on-write: step threads read, any thread couples. */
+    private static final Map<Level, List<AbstractVehicle>> TOWED = new ConcurrentHashMap<>();
 
     private TowLinks() {
     }
@@ -147,8 +149,8 @@ public final class TowLinks {
     public static boolean tows(AbstractVehicle tractor) {
         List<AbstractVehicle> index = TOWED.get(tractor.level());
         if (index != null) {
-            for (int i = 0, size = index.size(); i < size; i++) {
-                if (tractorOf(index.get(i)) == tractor) {
+            for (AbstractVehicle towed : index) {
+                if (tractorOf(towed) == tractor) {
                     return true;
                 }
             }
@@ -351,7 +353,7 @@ public final class TowLinks {
     }
 
     private static List<AbstractVehicle> index(AbstractVehicle vehicle) {
-        return TOWED.computeIfAbsent(vehicle.level(), level -> new ArrayList<>(2));
+        return TOWED.computeIfAbsent(vehicle.level(), level -> new CopyOnWriteArrayList<>());
     }
 
     public static List<AbstractVehicle> towedIn(Level level) {

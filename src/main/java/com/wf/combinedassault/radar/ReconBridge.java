@@ -19,8 +19,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.WeakHashMap;
 
 /**
  * Vehicle side of WFLib sensor net: vehicles as targets, vehicle radars as sensor/receiver/both.
@@ -42,9 +40,6 @@ public final class ReconBridge {
     /** Min closure rate (blocks/tick) for an inbound warning; missile cruise ~1.2, filters coasting-track noise. */
     private static final double INBOUND_MIN_CLOSURE = 0.3;
     private static final String SONAR_TYPE = "sonar";
-
-    /** Weak: GC'd vehicle drops its entry. Value holds only primitives, never keeps the key alive. */
-    private static final Map<RadarUnit, Registration> SENSORS = new WeakHashMap<>();
 
     private ReconBridge() {
     }
@@ -72,11 +67,11 @@ public final class ReconBridge {
         if (!(vehicle.level() instanceof ServerLevel level)) {
             return false;
         }
-        Registration held = SENSORS.get(unit);
+        Registration held = unit.recon;
         if (!unit.isOn() || !vehicle.hasPower() || vehicle.isDestroyed()) {
             if (held != null) {
                 ReconNet.unregisterSensor(level, held.pos, held.netId);
-                SENSORS.remove(unit);
+                unit.recon = null;
             }
             return false;
         }
@@ -100,14 +95,14 @@ public final class ReconBridge {
                 held = null;
             }
             if (held == null) {
-                SENSORS.put(unit, new Registration(pos, netId));
+                unit.recon = held = new Registration(pos, netId);
             }
             // Called every tick, idempotent; this alone prevents idle-timeout drop.
             ReconNet.registerSensor(level, pos, spec(unit, netId, sonar, role));
         } else if (held != null) {
             // Must unregister on sense->no-sense transition or it sweeps unowned. Hit every time a hull sonar breaches.
             ReconNet.unregisterSensor(level, held.pos, held.netId);
-            SENSORS.remove(unit);
+            unit.recon = null;
         }
 
         if (gameTime % SWEEP_TICKS == 0) {
@@ -129,8 +124,9 @@ public final class ReconBridge {
         if (!(unit.getVehicle().level() instanceof ServerLevel level)) {
             return;
         }
-        Registration held = SENSORS.remove(unit);
+        Registration held = unit.recon;
         if (held != null) {
+            unit.recon = null;
             ReconNet.unregisterSensor(level, held.pos, held.netId);
         }
     }
@@ -256,8 +252,8 @@ public final class ReconBridge {
                 Math.floorDiv((int) Math.floor(at.z), CELL) * CELL);
     }
 
-    /** One radar's place on the net. Primitives only, so holding it cannot keep its owner alive. */
-    private record Registration(BlockPos pos, long netId) {
+    /** One radar's place on the net. */
+    record Registration(BlockPos pos, long netId) {
     }
 
 }
