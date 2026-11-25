@@ -1,7 +1,7 @@
 package com.wf.combinedassault.dynamics;
 
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
-import com.wf.wflib.compat.dynamictrees.DynamicTrees;
+import com.wf.wflib.compat.api.DynamicTrees;
 import com.wf.wflib.geom.api.OBB;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
