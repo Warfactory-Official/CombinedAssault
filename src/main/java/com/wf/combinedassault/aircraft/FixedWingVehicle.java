@@ -203,9 +203,9 @@ public class FixedWingVehicle extends AbstractVehicle
         }
         if (message.toggleAerobaticSmoke) {
             setAerobaticSmokeOn(!isAerobaticSmokeOn());
-            setAerobaticSmokeR(message.aerobaticSmokeR);
-            setAerobaticSmokeG(message.aerobaticSmokeG);
-            setAerobaticSmokeB(message.aerobaticSmokeB);
+            setAerobaticSmokeR(message.aerobaticSmokeR & 0xFF);
+            setAerobaticSmokeG(message.aerobaticSmokeG & 0xFF);
+            setAerobaticSmokeB(message.aerobaticSmokeB & 0xFF);
             if (isAerobaticSmokeOn()) {
                 VehicleSounds.at(this, position(), VehicleSounds.SMOKE_START, AudioCategory.VEHICLES);
             }

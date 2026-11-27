@@ -3,6 +3,7 @@ package com.wf.combinedassault.weapon.message;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.vehicle.VehicleContent;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.lock.VehicleLock;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -41,7 +42,8 @@ public record ClientVehicleSelectPartWeapon(int vehicleEntityId, int partUnitInd
         if (!(player.level().getEntity(message.vehicleEntityId) instanceof AbstractVehicle vehicle)) {
             return;
         }
-        if (player.distanceToSqr(vehicle) > MAX_INTERACTION_DISTANCE_SQ) {
+        if (player.distanceToSqr(vehicle) > MAX_INTERACTION_DISTANCE_SQ || !AbstractVehicle.active(player)
+                || !VehicleLock.permits(vehicle, player)) {
             return;
         }
         vehicle.getPartUnit(message.partUnitIndex).ifPresent(partUnit -> {

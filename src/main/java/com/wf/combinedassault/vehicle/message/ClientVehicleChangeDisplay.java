@@ -1,8 +1,10 @@
 package com.wf.combinedassault.vehicle.message;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.camo.Finishes;
 import com.wf.combinedassault.vehicle.VehicleContent;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.lock.VehicleLock;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -11,7 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-/** Modding tool: paint variant. Tool in hand, within 16 blocks. */
+/** Modding tool: paint variant. */
 public class ClientVehicleChangeDisplay implements CustomPacketPayload {
 
     private static final double MAX_INTERACTION_DISTANCE_SQ = 256.0;
@@ -47,7 +49,8 @@ public class ClientVehicleChangeDisplay implements CustomPacketPayload {
             return;
         }
         if (player.level().getEntity(message.vehicleEntityId) instanceof AbstractVehicle vehicle
-                && player.distanceToSqr(vehicle) <= MAX_INTERACTION_DISTANCE_SQ) {
+                && player.distanceToSqr(vehicle) <= MAX_INTERACTION_DISTANCE_SQ && AbstractVehicle.active(player)
+                && VehicleLock.permits(vehicle, player) && Finishes.sameModel(vehicle.getDisplayId(), message.displayId)) {
             vehicle.setDisplayId(message.displayId);
         }
     }

@@ -19,7 +19,7 @@ public record VehicleLockMessage(int vehicleId) implements CustomPacketPayload {
 
     public static void handle(VehicleLockMessage message, IPayloadContext context) {
         if (context.player() instanceof ServerPlayer player && player.getVehicle() instanceof AbstractVehicle vehicle
-                && vehicle.getId() == message.vehicleId) {
+                && vehicle.getId() == message.vehicleId && AbstractVehicle.active(player)) {
             VehicleLock.cycle(player, vehicle);
         }
     }

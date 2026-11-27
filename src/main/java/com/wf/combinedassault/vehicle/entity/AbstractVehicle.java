@@ -99,6 +99,7 @@ import com.wf.combinedassault.weapon.kit.Loadouts;
 import com.wf.combinedassault.weapon.ordnance.GuidedRounds;
 import com.wf.combinedassault.weapon.part.MissileHolderUnit;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.combinedassault.weapon.part.data.WeaponUnitData;
 import com.wf.combinedassault.weapon.pojo.AimContext;
 import com.wf.combinedassault.weapon.pojo.LoadoutInfo;
 import com.wf.wflib.armor.api.hull.HullBody;
@@ -198,6 +199,7 @@ public abstract class AbstractVehicle extends ContainerCraft
         TelemetryReporter, InterceptTarget, LaserTarget,
         RadioCarrier, HullBody, BlastTarget {
 
+    public static final double REACH = 8;
     public static final EntityDataAccessor<Float> X_ROT = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Float> Y_ROT = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Float> Z_ROT = SynchedEntityData.defineId(AbstractVehicle.class, EntityDataSerializers.FLOAT);
@@ -2501,7 +2503,6 @@ public abstract class AbstractVehicle extends ContainerCraft
                 setDetachedBodyAnchor(serverPlayer, serverPlayer.position());
                 uavOperator = serverPlayer.getUUID();
             }
-            ServerLevel serverLevel = (ServerLevel) level();
             Seat targetSeat = requestedSeat >= 0 ? seats.get(requestedSeat) : null;
             // Reachable through an entry first; forced mounts (/ride) take any open seat.
             for (boolean reach : new boolean[]{true, false}) {
@@ -2533,9 +2534,7 @@ public abstract class AbstractVehicle extends ContainerCraft
                 });
             }
             refreshDriver();
-            for (ServerPlayer serverPlayer : serverLevel.players()) {
-                PacketDistributor.sendToPlayer(serverPlayer, new ServerVehicleSeatsChange(this));
-            }
+            PacketDistributor.sendToPlayersTrackingEntity(this, new ServerVehicleSeatsChange(this));
         }
         livingEntity.setSprinting(false);
     }
@@ -2699,21 +2698,46 @@ public abstract class AbstractVehicle extends ContainerCraft
         }
     }
 
+    public static boolean active(Player player) {
+        return player.isAlive() && !player.isSpectator();
+    }
+
+    public boolean aboard(Player player) {
+        return player.getVehicle() == this && active(player);
+    }
+
+    /** Box inflate, not flat distance: reach must scale with hull, or carrier deck's far end is unreachable. */
+    public boolean inReach(Player player) {
+        return active(player) && getBoundingBox().inflate(REACH).contains(player.getEyePosition());
+    }
+
+    /** Blocks {@code moving}'s client copy may lead/trail the server's: travel over (RTT + 2) ticks + 2. */
+    public static double lagSlack(ServerPlayer player, Entity moving) {
+        double travel = Math.max(moving.getDeltaMovement().length(), moving.position().distanceTo(new Vec3(moving.xo, moving.yo, moving.zo)));
+        return travel * (player.connection.latency() / 50.0 + 2) + 2;
+    }
+
+    public boolean nearHull(ServerPlayer player, Vec3 point) {
+        return getBoundingBox().inflate(lagSlack(player, this)).contains(point);
+    }
+
     public void onClientVehicleChangeSeat(ClientVehicleChangeSeat message, Player player) {
-        changeSeat(player, message.toSeat);
+        if (aboard(player)) {
+            changeSeat(player, message.toSeat);
+        }
     }
 
     public void onClientVehicleAction(ClientVehicleAction message, Player player) {
-        if (player != null && player.level().getEntity(message.vehicleEntityId) instanceof AbstractVehicle vehicle) {
-            if (message.leaveVehicle) {
-                player.stopRiding();
-            } else if (message.toggleEngine) {
-                vehicle.toggleEngine(null);
-            } else if (message.lockEntity) {
-                PartUnit<?> partUnit = vehicle.getOwnOperatorUnit(player);
-                if (partUnit instanceof WeaponUnit weaponUnit && CrewRules.mayOperate(player, weaponUnit)) {
-                    weaponUnit.setLockedEntity(SimTargets.resolve((ServerPlayer) player, message.lockedEntityId));
-                }
+        if (message.leaveVehicle) {
+            player.stopRiding();
+        } else if (message.toggleEngine) {
+            toggleEngine(null);
+        } else if (message.lockEntity) {
+            PartUnit<?> partUnit = getOwnOperatorUnit(player);
+            if (partUnit instanceof WeaponUnit weaponUnit && CrewRules.mayOperate(player, weaponUnit)
+                    && (weaponUnit.getFireControlSensorType() != WeaponUnitData.FireControlSensorType.RF
+                    || weaponUnit.getMainRadarUnit() != null && weaponUnit.getMainRadarUnit().mayLock(message.lockedEntityId))) {
+                weaponUnit.setLockedEntity(SimTargets.resolve((ServerPlayer) player, message.lockedEntityId));
             }
         }
     }
@@ -2846,6 +2870,11 @@ public abstract class AbstractVehicle extends ContainerCraft
         if (getDetachedBodyAnchor(player) == null && (level().isClientSide() || VehicleLock.check(this, player))) {
             super.openCustomInventoryScreen(player);
         }
+    }
+
+    @Override
+    public boolean stillValid(@NotNull Player player) {
+        return super.stillValid(player) && inReach(player) && VehicleLock.permits(this, player);
     }
 
     /** UAV riders are remote (parked body at its anchor): stand. */

@@ -12,7 +12,6 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public class ClientRadarAction implements CustomPacketPayload {
@@ -38,22 +37,20 @@ public class ClientRadarAction implements CustomPacketPayload {
 
     public static void handle(ClientRadarAction message, IPayloadContext ctx) {
         ServerPlayer player = (ServerPlayer) ctx.player();
-        if (player == null) {
-            return;
-        }
-        if (player.getVehicle() instanceof AbstractVehicle vehicle) {
+        if (player.getVehicle() instanceof AbstractVehicle vehicle && AbstractVehicle.active(player)) {
             PartUnit<?> partUnit = vehicle.getOwnOperatorUnit(player);
             if (partUnit instanceof WeaponUnit weaponUnit) {
                 RadarUnit mainRadarUnit = weaponUnit.getMainRadarUnit();
                 if (mainRadarUnit == null) {
                     return;
                 }
-                Level level = player.level();
                 if (message.action == Action.LOCK) {
-                    mainRadarUnit.setLockedEntity(SimTargets.resolve(player, message.toEntityId));
+                    if (mainRadarUnit.mayLock(message.toEntityId)) {
+                        mainRadarUnit.setLockedEntity(SimTargets.resolve(player, message.toEntityId));
+                    }
                 } else if (message.action == Action.DETECT) {
-                    Entity toEntity = level.getEntity(message.toEntityId);
-                    if (toEntity != null) {
+                    Entity toEntity = player.level().getEntity(message.toEntityId);
+                    if (toEntity != null && mainRadarUnit.mayDetect(player, toEntity)) {
                         mainRadarUnit.detect(toEntity);
                     }
                 }

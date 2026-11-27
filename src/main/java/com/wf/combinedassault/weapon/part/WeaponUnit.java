@@ -5,7 +5,6 @@ import com.wf.combinedassault.airdefense.AirDefense;
 import com.wf.combinedassault.ballistics.component.ComponentDamage;
 import com.wf.combinedassault.ballistics.component.ComponentState;
 import com.wf.combinedassault.ballistics.hit.ModelData;
-import com.wf.combinedassault.ballistics.message.ServerVehicleWarn;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
 import com.wf.combinedassault.indirect.BallisticSolver;
 import com.wf.combinedassault.indirect.FireMission;
@@ -19,6 +18,7 @@ import com.wf.combinedassault.pack.sync.SyncDataHolder;
 import com.wf.combinedassault.pack.sync.SyncDataSerializers;
 import com.wf.combinedassault.pack.weapon.VehicleWeaponIndex;
 import com.wf.combinedassault.radar.RadarUnit;
+import com.wf.combinedassault.radar.ReconBridge;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.VehicleContent;
 import com.wf.combinedassault.vehicle.audio.CueLoop;
@@ -492,10 +492,8 @@ public class WeaponUnit extends RotatableUnit<WeaponUnitData> {
         } else {
             if (vehicle.tickCount % 2 == 0 && getFireControlSensorType() == WeaponUnitData.FireControlSensorType.RF && !radarUnits.isEmpty()) {
                 RadarUnit mainRadarUnit = getMainRadarUnit();
-                Entity radarLockedEntity = mainRadarUnit.getLockedEntity();
-                if (radarLockedEntity != null) {
-                    ServerVehicleWarn packet = new ServerVehicleWarn(vehicle.getId(), radarLockedEntity.getId(), WarnType.RADAR_LOCK, mainRadarUnit.getRadarType());
-                    PacketDistributor.sendToPlayersTrackingEntity(radarLockedEntity, packet);
+                if (mainRadarUnit.getLockedEntity() instanceof AbstractVehicle target) {
+                    ReconBridge.send(target, vehicle.getId(), target.getId(), WarnType.RADAR_LOCK, mainRadarUnit.getRadarType());
                 }
             }
             if (airDefense != null) {

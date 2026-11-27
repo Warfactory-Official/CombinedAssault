@@ -1,6 +1,5 @@
 package com.wf.combinedassault.radar;
 
-import com.wf.combinedassault.ballistics.message.ServerVehicleWarn;
 import com.wf.combinedassault.dynamics.structure.VehicleCubeGroup;
 import com.wf.combinedassault.radar.message.ClientRadarAction;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
@@ -9,6 +8,7 @@ import com.wf.combinedassault.vehicle.part.RotatableUnit;
 import com.wf.combinedassault.vehicle.pojo.ReconRole;
 import com.wf.combinedassault.vehicle.pojo.WarnType;
 import com.wf.combinedassault.weapon.seeker.Radar;
+import com.wf.wflib.missile.api.SimGhostSyncPacket;
 import com.wf.wflib.missile.api.client.SimGhostEntities;
 import com.wf.wflib.sim.api.SimTargets;
 import net.minecraft.server.level.ServerPlayer;
@@ -137,16 +137,7 @@ public class RadarUnit extends RotatableUnit<RadarUnitData> {
                 });
                 scannedEntities.forEach(scannedEntity -> {
                     if (scannedEntity instanceof AbstractVehicle toVehicle) {
-                        ServerVehicleWarn serverVehicleWarn = new ServerVehicleWarn();
-                        serverVehicleWarn.fromEntityId = this.vehicle.getId();
-                        serverVehicleWarn.toEntityId = toVehicle.getId();
-                        serverVehicleWarn.warnType = WarnType.RADAR_SEARCH;
-                        serverVehicleWarn.info = getRadarType();
-                        for (Entity entity : toVehicle.getPassengers()) {
-                            if (entity instanceof ServerPlayer player) {
-                                PacketDistributor.sendToPlayer(player, serverVehicleWarn);
-                            }
-                        }
+                        ReconBridge.send(toVehicle, vehicle.getId(), toVehicle.getId(), WarnType.RADAR_SEARCH, getRadarType());
                     }
                 });
             });
@@ -234,6 +225,17 @@ public class RadarUnit extends RotatableUnit<RadarUnitData> {
         if (!this.on) {
             setLockedEntity(null);
         }
+    }
+
+    /** Ghost ids never reach {@link #detect}; {@link SimTargets#resolve} scopes them to the player. */
+    public boolean mayLock(int id) {
+        return id == -1 || SimGhostSyncPacket.isGhostId(id) || detectedObjects.containsKey(id);
+    }
+
+    /** Scan cube of {@link Radar#detectTargets}, server-checkable part only; sweep/sector phase is client state. */
+    public boolean mayDetect(ServerPlayer player, Entity entity) {
+        double reach = maxScanDistance + AbstractVehicle.lagSlack(player, vehicle) + AbstractVehicle.lagSlack(player, entity);
+        return AABB.ofSize(worldRadarPosition(), 2 * reach, 2 * reach, 2 * reach).intersects(entity.getBoundingBox());
     }
 
     public HashMap<Integer, DetectedObject> getDetectedEntities() {

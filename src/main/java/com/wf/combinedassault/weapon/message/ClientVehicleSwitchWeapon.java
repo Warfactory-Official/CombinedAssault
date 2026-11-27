@@ -43,7 +43,7 @@ public record ClientVehicleSwitchWeapon(
 
     public static void handle(ClientVehicleSwitchWeapon msg, IPayloadContext ctx) {
         var serverPlayer = (ServerPlayer) ctx.player();
-        if (serverPlayer.level().getEntity(msg.vehicleEntityId) instanceof AbstractVehicle vehicle) {
+        if (serverPlayer.level().getEntity(msg.vehicleEntityId) instanceof AbstractVehicle vehicle && vehicle.aboard(serverPlayer)) {
             var partUnit = vehicle.getOwnOperatorUnit(serverPlayer);
             if (partUnit instanceof WeaponUnit weaponUnit) {
                 switch (msg.switchType) {

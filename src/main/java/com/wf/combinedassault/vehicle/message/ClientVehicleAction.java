@@ -5,12 +5,14 @@ import com.wf.combinedassault.vehicle.crew.CrewRole;
 import com.wf.combinedassault.vehicle.crew.CrewRules;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.SwitchableUnit;
+import com.wf.combinedassault.weapon.part.WeaponUnit;
 import com.wf.combinedassault.weapon.pojo.AimContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -182,7 +184,8 @@ public class ClientVehicleAction implements CustomPacketPayload {
         Player player = ctx.player();
         Level level = player.level();
         Entity entity = level.getEntity(message.vehicleEntityId);
-        if (!(entity instanceof AbstractVehicle vehicle)) {
+        if (!(entity instanceof AbstractVehicle vehicle)
+                || !message.leaveVehicle && (!vehicle.aboard(player) || message.partUnitIndex < 0)) {
             return;
         }
         if (message.togglePartUnitState) {
@@ -196,9 +199,25 @@ public class ClientVehicleAction implements CustomPacketPayload {
             player.displayClientMessage(Component.translatable("tips.crew.driver_only"), true);
         } else if (message.leaveVehicle || message.toggleEngine || message.toggleLandingGear || message.toggleAirbrake || message.flapStep != 0 || message.toggleHoverMode || message.toggleAerobaticSmoke || message.lockEntity) {
             vehicle.onClientVehicleAction(message, player);
-        } else if (message.partUnitIndex < vehicle.getPartUnits().size()) {
+        } else if (message.partUnitIndex < vehicle.getPartUnits().size() && (message.shoot
+                ? validShot(vehicle, (ServerPlayer) player, message) : Float.isFinite(message.xAimRot + message.yAimRot))) {
             vehicle.getPartUnits().get(message.partUnitIndex).onClientMessageReceived(message, player);
         }
+    }
+
+    private static boolean validShot(AbstractVehicle vehicle, ServerPlayer player, ClientVehicleAction message) {
+        if (message.aimContexts.isEmpty() || !(vehicle.getPartUnits().get(message.partUnitIndex) instanceof WeaponUnit unit)
+                || message.weaponIndex < 0 || message.weaponIndex >= unit.indexedWeapons.size()
+                || message.aimContexts.size() > unit.indexedWeapons.get(message.weaponIndex).getWeaponUnit().getBolts().size()) {
+            return false;
+        }
+        for (AimContext aim : message.aimContexts) {
+            if (!Float.isFinite(aim.direction.x + aim.direction.y)
+                    || !Double.isFinite(aim.position.x + aim.position.y + aim.position.z) || !vehicle.nearHull(player, aim.from)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

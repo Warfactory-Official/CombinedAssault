@@ -28,7 +28,7 @@ public record TowCoupleMessage(int tractorId) implements CustomPacketPayload {
             return;
         }
         Entity ridden = player.getVehicle();
-        if (!(ridden instanceof AbstractVehicle tractor) || tractor.getId() != message.tractorId) {
+        if (!(ridden instanceof AbstractVehicle tractor) || tractor.getId() != message.tractorId || !AbstractVehicle.active(player)) {
             return;
         }
         if (tractor.towing.hitches.isEmpty()) {

@@ -186,8 +186,10 @@ public class ControlUnit {
     }
 
     public static void onClientMessageReceived(ClientVehicleMoveControl message, IPayloadContext ctx) {
-        if (ctx.player() != null && ctx.player().level().getEntity(message.vehicleEntityId) instanceof AbstractVehicle vehicle
-                && ctx.player() == vehicle.controlUnit.operator) {
+        if (ctx.player().level().getEntity(message.vehicleEntityId) instanceof AbstractVehicle vehicle
+                && ctx.player() == vehicle.controlUnit.operator && vehicle.aboard(ctx.player())
+                && Float.isFinite(message.xRot + message.yRot + message.stickX + message.stickY + message.wheel
+                + message.reportedXRot + message.reportedYRot + message.reportedZRot)) {
             ArrayDeque<ClientVehicleMoveControl> queued = vehicle.controlUnit.queued;
             if (queued.size() >= QUEUE) {
                 queued.poll();

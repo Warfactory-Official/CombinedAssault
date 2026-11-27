@@ -9,6 +9,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
@@ -56,7 +57,8 @@ public class ClientFigureBoxUpdate implements CustomPacketPayload {
 
     public static void handle(ClientFigureBoxUpdate message, IPayloadContext ctx) {
         ServerPlayer serverPlayer = (ServerPlayer) ctx.player();
-        if (!serverPlayer.canInteractWithBlock(message.blockPos, 4.0)) {
+        if (!serverPlayer.canInteractWithBlock(message.blockPos, 4.0) || !Float.isFinite(message.scale
+                + message.xShift + message.yShift + message.zShift + message.xRot + message.yRot + message.zRot)) {
             return;
         }
         Level level = serverPlayer.level();
@@ -66,9 +68,9 @@ public class ClientFigureBoxUpdate implements CustomPacketPayload {
             figureBoxBlockEntity.xShift = message.xShift;
             figureBoxBlockEntity.yShift = message.yShift;
             figureBoxBlockEntity.zShift = message.zShift;
-            figureBoxBlockEntity.xRot = message.xRot;
-            figureBoxBlockEntity.yRot = message.yRot;
-            figureBoxBlockEntity.zRot = message.zRot;
+            figureBoxBlockEntity.xRot = Mth.clamp(message.xRot, -180, 180);
+            figureBoxBlockEntity.yRot = Mth.clamp(message.yRot, -180, 180);
+            figureBoxBlockEntity.zRot = Mth.clamp(message.zRot, -180, 180);
             figureBoxBlockEntity.setChanged();
             level.setBlockAndUpdate(figureBoxBlockEntity.getBlockPos(), figureBoxBlockEntity.getBlockState().setValue(FigureBoxBlock.OPEN, message.open));
         }

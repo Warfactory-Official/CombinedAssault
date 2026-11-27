@@ -198,10 +198,11 @@ public final class ReconBridge {
         }
     }
 
-    private static void send(AbstractVehicle to, int fromEntityId, int toEntityId, WarnType type, String info) {
+    public static void send(AbstractVehicle to, int fromEntityId, int toEntityId, WarnType type, String info) {
         ServerVehicleWarn message = new ServerVehicleWarn(fromEntityId, toEntityId, type, info);
         for (Entity passenger : to.getPassengers()) {
             if (passenger instanceof ServerPlayer player) {
+                RadarAudience.grant(player, fromEntityId);
                 PacketDistributor.sendToPlayer(player, message);
             }
         }

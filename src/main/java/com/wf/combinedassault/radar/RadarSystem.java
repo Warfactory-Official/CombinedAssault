@@ -30,6 +30,7 @@ public final class RadarSystem implements CombinedAssaultSystem {
         modBus.addListener(ModConfigEvent.Reloading.class, RadarConfig::onLoad);
         RadarConfig.loadExternal();
         NeoForge.EVENT_BUS.register(RadarBroadcast.class);
+        NeoForge.EVENT_BUS.register(RadarAudience.class);
         NeoForge.EVENT_BUS.register(RadarScopeFeed.class);
         ReconBridge.register();
         modBus.addListener(RegisterPayloadHandlersEvent.class, event -> {

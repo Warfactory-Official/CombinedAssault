@@ -33,7 +33,7 @@ public record BarrelPacket(int vehicleEntityId, int partUnitIndex, int weaponInd
 
     public static void handle(BarrelPacket msg, IPayloadContext ctx) {
         ServerPlayer player = (ServerPlayer) ctx.player();
-        if (!(player.level().getEntity(msg.vehicleEntityId) instanceof AbstractVehicle vehicle)
+        if (!(player.level().getEntity(msg.vehicleEntityId) instanceof AbstractVehicle vehicle) || !vehicle.aboard(player)
                 || !(vehicle.getPartUnit(msg.partUnitIndex).orElse(null) instanceof WeaponUnit unit)
                 || msg.weaponIndex < 0 || msg.weaponIndex >= unit.indexedWeapons.size()) {
             return;

@@ -7,6 +7,7 @@ import com.wf.combinedassault.camo.CamoKitItem;
 import com.wf.combinedassault.camo.CamoPlacement;
 import com.wf.combinedassault.camo.pojo.CamoAction;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.lock.VehicleLock;
 import com.wf.combinedassault.vehicle.util.VectorUtil;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -39,7 +40,6 @@ public class ClientCamoAction implements CustomPacketPayload {
 
     /** Cap on one packet's rays; a stroke segment is dozens. Bounds allocation against an untrusted wire count. */
     private static final int MAX_RAYS = 1024;
-    private static final double REACH = 8;
     /**
      * Claimed ray origin vs last-seen eye pos; loose on purpose.
      * Server trails client ~1 tick on a moving hull; this only screens cross-map casts. REACH bounds range.
@@ -86,8 +86,7 @@ public class ClientCamoAction implements CustomPacketPayload {
                 || !(player.level().getEntity(message.vehicleId) instanceof AbstractVehicle vehicle)) {
             return;
         }
-        // Box inflate, not flat distance: reach must scale with hull, or carrier deck's far end is unreachable.
-        if (!vehicle.getBoundingBox().inflate(REACH).contains(player.getEyePosition())) {
+        if (!vehicle.inReach(player) || !VehicleLock.permits(vehicle, player)) {
             return;
         }
         ItemStack itemStack = player.getItemInHand(InteractionHand.MAIN_HAND);
@@ -174,7 +173,7 @@ public class ClientCamoAction implements CustomPacketPayload {
 
     private static boolean reaches(ServerPlayer player, Ray ray) {
         return ray.from().distanceToSqr(player.getEyePosition()) <= ORIGIN_SLACK * ORIGIN_SLACK
-                && ray.from().distanceToSqr(ray.to()) <= (REACH + 1) * (REACH + 1);
+                && ray.from().distanceToSqr(ray.to()) <= (AbstractVehicle.REACH + 1) * (AbstractVehicle.REACH + 1);
     }
 
     @Override

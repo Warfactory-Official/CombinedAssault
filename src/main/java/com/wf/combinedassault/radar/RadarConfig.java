@@ -1,5 +1,7 @@
 package com.wf.combinedassault.radar;
 
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.entity.EntityType;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.ModConfigSpec;
@@ -9,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class RadarConfig {
 
@@ -22,6 +26,7 @@ public final class RadarConfig {
     private static final ModConfigSpec.IntValue BROADCAST_INTERVAL;
     private static volatile Snapshot snapshot = new Snapshot(true, 512.0, 1024.0, 5);
     private static volatile List<String> broadcastWhitelist = List.of();
+    private static final Map<EntityType<?>, Boolean> BROADCASTS = new ConcurrentHashMap<>();
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -47,8 +52,11 @@ public final class RadarConfig {
     }
 
     /** Entity-type regexes (config/combinedassault/server_broadcast_entity_whitelist.txt) broadcast beyond the vehicle set. */
-    public static List<String> broadcastWhitelist() {
-        return broadcastWhitelist;
+    public static boolean broadcasts(EntityType<?> type) {
+        return BROADCASTS.computeIfAbsent(type, t -> {
+            String id = BuiltInRegistries.ENTITY_TYPE.getKey(t).toString();
+            return broadcastWhitelist.stream().anyMatch(id::matches);
+        });
     }
 
     static void onLoad(ModConfigEvent event) {
@@ -67,6 +75,7 @@ public final class RadarConfig {
             }
             broadcastWhitelist = Files.readAllLines(whitelistPath).stream()
                     .filter(line -> !line.startsWith("#") && !line.trim().isEmpty()).toList();
+            BROADCASTS.clear();
         } catch (IOException e) {
             throw new IllegalStateException("cannot read " + whitelistPath, e);
         }

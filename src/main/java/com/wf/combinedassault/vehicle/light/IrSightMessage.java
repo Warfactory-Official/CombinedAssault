@@ -22,7 +22,7 @@ public record IrSightMessage(int vehicleId, boolean on) implements CustomPacketP
 
     public static void handle(IrSightMessage message, IPayloadContext context) {
         if (!(context.player() instanceof ServerPlayer player)
-                || !(player.level().getEntity(message.vehicleId) instanceof AbstractVehicle vehicle)) {
+                || !(player.level().getEntity(message.vehicleId) instanceof AbstractVehicle vehicle) || !vehicle.aboard(player)) {
             return;
         }
         for (AbstractVehicle.Seat seat : vehicle.seats) {

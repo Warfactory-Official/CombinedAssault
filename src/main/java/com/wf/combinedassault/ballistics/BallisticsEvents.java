@@ -2,6 +2,7 @@ package com.wf.combinedassault.ballistics;
 
 import com.wf.combinedassault.ballistics.event.HitVehicleEvent;
 import com.wf.combinedassault.ballistics.message.ServerHitVehicleEvent;
+import com.wf.combinedassault.radar.RadarAudience;
 import com.wf.combinedassault.mixin.ballistics.ExplosionAccessor;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.wflib.explosion.api.BlastPayload;
@@ -53,7 +54,10 @@ final class BallisticsEvents {
                     AABB.ofSize(vehicle.position(), 256, 256, 256),
                     entity -> entity instanceof ServerPlayer && entity != serverPlayer);
             players.add(serverPlayer);
-            players.forEach(player -> PacketDistributor.sendToPlayer((ServerPlayer) player, new ServerHitVehicleEvent(event)));
+            players.forEach(player -> {
+                RadarAudience.grant((ServerPlayer) player, event.entityId);
+                PacketDistributor.sendToPlayer((ServerPlayer) player, new ServerHitVehicleEvent(event));
+            });
         }
     }
 

@@ -387,10 +387,16 @@ public class LocalVehiclePlayer {
         }
     }
 
-    /** Camera = barrel; aim from the mouse ({@link #handlePlayerTurn}) sent on. */
+    private static final double MIN_SIGHT_CONVERGE_SQR = 4.0;
+
+    /** Camera at the sight looks at the bore's hit point (parallax-free crosshair); aim from the mouse ({@link #handlePlayerTurn}) sent on. */
     private void layGun(WeaponUnit weaponUnit) {
         cameraAimWith(weaponUnit);
         Vec3 hitPosition = weaponUnit.aimHitPosition();
+        Vec3 eye = cameraPosition(weaponUnit, 1.0F);
+        if (eye != null && hitPosition.distanceToSqr(eye) > MIN_SIGHT_CONVERGE_SQR) {
+            cameraAimAt(eye, hitPosition);
+        }
         rangeFinding(hitPosition);
         if (weaponUnit.spottedBy(getPlayer())) {
             return;

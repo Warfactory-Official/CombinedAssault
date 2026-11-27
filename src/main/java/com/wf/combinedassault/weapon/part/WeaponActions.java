@@ -3,6 +3,7 @@ package com.wf.combinedassault.weapon.part;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.vehicle.VehicleContent;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.lock.VehicleLock;
 import com.wf.wflib.probe.api.ProbeActions;
 import com.wf.wflib.probe.api.ProbeInventory;
 import net.minecraft.resources.ResourceLocation;
@@ -26,7 +27,7 @@ public final class WeaponActions {
     }
 
     public static boolean select(ServerPlayer player, AbstractVehicle vehicle, int part, int weapon) {
-        if (vehicle.isDestroyed() || part >= vehicle.getPartUnits().size()
+        if (vehicle.isDestroyed() || !VehicleLock.permits(vehicle, player) || part >= vehicle.getPartUnits().size()
                 || !(vehicle.getPartUnits().get(part) instanceof WeaponUnit unit) || !unit.isInteractive()
                 || unit.isHardpoint()
                 || weapon >= unit.weapons.size() || weapon == unit.getCurrentWeaponIndex()

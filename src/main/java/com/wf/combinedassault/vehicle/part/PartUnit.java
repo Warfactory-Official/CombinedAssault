@@ -540,12 +540,12 @@ public class PartUnit<T extends PartUnitData> implements INBTSerializable<Compou
     }
 
     public void onClientMessageReceived(ClientVehicleAction message, Player player) {
-        // Aim and fire name any part by index: crew on => only that part's own gunner, or aim from its spotter seat.
+        // Aim and fire name any part by index: only that part's owner (crew on => its gunner), or aim from its spotter seat.
         PartUnit<?> target = vehicle.getPartUnits().get(message.partUnitIndex);
         PartUnit<?> own = vehicle.getOwnOperatorUnit(player);
         boolean spotting = !message.shoot && own != null && own.sensorUnit() == target;
-        if (CrewRules.enabled() && !spotting && (target.getOwner() != player || !CrewRules.has(vehicle, player, CrewRole.GUNNER)
-                || !message.shoot && target.aimedFromSensorSeat())) {
+        if (!spotting && (target.getOwner() != player || CrewRules.enabled() && (!CrewRules.has(vehicle, player, CrewRole.GUNNER)
+                || !message.shoot && target.aimedFromSensorSeat()))) {
             return;
         }
         if (message.shoot) {

@@ -2,6 +2,7 @@ package com.wf.combinedassault.camo;
 
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.lock.VehicleLock;
 import com.wf.wflib.probe.api.ProbeActions;
 import com.wf.wflib.probe.api.ProbeInventory;
 import net.minecraft.resources.ResourceLocation;
@@ -26,7 +27,7 @@ public final class SprayActions {
 
     private static boolean spray(ServerPlayer player, AbstractVehicle vehicle, int index) {
         List<ResourceLocation> finishes = Finishes.of(vehicle.getDisplayId());
-        if (vehicle.isDestroyed() || index < 0 || index >= finishes.size()
+        if (vehicle.isDestroyed() || !VehicleLock.permits(vehicle, player) || index < 0 || index >= finishes.size()
                 || finishes.get(index).equals(vehicle.getDisplayId())
                 || ProbeInventory.find(player, stack -> stack.is(CamoContent.SPRAY_CAN.get())).isEmpty()) {
             return false;

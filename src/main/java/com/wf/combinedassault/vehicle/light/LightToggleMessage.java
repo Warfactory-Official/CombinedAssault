@@ -23,7 +23,7 @@ public record LightToggleMessage(int vehicleId, VehicleLight.Kind kind) implemen
     public static void handle(LightToggleMessage message, IPayloadContext context) {
         if (!(context.player() instanceof ServerPlayer player)
                 || !(player.getVehicle() instanceof AbstractVehicle vehicle) || vehicle.getId() != message.vehicleId
-                || vehicle.isDestroyed()) {
+                || !AbstractVehicle.active(player) || vehicle.isDestroyed()) {
             return;
         }
         if (!message.kind.toggled()) {

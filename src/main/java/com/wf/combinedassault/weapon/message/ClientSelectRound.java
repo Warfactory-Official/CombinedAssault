@@ -1,6 +1,7 @@
 package com.wf.combinedassault.weapon.message;
 
 import com.wf.combinedassault.CombinedAssault;
+import com.wf.combinedassault.vehicle.crew.CrewRole;
 import com.wf.combinedassault.vehicle.crew.CrewRules;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
@@ -31,7 +32,8 @@ public record ClientSelectRound(int vehicleEntityId, int partUnitIndex, int weap
         ServerPlayer player = (ServerPlayer) ctx.player();
         if (!(player.level().getEntity(msg.vehicleEntityId) instanceof AbstractVehicle vehicle)
                 || !(vehicle.getPartUnit(msg.partUnitIndex).orElse(null) instanceof WeaponUnit unit)
-                || msg.weaponIndex < 0 || msg.weaponIndex >= unit.indexedWeapons.size()) {
+                || msg.weaponIndex < 0 || msg.weaponIndex >= unit.indexedWeapons.size() || !vehicle.aboard(player)
+                || unit.getOwner() != player && !(CrewRules.enabled() && CrewRules.has(vehicle, player, CrewRole.LOADER))) {
             return;
         }
         if (!CrewRules.maySwitchAmmo(player, unit)) {

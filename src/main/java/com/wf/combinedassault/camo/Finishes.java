@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.wf.combinedassault.pack.CommonAssetsManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,28 @@ public final class Finishes {
             }
         }
         return List.of();
+    }
+
+    /** Modding tool lists every display sharing the current model, not {@link #of}. */
+    public static boolean sameModel(ResourceLocation current, ResourceLocation target) {
+        ResourceLocation model = model(target);
+        return model != null && model.equals(model(current));
+    }
+
+    @Nullable
+    private static ResourceLocation model(ResourceLocation id) {
+        CommonAssetsManager.ensureLoaded();
+        for (Map.Entry<ResourceLocation, JsonObject> def : CommonAssetsManager.vehicleDefs().entrySet()) {
+            JsonObject variants = def.getValue().has("display") && def.getValue().getAsJsonObject("display").has("variants")
+                    ? def.getValue().getAsJsonObject("display").getAsJsonObject("variants") : null;
+            JsonObject variant = variants != null && id.getNamespace().equals(def.getKey().getNamespace())
+                    ? variants.getAsJsonObject(id.getPath()) : null;
+            JsonObject source = variant != null && variant.has("model") ? variant : def.getValue();
+            if ((id.equals(def.getKey()) || variant != null) && source.has("model")) {
+                return ResourceLocation.tryParse(source.get("model").getAsString());
+            }
+        }
+        return null;
     }
 
     /** Paint name when the variant sets one, else the display id path. */

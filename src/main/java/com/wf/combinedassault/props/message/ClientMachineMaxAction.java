@@ -45,6 +45,9 @@ public class ClientMachineMaxAction implements CustomPacketPayload {
 
     public static void handle(ClientMachineMaxAction message, IPayloadContext ctx) {
         ServerPlayer serverPlayer = (ServerPlayer) ctx.player();
+        if (!serverPlayer.canInteractWithBlock(message.blockPos, 4.0)) {
+            return;
+        }
         Level level = serverPlayer.level();
         if (level.getBlockEntity(message.blockPos) instanceof MachineMaxBlockEntity machineMaxBlockEntity) {
             if (message.action == Action.CRAFT) {

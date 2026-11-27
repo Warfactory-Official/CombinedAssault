@@ -35,7 +35,7 @@ public record FpvTriggerMessage(int droneId, boolean release) implements CustomP
             return;
         }
         Entity ridden = operator.getVehicle();
-        if (!(ridden instanceof AbstractVehicle drone) || drone.getId() != message.droneId) {
+        if (!(ridden instanceof AbstractVehicle drone) || drone.getId() != message.droneId || !AbstractVehicle.active(operator)) {
             return;
         }
         PayloadUnit hardpoint = PayloadUnit.on(drone);

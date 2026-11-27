@@ -1,6 +1,7 @@
 package com.wf.combinedassault.weapon.ordnance;
 
-import com.wf.combinedassault.ballistics.message.ServerVehicleWarn;
+import com.wf.combinedassault.radar.ReconBridge;
+import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.radar.RadarUnit;
 import com.wf.combinedassault.vehicle.pojo.WarnType;
 import com.wf.combinedassault.vehicle.util.VectorUtil;
@@ -12,7 +13,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec2;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -63,7 +63,8 @@ public final class GuidedRounds {
     /** Radar seeker on a vehicle => the crew's missile warning. */
     @SubscribeEvent
     public static void onLock(SeekerLockEvent event) {
-        PacketDistributor.sendToPlayersTrackingEntity(event.target(), new ServerVehicleWarn(event.missile().getId(),
-                event.target().getId(), WarnType.MISSILE_LAUNCH, "MSL"));
+        if (event.target() instanceof AbstractVehicle target) {
+            ReconBridge.send(target, event.missile().getId(), target.getId(), WarnType.MISSILE_LAUNCH, "MSL");
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.wf.combinedassault.weapon.message;
 import com.wf.combinedassault.CombinedAssault;
 import com.wf.combinedassault.vehicle.VehicleContent;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
+import com.wf.combinedassault.vehicle.lock.VehicleLock;
 import com.wf.combinedassault.weapon.kit.Loadouts;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -31,7 +32,8 @@ public record ClientVehicleSelectLoadout(int vehicleEntityId, int index) impleme
             return;
         }
         if (player.level().getEntity(message.vehicleEntityId) instanceof AbstractVehicle vehicle
-                && player.distanceToSqr(vehicle) <= MAX_INTERACTION_DISTANCE_SQ && message.index != vehicle.loadoutIndex()) {
+                && player.distanceToSqr(vehicle) <= MAX_INTERACTION_DISTANCE_SQ && message.index != vehicle.loadoutIndex()
+                && AbstractVehicle.active(player) && VehicleLock.permits(vehicle, player)) {
             Loadouts.select(vehicle, message.index, player);
         }
     }
