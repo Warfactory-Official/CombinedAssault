@@ -4,27 +4,34 @@ import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.sighs.apricityui.init.Document;
-import com.sighs.apricityui.init.Element;
-import com.sighs.apricityui.render.Drawer;
-import com.sighs.apricityui.screen.ApricityScreen;
 import com.wf.combinedassault.pack.client.ClientAssetsManager;
 import com.wf.combinedassault.pack.client.vehicle.BaseDisplay;
 import com.wf.combinedassault.render.util.RenderHelper;
+import com.wf.combinedassault.screen.Badge;
+import com.wf.combinedassault.screen.Label;
+import com.wf.combinedassault.screen.ModelPort;
+import com.wf.combinedassault.screen.Navbar;
+import com.wf.combinedassault.screen.Ore;
+import com.wf.combinedassault.screen.OreScreen;
+import com.wf.combinedassault.screen.Panel;
+import com.wf.combinedassault.screen.Paragraph;
+import com.wf.combinedassault.screen.Pick;
+import com.wf.combinedassault.screen.Port;
 import com.wf.combinedassault.vehicle.LocalVehiclePlayer;
 import com.wf.combinedassault.vehicle.entity.AbstractVehicle;
 import com.wf.combinedassault.vehicle.part.PartUnit;
-import com.wf.combinedassault.vehicle.util.AuiTextHelper;
-import com.wf.combinedassault.weapon.AbstractVehicleWeapon;
 import com.wf.combinedassault.weapon.message.ClientVehicleSelectPartWeapon;
 import com.wf.combinedassault.weapon.part.WeaponUnit;
+import com.wf.wflib.ui.api.Signals;
+import com.wf.wflib.ui.api.Subject;
+import com.wf.wflib.ui.api.UiLayout;
+import com.wf.wflib.ui.api.WidgetDef;
+import com.wf.wflib.ui.api.widget.ListView;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -32,324 +39,85 @@ import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
-public class VehicleWeaponSelectScreen extends ApricityScreen {
+import static com.wf.combinedassault.screen.Ore.pct;
+import static com.wf.wflib.ui.api.Ui.at;
+import static com.wf.wflib.ui.api.Ui.stack;
+import static com.wf.wflib.ui.api.Ui.when;
 
-    private static final String TEMPLATE = "screens/vehicle_weapon_select.html";
+public class VehicleWeaponSelectScreen extends OreScreen {
+    private static VehicleWeaponSelectScreen current;
+    private static final Subject<VehicleWeaponSelectScreen> SCREEN =
+            Subject.register("ca_weapon_select", VehicleWeaponSelectScreen.class, () -> current);
+    private static final Subject<Selection> SELECTION = Subject.register("ca_weapon_select_part", Selection.class);
+    private static final Subject<WeaponRow> WEAPON = Subject.register("ca_weapon_select_weapon", WeaponRow.class);
+    private static UiLayout layout;
+
+    static {
+        Signals.items(SCREEN, "parts", s -> s.selections, SELECTION);
+        Signals.items(SCREEN, "weapons", s -> s.weapons, WEAPON);
+        Signals.bool(SCREEN, "no_parts", s -> s.selections.isEmpty());
+        Signals.bool(SCREEN, "no_weapons", s -> s.weapons.isEmpty());
+    }
+
     private final AbstractVehicle vehicle;
     private final Screen parent;
-    private final List<WeaponSelectionEntry> weaponSelections = new ArrayList<>();
-    private Document document;
-    private Element selectionList;
-    private Element selectionEmpty;
-    private Element weaponList;
-    private Element weaponEmpty;
-    private Element selectedPartName;
-    private Element selectedWeaponDescription;
-    private Element previewAnchor;
-    private Element closeButton;
-    private int selectedWeaponSelectionIndex;
-    private int selectedWeaponIndex = -1;
+    private final List<Selection> selections = new ArrayList<>();
+    private final List<WeaponRow> weapons = new ArrayList<>();
+    private final Port preview;
+    private Selection selected;
+    private int selectedWeapon = -1;
+    private String partName;
+    private String description;
     private float viewShiftX;
     private float viewShiftY;
     private float viewScale = 1;
     private float viewRotX;
     private float viewRotY;
-    private boolean previewDragging;
 
     public VehicleWeaponSelectScreen(AbstractVehicle vehicle, Screen parent) {
-        super(TEMPLATE);
+        super(build(), Component.translatable("screen.vehicle_weapon_select.title"));
         this.vehicle = vehicle;
         this.parent = parent;
         this.viewRotX = 180 - vehicle.getXRot();
         this.viewRotY = 180 + LocalVehiclePlayer.instance().getPlayer().getYRot();
-        refreshWeaponSelections();
-        this.selectedWeaponSelectionIndex = weaponSelections.isEmpty() ? -1 : 0;
-        setPauseGame(false);
-        setShowDefaultBackground(false);
+        for (PartUnit<?> partUnit : vehicle.getPartUnits()) {
+            if (partUnit instanceof WeaponUnit unit && unit.isInteractive() && unit.weapons.size() > 1) {
+                selections.add(new Selection(partUnit.getIndex(), unit));
+            }
+        }
+        preview = port(new Port.Handler() {
+            @Override
+            public void drag(int button, double dx, double dy) {
+                if (button == 0) {
+                    viewRotY += (float) dx;
+                    viewRotX += (float) dy;
+                } else {
+                    viewShiftX += (float) dx;
+                    viewShiftY += (float) dy;
+                }
+            }
+
+            @Override
+            public void scroll(double mouseX, double mouseY, double amount) {
+                viewScale = Mth.clamp(viewScale * (float) Math.pow(1.1, amount), 0.1f, 10.0f);
+            }
+        });
+        select(selections.isEmpty() ? null : selections.get(0));
     }
 
     @Override
     protected void init() {
+        current = this;
         super.init();
-        document = getLinkedDocument();
-        if (document == null) {
-            return;
-        }
-        selectionList = element("weapon-selection-list");
-        selectionEmpty = element("weapon-selection-empty");
-        weaponList = element("weapon-list");
-        weaponEmpty = element("weapon-list-empty");
-        selectedPartName = element("selected-part-name");
-        selectedWeaponDescription = element("selected-weapon-description");
-        previewAnchor = element("weapon-vehicle-preview");
-        closeButton = element("close-button");
-        if (closeButton != null) {
-            closeButton.addEventListener("click", event -> onClose());
-        }
-        buildSelectionList();
-        refreshWeaponPanel();
-    }
-
-    private Element element(String id) {
-        return document.getElementById(id);
-    }
-
-    private void refreshWeaponSelections() {
-        weaponSelections.clear();
-        for (PartUnit<?> partUnit : vehicle.getPartUnits()) {
-            if (partUnit instanceof WeaponUnit weaponUnit && weaponUnit.isInteractive() && weaponUnit.weapons.size() > 1) {
-                weaponSelections.add(new WeaponSelectionEntry(partUnit.getIndex(), weaponUnit));
-            }
-        }
-    }
-
-    private void buildSelectionList() {
-        if (selectionList == null) {
-            return;
-        }
-        selectionList.setTextContent("");
-        for (int index = 0; index < weaponSelections.size(); index++) {
-            WeaponSelectionEntry selection = weaponSelections.get(index);
-            Element entry = document.createElement("div");
-            entry.setClassName("weapon-entry");
-            entry.setAttribute("role", "button");
-            entry.setAttribute("tabindex", "0");
-            Element name = document.createElement("span");
-            name.setClassName("weapon-entry-name");
-            name.setTextContent(selection.weaponUnit.getName().getString());
-            Element count = document.createElement("span");
-            count.setClassName("weapon-entry-count");
-            count.setTextContent((selection.weaponUnit.getCurrentWeaponIndex() + 1) + "/" + selection.weaponUnit.weapons.size());
-            entry.appendChild(name);
-            entry.appendChild(count);
-            int selectionIndex = index;
-            entry.addEventListener("click", event -> selectWeaponSelection(selectionIndex, true));
-            selectionList.appendChild(entry);
-        }
-        setHidden(selectionEmpty, !weaponSelections.isEmpty());
-    }
-
-    private void selectWeaponSelection(int index, boolean playSound) {
-        if (index < 0 || index >= weaponSelections.size()) {
-            return;
-        }
-        selectedWeaponSelectionIndex = index;
-        selectedWeaponIndex = weaponSelections.get(index).weaponUnit.getCurrentWeaponIndex();
-        refreshWeaponPanel();
-        if (playSound) {
-            playClickSound();
-        }
-    }
-
-    private void refreshWeaponPanel() {
-        refreshSelectionClasses();
-        if (selectedWeaponSelection() == null) {
-            setText(selectedPartName, Component.translatable("screen.vehicle_weapon_select.select_part").getString());
-            setDescriptionText(Component.translatable("screen.no_description").getString());
-            if (weaponList != null) {
-                weaponList.setTextContent("");
-            }
-            setHidden(weaponEmpty, false);
-            return;
-        }
-        WeaponSelectionEntry selection = selectedWeaponSelection();
-        selectedWeaponIndex = selection.weaponUnit.getCurrentWeaponIndex();
-        setText(selectedPartName, selection.weaponUnit.getName().getString());
-        buildWeaponList(selection);
-        updateWeaponDescription(selection);
-    }
-
-    private void refreshSelectionClasses() {
-        if (selectionList == null) {
-            return;
-        }
-        List<Element> entries = selectionList.getChildren();
-        for (int index = 0; index < entries.size(); index++) {
-            entries.get(index).setClassName(index == selectedWeaponSelectionIndex
-                    ? "weapon-entry active" : "weapon-entry");
-            document.markDirty(entries.get(index), Drawer.RELAYOUT | Drawer.REPAINT);
-        }
-    }
-
-    private void buildWeaponList(WeaponSelectionEntry selection) {
-        if (weaponList == null) {
-            return;
-        }
-        weaponList.setTextContent("");
-        for (int index = 0; index < selection.weaponUnit.weapons.size(); index++) {
-            AbstractVehicleWeapon<?> weapon = selection.weaponUnit.proxyWeapon(selection.weaponUnit.weapons.get(index));
-            Element entry = document.createElement("div");
-            entry.setClassName(index == selectedWeaponIndex
-                    ? "weapon-entry active" : "weapon-entry");
-            entry.setAttribute("role", "button");
-            entry.setTextContent(weapon.getDisplayName().getString());
-            int weaponIndex = index;
-            entry.addEventListener("click", event -> onWeaponSelected(selection, weaponIndex));
-            weaponList.appendChild(entry);
-        }
-        setHidden(weaponEmpty, !selection.weaponUnit.weapons.isEmpty());
-    }
-
-    private void onWeaponSelected(WeaponSelectionEntry selection, int weaponIndex) {
-        selectedWeaponIndex = weaponIndex;
-        buildWeaponList(selection);
-        updateWeaponDescription(selection);
-        PacketDistributor.sendToServer(new ClientVehicleSelectPartWeapon(vehicle.getId(), selection.partUnitIndex, weaponIndex));
-        playClickSound();
-    }
-
-    private void updateWeaponDescription(WeaponSelectionEntry selection) {
-        int currentIndex = selectedWeaponIndex >= 0 && selectedWeaponIndex < selection.weaponUnit.weapons.size()
-                ? selectedWeaponIndex : selection.weaponUnit.getCurrentWeaponIndex();
-        if (currentIndex < 0 || currentIndex >= selection.weaponUnit.weapons.size()) {
-            setDescriptionText(Component.translatable("screen.no_description").getString());
-            return;
-        }
-        AbstractVehicleWeapon<?> weapon = selection.weaponUnit.proxyWeapon(selection.weaponUnit.weapons.get(currentIndex));
-        Optional<String> description = ClientAssetsManager.INSTANCE.getWeaponDisplay(weapon.getData().getWeaponId())
-                .map(BaseDisplay::getDescription)
-                .filter(text -> text != null && !text.isBlank());
-        setDescriptionText(Component.translatable(description.orElse("screen.no_description")).getString());
-    }
-
-    private WeaponSelectionEntry selectedWeaponSelection() {
-        return selectedWeaponSelectionIndex >= 0 && selectedWeaponSelectionIndex < weaponSelections.size()
-                ? weaponSelections.get(selectedWeaponSelectionIndex) : null;
-    }
-
-    private void setText(Element element, String text) {
-        if (element != null) {
-            element.setTextContent(text);
-        }
-    }
-
-    private void setDescriptionText(String text) {
-        AuiTextHelper.setDescription(selectedWeaponDescription, text);
-    }
-
-    private void setHidden(Element element, boolean hidden) {
-        if (element != null) {
-            element.setClassName(hidden ? "empty-state hidden" : "empty-state");
-        }
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        super.render(graphics, mouseX, mouseY, partialTick);
-        renderVehiclePreview(graphics);
-    }
-
-    private void renderVehiclePreview(GuiGraphics graphics) {
-        Bounds bounds = getPreviewBounds();
-        if (bounds == null) {
-            return;
+    public void removed() {
+        super.removed();
+        if (current == this) {
+            current = null;
         }
-        double scale = Math.min(bounds.width(), bounds.height()) * 1.5 / Math.max(vehicle.getStructureLength(), 3) * viewScale;
-        graphics.enableScissor((int) bounds.left, (int) bounds.top, (int) Math.ceil(bounds.right), (int) Math.ceil(bounds.bottom));
-        boolean scissorEnabled = true;
-        PoseStack poseStack = graphics.pose();
-        poseStack.pushPose();
-        try {
-            poseStack.translate((float) bounds.centerX() + viewShiftX, (float) bounds.centerY() + viewShiftY, 512);
-            poseStack.scale((float) scale, (float) scale, (float) -scale);
-            poseStack.mulPose(Axis.XP.rotationDegrees(viewRotX));
-            poseStack.mulPose(Axis.YP.rotationDegrees(viewRotY));
-            Vec3 centerOffset = vehicle.getBoundingBox().getCenter().subtract(vehicle.position());
-            poseStack.translate((float) -centerOffset.x, (float) -centerOffset.y, (float) -centerOffset.z);
-            EntityRenderDispatcher dispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
-            dispatcher.setRenderShadow(false);
-            Lighting.setupForEntityInInventory();
-            RenderSystem.runAsFancy(() ->
-                    dispatcher.render(vehicle, 0, 0, 0, 0, 1.0F, poseStack, graphics.bufferSource(), 15728880));
-            graphics.flush();
-            graphics.disableScissor();
-            scissorEnabled = false;
-            RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, false);
-            renderSelectedWeaponArrow(poseStack, graphics);
-            graphics.flush();
-        } finally {
-            dispatcherResetShadow();
-            Lighting.setupFor3DItems();
-            poseStack.popPose();
-            if (scissorEnabled) {
-                graphics.disableScissor();
-            }
-        }
-    }
-
-    private void renderSelectedWeaponArrow(PoseStack poseStack, GuiGraphics graphics) {
-        WeaponSelectionEntry selection = selectedWeaponSelection();
-        if (selection == null) {
-            return;
-        }
-        Vec3 arrowPosition = selection.weaponUnit.aimContext().from.subtract(vehicle.position());
-        poseStack.pushPose();
-        poseStack.translate(arrowPosition.x, arrowPosition.y, arrowPosition.z);
-        RenderHelper.renderArrow3D(
-                poseStack, graphics.bufferSource(), 0.15f, 0.3f, 0, 255, 0, 255);
-        poseStack.popPose();
-    }
-
-    private void dispatcherResetShadow() {
-        Minecraft.getInstance().getEntityRenderDispatcher().setRenderShadow(true);
-    }
-
-    private Bounds getPreviewBounds() {
-        if (previewAnchor == null || document == null) {
-            return null;
-        }
-        Element.DOMRect rect = previewAnchor.getBoundingClientRect();
-        if (rect.width <= 0 || rect.height <= 0) {
-            return null;
-        }
-        double scale = document.getViewport().renderScale();
-        return new Bounds(rect.x * scale, rect.y * scale, (rect.x + rect.width) * scale, (rect.y + rect.height) * scale);
-    }
-
-    @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double deltaX, double deltaY) {
-        Bounds bounds = getPreviewBounds();
-        if (bounds != null && bounds.contains(mouseX, mouseY)) {
-            viewScale = Mth.clamp(viewScale * (float) Math.pow(1.1, deltaY), 0.1f, 10.0f);
-            return true;
-        }
-        return super.mouseScrolled(mouseX, mouseY, deltaX, deltaY);
-    }
-
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        Bounds bounds = getPreviewBounds();
-        if ((button == 0 || button == 1) && bounds != null && bounds.contains(mouseX, mouseY)) {
-            previewDragging = true;
-            return true;
-        }
-        return super.mouseClicked(mouseX, mouseY, button);
-    }
-
-    @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        if (previewDragging && button == 0) {
-            viewRotY += (float) dragX;
-            viewRotX += (float) dragY;
-            return true;
-        }
-        if (previewDragging && button == 1) {
-            viewShiftX += (float) dragX;
-            viewShiftY += (float) dragY;
-            return true;
-        }
-        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
-    }
-
-    @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (previewDragging && (button == 0 || button == 1)) {
-            previewDragging = false;
-            return true;
-        }
-        return super.mouseReleased(mouseX, mouseY, button);
     }
 
     @Override
@@ -357,24 +125,145 @@ public class VehicleWeaponSelectScreen extends ApricityScreen {
         Minecraft.getInstance().setScreen(parent);
     }
 
-    @Override
-    public boolean shouldCloseOnEsc() { return true; }
-
-    @Override
-    public boolean isPauseScreen() { return false; }
-
-    private void playClickSound() {
-        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+    private void select(Selection selection) {
+        selected = selection;
+        weapons.clear();
+        if (selection == null) {
+            partName = Component.translatable("screen.vehicle_weapon_select.select_part").getString();
+            description = Component.translatable("screen.no_description").getString();
+            return;
+        }
+        for (int i = 0; i < selection.unit.weapons.size(); i++) {
+            weapons.add(new WeaponRow(i, selection.unit.proxyWeapon(selection.unit.weapons.get(i))
+                    .getDisplayName().getString()));
+        }
+        selectedWeapon = selection.unit.getCurrentWeaponIndex();
+        partName = selection.name;
+        describe();
     }
 
-    private record WeaponSelectionEntry(int partUnitIndex, WeaponUnit weaponUnit) {}
-
-    private record Bounds(double left, double top, double right, double bottom) {
-        private boolean contains(double x, double y) { return x >= left && x <= right && y >= top && y <= bottom; }
-        private double width() { return right - left; }
-        private double height() { return bottom - top; }
-        private double centerX() { return (left + right) / 2; }
-        private double centerY() { return (top + bottom) / 2; }
+    private void describe() {
+        String key = "screen.no_description";
+        if (selectedWeapon >= 0 && selectedWeapon < selected.unit.weapons.size()) {
+            key = ClientAssetsManager.INSTANCE.getWeaponDisplay(selected.unit.proxyWeapon(
+                            selected.unit.weapons.get(selectedWeapon)).getData().getWeaponId())
+                    .map(BaseDisplay::getDescription).filter(text -> text != null && !text.isBlank()).orElse(key);
+        }
+        description = Component.translatable(key).getString();
     }
 
+    private void pickWeapon(int index) {
+        selectedWeapon = index;
+        describe();
+        PacketDistributor.sendToServer(new ClientVehicleSelectPartWeapon(vehicle.getId(), selected.partUnitIndex, index));
+        click();
+    }
+
+    private void paintPreview(GuiGraphics graphics, Port port) {
+        double scale = Math.min(port.width(), port.height()) * 1.5 / Math.max(vehicle.getStructureLength(), 3)
+                * viewScale;
+        PoseStack poseStack = graphics.pose();
+        EntityRenderDispatcher dispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
+        poseStack.pushPose();
+        try {
+            poseStack.translate(port.centerX() + viewShiftX, port.centerY() + viewShiftY, 512);
+            poseStack.scale((float) scale, (float) scale, (float) -scale);
+            poseStack.mulPose(Axis.XP.rotationDegrees(viewRotX));
+            poseStack.mulPose(Axis.YP.rotationDegrees(viewRotY));
+            Vec3 centerOffset = vehicle.getBoundingBox().getCenter().subtract(vehicle.position());
+            poseStack.translate((float) -centerOffset.x, (float) -centerOffset.y, (float) -centerOffset.z);
+            dispatcher.setRenderShadow(false);
+            Lighting.setupForEntityInInventory();
+            RenderSystem.runAsFancy(() ->
+                    dispatcher.render(vehicle, 0, 0, 0, 0, 1.0F, poseStack, graphics.bufferSource(), 15728880));
+            graphics.flush();
+            if (selected != null) {
+                RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, false);
+                Vec3 arrow = selected.unit.aimContext().from.subtract(vehicle.position());
+                poseStack.pushPose();
+                poseStack.translate(arrow.x, arrow.y, arrow.z);
+                RenderHelper.renderArrow3D(poseStack, graphics.bufferSource(), 0.15f, 0.3f, 0, 255, 0, 255);
+                poseStack.popPose();
+            }
+        } finally {
+            dispatcher.setRenderShadow(true);
+            Lighting.setupFor3DItems();
+            poseStack.popPose();
+        }
+    }
+
+    private static UiLayout build() {
+        if (layout != null) {
+            return layout;
+        }
+        String ws = "(" + Ore.W + " - 14)";
+        String bh = "1005";
+        String leftW = pct(ws, 0.22f);
+        String midW = pct(ws, 0.28f);
+        String midX = "(14 + " + leftW + ")";
+        String rightX = "(" + midX + " + " + midW + " + 7)";
+        String rightW = "(" + ws + " - " + leftW + " - " + midW + " - 14)";
+        String previewH = "((" + bh + " - 7) * 0.6)";
+        String descH = "(" + bh + " - 7 - " + previewH + ")";
+        float pad = 16;
+        String leftBody = Panel.bodyW(leftW, pad);
+        String midBody = Panel.bodyW(midW, pad);
+
+        WidgetDef partRow = new Pick(i -> {
+            current.select((Selection) i);
+            click();
+        }, i -> i == current.selected, leftBody, "38", Pick.Look.ENTRY, 9, 0, stack(
+                at("0", "10", Label.plain(i -> ((Selection) i).name, Ore.WHITE, 19).clipped(leftBody + " - 70")),
+                at(leftBody + " - 58", "12", Label.plain(i -> ((Selection) i).count(), Ore.INK_MUTED, 14))));
+        WidgetDef weaponRow = new Pick(i -> current.pickWeapon(((WeaponRow) i).index),
+                i -> ((WeaponRow) i).index == current.selectedWeapon, midBody, "38", Pick.Look.ENTRY, 9, 10,
+                Label.plain(i -> ((WeaponRow) i).name, Ore.WHITE, 19).clipped(midBody + " - 18"));
+
+        layout = Ore.layout("vehicle_weapon_select", stack(
+                new Navbar(Ore.tr("screen.vehicle_weapon_select.title"), 22, i -> current.onClose()),
+                at("7", "68", new Panel(leftW, bh, Ore.GREEN, Ore.tr("screen.vehicle_weapon_select.weapon_selections"),
+                        null, pad, stack(
+                        new ListView("ca_weapon_select.parts", 38, 7, leftBody, Panel.bodyH(bh, pad), "#FF8A8C90",
+                                partRow),
+                        when("ca_weapon_select.no_parts", Ore.note("screen.vehicle_weapon_select.no_selections", leftBody))))),
+                at(midX, "68", new Panel(midW, bh, Ore.GOLD, i -> current.partName, null, pad, stack(
+                        new ListView("ca_weapon_select.weapons", 38, 7, midBody, Panel.bodyH(bh, pad), "#FF8A8C90",
+                                weaponRow),
+                        when("ca_weapon_select.no_weapons", Ore.note("screen.vehicle_weapon_select.no_weapons", midBody))))),
+                at(rightX, "68", new Panel(rightW, previewH, Ore.PURPLE, Ore.tr("screen.vehicle_weapon_select.preview"),
+                        new Badge(Label.of("3D"), Ore.PURPLE, 14), 0,
+                        at("5", "5", new ModelPort(() -> current.preview, (g, p) -> current.paintPreview(g, p),
+                                Panel.bodyW(rightW, 0) + " - 10", Panel.bodyH(previewH, 0) + " - 10", false)))),
+                at(rightX, "(75 + " + previewH + ")", new Panel(rightW, descH, Ore.PURPLE,
+                        Ore.tr("screen.vehicle_weapon_select.description"), null, pad,
+                        new Paragraph(i -> current.description, Panel.bodyW(rightW, pad), Panel.bodyH(descH, pad),
+                                Ore.INK_MUTED, 17, 23, Ore.BOLD)))));
+        return layout;
+    }
+
+    private static final class Selection {
+        final int partUnitIndex;
+        final WeaponUnit unit;
+        final String name;
+        private int countFor = -1;
+        private String count;
+
+        Selection(int partUnitIndex, WeaponUnit unit) {
+            this.partUnitIndex = partUnitIndex;
+            this.unit = unit;
+            this.name = unit.getName().getString();
+        }
+
+        String count() {
+            int index = unit.getCurrentWeaponIndex();
+            if (index != countFor) {
+                countFor = index;
+                count = (index + 1) + "/" + unit.weapons.size();
+            }
+            return count;
+        }
+    }
+
+    private record WeaponRow(int index, String name) {
+    }
 }

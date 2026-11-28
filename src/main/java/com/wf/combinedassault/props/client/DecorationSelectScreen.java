@@ -3,458 +3,198 @@ package com.wf.combinedassault.props.client;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.sighs.apricityui.init.Document;
-import com.sighs.apricityui.init.Element;
-import com.sighs.apricityui.render.Drawer;
-import com.sighs.apricityui.screen.ApricityScreen;
 import com.wf.combinedassault.pack.client.ClientAssetsManager;
 import com.wf.combinedassault.pack.client.vehicle.BaseDisplay;
 import com.wf.combinedassault.props.message.ClientDecorationAction;
 import com.wf.combinedassault.render.gem.GemModels;
-import com.wf.combinedassault.vehicle.util.AuiTextHelper;
+import com.wf.combinedassault.screen.Badge;
+import com.wf.combinedassault.screen.Field;
+import com.wf.combinedassault.screen.Label;
+import com.wf.combinedassault.screen.ModelPort;
+import com.wf.combinedassault.screen.Navbar;
+import com.wf.combinedassault.screen.Ore;
+import com.wf.combinedassault.screen.OreScreen;
+import com.wf.combinedassault.screen.Panel;
+import com.wf.combinedassault.screen.Paragraph;
+import com.wf.combinedassault.screen.Pick;
+import com.wf.combinedassault.screen.Port;
+import com.wf.gemrender.ui.Canvas;
+import com.wf.wflib.ui.api.Binder;
+import com.wf.wflib.ui.api.NumProp;
+import com.wf.wflib.ui.api.Signals;
+import com.wf.wflib.ui.api.Subject;
+import com.wf.wflib.ui.api.UiEval;
+import com.wf.wflib.ui.api.UiLayout;
+import com.wf.wflib.ui.api.Widget;
+import com.wf.wflib.ui.api.WidgetDef;
+import com.wf.wflib.ui.api.input.Interactive;
+import com.wf.wflib.ui.api.input.TextBox;
+import com.wf.wflib.ui.api.input.UiInput;
+import com.wf.wflib.ui.api.widget.Place;
+import com.wf.wflib.ui.api.widget.Point;
+import com.wf.wflib.ui.api.widget.Rect;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.joml.Vector4f;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-public class DecorationSelectScreen extends ApricityScreen {
+import static com.wf.combinedassault.screen.Ore.pct;
+import static com.wf.wflib.ui.api.Ui.at;
+import static com.wf.wflib.ui.api.Ui.stack;
+import static com.wf.wflib.ui.api.Ui.when;
 
-    private static final String TEMPLATE = "screens/decoration_select.html";
-    private final List<ResourceLocation> decorationDisplayIds;
-    private final List<DecorationEntry> decorationEntries = new ArrayList<>();
-    private Document document;
-    private Element searchInput;
-    private Element decorationCount;
-    private Element decorationGrid;
-    private Element decorationGridEmpty;
-    private Element selectedDecorationName;
-    private Element selectedDecorationId;
-    private Element previewAnchor;
-    private Element description;
-    private Element closeButton;
-    private String filter = "";
-    private String appliedQuery;
-    private ResourceLocation selectedDisplayId;
-    private BaseDisplay selectedDisplay;
-    private double previewZoom = 1.0;
-    private double previewPanX;
-    private double previewPanY;
-    private boolean previewDragging;
-    private int gridSlotSize = -1;
+public class DecorationSelectScreen extends OreScreen {
+    private static DecorationSelectScreen current;
+    private static final Subject<DecorationSelectScreen> SCREEN =
+            Subject.register("ca_decoration_select", DecorationSelectScreen.class, () -> current);
+    private static final TextBox SEARCH = TextBox.text(48);
+    private static UiLayout layout;
+
+    static {
+        Signals.bool(SCREEN, "none", s -> s.visible.isEmpty());
+        SEARCH.onChange(text -> {
+            if (current != null) {
+                current.filter(text);
+            }
+        });
+    }
+
+    private final List<Decor> all = new ArrayList<>();
+    private final List<Decor> visible = new ArrayList<>();
+    private final Port preview;
+    private Decor selected;
+    private String count;
+    private String name;
+    private String namespace;
+    private String description;
+    private double zoom = 1.0;
+    private double panX;
+    private double panY;
 
     public DecorationSelectScreen() {
-        super(TEMPLATE);
-        this.decorationDisplayIds = ClientAssetsManager.INSTANCE.getDecorationDisplays().stream()
-                .map(BaseDisplay::getDisplayId)
-                .distinct()
+        super(build(), Component.translatable("screen.decoration_select.title"));
+        ClientAssetsManager.INSTANCE.getDecorationDisplays().stream().map(BaseDisplay::getDisplayId).distinct()
                 .sorted(Comparator.comparing(ResourceLocation::toString))
-                .toList();
-        setPauseGame(false);
-        setShowDefaultBackground(false);
+                .forEach(id -> all.add(new Decor(id, ClientAssetsManager.INSTANCE.getDecorationDisplay(id).orElse(null))));
+        preview = port(new Port.Handler() {
+            @Override
+            public boolean accepts(int button) {
+                return button == 0 && hasModel();
+            }
+
+            @Override
+            public void drag(int button, double dx, double dy) {
+                panX += dx;
+                panY += dy;
+                clampPan();
+            }
+
+            @Override
+            public void scroll(double mouseX, double mouseY, double amount) {
+                if (!hasModel()) {
+                    return;
+                }
+                double old = zoom;
+                zoom = Mth.clamp(zoom * Math.pow(1.15, amount), 0.35, 4.0);
+                double ratio = zoom / old;
+                double baseX = preview.centerX();
+                double baseY = modelCenterY();
+                panX = mouseX + (baseX + panX - mouseX) * ratio - baseX;
+                panY = mouseY + (baseY + panY - mouseY) * ratio - baseY;
+                clampPan();
+            }
+        });
+        current = this;
+        SEARCH.set("");
     }
 
     @Override
     protected void init() {
-        appliedQuery = null;
-        gridSlotSize = -1;
+        current = this;
         super.init();
-        document = getLinkedDocument();
-        if (document == null) {
-            return;
-        }
-
-        searchInput = element("decoration-search");
-        decorationCount = element("decoration-count");
-        decorationGrid = element("decoration-grid");
-        decorationGridEmpty = element("decoration-grid-empty");
-        selectedDecorationName = element("selected-decoration-name");
-        selectedDecorationId = element("selected-decoration-id");
-        previewAnchor = element("decoration-preview");
-        description = element("decoration-description");
-        closeButton = element("close-button");
-
-        buildDecorationCatalog();
-        if (searchInput != null) {
-            searchInput.setValue(filter);
-            searchInput.addEventListener("input", event -> applyFilter(searchInput.getValue()));
-            searchInput.addEventListener("change", event -> applyFilter(searchInput.getValue()));
-        }
-        if (closeButton != null) {
-            closeButton.addEventListener("click", event -> onClose());
-        }
-
-        applyFilter(filter);
-        updateGridSlotSize();
     }
 
     @Override
-    public void resize(Minecraft minecraft, int width, int height) {
-        appliedQuery = null;
-        gridSlotSize = -1;
-        super.resize(minecraft, width, height);
-        gridSlotSize = -1;
-        updateGridSlotSize();
-    }
-
-    private Element element(String id) {
-        return document.getElementById(id);
-    }
-
-    private void buildDecorationCatalog() {
-        if (decorationGrid == null) {
-            return;
-        }
-
-        decorationGrid.setTextContent("");
-        decorationEntries.clear();
-        for (ResourceLocation displayId : decorationDisplayIds) {
-            BaseDisplay display = ClientAssetsManager.INSTANCE.getDecorationDisplay(displayId).orElse(null);
-            Element entry = document.createElement("button");
-            entry.setClassName("decoration-entry");
-            entry.setAttribute("type", "button");
-            entry.setAttribute("aria-label", displayId.getPath());
-            entry.setAttribute("title", displayId.toString());
-
-            Element thumbnail = document.createElement("div");
-            thumbnail.setClassName("decoration-thumbnail");
-            boolean rendersModel = display != null && display.getSlotTexture() == null && display.getModelPath() != null;
-            Element texture = null;
-            if (display != null && display.getSlotTexture() != null) {
-                texture = document.createElement("texture");
-                texture.setClassName("decoration-texture");
-                texture.setAttribute("src", display.getSlotTexture().toString());
-                thumbnail.appendChild(texture);
-            }
-
-            entry.appendChild(thumbnail);
-            entry.addEventListener("click", event -> selectDisplay(displayId, true));
-            decorationGrid.appendChild(entry);
-            decorationEntries.add(new DecorationEntry(displayId, display, entry, thumbnail, texture, rendersModel));
+    public void removed() {
+        super.removed();
+        if (current == this) {
+            current = null;
         }
     }
 
-    private void applyFilter(String text) {
-        filter = text == null ? "" : text;
-        String query = filter.strip().toLowerCase(Locale.ROOT);
-        if (query.equals(appliedQuery)) {
-            return;
-        }
-        appliedQuery = query;
+    private boolean hasModel() {
+        return selected != null && selected.display != null && selected.display.getModelPath() != null;
+    }
 
-        int visibleCount = 0;
-        for (DecorationEntry decorationEntry : decorationEntries) {
-            boolean visible = query.isEmpty()
-                    || decorationEntry.displayId.toString().toLowerCase(Locale.ROOT).contains(query);
-            decorationEntry.visible = visible;
-            decorationEntry.element.setInlineStyleProperty("display", visible ? "flex" : "none");
-            document.markDirty(decorationEntry.element, Drawer.RELAYOUT | Drawer.REPAINT);
-            if (visible) {
-                visibleCount++;
+    private double modelCenterY() {
+        return preview.centerY() + preview.height() * 0.08;
+    }
+
+    private void clampPan() {
+        panX = Mth.clamp(panX, -preview.width() * 0.45, preview.width() * 0.45);
+        panY = Mth.clamp(panY, -preview.height() * 0.45, preview.height() * 0.45);
+    }
+
+    private void filter(String text) {
+        String query = text.strip().toLowerCase(Locale.ROOT);
+        visible.clear();
+        for (Decor decor : all) {
+            if (query.isEmpty() || decor.search.contains(query)) {
+                visible.add(decor);
             }
         }
-
-        setText(decorationCount, visibleCount + "/" + decorationEntries.size());
-        setEmptyStateHidden(visibleCount > 0);
-        clearSelection();
+        count = visible.size() + "/" + all.size();
+        select(null);
     }
 
-    private void selectDisplay(ResourceLocation displayId, boolean playSound) {
-        BaseDisplay display = ClientAssetsManager.INSTANCE.getDecorationDisplay(displayId).orElse(null);
-        if (display == null) {
-            clearSelection();
+    private void select(Decor decor) {
+        selected = decor == null || decor.display == null ? null : decor;
+        zoom = 1.0;
+        panX = 0;
+        panY = 0;
+        if (selected == null) {
+            name = Component.translatable("screen.decoration_select.preview").getString();
+            namespace = "--";
+            description = Component.translatable("screen.decoration_select.select_decoration").getString();
             return;
         }
-
-        selectedDisplayId = displayId;
-        selectedDisplay = display;
-        resetPreviewTransform();
-        refreshEntrySelection();
-        setText(selectedDecorationName, displayId.getPath());
-        setText(selectedDecorationId, displayId.getNamespace());
-
-        String descriptionKey = display.getDescription();
-        setDescriptionText(Component.translatable(descriptionKey == null || descriptionKey.isBlank()
-                ? "screen.no_description"
-                : descriptionKey).getString());
-
+        name = selected.id.getPath();
+        namespace = selected.id.getNamespace();
+        String key = selected.display.getDescription();
+        description = Component.translatable(key == null || key.isBlank() ? "screen.no_description" : key).getString();
         ClientDecorationAction action = new ClientDecorationAction();
         action.action = ClientDecorationAction.Action.UPDATE_ITEM;
-        action.displayId = displayId.toString();
+        action.displayId = selected.id.toString();
         PacketDistributor.sendToServer(action);
-        if (playSound) {
-            Minecraft.getInstance().getSoundManager()
-                    .play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
-        }
+        click();
     }
 
-    private void clearSelection() {
-        selectedDisplayId = null;
-        selectedDisplay = null;
-        resetPreviewTransform();
-        refreshEntrySelection();
-        setText(selectedDecorationName, Component.translatable("screen.decoration_select.preview").getString());
-        setText(selectedDecorationId, "--");
-        setDescriptionText(Component.translatable("screen.decoration_select.select_decoration").getString());
-    }
-
-    private void refreshEntrySelection() {
-        for (DecorationEntry decorationEntry : decorationEntries) {
-            boolean selected = decorationEntry.displayId.equals(selectedDisplayId);
-            decorationEntry.element.setClassName(selected
-                    ? "decoration-entry active"
-                    : "decoration-entry");
-            if (document != null) {
-                document.markDirty(decorationEntry.element, Drawer.RELAYOUT | Drawer.REPAINT);
-            }
-        }
-    }
-
-    private void setEmptyStateHidden(boolean hidden) {
-        if (decorationGridEmpty != null) {
-            decorationGridEmpty.setClassName(hidden ? "empty-state hidden" : "empty-state");
-        }
-    }
-
-    private void setText(Element element, String text) {
-        if (element != null) {
-            element.setTextContent(text);
-        }
-    }
-
-    private void setDescriptionText(String text) {
-        AuiTextHelper.setDescription(description, text);
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-        updateGridSlotSize();
-        if (searchInput != null) {
-            String currentFilter = searchInput.getValue() == null ? "" : searchInput.getValue();
-            if (!filter.equals(currentFilter)) {
-                applyFilter(currentFilter);
-            }
-        }
-    }
-
-    private void updateGridSlotSize() {
-        if (decorationGrid == null || document == null) {
+    private void paintPreview(GuiGraphics graphics, Port port) {
+        if (!hasModel()) {
             return;
         }
-        Element.DOMRect rect = decorationGrid.getBoundingClientRect();
-        if (rect.width <= 0) {
-            return;
-        }
-
-        // 12 = 2px border + 4px padding, both sides; 20 = five 4px gaps.
-        int slotSize = Math.max(28, (int) Math.floor((rect.width - 12 - 20) / 6.0));
-        if (slotSize == gridSlotSize) {
-            return;
-        }
-        gridSlotSize = slotSize;
-        int thumbnailSize = Math.max(20, slotSize - 8);
-        String slotPixels = slotSize + "px";
-        String thumbnailPixels = thumbnailSize + "px";
-
-        decorationGrid.setInlineStyleProperty("grid-template-columns", "repeat(6, " + slotPixels + ")");
-        decorationGrid.setInlineStyleProperty("grid-auto-rows", slotPixels);
-        for (DecorationEntry decorationEntry : decorationEntries) {
-            decorationEntry.element.setInlineStyleProperty("width", slotPixels);
-            decorationEntry.element.setInlineStyleProperty("height", slotPixels);
-            decorationEntry.element.setInlineStyleProperty("min-width", slotPixels);
-            decorationEntry.element.setInlineStyleProperty("min-height", slotPixels);
-            decorationEntry.element.setInlineStyleProperty("max-width", slotPixels);
-            decorationEntry.element.setInlineStyleProperty("max-height", slotPixels);
-            decorationEntry.thumbnail.setInlineStyleProperty("width", thumbnailPixels);
-            decorationEntry.thumbnail.setInlineStyleProperty("height", thumbnailPixels);
-            decorationEntry.thumbnail.setInlineStyleProperty("min-width", thumbnailPixels);
-            decorationEntry.thumbnail.setInlineStyleProperty("min-height", thumbnailPixels);
-            decorationEntry.thumbnail.setInlineStyleProperty("max-width", thumbnailPixels);
-            decorationEntry.thumbnail.setInlineStyleProperty("max-height", thumbnailPixels);
-            decorationEntry.thumbnail.setInlineStyleProperty("flex", "0 0 " + thumbnailPixels);
-            if (decorationEntry.texture != null) {
-                decorationEntry.texture.setInlineStyleProperty("width", thumbnailPixels);
-                decorationEntry.texture.setInlineStyleProperty("height", thumbnailPixels);
-                decorationEntry.texture.setInlineStyleProperty("min-width", thumbnailPixels);
-                decorationEntry.texture.setInlineStyleProperty("min-height", thumbnailPixels);
-                decorationEntry.texture.setInlineStyleProperty("max-width", thumbnailPixels);
-                decorationEntry.texture.setInlineStyleProperty("max-height", thumbnailPixels);
-                decorationEntry.texture.setInlineStyleProperty("flex", "0 0 " + thumbnailPixels);
-            }
-        }
-        document.markDirty(decorationGrid, Drawer.RELAYOUT | Drawer.REPAINT);
-    }
-
-    @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double deltaX, double deltaY) {
-        Bounds bounds = getBounds(previewAnchor);
-        if (!hasPreviewModel() || bounds == null || !bounds.contains(mouseX, mouseY)) {
-            return super.mouseScrolled(mouseX, mouseY, deltaX, deltaY);
-        }
-
-        double oldZoom = previewZoom;
-        previewZoom = Mth.clamp(previewZoom * Math.pow(1.15, deltaY), 0.35, 4.0);
-        double ratio = previewZoom / oldZoom;
-        double modelCenterX = bounds.centerX() + previewPanX;
-        double modelCenterY = bounds.modelCenterY() + previewPanY;
-        previewPanX = mouseX + (modelCenterX - mouseX) * ratio - bounds.centerX();
-        previewPanY = mouseY + (modelCenterY - mouseY) * ratio - bounds.modelCenterY();
-        clampPreviewPan(bounds);
-        return true;
-    }
-
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        Bounds bounds = getBounds(previewAnchor);
-        if (button == 0 && hasPreviewModel() && bounds != null && bounds.contains(mouseX, mouseY)) {
-            setPreviewDragging(true);
-            return true;
-        }
-        return super.mouseClicked(mouseX, mouseY, button);
-    }
-
-    @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        if (button == 0 && previewDragging) {
-            previewPanX += dragX;
-            previewPanY += dragY;
-            Bounds bounds = getBounds(previewAnchor);
-            if (bounds != null) {
-                clampPreviewPan(bounds);
-            }
-            return true;
-        }
-        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
-    }
-
-    @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (button == 0 && previewDragging) {
-            setPreviewDragging(false);
-            return true;
-        }
-        return super.mouseReleased(mouseX, mouseY, button);
-    }
-
-    private boolean hasPreviewModel() {
-        return selectedDisplay != null && selectedDisplay.getModelPath() != null;
-    }
-
-    private Bounds getBounds(Element element) {
-        if (element == null || document == null) {
-            return null;
-        }
-        Element.DOMRect rect = element.getBoundingClientRect();
-        if (rect.width <= 0 || rect.height <= 0) {
-            return null;
-        }
-        double viewportScale = document.getViewport().renderScale();
-        return new Bounds(
-                rect.x * viewportScale,
-                rect.y * viewportScale,
-                (rect.x + rect.width) * viewportScale,
-                (rect.y + rect.height) * viewportScale
-        );
-    }
-
-    private void clampPreviewPan(Bounds bounds) {
-        previewPanX = Mth.clamp(previewPanX, -bounds.width() * 0.45, bounds.width() * 0.45);
-        previewPanY = Mth.clamp(previewPanY, -bounds.height() * 0.45, bounds.height() * 0.45);
-    }
-
-    private void resetPreviewTransform() {
-        previewZoom = 1.0;
-        previewPanX = 0;
-        previewPanY = 0;
-        setPreviewDragging(false);
-    }
-
-    private void setPreviewDragging(boolean dragging) {
-        previewDragging = dragging;
-        if (previewAnchor != null) {
-            previewAnchor.setClassName(dragging ? "dragging" : "");
-        }
-    }
-
-    @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        super.render(graphics, mouseX, mouseY, partialTick);
-        renderFallbackThumbnails(graphics);
-        renderDecorationPreview(graphics);
-    }
-
-    private void renderFallbackThumbnails(GuiGraphics graphics) {
-        Bounds gridBounds = getBounds(decorationGrid);
-        if (gridBounds == null) {
-            return;
-        }
-
-        graphics.enableScissor((int) Math.floor(gridBounds.left), (int) Math.floor(gridBounds.top),
-                (int) Math.ceil(gridBounds.right), (int) Math.ceil(gridBounds.bottom));
-        try {
-            Lighting.setupForEntityInInventory();
-            for (DecorationEntry decorationEntry : decorationEntries) {
-                if (!decorationEntry.visible || !decorationEntry.rendersModel || decorationEntry.display == null) {
-                    continue;
-                }
-                Bounds slotBounds = getBounds(decorationEntry.element);
-                if (slotBounds == null || !slotBounds.intersects(gridBounds)) {
-                    continue;
-                }
-                double inset = Math.min(slotBounds.width(), slotBounds.height()) * 0.125;
-                Bounds modelBounds = slotBounds.inset(inset);
-                renderModel(graphics, decorationEntry.display, modelBounds.centerX(), modelBounds.centerY(),
-                        Math.min(modelBounds.width(), modelBounds.height()), 0, 180);
-            }
-            // Per-model flush: GPU wait x dozens per drag event. Batch all, flush once.
-            graphics.flush();
-        } finally {
-            Lighting.setupFor3DItems();
-            graphics.disableScissor();
-        }
-    }
-
-    private void renderDecorationPreview(GuiGraphics graphics) {
-        if (!hasPreviewModel()) {
-            return;
-        }
-        Bounds bounds = getBounds(previewAnchor);
-        if (bounds == null) {
-            return;
-        }
-
-        double centerX = bounds.centerX() + previewPanX;
-        double centerY = bounds.modelCenterY() + previewPanY;
-        double scale = Math.min(bounds.width(), bounds.height()) * 0.38 * previewZoom;
+        double scale = Math.min(port.width(), port.height()) * 0.38 * zoom;
         float rotation = (System.currentTimeMillis() % 10000L) / 10000.0F * 360.0F;
-        graphics.enableScissor((int) Math.floor(bounds.left), (int) Math.floor(bounds.top),
-                (int) Math.ceil(bounds.right), (int) Math.ceil(bounds.bottom));
+        Lighting.setupForEntityInInventory();
         try {
-            Lighting.setupForEntityInInventory();
-            renderModel(graphics, selectedDisplay, centerX, centerY, scale, 165, rotation);
-            graphics.flush();
+            drawModel(graphics.pose(), selected.display, port.centerX() + panX, modelCenterY() + panY, scale, 165,
+                    rotation);
         } finally {
             Lighting.setupFor3DItems();
-            graphics.disableScissor();
         }
     }
 
-    private void renderModel(GuiGraphics graphics, BaseDisplay display, double centerX, double centerY,
-                             double scale, float xRotation, float yRotation) {
-        if (display.getModelPath() == null) {
-            return;
-        }
-
-        PoseStack poseStack = graphics.pose();
+    /** {@code xRotation} 0 => upright thumbnail (Z flip). */
+    private static void drawModel(PoseStack poseStack, BaseDisplay display, double centerX, double centerY,
+                                  double scale, float xRotation, float yRotation) {
         poseStack.pushPose();
         try {
             poseStack.translate((float) centerX, (float) centerY, 512);
@@ -466,76 +206,220 @@ public class DecorationSelectScreen extends ApricityScreen {
                 poseStack.mulPose(Axis.ZP.rotationDegrees(180));
             }
             poseStack.scale((float) scale, (float) scale, (float) -scale);
-
-            graphics.flush();
             GemModels.drawGui(display.getModelPath(), poseStack, 15728880);
         } finally {
             poseStack.popPose();
         }
     }
 
-    @Override
-    public boolean shouldCloseOnEsc() {
-        return true;
+    private static UiLayout build() {
+        if (layout != null) {
+            return layout;
+        }
+        String ws = "(" + Ore.W + " - 14)";
+        String bh = "1005";
+        String leftW = pct(ws, 0.43f);
+        String rightX = "(14 + " + leftW + ")";
+        String rightW = "(" + ws + " - " + leftW + " - 7)";
+        String previewH = "((" + bh + " - 7) * 0.6)";
+        String profileH = "(" + bh + " - 7 - " + previewH + ")";
+        float pad = 16;
+        String gridW = Panel.bodyW(leftW, pad);
+        String profW = Panel.bodyW(rightW, pad);
+        String descH = Panel.bodyH(profileH, pad) + " - 40";
+
+        layout = Ore.layout("decoration_select", stack(
+                new Navbar(Ore.tr("screen.decoration_select.title"), 22, i -> current.onClose()),
+                at("7", "68", new Panel(leftW, bh, Ore.GREEN, Ore.tr("screen.decoration_select.catalog"),
+                        new Badge(i -> current.count, Ore.BLUE, 14), pad, stack(
+                        new Field(SEARCH, "Search", gridW, 42, 12, Ore.WHITE),
+                        at("0", "48", new Grid(gridW, Panel.bodyH(bh, pad) + " - 48")),
+                        when("ca_decoration_select.none", at("0", "48",
+                                Ore.note("screen.decoration_select.no_results", gridW)))))),
+                at(rightX, "68", new Panel(rightW, previewH, Ore.PURPLE, Ore.tr("screen.decoration_select.preview"),
+                        new Badge(Label.of("3D"), Ore.PURPLE, 14), 0,
+                        at("5", "5", new ModelPort(() -> current.preview, (g, p) -> current.paintPreview(g, p),
+                                Panel.bodyW(rightW, 0) + " - 10", Panel.bodyH(previewH, 0) + " - 10", true)))),
+                at(rightX, "(75 + " + previewH + ")", new Panel(rightW, profileH, Ore.PURPLE,
+                        Ore.tr("screen.decoration_select.profile"), null, pad, stack(
+                        Label.display(i -> current.name, Ore.WHITE, 22).clipped(profW + " * 0.55"),
+                        new Place(profW, "-2", Point.TOP_RIGHT,
+                                new Badge(i -> current.namespace, Ore.PURPLE, 14, profW + " * 0.42 - 20")),
+                        at("0", "40", stack(
+                                new Rect(profW, descH, "#C2343537", 0, 0),
+                                new Rect(profW, descH, "#FF1E1E1F", 0, 2),
+                                at("9", "9", new Paragraph(i -> current.description, profW + " - 18",
+                                        descH + " - 18", Ore.INK_MUTED, 17, 23, Ore.BOLD)))))))));
+        return layout;
     }
 
-    @Override
-    public boolean isPauseScreen() {
-        return false;
+    /**
+     * Catalog grid: 2 edge, 4 padding, 6 columns of square tiles (min 28), wheel-scrolled; texture or model thumbnail
+     * (models drawn after all chrome, one flush).
+     */
+    private record Grid(String w, String h) implements WidgetDef {
+        private static final int COLUMNS = 6;
+        private static final float GAP = 4;
+
+        @Override
+        public Widget create(Binder binder) {
+            return new Node(binder.num(w), binder.num(h));
+        }
+
+        private static final class Node extends Widget implements Interactive {
+            private final NumProp pw;
+            private final NumProp ph;
+            private final PoseStack scratch = new PoseStack();
+            private final Vector4f corner = new Vector4f();
+            private float scroll;
+            private float content;
+
+            Node(NumProp pw, NumProp ph) {
+                this.pw = pw;
+                this.ph = ph;
+            }
+
+            @Override
+            public void measure(UiEval ev) {
+                width = Math.max(0, pw.getFloat(ev));
+                height = Math.max(0, ph.getFloat(ev));
+            }
+
+            @Override
+            public void draw(UiEval ev, float x, float y, float bw, float bh) {
+                Canvas c = ev.canvas;
+                List<Decor> list = current.visible;
+                float tile = Math.max(28, (float) Math.floor((width - 12 - GAP * (COLUMNS - 1)) / COLUMNS));
+                float left = x + (width - tile * COLUMNS - GAP * (COLUMNS - 1)) / 2;
+                int rows = (list.size() + COLUMNS - 1) / COLUMNS;
+                content = rows == 0 ? 0 : rows * (tile + GAP) - GAP + 12;
+                scroll = Math.max(0, Math.min(scroll, content - height));
+                c.fill(x, y, x + width, y + height, 0xAD2D2E30);
+                c.frame(x, y, x + width, y + height, 2, Ore.EDGE);
+                UiInput input = ev.input;
+                if (input != null) {
+                    input.hit(x, y, x + width, y + height, this, null);
+                    input.pushClip(x + 2, y + 2, x + width - 2, y + height - 2);
+                }
+                c.pushClip(x + 2, y + 2, x + width - 2, y + height - 2);
+                int first = Math.max(0, (int) ((scroll - 6) / (tile + GAP))) * COLUMNS;
+                int last = first;
+                for (int i = first; i < list.size(); i++) {
+                    float tx = left + (i % COLUMNS) * (tile + GAP);
+                    float ty = y + 6 + (i / COLUMNS) * (tile + GAP) - scroll;
+                    if (ty >= y + height) {
+                        break;
+                    }
+                    last = i + 1;
+                    Decor decor = list.get(i);
+                    boolean hover = false;
+                    if (input != null) {
+                        input.hit(tx, ty, tx + tile, ty + tile, decor, decor);
+                        hover = input.hovered(decor, decor);
+                    }
+                    Pick.Look look = Pick.Look.TILE;
+                    boolean on = decor == current.selected;
+                    c.fill(tx, ty, tx + tile, ty + tile, on ? look.on() : hover ? look.hover() : look.back());
+                    c.fill(tx + 2, ty + 2, tx + tile - 2, ty + 4, on ? 0xFF302C20 : 0xFF292A2C);
+                    c.fill(tx + 2, ty + 4, tx + 4, ty + tile - 2, on ? 0xFF302C20 : 0xFF292A2C);
+                    c.fill(tx + 4, ty + tile - 4, tx + tile - 2, ty + tile - 2, on ? 0xFF6A6044 : 0xFF47494C);
+                    c.fill(tx + tile - 4, ty + 4, tx + tile - 2, ty + tile - 4, on ? 0xFF6A6044 : 0xFF47494C);
+                    c.frame(tx, ty, tx + tile, ty + tile, 2, on ? look.edgeOn() : hover ? look.edgeHover()
+                            : look.edgeBack());
+                    if (decor.display != null && decor.display.getSlotTexture() != null) {
+                        c.sprite(decor.display.getSlotTexture(), tx + 4, ty + 4, tx + tile - 4, ty + tile - 4,
+                                0xFFFFFFFF);
+                    }
+                }
+                if (content > height) {
+                    float size = Math.max(24, height * height / content);
+                    float at = y + (height - size) * scroll / (content - height);
+                    c.fill(x + width - 6, at, x + width - 2, at + size, 0xFF8A8C90);
+                }
+                GuiGraphics graphics = ev.graphics;
+                if (graphics != null) {
+                    models(c, graphics, list, first, last, left, y, tile);
+                }
+                c.popClip();
+                if (input != null) {
+                    input.popClip();
+                }
+            }
+
+            private void models(Canvas c, GuiGraphics graphics, List<Decor> list, int first, int last, float left,
+                                float y, float tile) {
+                boolean any = false;
+                for (int i = first; i < last && !any; i++) {
+                    any = list.get(i).thumbModel;
+                }
+                if (!any) {
+                    return;
+                }
+                c.suspend();
+                PoseStack pose = graphics.pose();
+                pose.pushPose();
+                c.applyTo(pose);
+                scratch.setIdentity();
+                c.applyTo(scratch);
+                corner.set(left - 6, y + 2, 0, 1).mul(scratch.last().pose());
+                int sx0 = (int) Math.floor(corner.x);
+                int sy0 = (int) Math.floor(corner.y);
+                corner.set(left + COLUMNS * (tile + GAP) + 6, y + height - 2, 0, 1).mul(scratch.last().pose());
+                graphics.enableScissor(sx0, sy0, (int) Math.ceil(corner.x), (int) Math.ceil(corner.y));
+                Lighting.setupForEntityInInventory();
+                try {
+                    for (int i = first; i < last; i++) {
+                        Decor decor = list.get(i);
+                        if (!decor.thumbModel) {
+                            continue;
+                        }
+                        float tx = left + (i % COLUMNS) * (tile + GAP);
+                        float ty = y + 6 + (i / COLUMNS) * (tile + GAP) - scroll;
+                        float inner = tile * 0.75f;
+                        drawModel(pose, decor.display, tx + tile / 2, ty + tile / 2, inner, 0, 180);
+                    }
+                    graphics.flush();
+                } finally {
+                    Lighting.setupFor3DItems();
+                    graphics.disableScissor();
+                    pose.popPose();
+                    c.resume();
+                }
+            }
+
+            @Override
+            public boolean feedback() {
+                return false;
+            }
+
+            @Override
+            public boolean wheel(Object item, float amount) {
+                float before = scroll;
+                scroll = Math.max(0, Math.min(scroll - amount * 40, content - height));
+                return scroll != before;
+            }
+        }
     }
 
-    private static final class DecorationEntry {
-        private final ResourceLocation displayId;
-        private final BaseDisplay display;
-        private final Element element;
-        private final Element thumbnail;
-        private final Element texture;
-        private final boolean rendersModel;
-        private boolean visible = true;
+    /** Hit owner per tile: release => select. */
+    private static final class Decor implements Interactive {
+        final ResourceLocation id;
+        final BaseDisplay display;
+        final String search;
+        final boolean thumbModel;
 
-        private DecorationEntry(ResourceLocation displayId, BaseDisplay display, Element element,
-                                Element thumbnail, Element texture, boolean rendersModel) {
-            this.displayId = displayId;
+        Decor(ResourceLocation id, BaseDisplay display) {
+            this.id = id;
             this.display = display;
-            this.element = element;
-            this.thumbnail = thumbnail;
-            this.texture = texture;
-            this.rendersModel = rendersModel;
+            this.search = id.toString().toLowerCase(Locale.ROOT);
+            this.thumbModel = display != null && display.getSlotTexture() == null && display.getModelPath() != null;
+        }
+
+        @Override
+        public void release(Object item, float x, float y, boolean inside) {
+            if (inside && current != null) {
+                current.select(this);
+            }
         }
     }
-
-    private record Bounds(double left, double top, double right, double bottom) {
-        private boolean contains(double x, double y) {
-            return x >= left && x <= right && y >= top && y <= bottom;
-        }
-
-        private boolean intersects(Bounds other) {
-            return right > other.left && left < other.right && bottom > other.top && top < other.bottom;
-        }
-
-        private Bounds inset(double amount) {
-            return new Bounds(left + amount, top + amount, right - amount, bottom - amount);
-        }
-
-        private double width() {
-            return right - left;
-        }
-
-        private double height() {
-            return bottom - top;
-        }
-
-        private double centerX() {
-            return (left + right) / 2;
-        }
-
-        private double centerY() {
-            return (top + bottom) / 2;
-        }
-
-        private double modelCenterY() {
-            return centerY() + height() * 0.08;
-        }
-    }
-
 }

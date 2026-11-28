@@ -142,9 +142,6 @@ repositories {
         content { includeGroupAndSubgroups 'dev.engine-room' }
     }
     maven {
-        url = 'https://maven.sighs.cc/repository/maven-public/'
-    }
-    maven {
         name = 'KosmX'
         url = 'https://maven.kosmx.dev/'
         content { includeGroup 'dev.kosmx.player-anim' }
@@ -181,13 +178,6 @@ dependencies {
         version {
             strictly '[1.1.2,)'
             prefer '1.1.2'
-        }
-    }
-    // apricityui
-    jarJar(implementation 'com.sighs:ApricityUI-neoforge-1.21.1:1.2.4-hotfix') {
-        version {
-            strictly '[1.2.4-hotfix,)'
-            prefer '1.2.4-hotfix'
         }
     }
     // spark
